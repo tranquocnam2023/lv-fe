@@ -132,6 +132,18 @@ export default function AdminCustomers() {
     }
   };
 
+  const getRankBadgeStyle = (points) => {
+    if (points >= 5000) return 'bg-amber-100 text-amber-800 border border-amber-200';
+    if (points >= 1000) return 'bg-slate-100 text-slate-800 border border-slate-200';
+    return 'bg-orange-100 text-orange-800 border border-orange-200';
+  };
+
+  const getRankLabel = (points) => {
+    if (points >= 5000) return 'Vàng';
+    if (points >= 1000) return 'Bạc';
+    return 'Đồng';
+  };
+
   return (
     <div className="animate-in fade-in duration-500 space-y-6">
       {/* Header & Search */}
@@ -254,6 +266,14 @@ export default function AdminCustomers() {
                           <span className="text-xs">{customer.id}</span>
                         </td>
                         <td className="px-6 py-4">
+                          <div className="flex flex-col items-start">
+                            <span className={`px-2 py-0.5 rounded text-[11px] font-bold ${getRankBadgeStyle(customer.rewardPoints)}`}>
+                              {getRankLabel(customer.rewardPoints)}
+                            </span>
+                            <span className="text-xs text-admin-text-muted mt-1 font-bold">{customer.rewardPoints ?? 0} điểm</span>
+                          </div>
+                        </td>
+                        <td className="px-6 py-4">
                           <span className="text-[13px] font-medium text-admin-text-main">{customer.email}</span>
                         </td>
                         <td className="px-6 py-4 text-center">
@@ -293,7 +313,7 @@ export default function AdminCustomers() {
                   })
                 ) : (
                   <tr>
-                    <td colSpan="7" className="px-6 py-20 text-center">
+                    <td colSpan="8" className="px-6 py-20 text-center">
                       <div className="flex flex-col items-center justify-center text-admin-text-muted">
                         <Users size={64} strokeWidth={1} className="mb-4 opacity-50" />
                         <p className="text-lg font-bold text-admin-text-main">Không tìm thấy tài khoản người dùng nào</p>

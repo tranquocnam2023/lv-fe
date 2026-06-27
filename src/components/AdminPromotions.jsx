@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Search, Plus, Edit, Trash2, Ticket, X, Check, Calendar, Settings } from 'lucide-react';
 import { promotionService } from '../services/promotionService';
-import { useFormat } from '../hooks/useFormat';
 
 export default function AdminPromotions() {
   const [promotions, setPromotions] = useState([]);
@@ -9,7 +8,6 @@ export default function AdminPromotions() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingPromotion, setEditingPromotion] = useState(null);
   const [loading, setLoading] = useState(false);
-  const { formatCurrency, formatDate } = useFormat();
 
   const [formData, setFormData] = useState({
     code: '',

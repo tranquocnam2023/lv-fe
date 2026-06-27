@@ -7,7 +7,6 @@ import { brandService } from '../services/brandService';
 import { productService } from '../services/productService';
 import { usePagination } from '../hooks/usePagination';
 import { useFormat } from '../hooks/useFormat';
-import { cleanDescription } from '../utils/productHelper';
 import PriceInput from '../components/PriceInput';
 
 export default function AdminProducts({ onCreate, onEdit, defaultBrandFilter, clearBrandFilter }) {

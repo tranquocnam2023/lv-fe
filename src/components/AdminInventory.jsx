@@ -34,7 +34,7 @@ export default function AdminInventory() {
   const [searchQuery, setSearchQuery] = useState('');
   const [typeFilter, setTypeFilter] = useState('ALL');
 
-  const { formatCurrency, formatDate } = useFormat();
+  const { formatCurrency } = useFormat();
 
   // Load products & history
   const fetchData = async () => {

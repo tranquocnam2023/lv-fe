@@ -26,10 +26,10 @@ const generateSkuFromName = (name) => {
   str = str.replace(/Đ/g, "D");
 
   // Remove special characters, keep letters, numbers, spaces, hyphens
-  str = str.replace(/[^A-Za-z0-9\s\-]/g, '');
+  str = str.replace(/[^A-Za-z0-9\s-]/g, '');
 
   // Replace multiple spaces/hyphens with a single hyphen
-  str = str.replace(/[\s\-]+/g, '-');
+  str = str.replace(/[\s-]+/g, '-');
 
   return str.toUpperCase().trim().replace(/^-+|-+$/g, '');
 };
@@ -38,7 +38,6 @@ export default function AdminProductVariants() {
   const [variants, setVariants] = useState([]);
   const [products, setProducts] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
-  const [loading, setLoading] = useState(false);
   const [showModal, setShowModal] = useState(false);
   const [editingVariant, setEditingVariant] = useState(null);
 
@@ -57,7 +56,6 @@ export default function AdminProductVariants() {
 
   // Load products and variants
   const loadData = () => {
-    setLoading(true);
     Promise.all([
       productService.getAll(),
       variantService.getAll()
@@ -68,8 +66,7 @@ export default function AdminProductVariants() {
       })
       .catch(err => {
         console.error("Lỗi tải dữ liệu biến thể:", err);
-      })
-      .finally(() => setLoading(false));
+      });
   };
 
   useEffect(() => {
@@ -179,7 +176,7 @@ export default function AdminProductVariants() {
       if (editingVariant && v.id === editingVariant.id) return false;
 
       let parsedAttr = {};
-      try { parsedAttr = v.attributes ? JSON.parse(v.attributes) : {}; } catch (e) { }
+      try { parsedAttr = v.attributes ? JSON.parse(v.attributes) : {}; } catch { /* empty */ }
 
       // Compare all non-SKU attributes
       const currentAttrs = {};
@@ -272,7 +269,9 @@ export default function AdminProductVariants() {
     try {
       const parsed = v.attributes ? JSON.parse(v.attributes) : {};
       sku = (parsed["SKU"] || '').toLowerCase();
-    } catch (e) { }
+    } catch {
+      /* ignore invalid JSON attributes */
+    }
 
     const query = searchTerm.toLowerCase();
     return prodName.includes(query) || varName.includes(query) || sku.includes(query);
@@ -347,7 +346,7 @@ export default function AdminProductVariants() {
                 paginatedVariants.map((v) => {
                   const product = getProductById(v.productId);
                   let parsedAttr = {};
-                  try { parsedAttr = v.attributes ? JSON.parse(v.attributes) : {}; } catch (e) { }
+                  try { parsedAttr = v.attributes ? JSON.parse(v.attributes) : {}; } catch { /* ignore JSON parse error */ }
                   const sku = parsedAttr["SKU"] || generateSkuFromName(v.name);
 
                   return (
