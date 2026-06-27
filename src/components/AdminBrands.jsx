@@ -127,6 +127,7 @@ export default function AdminBrands({ onRedirectToProducts, onRedirectToCreatePr
     }, 300);
 
     return () => clearTimeout(delayDebounceFn);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentPage, searchTerm]);
 
   useEffect(() => {
@@ -439,7 +440,14 @@ export default function AdminBrands({ onRedirectToProducts, onRedirectToCreatePr
                                 )}
                               </div>
                               <div>
-                                <span className="text-base font-bold text-admin-text-main">{brand.name}</span>
+                                <div className="flex items-center gap-2">
+                                  <span className="text-base font-bold text-admin-text-main">{brand.name}</span>
+                                  {!isBrandActive && (
+                                    <span className="px-2 py-0.5 rounded-full text-[9px] font-bold bg-admin-danger/25 text-admin-danger border border-admin-danger/35">
+                                      Đang ẩn
+                                    </span>
+                                  )}
+                                </div>
                                 {brand.description && (
                                   <span className="block text-xs text-admin-text-muted max-w-xs truncate mt-0.5">{brand.description}</span>
                                 )}

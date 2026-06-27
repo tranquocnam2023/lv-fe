@@ -44,11 +44,13 @@ const CategoryRow = ({ category, level = 1, onEdit, onAddSubCategory, onDelete, 
   };
 
   const inheritedInactive = checkInheritedInactive(category);
+  const isSelfInactive = category.isActive === false;
+  const isInactive = inheritedInactive || isSelfInactive;
   const currentLevel = category.level || level;
 
   return (
     <>
-      <tr className={`hover:bg-admin-bg transition-colors group border-b border-admin-border ${inheritedInactive ? 'opacity-60 grayscale bg-gray-50/50' : ''}`}>
+      <tr className={`hover:bg-admin-bg transition-colors group border-b border-admin-border ${isInactive ? 'opacity-65 grayscale bg-slate-50/50' : ''}`}>
         <td className="px-6 py-4">
           <div className="flex items-center gap-3">
             {currentLevel > 1 && (
@@ -72,6 +74,11 @@ const CategoryRow = ({ category, level = 1, onEdit, onAddSubCategory, onDelete, 
                 {inheritedInactive && (
                   <span className="px-2 py-0.5 rounded-full text-[9px] font-bold bg-admin-danger/10 text-admin-danger">
                     Kế thừa ẩn
+                  </span>
+                )}
+                {isSelfInactive && (
+                  <span className="px-2 py-0.5 rounded-full text-[9px] font-bold bg-admin-danger/25 text-admin-danger border border-admin-danger/35">
+                    Đang ẩn
                   </span>
                 )}
               </div>
@@ -213,7 +220,6 @@ export default function AdminCategories() {
   });
   const [catErrorMessage, setCatErrorMessage] = useState('');
   const [uploading, setUploading] = useState(false);
-  const [hideParentSelect, setHideParentSelect] = useState(false);
   const [lockParentRoot, setLockParentRoot] = useState(false);
   const [isCodeEditable, setIsCodeEditable] = useState(true);
   const [parentName, setParentName] = useState('');
@@ -330,7 +336,7 @@ export default function AdminCategories() {
           return;
         }
         e.preventDefault();
-        handleOpenModal(null, '', false, true);
+        handleOpenModal(null, '', true);
       }
     };
     window.addEventListener('keydown', handleKeyDown);
@@ -339,7 +345,7 @@ export default function AdminCategories() {
     };
   }, []);
 
-  const handleOpenModal = (category = null, defaultParentId = '', hideParent = false, lockParentToRoot = false, parentNameVal = '') => {
+  const handleOpenModal = (category = null, defaultParentId = '', lockParentToRoot = false, parentNameVal = '') => {
     setFormError(null);
     setParentName(parentNameVal);
     if (category) {
@@ -368,7 +374,6 @@ export default function AdminCategories() {
       setLockParentRoot(lockParentToRoot || !!defaultParentId);
     }
     setCatErrorMessage('');
-    setHideParentSelect(false);
     setIsModalOpen(true);
   };
 

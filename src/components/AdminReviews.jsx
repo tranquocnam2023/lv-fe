@@ -5,20 +5,16 @@ import { reviewService } from '../services/reviewService';
 
 export default function AdminReviews() {
   const [reviews, setReviews] = useState([]);
-  const [loading, setLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
-  const [dateRange, setDateRange] = useState({ start: '', end: '' });
 
   const fetchReviews = () => {
-    setLoading(true);
     // Assuming userService.getAllReviews exists, or use appropriate service
     reviewService.getAll()
       .then(data => setReviews(Array.isArray(data) ? data : []))
       .catch(err => {
         console.error("Lỗi tải đánh giá:", err);
         setReviews([]);
-      })
-      .finally(() => setLoading(false));
+      });
   };
 
   useEffect(() => {
@@ -37,9 +33,9 @@ export default function AdminReviews() {
   };
 
   const filteredReviews = reviews.filter(rev =>
-    String(rev.user || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-    String(rev.content || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-    String(rev.email || '').toLowerCase().includes(searchTerm.toLowerCase())
+    String(rev.username || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+    String(rev.comment || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+    String(rev.productName || '').toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   return (
@@ -110,11 +106,11 @@ export default function AdminReviews() {
               <tr className="border-b border-admin-border">
                 <th className="px-6 py-4 text-[12px] font-bold text-admin-text-muted">Mã đánh giá</th>
                 <th className="px-6 py-4 text-[12px] font-bold text-admin-text-muted">Người dùng</th>
-                <th className="px-6 py-4 text-[12px] font-bold text-admin-text-muted text-center">Biến thể</th>
+                <th className="px-6 py-4 text-[12px] font-bold text-admin-text-muted">Sản phẩm</th>
                 <th className="px-6 py-4 text-[12px] font-bold text-admin-text-muted text-center">Số sao</th>
                 <th className="px-6 py-4 text-[12px] font-bold text-admin-text-muted">Nội dung</th>
                 <th className="px-6 py-4 text-[12px] font-bold text-admin-text-muted">Ngày tạo</th>
-                <th className="px-6 py-4 text-[12px] font-bold text-admin-text-muted">Ngày sửa</th>
+                <th className="px-6 py-4 text-[12px] font-bold text-admin-text-muted">Ngày phản hồi</th>
                 <th className="px-6 py-4 text-[12px] font-bold text-admin-text-muted text-center">Thao tác</th>
               </tr>
             </thead>
@@ -125,24 +121,27 @@ export default function AdminReviews() {
                     <td className="px-6 py-4 text-admin-text-muted font-bold">#{rev.id}</td>
                     <td className="px-6 py-4">
                       <div className="flex flex-col">
-                        <span className="font-bold text-admin-text-main">{rev.user}</span>
-                        <span className="text-[12px] text-admin-text-muted font-medium">{rev.email}</span>
+                        <span className="font-bold text-admin-text-main">{rev.username}</span>
                       </div>
                     </td>
-                    <td className="px-6 py-4 text-center font-bold text-primary">{rev.variantId}</td>
+                    <td className="px-6 py-4 font-bold text-primary">{rev.productName}</td>
                     <td className="px-6 py-4">
                       <div className="flex items-center justify-center gap-1 text-warning">
-                        <span className="font-bold text-admin-text-main">{rev.stars}</span>
+                        <span className="font-bold text-admin-text-main">{rev.rating}</span>
                         <Star size={16} fill="currentColor" />
                       </div>
                     </td>
                     <td className="px-6 py-4">
-                      <p className="text-sm font-medium text-admin-text-main max-w-[200px] truncate" title={rev.content}>
-                        {rev.content}
+                      <p className="text-sm font-medium text-admin-text-main max-w-[200px] truncate" title={rev.comment}>
+                        {rev.comment}
                       </p>
                     </td>
-                    <td className="px-6 py-4 text-[12px] font-bold text-admin-text-muted whitespace-nowrap">{rev.createdAt}</td>
-                    <td className="px-6 py-4 text-[12px] font-bold text-admin-text-muted whitespace-nowrap">{rev.updatedAt}</td>
+                    <td className="px-6 py-4 text-[12px] font-bold text-admin-text-muted whitespace-nowrap">
+                      {new Date(rev.createdAt).toLocaleDateString('vi-VN')}
+                    </td>
+                    <td className="px-6 py-4 text-[12px] font-bold text-admin-text-muted whitespace-nowrap">
+                      {rev.repliedAt ? new Date(rev.repliedAt).toLocaleDateString('vi-VN') : <span className="text-gray-400 italic font-normal">Chưa phản hồi</span>}
+                    </td>
                     <td className="px-6 py-4">
                       <div className="flex items-center justify-center">
                         <button

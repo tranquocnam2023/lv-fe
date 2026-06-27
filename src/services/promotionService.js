@@ -6,4 +6,5 @@ export const promotionService = {
   create: (data) => api.post('/Promotion', data),
   update: (id, data) => api.put(`/Promotion/${id}`, data),
   delete: (id) => api.delete(`/Promotion/${id}`),
+  validate: (code, subTotal) => api.post('/Promotion/validate', { code, subTotal }),
 };

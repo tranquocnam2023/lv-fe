@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { useCart } from '../context/CartContext';
 import { productService } from '../services/productService';
 import api from '../services/api';
-import { Check, X, Maximize2, ChevronLeft, ChevronRight } from 'lucide-react';
+import { GitCompare } from 'lucide-react';
 
 // Unused theme removed
 
@@ -77,6 +77,7 @@ export default function ProductDetailPage() {
 
   // Tải dữ liệu Product & danh sách Variants
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setLoading(true);
     productService.getById(id)
       .then(async (data) => {
@@ -104,21 +105,12 @@ export default function ProductDetailPage() {
             console.error("Lỗi lấy danh sách biến thể:", vErr);
           }
         } else {
-          const localData = productsData.find((p) => p.id === parseInt(id));
-          setProduct(localData);
-          if (localData) {
-            setActiveImage(localData.image);
-            setGalleryImages(getMasterImages(localData));
-          }
+          setProduct(null);
         }
       })
-      .catch(() => {
-        const localData = productsData.find((p) => p.id === parseInt(id));
-        setProduct(localData);
-        if (localData) {
-          setActiveImage(localData.image);
-          setGalleryImages(getMasterImages(localData));
-        }
+      .catch((err) => {
+        console.error("Lỗi lấy chi tiết sản phẩm:", err);
+        setProduct(null);
       })
       .finally(() => setLoading(false));
   }, [id]);
@@ -144,7 +136,7 @@ export default function ProductDetailPage() {
 
     variants.forEach(v => {
       let parsedAttr = {};
-      try { parsedAttr = v.attributes ? JSON.parse(v.attributes) : {}; } catch(e){}
+      try { parsedAttr = v.attributes ? JSON.parse(v.attributes) : {}; } catch { /* ignore JSON parsing error */ }
       let colorName = parsedAttr["Màu sắc"] || '';
       
       // Fallback
@@ -179,7 +171,7 @@ export default function ProductDetailPage() {
     const storages = new Set();
     variants.forEach(v => {
       let parsedAttr = {};
-      try { parsedAttr = v.attributes ? JSON.parse(v.attributes) : {}; } catch(e){}
+      try { parsedAttr = v.attributes ? JSON.parse(v.attributes) : {}; } catch { /* ignore JSON parsing error */ }
       let storagePart = parsedAttr["Dung Lượng RAM - ROM"] || '';
 
       // Fallback
@@ -204,7 +196,7 @@ export default function ProductDetailPage() {
       // Tìm variant khớp màu sắc và dung lượng
       const matched = variants.find(v => {
         let parsedAttr = {};
-        try { parsedAttr = v.attributes ? JSON.parse(v.attributes) : {}; } catch(e){}
+        try { parsedAttr = v.attributes ? JSON.parse(v.attributes) : {}; } catch { /* ignore JSON parsing error */ }
         let vColor = parsedAttr["Màu sắc"] || '';
         let vStorage = parsedAttr["Dung Lượng RAM - ROM"] || '';
         
@@ -262,7 +254,7 @@ export default function ProductDetailPage() {
       // Tìm hình ảnh của màu sắc biến thể vừa chọn
       const matchedVariant = variants.find(v => {
         let parsedAttr = {};
-        try { parsedAttr = v.attributes ? JSON.parse(v.attributes) : {}; } catch(e){}
+        try { parsedAttr = v.attributes ? JSON.parse(v.attributes) : {}; } catch { /* ignore JSON parsing error */ }
         let vColor = parsedAttr["Màu sắc"] || '';
         if (!vColor && v.name && v.name.includes(' - ')) {
             vColor = v.name.split(' - ')[1] || '';
@@ -688,7 +680,7 @@ export default function ProductDetailPage() {
                       {product.isAvailable === false ? '(Sản phẩm tạm ngưng kinh doanh)' : (displayDetails.stock > 0 ? '(Giao tận nơi hoặc nhận tại cửa hàng)' : '(Vui lòng quay lại sau)')}
                     </span>
                   </button>
-                  <button
+                   <button
                     onClick={handleAddToCart}
                     disabled={displayDetails.stock === 0 || product.isAvailable === false}
                     className={`w-full border-2 ${displayDetails.stock > 0 && product.isAvailable !== false ? 'border-blue-600 text-blue-600 hover:bg-blue-50' : 'border-gray-300 text-gray-400 cursor-not-allowed'} font-black py-3.5 rounded-md text-md uppercase transition-all flex items-center justify-center gap-2`}
@@ -697,6 +689,32 @@ export default function ProductDetailPage() {
                       <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 3h1.386c.51 0 .955.343 1.087.835l.383 1.437M7.5 14.25a3 3 0 0 0-3 3h15.75m-12.75-3h11.218c1.121-2.3 2.1-4.684 2.924-7.138a60.114 60.114 0 0 0-16.536-1.84M7.5 14.25 5.106 5.272M6 20.25a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0Zm12.75 0a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0Z" />
                     </svg>
                     {product.isAvailable === false ? 'SẢN PHẨM TẠM NGƯNG KINH DOANH' : 'THÊM VÀO GIỎ HÀNG'}
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const event = new CustomEvent('add-to-compare', {
+                        detail: {
+                          id: product.id,
+                          name: product.name,
+                          thumbnailImage: product.image,
+                          basePrice: product.price,
+                          originalPrice: product.originalPrice,
+                          discount: product.discount,
+                          stockQuantity: product.stockQuantity,
+                          brand: { name: product.brand },
+                          category: { name: product.category },
+                          description: product.description,
+                          productCode: product.productCode
+                        }
+                      });
+                      window.dispatchEvent(event);
+                    }}
+                    className="w-full border border-gray-300 text-gray-700 hover:bg-gray-50 font-black py-3 rounded-md text-sm uppercase transition-all flex items-center justify-center gap-2"
+                  >
+                    <GitCompare size={16} />
+                    SO SÁNH SẢN PHẨM NÀY
                   </button>
                 </div>
               </div>

@@ -11,7 +11,14 @@ import { THEME } from '../utils/theme';
 
 export default function HomePage({ selectedLocation }) {
   const { brand } = useParams();
-  const [selectedBrand, setSelectedBrand] = useState(null);
+  const [prevBrand, setPrevBrand] = useState(brand);
+  const [selectedBrand, setSelectedBrand] = useState(brand || null);
+
+  if (brand !== prevBrand) {
+    setPrevBrand(brand);
+    setSelectedBrand(brand || null);
+  }
+
   const [advancedFilters, setAdvancedFilters] = useState(null);
   const [products, setProducts] = useState([]);
   const [categories, setCategories] = useState([]);
@@ -48,14 +55,6 @@ export default function HomePage({ selectedLocation }) {
         setProducts([]);
       });
   }, []);
-
-  useEffect(() => {
-    if (brand) {
-      setSelectedBrand(brand);
-    } else {
-      setSelectedBrand(null);
-    }
-  }, [brand]);
 
   const handleApplyFilter = (filters) => {
     setAdvancedFilters(filters);
