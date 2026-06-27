@@ -10,6 +10,8 @@ import { orderService } from '../services/orderService';
 import api from '../services/api';
 import { authService } from '../services/authService';
 import { userService } from '../services/userService';
+import SearchableSelect from '../components/SearchableSelect';
+
 
 
 import {
@@ -71,7 +73,6 @@ export default function CartPage() {
     email: '',
     address: '',
     city: 'Hồ Chí Minh',
-    district: '',
     ward: '',
     streetAddress: '',
     someoneElse: false,
@@ -87,7 +88,6 @@ export default function CartPage() {
   const [modalPhone, setModalPhone] = useState('');
   const [modalEmail, setModalEmail] = useState('');
   const [modalCity, setModalCity] = useState('Hồ Chí Minh');
-  const [modalDistrict, setModalDistrict] = useState('');
   const [modalWard, setModalWard] = useState('');
   const [modalStreetAddress, setModalStreetAddress] = useState('');
   const [modalSomeoneElse, setModalSomeoneElse] = useState(false);
@@ -99,8 +99,6 @@ export default function CartPage() {
   const [wards, setWards] = useState([]);
   const [selectedProvinceId, setSelectedProvinceId] = useState('');
   const [modalWardId, setModalWardId] = useState('');
-  const [provinceSearch, setProvinceSearch] = useState('');
-  const [wardSearch, setWardSearch] = useState('');
 
   // Modal toggle states
   const [showAddressModal, setShowAddressModal] = useState(false);
@@ -223,38 +221,31 @@ export default function CartPage() {
     setModalPhone(formData.phone);
     setModalEmail(formData.email);
     setModalCity(formData.city);
-    setModalDistrict(formData.district);
     setModalWard(formData.ward);
     setModalStreetAddress(formData.streetAddress);
     setModalSomeoneElse(formData.someoneElse);
     setModalSomeoneElseName(formData.someoneElseName);
     setModalSomeoneElsePhone(formData.someoneElsePhone);
     setModalWardId(formData.wardId || '');
-    setProvinceSearch('');
-    setWardSearch('');
     setValidationErrors({});
     setShowAddressModal(true);
   };
 
-  const handleProvinceChange = (e) => {
-    const provinceId = e.target.value;
+  const handleProvinceChange = (provinceId) => {
     setSelectedProvinceId(provinceId);
-    const matchedProv = provinces.find(p => p.id === provinceId);
+    const matchedProv = provinces.find(p => String(p.id) === String(provinceId));
     if (matchedProv) {
       setModalCity(matchedProv.name);
     } else {
       setModalCity('');
     }
-    setModalDistrict('');
     setModalWard('');
     setModalWardId('');
-    setWardSearch('');
   };
 
-  const handleWardChange = (e) => {
-    const wardId = e.target.value;
+  const handleWardChange = (wardId) => {
     setModalWardId(wardId);
-    const matchedWard = wards.find(w => w.id === wardId);
+    const matchedWard = wards.find(w => String(w.id) === String(wardId));
     if (matchedWard) {
       setModalWard(matchedWard.fullName || matchedWard.name);
     } else {
@@ -287,7 +278,6 @@ export default function CartPage() {
     if (deliveryMethod === 'ship') {
       const parts = [modalStreetAddress.trim()];
       if (modalWard) parts.push(modalWard);
-      if (modalDistrict) parts.push(modalDistrict);
       if (modalCity) parts.push(modalCity);
       generatedAddress = parts.join(', ');
     } else {
@@ -301,7 +291,6 @@ export default function CartPage() {
       phone: modalPhone,
       email: modalEmail,
       city: modalCity,
-      district: modalDistrict,
       ward: modalWard,
       streetAddress: modalStreetAddress,
       address: generatedAddress,
@@ -657,17 +646,7 @@ export default function CartPage() {
     );
   }
 
-  const filteredProvinces = provinces.filter(p => {
-    const matchesSearch = (p.fullName || p.name || '').toLowerCase().includes(provinceSearch.toLowerCase());
-    const isCurrentlySelected = String(p.id) === String(selectedProvinceId);
-    return matchesSearch || isCurrentlySelected;
-  });
 
-  const filteredWards = wards.filter(w => {
-    const matchesSearch = (w.fullName || w.name || '').toLowerCase().includes(wardSearch.toLowerCase());
-    const isCurrentlySelected = String(w.id) === String(modalWardId);
-    return matchesSearch || isCurrentlySelected;
-  });
 
   return (
     <div className="w-full min-h-screen bg-gray-100 py-6 font-sans">
@@ -1344,67 +1323,36 @@ export default function CartPage() {
                 <div className="space-y-3 pt-2 border-t border-gray-100">
                   <p className="block text-[9px] font-bold text-gray-400 uppercase tracking-wider">Địa chỉ giao hàng tận nơi</p>
 
-                  {/* City & District */}
+                  {/* City & Ward */}
                   <div className="grid grid-cols-2 gap-3">
                     <div className="space-y-1">
                       <label className="block text-[9px] font-bold text-gray-400 uppercase tracking-wider">Tỉnh / Thành phố *</label>
-                      <input
-                        type="text"
-                        placeholder="🔍 Tìm nhanh Tỉnh/Thành..."
-                        value={provinceSearch}
-                        onChange={(e) => setProvinceSearch(e.target.value)}
-                        className="w-full bg-white border border-gray-200 rounded-md px-3 py-1 text-xs focus:outline-none focus:border-blue-500 mb-1 font-semibold"
-                      />
-                      <select
+                      <SearchableSelect
+                        placeholder="Chọn Tỉnh/Thành phố"
+                        searchPlaceholder="🔍 Tìm nhanh Tỉnh/Thành..."
+                        options={provinces}
                         value={selectedProvinceId}
                         onChange={handleProvinceChange}
-                        className="w-full bg-gray-50 border border-gray-200 rounded-md px-2 py-2 focus:outline-none focus:border-blue-500 font-bold text-gray-850"
-                      >
-                        <option value="">Chọn Tỉnh/Thành phố</option>
-                        {filteredProvinces.map(p => (
-                          <option key={p.id} value={p.id}>{p.fullName || p.name}</option>
-                        ))}
-                      </select>
+                        className="font-bold text-gray-850"
+                      />
                     </div>
 
                     <div className="space-y-1">
-                      <label className="block text-[9px] font-bold text-gray-400 uppercase tracking-wider">Quận / Huyện *</label>
-                      <input
-                        type="text"
-                        placeholder="Nhập Quận/Huyện..."
-                        value={modalDistrict}
-                        onChange={(e) => setModalDistrict(e.target.value)}
-                        className="w-full bg-gray-50 border border-gray-200 rounded-md px-3 py-2 font-bold focus:outline-none focus:border-blue-500"
+                      <label className="block text-[9px] font-bold text-gray-400 uppercase tracking-wider">Phường / Xã *</label>
+                      <SearchableSelect
+                        placeholder="Chọn Phường/Xã"
+                        searchPlaceholder="🔍 Tìm nhanh Phường/Xã..."
+                        options={wards}
+                        value={modalWardId}
+                        onChange={handleWardChange}
+                        disabled={!selectedProvinceId}
+                        className="font-bold text-gray-850"
                       />
                     </div>
                   </div>
 
-                  {/* Ward & Street Address */}
+                  {/* Street Address */}
                   <div className="grid grid-cols-1 gap-3">
-                    <div className="space-y-1">
-                      <label className="block text-[9px] font-bold text-gray-400 uppercase tracking-wider">Phường / Xã *</label>
-                      {selectedProvinceId && (
-                        <input
-                          type="text"
-                          placeholder="🔍 Tìm nhanh Phường/Xã..."
-                          value={wardSearch}
-                          onChange={(e) => setWardSearch(e.target.value)}
-                          className="w-full bg-white border border-gray-200 rounded-md px-3 py-1 text-xs focus:outline-none focus:border-blue-500 mb-1 font-semibold"
-                        />
-                      )}
-                      <select
-                        value={modalWardId}
-                        onChange={handleWardChange}
-                        disabled={!selectedProvinceId}
-                        className="w-full bg-gray-50 border border-gray-200 rounded-md px-2 py-2 focus:outline-none focus:border-blue-500 font-bold disabled:opacity-50"
-                      >
-                        <option value="">Chọn Phường/Xã</option>
-                        {filteredWards.map(w => (
-                          <option key={w.id} value={w.id}>{w.fullName || w.name}</option>
-                        ))}
-                      </select>
-                    </div>
-
                     <div className="space-y-1">
                       <label className="block text-[9px] font-bold text-gray-400 uppercase tracking-wider">Số nhà, tên đường *</label>
                       <input
