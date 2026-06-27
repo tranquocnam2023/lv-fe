@@ -8,7 +8,6 @@ import AdminCustomers from '../components/AdminCustomers';
 import AdminCategories from '../components/AdminCategories';
 import AdminBrands from '../components/AdminBrands';
 import AdminPromotions from '../components/AdminPromotions';
-import AdminProductVariants from '../components/AdminProductVariants';
 import AdminReviews from '../components/AdminReviews';
 import AdminCreateProduct from './AdminCreateProduct';
 import AdminUpdateProduct from './AdminUpdateProduct';
@@ -25,7 +24,7 @@ const DASHBOARD_STATS = [
 export default function AdminPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const activeAdminTab = searchParams.get('tab') || 'dashboard';
-  const [editProductId, setEditProductId] = useState(null);
+  const editProductId = searchParams.get('productId');
   const [selectedBrandId, setSelectedBrandId] = useState(null);
 
   const setActiveAdminTab = (tab, brandId = null) => {
@@ -35,6 +34,9 @@ export default function AdminPage() {
         prev.set('brandId', brandId);
       } else {
         prev.delete('brandId');
+      }
+      if (tab !== 'update_product') {
+        prev.delete('productId');
       }
       return prev;
     });
@@ -58,7 +60,6 @@ export default function AdminPage() {
       case 'inventory': return 'Quản lý kho hàng';
       case 'categories': return 'Quản lý danh mục';
       case 'brands': return 'Quản lý thương hiệu';
-      case 'variants': return 'Quản lý biến thể';
       case 'orders': return 'Quản lý đơn hàng';
       case 'customers': return 'Quản lý khách hàng';
       case 'promotions': return 'Quản lý mã khuyến mãi';
@@ -102,7 +103,6 @@ export default function AdminPage() {
           {renderSidebarItem("brands", Star, "Thương hiệu")}
           {renderSidebarItem("products", Package, "Sản phẩm")}
           {renderSidebarItem("inventory", Boxes, "Quản lý kho")}
-          {renderSidebarItem("variants", Layers, "Biến thể")}
           {renderSidebarItem("orders", ShoppingCart, "Đơn hàng")}
           {renderSidebarItem("customers", Users, "Khách hàng")}
           {renderSidebarItem("promotions", Ticket, "Khuyến mãi")}
@@ -164,7 +164,13 @@ export default function AdminPage() {
           {activeAdminTab === 'products' && (
             <AdminProducts
               onCreate={() => setActiveAdminTab('create_product')}
-              onEdit={(id) => { setEditProductId(id); setActiveAdminTab('update_product'); }}
+              onEdit={(id) => {
+                setSearchParams(prev => {
+                  prev.set('tab', 'update_product');
+                  prev.set('productId', id);
+                  return prev;
+                });
+              }}
               defaultBrandFilter={selectedBrandId}
               clearBrandFilter={() => setSelectedBrandId(null)}
             />
@@ -184,7 +190,6 @@ export default function AdminPage() {
             />
           )}
           {activeAdminTab === 'inventory' && <AdminInventory />}
-          {activeAdminTab === 'variants' && <AdminProductVariants />}
           {activeAdminTab === 'orders' && <AdminOrders />}
           {activeAdminTab === 'customers' && <AdminCustomers />}
           {activeAdminTab === 'promotions' && <AdminPromotions />}
