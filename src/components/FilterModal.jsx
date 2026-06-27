@@ -19,7 +19,7 @@ const filterData = {
 /**
  * Reusable Filter Section Component
  */
-const FilterSection = ({ title, options, selected, onSelect, columns = 4 }) => {
+const FilterSection = ({ title, options, selected, onSelect }) => {
   return (
     <div className="mb-6">
       <h3 className="text-[15px] font-semibold text-gray-800 mb-3">{title}</h3>

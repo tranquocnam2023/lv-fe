@@ -14,13 +14,13 @@ const getPaymentMethodLabel = (method) => {
 };
 
 export default function OrderDetailsTracker({ order, onOrderCancelled }) {
-  if (!order) return null;
-
   const [isCancelModalOpen, setIsCancelModalOpen] = useState(false);
   const [cancelReason, setCancelReason] = useState('');
   const [customReason, setCustomReason] = useState('');
   const [cancelling, setCancelling] = useState(false);
   const [cancelError, setCancelError] = useState('');
+
+  if (!order) return null;
 
   const cancelReasons = [
     "Tôi muốn đổi địa chỉ / thông tin nhận hàng",

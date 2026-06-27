@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-
+import { GitCompare } from 'lucide-react';
 import { THEME } from '../../utils/theme';
 
 export default function ProductCard({ 
@@ -23,7 +23,30 @@ export default function ProductCard({
       onMouseOver={(e) => { e.currentTarget.style.borderColor = THEME.primary; }}
       onMouseOut={(e) => { e.currentTarget.style.borderColor = THEME.border; }}
     >
-      
+      {/* Compare Button */}
+      <button
+        onClick={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          const event = new CustomEvent('add-to-compare', {
+            detail: {
+              id,
+              name,
+              thumbnailImage: image,
+              basePrice: price,
+              originalPrice,
+              discount,
+              stockQuantity
+            }
+          });
+          window.dispatchEvent(event);
+        }}
+        className="absolute top-2 left-2 z-20 p-1.5 bg-gray-50 hover:bg-primary text-gray-500 hover:text-white rounded-full border border-gray-200 transition-all opacity-0 group-hover:opacity-100 shadow-sm"
+        title="So sánh sản phẩm"
+      >
+        <GitCompare size={13} />
+      </button>
+
       {/* Badge Giảm giá & Nổi bật */}
       <div className="absolute top-2 right-2 flex flex-col space-y-1 z-10 text-[11px] font-bold">
         {badgeText && (

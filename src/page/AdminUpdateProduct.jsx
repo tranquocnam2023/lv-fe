@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ArrowLeft, Save, Plus, Trash2, UploadCloud, Loader2, GripVertical, Image as ImageIcon, X } from 'lucide-react';
+import { ArrowLeft, Save, Plus, Trash2, UploadCloud, Loader2, Image as ImageIcon, X } from 'lucide-react';
 import { categoryService } from '../services/categoryService';
 import { brandService } from '../services/brandService';
 import { productService } from '../services/productService';
@@ -23,6 +23,7 @@ export default function AdminUpdateProduct({ productId, onBack, onCreateNew }) {
   const [uploading, setUploading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [isDragOver, setIsDragOver] = useState(false);
 
   // Form State
   const [formData, setFormData] = useState({
@@ -36,7 +37,6 @@ export default function AdminUpdateProduct({ productId, onBack, onCreateNew }) {
     originalPrice: 0,
     isActive: true,
     isFeatured: false,
-    images: [], // { url, isMain, order }
     images: [], // { url, isMain, order }
     variants: [] // { id?, tempId, name, price, totalStock, isActive, attr1Value, attr2Value }
   });
@@ -88,7 +88,9 @@ export default function AdminUpdateProduct({ productId, onBack, onCreateNew }) {
                       attr1Val = parsed[a1Name] || parsed[keys[0]] || '';
                       if (hA2) attr2Val = parsed[a2Name] || (keys.length > 1 ? parsed[keys[1]] : '') || '';
                     }
-                  } catch (e) { }
+                  } catch (err) {
+                    console.debug(err);
+                  }
                 }
                 return {
                   id: v.id,
@@ -109,7 +111,9 @@ export default function AdminUpdateProduct({ productId, onBack, onCreateNew }) {
                 setHasAttr2(hA2);
               }
             }
-          } catch (e) { }
+          } catch (err) {
+            console.debug(err);
+          }
 
           // Parse images
           let loadedImages = [];
@@ -126,7 +130,9 @@ export default function AdminUpdateProduct({ productId, onBack, onCreateNew }) {
                   }
                 });
               }
-            } catch (e) { }
+            } catch (err) {
+              console.debug(err);
+            }
           }
 
           setFormData({
@@ -166,8 +172,8 @@ export default function AdminUpdateProduct({ productId, onBack, onCreateNew }) {
     str = str.replace(/đ/g, "d");
     return str
       .replace(/\s+/g, '-')
-      .replace(/[^\w\-]+/g, '')
-      .replace(/\-\-+/g, '-')
+      .replace(/[^\w-]+/g, '')
+      .replace(/--+/g, '-')
       .replace(/^-+/, '')
       .replace(/-+$/, '');
   };
@@ -877,7 +883,12 @@ export default function AdminUpdateProduct({ productId, onBack, onCreateNew }) {
           {/* E. Hình ảnh */}
           <div className="bg-white p-6 rounded-md border border-admin-border">
             <h3 className="text-lg font-bold text-admin-text-main mb-4">E. Hình ảnh sản phẩm</h3>
-            <div className="border-2 border-dashed border-admin-border rounded-md p-6 flex flex-col items-center justify-center bg-admin-bg/30 relative hover:border-primary transition-colors mb-4">
+            <div 
+              onDragOver={(e) => { e.preventDefault(); setIsDragOver(true); }}
+              onDragLeave={() => setIsDragOver(false)}
+              onDrop={() => setIsDragOver(false)}
+              className={`border-2 border-dashed rounded-md p-6 flex flex-col items-center justify-center relative transition-colors mb-4 ${isDragOver ? 'border-primary bg-primary/10' : 'border-admin-border bg-admin-bg/30'}`}
+            >
               <input
                 type="file" multiple accept=".jpg,.jpeg,.png,.webp,.svg"
                 onChange={handleImageUpload}
@@ -889,10 +900,12 @@ export default function AdminUpdateProduct({ productId, onBack, onCreateNew }) {
                   <span className="text-sm font-bold">Đang tải...</span>
                 </div>
               ) : (
-                <div className="flex flex-col items-center text-admin-text-muted">
-                  <UploadCloud size={32} className="mb-2" />
-                  <span className="text-sm font-bold text-admin-text-main">Tải ảnh từ máy tính</span>
-                  <span className="text-xs mt-1">Hỗ trợ nhiều ảnh</span>
+                <div className="flex flex-col items-center text-admin-text-muted text-center">
+                  <UploadCloud size={32} className={`mb-2 ${isDragOver ? 'text-primary animate-bounce' : ''}`} />
+                  <span className="text-sm font-bold text-admin-text-main">
+                    {isDragOver ? 'Thả ảnh vào đây!' : 'Tải ảnh từ máy tính hoặc kéo thả vào đây'}
+                  </span>
+                  <span className="text-xs mt-1">Hỗ trợ tải lên nhiều hình ảnh cùng lúc</span>
                 </div>
               )}
             </div>

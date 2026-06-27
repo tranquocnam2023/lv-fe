@@ -18,24 +18,17 @@ import { THEME, PIE_COLORS } from '../utils/theme';
 export default function AdminDashboard() {
   const [revenueData, setRevenueData] = useState([]);
   const [productStats, setProductStats] = useState([]);
-  const [recentOrders, setRecentOrders] = useState([]);
   const [brandPerformance, setBrandPerformance] = useState([]);
   const [stats, setStats] = useState({ totalRevenue: 0, totalOrders: 0, totalProducts: 0, totalUsers: 0 });
   const [weeklySales, setWeeklySales] = useState(0);
   const [usersList, setUsersList] = useState([]);
   const [shippingStats, setShippingStats] = useState({ delivered: 0, shipping: 0, pending: 0, total: 0 });
-  const [selectedMonth, setSelectedMonth] = useState('January');
 
   useEffect(() => {
     // 1. Fetch Revenue Data
     dashboardService.getRevenue()
       .then(data => { if (data && data.length > 0) setRevenueData(data); })
       .catch(e => console.error("Lỗi tải Doanh thu:", e));
-
-    // 2. Fetch Recent Orders
-    dashboardService.getRecentOrders()
-      .then(data => { if (data && data.length > 0) setRecentOrders(data); })
-      .catch(e => console.error("Lỗi tải Đơn hàng mới:", e));
 
     // 3. Fetch General Stats
     dashboardService.getStats()
