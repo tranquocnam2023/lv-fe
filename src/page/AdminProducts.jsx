@@ -26,9 +26,7 @@ export default function AdminProducts({ onCreate, onEdit, defaultBrandFilter, cl
     }
   }, [defaultBrandFilter, clearBrandFilter]);
 
-  // State for variants inside inventory
-  const [variants, setVariants] = useState([]);
-  const [expandedProducts, setExpandedProducts] = useState({});
+
 
   // Khởi tạo các hook
   const filteredProducts = products.filter(p => {
@@ -98,21 +96,7 @@ export default function AdminProducts({ onCreate, onEdit, defaultBrandFilter, cl
     fetchCategoriesData();
   }, []);
 
-  const fetchVariants = async () => {
-    try {
-      const { variantService } = await import('../services/variantService');
-      const data = await variantService.getAll();
-      if (Array.isArray(data)) {
-        setVariants(data);
-      }
-    } catch (err) {
-      console.error("Lỗi tải biến thể:", err);
-    }
-  };
 
-  useEffect(() => {
-    fetchVariants();
-  }, [products]);
 
   useEffect(() => {
     fetchProducts();
@@ -314,9 +298,6 @@ export default function AdminProducts({ onCreate, onEdit, defaultBrandFilter, cl
               <tbody className="text-sm">
                 {paginatedProducts.length > 0 ? (
                   paginatedProducts.map((product) => {
-                    const productVariants = variants.filter(v => v.productId === product.id);
-                    const isExpanded = expandedProducts[product.id];
-
                     const brandName = categories.find(c => c.id === product.brandId)?.name || product.brandName || 'N/A';
                     const categoryName = dbCategories.find(c => c.id === product.categoryId)?.name || 'N/A';
 
@@ -325,107 +306,76 @@ export default function AdminProducts({ onCreate, onEdit, defaultBrandFilter, cl
                     const isInheritedInactive = showCategoryDisabledBadge || showBrandDisabledBadge;
 
                     return (
-                      <React.Fragment key={product.id}>
-                        <tr className={`border-b border-admin-border hover:bg-admin-bg transition-colors group cursor-pointer ${isInheritedInactive ? 'opacity-60 grayscale bg-gray-50/50' : ''}`} onClick={() => setExpandedProducts(prev => ({ ...prev, [product.id]: !prev[product.id] }))}>
-                          <td className="py-4 px-2 font-bold text-admin-text-main">
-                            <div className="flex items-center gap-2">
-                              {productVariants.length > 0 && (
-                                <span className="text-admin-text-muted">
-                                  {isExpanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
-                                </span>
-                              )}
-                              {product.name}
-                              {product.isFeatured && (
-                                <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-warning/10 text-warning">
-                                  Nổi bật
-                                </span>
-                              )}
-                              {showCategoryDisabledBadge && (
-                                <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-warning/10 text-warning border border-warning/30 whitespace-nowrap animate-pulse">
-                                  Đang bị ẩn (Do danh mục tắt)
-                                </span>
-                              )}
-                              {showBrandDisabledBadge && (
-                                <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-warning/10 text-warning border border-warning/30 whitespace-nowrap animate-pulse">
-                                  Đang bị ẩn (Do Thương hiệu đã tắt)
-                                </span>
-                              )}
-                            </div>
-                          </td>
-                          <td className="py-4 px-2 text-admin-text-main">{brandName}</td>
-                          <td className="py-4 px-2 text-admin-text-main">{categoryName}</td>
-                          <td className="py-4 px-2 font-bold text-admin-text-main text-right">{formatCurrency(product.basePrice ?? product.price ?? 0)}</td>
-                          <td className="py-4 px-2 text-center font-bold text-admin-text-main">
-                            {(() => {
-                              const stock = product.totalStock ?? product.stock ?? product.stockQuantity ?? 0;
-                              if (stock === 0) {
-                                return <span className="px-2 py-1 bg-admin-danger/10 text-admin-danger rounded-md text-xs whitespace-nowrap">Hết hàng</span>;
-                              } else if (stock < 5) {
-                                return <span className="text-warning">{stock}</span>;
-                              }
-                              return stock;
-                            })()}
-                          </td>
-                          <td className="py-4 px-2 text-center">
-                            <div className="flex flex-col items-center justify-center gap-1">
-                              <label className="relative inline-flex items-center cursor-pointer">
-                                <input
-                                  type="checkbox"
-                                  className="sr-only peer"
-                                  checked={product.isActive !== false}
-                                  onChange={(e) => { e.stopPropagation(); handleToggleActive(product); }}
-                                />
-                                <div className="w-9 h-5 bg-admin-border peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-success"></div>
-                              </label>
-                              <span className={`text-[10px] font-bold ${product.isActive !== false ? 'text-success' : 'text-admin-text-muted'}`}>
-                                {product.isActive !== false ? 'Đang bán' : 'Ngừng kinh doanh'}
+                      <tr key={product.id} className={`border-b border-admin-border hover:bg-admin-bg transition-colors group cursor-pointer ${isInheritedInactive ? 'opacity-60 grayscale bg-gray-50/50' : ''}`} onClick={() => onEdit(product.id)}>
+                        <td className="py-4 px-2 font-bold text-admin-text-main">
+                          <div className="flex items-center gap-2">
+                            {product.name}
+                            {product.isFeatured && (
+                              <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-warning/10 text-warning">
+                                Nổi bật
                               </span>
-                            </div>
-                          </td>
-                          <td className="py-4 px-2" onClick={(e) => e.stopPropagation()}>
-                            <div className="flex items-center justify-center gap-2">
-                              <button
-                                onClick={(e) => { e.stopPropagation(); onEdit(product.id); }}
-                                className="p-2 text-admin-text-muted hover:text-warning hover:bg-warning/10 rounded-md transition-all"
-                                title="Sửa"
-                              >
-                                <Edit size={18} />
-                              </button>
-                              <button
-                                onClick={(e) => { e.stopPropagation(); handleDeleteProduct(product.id); }}
-                                className="p-2 text-admin-text-muted hover:text-admin-danger hover:bg-admin-danger/10 rounded-md transition-all"
-                                title="Xóa"
-                              >
-                                <Trash2 size={18} />
-                              </button>
-                            </div>
-                          </td>
-                        </tr>
-
-                        {/* Variant Rows (Chỉ hiển thị khi expanded) */}
-                        {isExpanded && productVariants.length > 0 && productVariants.map((v) => (
-                          <tr key={`v-${v.id}`} className="border-b border-admin-border/60 hover:bg-admin-bg/40 transition-colors text-xs text-gray-600 bg-gray-50/50">
-                            <td className="py-3 px-6 font-medium text-gray-700 flex items-center gap-2">
-                              <span className="text-gray-400">↳</span>
-                              <span>{v.name}</span>
-                            </td>
-                            <td className="py-3 px-2 text-center text-gray-400">-</td>
-                            <td className="py-3 px-2 text-center text-gray-400">-</td>
-                            <td className="py-3 px-2 font-semibold text-gray-700 text-right">{formatCurrency(v.price)}</td>
-                            <td className="py-3 px-2 text-center font-semibold text-gray-700">
-                              {v.totalStock === 0 ? (
-                                <span className="px-2 py-0.5 bg-admin-danger/10 text-admin-danger rounded-md text-[10px] whitespace-nowrap">Hết hàng</span>
-                              ) : v.totalStock < 5 ? (
-                                <span className="text-warning">{v.totalStock}</span>
-                              ) : (
-                                v.totalStock
-                              )}
-                            </td>
-                            <td className="py-3 px-2 text-center text-gray-400">-</td>
-                            <td className="py-3 px-2 text-center text-gray-400">-</td>
-                          </tr>
-                        ))}
-                      </React.Fragment>
+                            )}
+                            {showCategoryDisabledBadge && (
+                              <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-warning/10 text-warning border border-warning/30 whitespace-nowrap animate-pulse">
+                                Đang bị ẩn (Do danh mục tắt)
+                              </span>
+                            )}
+                            {showBrandDisabledBadge && (
+                              <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-warning/10 text-warning border border-warning/30 whitespace-nowrap animate-pulse">
+                                Đang bị ẩn (Do Thương hiệu đã tắt)
+                              </span>
+                            )}
+                          </div>
+                        </td>
+                        <td className="py-4 px-2 text-admin-text-main">{brandName}</td>
+                        <td className="py-4 px-2 text-admin-text-main">{categoryName}</td>
+                        <td className="py-4 px-2 font-bold text-admin-text-main text-right">{formatCurrency(product.basePrice ?? product.price ?? 0)}</td>
+                        <td className="py-4 px-2 text-center font-bold text-admin-text-main">
+                          {(() => {
+                            const stock = product.totalStock ?? product.stock ?? product.stockQuantity ?? 0;
+                            if (stock === 0) {
+                              return <span className="px-2 py-1 bg-admin-danger/10 text-admin-danger rounded-md text-xs whitespace-nowrap">Hết hàng</span>;
+                            } else if (stock < 5) {
+                              return <span className="text-warning">{stock}</span>;
+                            }
+                            return stock;
+                          })()}
+                        </td>
+                        <td className="py-4 px-2 text-center">
+                          <div className="flex flex-col items-center justify-center gap-1">
+                            <label className="relative inline-flex items-center cursor-pointer">
+                              <input
+                                type="checkbox"
+                                className="sr-only peer"
+                                checked={product.isActive !== false}
+                                onChange={(e) => { e.stopPropagation(); handleToggleActive(product); }}
+                              />
+                              <div className="w-9 h-5 bg-admin-border peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-success"></div>
+                            </label>
+                            <span className={`text-[10px] font-bold ${product.isActive !== false ? 'text-success' : 'text-admin-text-muted'}`}>
+                              {product.isActive !== false ? 'Đang bán' : 'Ngừng kinh doanh'}
+                            </span>
+                          </div>
+                        </td>
+                        <td className="py-4 px-2" onClick={(e) => e.stopPropagation()}>
+                          <div className="flex items-center justify-center gap-2">
+                            <button
+                              onClick={(e) => { e.stopPropagation(); onEdit(product.id); }}
+                              className="p-2 text-admin-text-muted hover:text-warning hover:bg-warning/10 rounded-md transition-all"
+                              title="Sửa"
+                            >
+                              <Edit size={18} />
+                            </button>
+                            <button
+                              onClick={(e) => { e.stopPropagation(); handleDeleteProduct(product.id); }}
+                              className="p-2 text-admin-text-muted hover:text-admin-danger hover:bg-admin-danger/10 rounded-md transition-all"
+                              title="Xóa"
+                            >
+                              <Trash2 size={18} />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
                     );
                   })
                 ) : (

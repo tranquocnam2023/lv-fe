@@ -10,4 +10,6 @@ export const variantService = {
   update: (id, data) => api.put(`/ProductVariant/${id}`, data),
   
   delete: (id) => api.delete(`/ProductVariant/${id}`),
+
+  sync: (productId, data) => api.put(`/ProductVariant/sync/${productId}`, data),
 };
