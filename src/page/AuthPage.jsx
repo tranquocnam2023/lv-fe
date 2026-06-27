@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
 import Breadcrumb from '../components/Breadcrumb';
 import { authService } from '../services/authService';
 import { userService } from '../services/userService';
@@ -14,7 +13,6 @@ import SearchableSelect from '../components/SearchableSelect';
 
 
 export default function AuthPage() {
-  const navigate = useNavigate();
 
   // Auth state
   const [isLogin, setIsLogin] = useState(true);
@@ -108,6 +106,7 @@ export default function AuthPage() {
       fetchProfile();
       fetchShippingInfos();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isLoggedIn]);
 
   // Fetch provinces list on mount
@@ -163,6 +162,7 @@ export default function AuthPage() {
     if (profileTab === 'history') {
       fetchMyOrders();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [profileTab, isLoggedIn]);
 
   const handleGoogleLoginSuccess = async (response) => {

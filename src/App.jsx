@@ -2,9 +2,9 @@ import { useState, useEffect } from 'react';
 import { Routes, Route, useLocation } from 'react-router-dom';
 import './App.css';
 
-import { THEME } from './utils/theme';
 import { MapPin } from 'lucide-react';
 import { locationService } from './services/locationService';
+import { THEME } from './utils/theme';
 
 import Header from './components/Header';
 import Sidebar from './components/Sidebar';
@@ -18,8 +18,7 @@ import ProductDetailPage from './page/ProductDetailPage';
 import PolicyPage from './page/PolicyPage';
 import CheckoutPage from './page/CheckoutPage';
 import OrderTrackingPage from './page/OrderTrackingPage';
-
-
+import ProductComparison from './components/ProductComparison';
 
 function App() {
   const location = useLocation();
@@ -49,7 +48,7 @@ function App() {
   if (!selectedLocation && !isAdminPath) {
     return (
       <div className="fixed inset-0 bg-indigo-950/80 backdrop-blur-md z-[9999] flex items-center justify-center p-4">
-        <div className="bg-white rounded-2xl shadow-2xl p-8 max-w-md w-full border border-gray-100 flex flex-col items-center text-center animate-in zoom-in-95 duration-200">
+        <div className="bg-white rounded-2xl p-8 max-w-md w-full border border-gray-100 flex flex-col items-center text-center animate-in zoom-in-95 duration-200">
           <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mb-6">
             <MapPin className="w-8 h-8 text-primary" />
           </div>
@@ -78,20 +77,7 @@ function App() {
     );
   }
 
-  // Tự động chuyển hướng tài khoản quản trị sang trang quản lý
-  const userJson = localStorage.getItem('user');
-  const token = localStorage.getItem('token');
-  let isAdmin = false;
-  if (userJson && token) {
-    try {
-      const user = JSON.parse(userJson);
-      if (user.role === 'Admin') {
-        isAdmin = true;
-      }
-    } catch (e) {
-      console.error("Lỗi đọc thông tin đăng nhập:", e);
-    }
-  }
+
 
 
 
@@ -148,6 +134,9 @@ function App() {
 
         {/* Footer full width */}
         <Footer />
+        
+        {/* Floating comparison drawer and details modal */}
+        <ProductComparison />
       </div>
     </div>
   );

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
 
 import { THEME } from '../utils/theme';
@@ -7,7 +7,6 @@ import { locationService } from '../services/locationService';
 
 export default function Header({ selectedLocation, setSelectedLocation }) {
   const { cartCount } = useCart();
-  const navigate = useNavigate();
   
   const [provinces, setProvinces] = useState([]);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);

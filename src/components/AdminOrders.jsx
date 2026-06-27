@@ -56,6 +56,7 @@ export default function AdminOrders() {
 
   useEffect(() => {
     console.log("AdminOrders: Bắt đầu tải danh sách đơn hàng...");
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setError(null);
     orderService.getAll()
       .then(data => {
@@ -137,17 +138,6 @@ export default function AdminOrders() {
     totalItems
   } = usePagination(filteredOrders, 5); // Hiển thị 5 đơn hàng mỗi trang
 
-  const getStatusStyle = (status) => {
-    switch (status) {
-      case 'pending': return 'bg-warning/10 text-warning';
-      case 'confirmed': return 'bg-info/10 text-info';
-      case 'shipping': return 'bg-primary/10 text-primary';
-      case 'delivered': return 'bg-success/10 text-success';
-      case 'cancelled': return 'bg-admin-danger/10 text-admin-danger';
-      default: return 'bg-admin-bg text-admin-text-muted';
-    }
-  };
-
   const getStatusName = (status) => {
     return STATUS_TABS.find(t => t.id === status)?.name || status;
   };
@@ -185,7 +175,7 @@ export default function AdminOrders() {
     }
   };
 
-  const isTransitionAllowed = (currentStatus, newStatus, failedCount = 0) => {
+  const isTransitionAllowed = (currentStatus, newStatus) => {
     if (currentStatus === newStatus) return true;
     if (currentStatus === 'cancelled' || currentStatus === 'delivered') return false;
 
@@ -214,7 +204,7 @@ export default function AdminOrders() {
     const currentStatus = order.status;
 
     // Kiểm tra tính hợp lệ của luồng chuyển đổi trạng thái
-    if (!isTransitionAllowed(currentStatus, newStatus, order.failedDeliveryCount)) {
+    if (!isTransitionAllowed(currentStatus, newStatus)) {
       if (newStatus === 'cancelled' && (currentStatus === 'shipping' || currentStatus === 'shipping_failed')) {
         alert(`⚠️ Đơn hàng giao thất bại mới được ${order.failedDeliveryCount}/3 lần. Phải giao thất bại đủ 3 lần mới được hủy đơn!`);
       } else {

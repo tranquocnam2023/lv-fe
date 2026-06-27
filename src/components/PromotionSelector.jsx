@@ -21,6 +21,7 @@ export default function PromotionSelector({ subTotal, onApplyPromotion }) {
     if (isOpen || isModalOpen) {
       fetchPromotionsData();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen, isModalOpen]);
 
   const fetchPromotionsData = async () => {
@@ -43,8 +44,8 @@ export default function PromotionSelector({ subTotal, onApplyPromotion }) {
     }
   };
 
-  // Xác thực mã khuyến mãi
-  const validateCoupon = (code, list = coupons, usages = usedCouponCodes) => {
+  // Xác thực mã khuyến mãi qua backend
+  const validateCoupon = async (code) => {
     const uppercaseCode = code.trim().toUpperCase();
     
     if (!uppercaseCode) {
@@ -54,58 +55,28 @@ export default function PromotionSelector({ subTotal, onApplyPromotion }) {
       return;
     }
 
-    // 1. Tìm coupon trong danh sách hoạt động
-    const coupon = list.find(c => c.code.toUpperCase() === uppercaseCode);
-    if (!coupon) {
-      setValidationError('Mã giảm giá không tồn tại hoặc đã bị khóa.');
+    try {
+      const res = await promotionService.validate(uppercaseCode, subTotal);
+      if (res && res.code) {
+        const discountAmount = res.discountAmount || 0;
+        setValidationError('');
+        setSuccessMessage(`Áp dụng thành công! Giảm -${discountAmount.toLocaleString('vi-VN')}₫`);
+        onApplyPromotion(res.code, discountAmount);
+      } else {
+        setValidationError('Mã giảm giá không hợp lệ.');
+        setSuccessMessage('');
+        onApplyPromotion('', 0);
+      }
+    } catch (err) {
+      console.error('Lỗi xác thực mã giảm giá:', err);
+      let errorMsg = 'Mã giảm giá không hợp lệ hoặc đã hết lượt sử dụng.';
+      if (err.response && err.response.data) {
+        errorMsg = typeof err.response.data === 'string' ? err.response.data : (err.response.data.message || errorMsg);
+      }
+      setValidationError(errorMsg);
       setSuccessMessage('');
       onApplyPromotion('', 0);
-      return;
     }
-
-    // 2. Kiểm tra thời hạn sử dụng
-    const now = new Date();
-    const startDate = new Date(coupon.startDate);
-    const endDate = new Date(coupon.endDate);
-    if (now < startDate || now > endDate) {
-      setValidationError('Mã giảm giá đã hết hạn hoặc chưa tới thời gian sử dụng.');
-      setSuccessMessage('');
-      onApplyPromotion('', 0);
-      return;
-    }
-
-    // 3. Kiểm tra xem user đã sử dụng chưa
-    if (usages.includes(uppercaseCode)) {
-      setValidationError('Bạn đã sử dụng mã giảm giá này rồi.');
-      setSuccessMessage('');
-      onApplyPromotion('', 0);
-      return;
-    }
-
-    // 4. Kiểm tra giới hạn số lượt sử dụng
-    if (coupon.usageLimit > 0 && coupon.usedCount >= coupon.usageLimit) {
-      setValidationError('Mã giảm giá này đã hết lượt sử dụng.');
-      setSuccessMessage('');
-      onApplyPromotion('', 0);
-      return;
-    }
-
-    // 5. Tính số tiền giảm
-    let discountAmount = 0;
-    if (coupon.discountType.toUpperCase() === 'PERCENTAGE') {
-      discountAmount = subTotal * (coupon.discountValue / 100);
-    } else if (coupon.discountType.toUpperCase() === 'FIXED_AMOUNT') {
-      discountAmount = coupon.discountValue;
-    }
-
-    // Giới hạn giảm tối đa bằng subtotal
-    if (discountAmount > subTotal) {
-      discountAmount = subTotal;
-    }
-
-    setValidationError('');
-    setSuccessMessage(`Áp dụng thành công! Giảm -${discountAmount.toLocaleString('vi-VN')}₫`);
-    onApplyPromotion(coupon.code, discountAmount);
   };
 
   const handleInputChange = (e) => {
