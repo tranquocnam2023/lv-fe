@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import AdminProducts from './AdminProducts';
 import AdminInventory from '../components/AdminInventory';
@@ -9,11 +9,11 @@ import AdminCategories from '../components/AdminCategories';
 import AdminBrands from '../components/AdminBrands';
 import AdminPromotions from '../components/AdminPromotions';
 import AdminProductVariants from '../components/AdminProductVariants';
+import AdminReviews from '../components/AdminReviews';
 import AdminCreateProduct from './AdminCreateProduct';
 import AdminUpdateProduct from './AdminUpdateProduct';
-import { dashboardService } from '../services/dashboardService';
 import { authService } from '../services/authService';
-import { Layout, Package, Users, ShoppingCart, Settings, LogOut, Bell, FolderTree, Star, LayoutGrid, Ticket, Layers, Boxes } from 'lucide-react';
+import { Layout, Package, Users, ShoppingCart, Settings, LogOut, Bell, FolderTree, Star, LayoutGrid, Ticket, Layers, Boxes, MessageSquare } from 'lucide-react';
 
 const DASHBOARD_STATS = [
   { label: 'Tổng khách hàng', icon: Users, bgColor: '#5856d6', textColor: '#ffffff' },
@@ -40,17 +40,7 @@ export default function AdminPage() {
     });
   };
 
-  // Khởi tạo state trống để sau này truyền API
-  const [stats, setStats] = useState({ users: 0, revenue: 0, orders: 0, products: 0 });
-  const [recentOrders, setRecentOrders] = useState([]);
 
-  useEffect(() => {
-    dashboardService.getStats()
-      .then(data => {
-        if (data) setStats(data);
-      })
-      .catch(e => console.log("Lỗi tải thống kê tổng quát"));
-  }, []);
 
   const userJson = localStorage.getItem('user');
   const user = userJson ? JSON.parse(userJson) : null;
@@ -72,6 +62,7 @@ export default function AdminPage() {
       case 'orders': return 'Quản lý đơn hàng';
       case 'customers': return 'Quản lý khách hàng';
       case 'promotions': return 'Quản lý mã khuyến mãi';
+      case 'reviews': return 'Quản lý đánh giá';
       case 'dashboard': return 'Bảng thống kê số liệu';
       case 'create_product': return 'Thêm sản phẩm mới';
       case 'update_product': return 'Cập nhật sản phẩm';
@@ -79,8 +70,9 @@ export default function AdminPage() {
     }
   };
 
-  const SidebarItem = ({ id, icon: Icon, label }) => (
+  const renderSidebarItem = (id, Icon, label) => (
     <button
+      key={id}
       onClick={() => setActiveAdminTab(id)}
       className={`w-full flex items-center px-4 py-3 rounded-md transition-all duration-200 font-bold cursor-pointer ${activeAdminTab === id
         ? 'bg-admin-sidebar-hover text-primary border-l-4 border-primary'
@@ -105,19 +97,20 @@ export default function AdminPage() {
 
         <nav className="flex-1 px-4 py-6 space-y-1 overflow-y-auto no-scrollbar">
           <p className="px-4 text-[12px] font-bold text-admin-sidebar-text/60 uppercase tracking-widest mb-4">Chính</p>
-          <SidebarItem id="dashboard" icon={Layout} label="Bảng thống kê" />
-          <SidebarItem id="categories" icon={FolderTree} label="Danh mục" />
-          <SidebarItem id="brands" icon={Star} label="Thương hiệu" />
-          <SidebarItem id="products" icon={Package} label="Sản phẩm" />
-          <SidebarItem id="inventory" icon={Boxes} label="Quản lý kho" />
-          <SidebarItem id="variants" icon={Layers} label="Biến thể" />
-          <SidebarItem id="orders" icon={ShoppingCart} label="Đơn hàng" />
-          <SidebarItem id="customers" icon={Users} label="Khách hàng" />
-          <SidebarItem id="promotions" icon={Ticket} label="Khuyến mãi" />
+          {renderSidebarItem("dashboard", Layout, "Bảng thống kê")}
+          {renderSidebarItem("categories", FolderTree, "Danh mục")}
+          {renderSidebarItem("brands", Star, "Thương hiệu")}
+          {renderSidebarItem("products", Package, "Sản phẩm")}
+          {renderSidebarItem("inventory", Boxes, "Quản lý kho")}
+          {renderSidebarItem("variants", Layers, "Biến thể")}
+          {renderSidebarItem("orders", ShoppingCart, "Đơn hàng")}
+          {renderSidebarItem("customers", Users, "Khách hàng")}
+          {renderSidebarItem("promotions", Ticket, "Khuyến mãi")}
+          {renderSidebarItem("reviews", MessageSquare, "Đánh giá")}
 
           <div className="pt-6">
             <p className="px-4 text-[12px] font-bold text-admin-sidebar-text/60 uppercase tracking-widest mb-4">Hệ thống</p>
-            <SidebarItem id="settings" icon={Settings} label="Cài đặt" />
+            {renderSidebarItem("settings", Settings, "Cài đặt")}
           </div>
         </nav>
 
@@ -195,6 +188,7 @@ export default function AdminPage() {
           {activeAdminTab === 'orders' && <AdminOrders />}
           {activeAdminTab === 'customers' && <AdminCustomers />}
           {activeAdminTab === 'promotions' && <AdminPromotions />}
+          {activeAdminTab === 'reviews' && <AdminReviews />}
           {activeAdminTab === 'dashboard' && (
             <AdminDashboard />
           )}

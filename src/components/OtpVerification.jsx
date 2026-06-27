@@ -25,6 +25,7 @@ export default function OtpVerification({
         setTimer((prev) => prev - 1);
       }, 1000);
     } else {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setCanResend(true);
     }
     return () => clearInterval(interval);

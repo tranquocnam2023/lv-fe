@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { authService } from '../services/authService';
 
 /**
@@ -6,15 +6,7 @@ import { authService } from '../services/authService';
  */
 export const useAuth = () => {
   const [user, setUser] = useState(authService.getCurrentUser());
-  const [isAdmin, setIsAdmin] = useState(false);
-
-  useEffect(() => {
-    if (user) {
-      setIsAdmin(user.role === 'Admin');
-    } else {
-      setIsAdmin(false);
-    }
-  }, [user]);
+  const isAdmin = user ? user.role === 'Admin' : false;
 
   const logout = () => {
     authService.logout();
