@@ -1,0 +1,74 @@
+@import "tailwindcss";
+
+@theme {
+  --color-primary: #4318FF;
+  --color-secondary: #1070CD;
+  --color-success: #00D990;
+  --color-warning: #FF8B38;
+  --color-danger: #FF3D54;
+  --color-info: #27bcfd;
+  --color-yellow: #fbd535;
+  --color-bg: #f3f4f6;
+  --color-text: #333333;
+  --color-textmuted: #9da9bb;
+  --color-textmain: #344050;
+  --color-bgcard: #FFFFFF;
+  --color-bordercustom: #edf2f9;
+  --color-headerbg: #4318FF;
+  --color-footerbg: #ffffff;
+  --color-sidebarbg: #ffffff;
+  --color-admin-sidebar-bg: #111c44;
+  --color-admin-sidebar-border: #1b254b;
+  --color-admin-sidebar-hover: #1b254b;
+  --color-admin-sidebar-text: #a3aed0;
+  --color-admin-bg: #F4F7FE;
+  --color-admin-border: #E0E5F2;
+  --color-admin-text-main: #2B3674;
+  --color-admin-text-muted: #A3AED0;
+  --color-admin-danger: #EE5D50;
+  --color-admin-primary-hover: #3911D1;
+}
+
+/* Container dùng chung cho layout 1200px */
+.container-box {
+  width: 1200px;
+  max-width: 100%;
+  margin: 0 auto;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  background-color: var(--color-bg);
+  color: var(--color-text);
+  font-family: system-ui, 'Segoe UI', Roboto, sans-serif;
+  width: 100%;
+  min-height: 100vh;
+}
+
+#root {
+  width: 100%;
+  min-height: 100svh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Hide number input spin-buttons (up/down arrows) */
+input::-webkit-outer-spin-button,
+input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+input[type=number] {
+  -moz-appearance: textfield;
+}
+
+/* Utilities to hide scrollbars */
+.no-scrollbar::-webkit-scrollbar {
+  display: none !important;
+}
+.no-scrollbar {
+  -ms-overflow-style: none !important;  /* IE and Edge */
+  scrollbar-width: none !important;  /* Firefox */
+}
