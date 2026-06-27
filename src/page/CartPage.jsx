@@ -13,9 +13,9 @@ import { userService } from '../services/userService';
 
 
 import {
-  User, Lock, MapPin, Check, Plus, Edit2, Trash2, ArrowLeft,
-  CreditCard, Truck, FileText, ChevronRight, X, Sparkles, Gift,
-  ShieldCheck, AlertCircle, ShoppingBag, Eye, Info, CheckCircle2
+  User, Lock, MapPin, Edit2, Trash2, ArrowLeft,
+  CreditCard, Truck, ChevronRight, X, Sparkles, Gift,
+  ShieldCheck, AlertCircle, ShoppingBag, Info, CheckCircle2
 } from 'lucide-react';
 
 
@@ -43,7 +43,9 @@ export default function CartPage() {
           if (userJson && userJson !== 'undefined' && userJson !== 'null') {
             try {
               setCurrentUser(JSON.parse(userJson));
-            } catch (e) {}
+            } catch (err2) {
+              console.debug(err2);
+            }
           }
         });
     } else {
@@ -111,17 +113,54 @@ export default function CartPage() {
     companyInvoice: false,
     otherRequest: false
   });
+  const [otherRequestText, setOtherRequestText] = useState('');
   const [companyInvoiceDetails, setCompanyInvoiceDetails] = useState({
     companyName: '',
     taxCode: '',
     companyAddress: ''
   });
-  const [otherRequestText, setOtherRequestText] = useState('');
 
   // Loyalty and promotion calculation
   const [appliedPromo, setAppliedPromo] = useState('');
   const [discountAmount, setDiscountAmount] = useState(0);
   const [usePoints, setUsePoints] = useState(false);
+
+  // Dynamic Shipping Fee states
+  const [shippingFee, setShippingFee] = useState(0);
+  const [shippingCarrier, setShippingCarrier] = useState('');
+  const [shippingEstimatedDays, setShippingEstimatedDays] = useState('');
+  const [shippingLoading, setShippingLoading] = useState(false);
+
+  // Effect to calculate shipping fee dynamically
+  useEffect(() => {
+    if (deliveryMethod === 'ship' && formData.wardId) {
+      setShippingLoading(true);
+      api.post('/Shipping/calculate-fee', {
+        wardId: formData.wardId,
+        totalWeightKg: 1.0
+      })
+      .then(res => {
+        if (res) {
+          setShippingFee(Number(res.fee || res.Fee || 0));
+          setShippingCarrier(res.carrier || res.Carrier || 'Giao Hàng Nhanh (GHN)');
+          setShippingEstimatedDays(res.estimatedDeliveryDays || res.EstimatedDeliveryDays || '2-3 ngày');
+        }
+      })
+      .catch(err => {
+        console.error("Lỗi tính phí vận chuyển:", err);
+        setShippingFee(25000); // fallback
+        setShippingCarrier('Giao Hàng Nhanh (GHN)');
+        setShippingEstimatedDays('3-5 ngày');
+      })
+      .finally(() => {
+        setShippingLoading(false);
+      });
+    } else {
+      setShippingFee(0);
+      setShippingCarrier('');
+      setShippingEstimatedDays('');
+    }
+  }, [formData.wardId, deliveryMethod]);
 
   // Form submission state
   const [paymentMethod, setPaymentMethod] = useState('transfer'); // default 'transfer' for guest, COD require login
@@ -450,9 +489,6 @@ export default function CartPage() {
 
     try {
       // 2. Guest auto registration/login underneath if NOT logged in (compatibility fallback)
-      let activeUser = currentUser;
-      let activeToken = localStorage.getItem('token');
-
       if (!isLoggedIn) {
         // Create an automatic guest user so we have a token
         const randSuffix = Math.floor(1000 + Math.random() * 9000);
@@ -472,7 +508,6 @@ export default function CartPage() {
             password: guestPass
           });
 
-          activeToken = loginRes.token;
           localStorage.setItem('token', loginRes.token);
           localStorage.setItem('user', JSON.stringify({
             id: loginRes.id,
@@ -515,32 +550,38 @@ export default function CartPage() {
       };
 
       // 3. Sync cart to database before checking out
-      await api.delete('/Cart/clear');
-
-      for (const item of cartItems) {
+      const syncItems = [];
+      await Promise.all(cartItems.map(async (item) => {
         const productId = item.id || item.Id;
-        if (!productId) continue;
+        if (!productId) return;
 
-        let variants = await api.get(`/ProductVariant?productId=${productId}`);
-        let matchedVariant = null;
+        try {
+          const variants = await api.get(`/ProductVariant?productId=${productId}`);
+          let matchedVariant = null;
 
-        if (Array.isArray(variants) && variants.length > 0) {
-          matchedVariant = variants.find(v =>
-            v.name && (
-              (item.selectedStorage && v.name.toLowerCase().includes(item.selectedStorage.toLowerCase())) ||
-              (item.selectedColor && v.name.toLowerCase().includes(item.selectedColor.toLowerCase()))
-            )
-          );
-          if (!matchedVariant) matchedVariant = variants[0];
+          if (Array.isArray(variants) && variants.length > 0) {
+            matchedVariant = variants.find(v =>
+              v.name && (
+                (item.selectedStorage && v.name.toLowerCase().includes(item.selectedStorage.toLowerCase())) ||
+                (item.selectedColor && v.name.toLowerCase().includes(item.selectedColor.toLowerCase()))
+              )
+            );
+            if (!matchedVariant) matchedVariant = variants[0];
+          }
+
+          if (matchedVariant) {
+            syncItems.push({
+              variantId: matchedVariant.id,
+              quantity: item.quantity
+            });
+          }
+        } catch (err) {
+          console.error(`Error resolving variant for product ${productId}:`, err);
         }
+      }));
 
-        if (matchedVariant) {
-          await api.post('/CartItem', {
-            variantId: matchedVariant.id,
-            quantity: item.quantity
-          });
-        }
-      }
+      // Gửi request đồng bộ batch duy nhất lên server
+      await api.post('/Cart/sync', syncItems);
 
       // 4. Place order
       const checkoutRes = await orderService.checkout(payload);
@@ -578,7 +619,7 @@ export default function CartPage() {
   // Subtotal and final values
   const userPoints = currentUser?.rewardPoints || 0;
   const pointsDiscount = usePoints ? Math.min(userPoints, cartTotal - discountAmount) : 0;
-  const finalTotalPay = Math.max(0, cartTotal - discountAmount - pointsDiscount);
+  const finalTotalPay = Math.max(0, cartTotal - discountAmount - pointsDiscount + shippingFee);
 
 
   // Render Success Screen
@@ -1017,6 +1058,42 @@ export default function CartPage() {
                 <label className="flex items-center gap-2 text-xs font-semibold text-gray-700 cursor-pointer hover:text-gray-900 select-none">
                   <input
                     type="checkbox"
+                    checked={specialRequests.companyInvoice}
+                    onChange={(e) => setSpecialRequests({ ...specialRequests, companyInvoice: e.target.checked })}
+                    className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-0 cursor-pointer"
+                  />
+                  <span>Yêu cầu xuất hóa đơn công ty</span>
+                </label>
+
+                {specialRequests.companyInvoice && (
+                  <div className="ml-6 space-y-2 animate-in slide-in-from-top-2 duration-150">
+                    <input
+                      type="text"
+                      placeholder="Tên công ty"
+                      value={companyInvoiceDetails.companyName}
+                      onChange={(e) => setCompanyInvoiceDetails({ ...companyInvoiceDetails, companyName: e.target.value })}
+                      className="w-full bg-gray-50 border border-gray-200 rounded-md p-2.5 text-xs font-semibold focus:outline-none focus:border-blue-500 text-gray-800"
+                    />
+                    <input
+                      type="text"
+                      placeholder="Mã số thuế"
+                      value={companyInvoiceDetails.taxCode}
+                      onChange={(e) => setCompanyInvoiceDetails({ ...companyInvoiceDetails, taxCode: e.target.value })}
+                      className="w-full bg-gray-50 border border-gray-200 rounded-md p-2.5 text-xs font-semibold focus:outline-none focus:border-blue-500 text-gray-800"
+                    />
+                    <input
+                      type="text"
+                      placeholder="Địa chỉ công ty"
+                      value={companyInvoiceDetails.companyAddress}
+                      onChange={(e) => setCompanyInvoiceDetails({ ...companyInvoiceDetails, companyAddress: e.target.value })}
+                      className="w-full bg-gray-50 border border-gray-200 rounded-md p-2.5 text-xs font-semibold focus:outline-none focus:border-blue-500 text-gray-800"
+                    />
+                  </div>
+                )}
+
+                <label className="flex items-center gap-2 text-xs font-semibold text-gray-700 cursor-pointer hover:text-gray-900 select-none">
+                  <input
+                    type="checkbox"
                     checked={specialRequests.otherRequest}
                     onChange={(e) => setSpecialRequests({ ...specialRequests, otherRequest: e.target.checked })}
                     className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-0 cursor-pointer"
@@ -1207,10 +1284,26 @@ export default function CartPage() {
                     <span>-{pointsDiscount.toLocaleString('vi-VN')}₫</span>
                   </div>
                 )}
-                <div className="flex justify-between text-green-600">
-                  <span>Phí vận chuyển</span>
-                  <span>Miễn phí</span>
+                <div className="flex justify-between text-gray-700">
+                  <span>Phí vận chuyển {shippingCarrier && `(${shippingCarrier})`}</span>
+                  <span>
+                    {shippingLoading ? (
+                      <span className="text-gray-400 italic">Đang tính...</span>
+                    ) : deliveryMethod === 'store' ? (
+                      <span className="text-green-600 font-bold">Miễn phí</span>
+                    ) : shippingFee > 0 ? (
+                      <span className="text-gray-900 font-bold">{shippingFee.toLocaleString('vi-VN')}₫</span>
+                    ) : (
+                      <span className="text-green-600 font-bold">Miễn phí</span>
+                    )}
+                  </span>
                 </div>
+                {deliveryMethod === 'ship' && shippingEstimatedDays && (
+                  <div className="flex justify-between text-[11px] text-gray-400 font-medium normal-case">
+                    <span>Thời gian giao hàng dự kiến</span>
+                    <span>{shippingEstimatedDays}</span>
+                  </div>
+                )}
 
                 <div className="flex justify-between pt-3 border-t border-dashed border-gray-100 items-center">
                   <span className="text-xs font-black text-gray-900">Tổng tiền</span>
