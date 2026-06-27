@@ -11,7 +11,7 @@ export const userService = {
 
   toggleStatus: (id) => api.put(`/User/${id}/toggle-status`), // khóa / mở khóa tài khoản
 
-  updateProfile: (data) => api.put('/User/profile', data), // cập nhật thông tin cá nhân (họ tên, email,...)
+  updateProfile: (data) => api.put('/User/me', data), // cập nhật thông tin cá nhân (họ tên, email,...)
 
   changePassword: (data) => api.put('/User/change-password', data), // đổi mật khẩu
 };

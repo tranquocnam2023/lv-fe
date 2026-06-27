@@ -1,14 +1,16 @@
 import React, { useState, useEffect } from 'react';
-import { Search, Trash2, Star, Calendar, MessageSquare, Filter } from 'lucide-react';
+import { Search, Trash2, Star, Calendar, MessageSquare, Filter, Eye, EyeOff, CornerDownRight, Check } from 'lucide-react';
 // import { MOCK_REVIEWS } from '../utils/mockData'; // Removed mock data
 import { reviewService } from '../services/reviewService';
+
 
 export default function AdminReviews() {
   const [reviews, setReviews] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
+  const [replyingId, setReplyingId] = useState(null);
+  const [replyText, setReplyText] = useState('');
 
   const fetchReviews = () => {
-    // Assuming userService.getAllReviews exists, or use appropriate service
     reviewService.getAll()
       .then(data => setReviews(Array.isArray(data) ? data : []))
       .catch(err => {
@@ -30,6 +32,34 @@ export default function AdminReviews() {
         alert('Lỗi xóa đánh giá: ' + err.message);
       });
     }
+  };
+
+  const handleToggleVisibility = (id) => {
+    reviewService.toggleVisibility(id)
+      .then(res => {
+        alert(res || 'Thay đổi trạng thái hiển thị thành công!');
+        fetchReviews();
+      })
+      .catch(err => {
+        alert('Lỗi thay đổi trạng thái hiển thị: ' + (err.message || err));
+      });
+  };
+
+  const handleSendReply = (id) => {
+    if (!replyText.trim()) {
+      alert('Vui lòng nhập nội dung phản hồi!');
+      return;
+    }
+    reviewService.reply(id, replyText)
+      .then(res => {
+        alert(res || 'Đã gửi phản hồi thành công!');
+        setReplyingId(null);
+        setReplyText('');
+        fetchReviews();
+      })
+      .catch(err => {
+        alert('Lỗi gửi phản hồi: ' + (err.message || err));
+      });
   };
 
   const filteredReviews = reviews.filter(rev =>
@@ -117,42 +147,117 @@ export default function AdminReviews() {
             <tbody className="divide-y divide-admin-border text-sm">
               {filteredReviews.length > 0 ? (
                 filteredReviews.map((rev) => (
-                  <tr key={rev.id} className="hover:bg-admin-bg transition-colors group">
-                    <td className="px-6 py-4 text-admin-text-muted font-bold">#{rev.id}</td>
-                    <td className="px-6 py-4">
-                      <div className="flex flex-col">
-                        <span className="font-bold text-admin-text-main">{rev.username}</span>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 font-bold text-primary">{rev.productName}</td>
-                    <td className="px-6 py-4">
-                      <div className="flex items-center justify-center gap-1 text-warning">
-                        <span className="font-bold text-admin-text-main">{rev.rating}</span>
-                        <Star size={16} fill="currentColor" />
-                      </div>
-                    </td>
-                    <td className="px-6 py-4">
-                      <p className="text-sm font-medium text-admin-text-main max-w-[200px] truncate" title={rev.comment}>
-                        {rev.comment}
-                      </p>
-                    </td>
-                    <td className="px-6 py-4 text-[12px] font-bold text-admin-text-muted whitespace-nowrap">
-                      {new Date(rev.createdAt).toLocaleDateString('vi-VN')}
-                    </td>
-                    <td className="px-6 py-4 text-[12px] font-bold text-admin-text-muted whitespace-nowrap">
-                      {rev.repliedAt ? new Date(rev.repliedAt).toLocaleDateString('vi-VN') : <span className="text-gray-400 italic font-normal">Chưa phản hồi</span>}
-                    </td>
-                    <td className="px-6 py-4">
-                      <div className="flex items-center justify-center">
-                        <button
-                          onClick={() => handleDelete(rev.id)}
-                          className="p-2 text-admin-text-muted hover:text-admin-danger hover:bg-admin-danger/10 rounded-md transition-all"
-                        >
-                          <Trash2 size={18} />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
+                  <React.Fragment key={rev.id}>
+                    <tr className={`${rev.isHidden ? 'opacity-60 bg-gray-50' : ''} hover:bg-admin-bg transition-colors group`}>
+                      <td className="px-6 py-4 text-admin-text-muted font-bold">#{rev.id}</td>
+                      <td className="px-6 py-4">
+                        <div className="flex flex-col">
+                          <span className="font-bold text-admin-text-main">{rev.username}</span>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 font-bold text-primary">{rev.productName}</td>
+                      <td className="px-6 py-4">
+                        <div className="flex items-center justify-center gap-1 text-warning">
+                          <span className="font-bold text-admin-text-main">{rev.rating}</span>
+                          <Star size={16} fill="currentColor" className="text-yellow-400" />
+                        </div>
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="space-y-1">
+                          <p className="text-sm font-medium text-admin-text-main max-w-[250px] break-words" title={rev.comment}>
+                            {rev.comment}
+                          </p>
+                          {rev.adminReply && (
+                            <div className="text-xs text-blue-600 bg-blue-50/50 border border-blue-100 rounded p-2 flex gap-1 mt-1">
+                              <span className="font-bold shrink-0">QTV:</span>
+                              <span className="font-medium break-words">{rev.adminReply}</span>
+                            </div>
+                          )}
+                          {rev.isHidden && (
+                            <span className="inline-block bg-red-100 text-red-600 font-bold text-[10px] px-1.5 py-0.5 rounded uppercase mt-1">
+                              Đang bị ẩn
+                            </span>
+                          )}
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 text-[12px] font-bold text-admin-text-muted whitespace-nowrap">
+                        {new Date(rev.createdAt).toLocaleDateString('vi-VN')}
+                      </td>
+                      <td className="px-6 py-4 text-[12px] font-bold text-admin-text-muted whitespace-nowrap">
+                        {rev.repliedAt ? new Date(rev.repliedAt).toLocaleDateString('vi-VN') : <span className="text-gray-400 italic font-normal">Chưa phản hồi</span>}
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="flex items-center justify-center gap-2">
+                          <button
+                            onClick={() => {
+                              if (replyingId === rev.id) {
+                                setReplyingId(null);
+                                setReplyText('');
+                              } else {
+                                setReplyingId(rev.id);
+                                setReplyText(rev.adminReply || '');
+                              }
+                            }}
+                            className="p-2 text-admin-text-muted hover:text-primary hover:bg-primary/10 rounded-md transition-all"
+                            title="Phản hồi bình luận"
+                          >
+                            <MessageSquare size={18} />
+                          </button>
+                          <button
+                            onClick={() => handleToggleVisibility(rev.id)}
+                            className="p-2 text-admin-text-muted hover:text-primary hover:bg-primary/10 rounded-md transition-all"
+                            title={rev.isHidden ? "Hiển thị bình luận" : "Ẩn bình luận"}
+                          >
+                            {rev.isHidden ? <EyeOff size={18} className="text-red-500" /> : <Eye size={18} />}
+                          </button>
+                          <button
+                            onClick={() => handleDelete(rev.id)}
+                            className="p-2 text-admin-text-muted hover:text-admin-danger hover:bg-admin-danger/10 rounded-md transition-all"
+                            title="Xóa đánh giá"
+                          >
+                            <Trash2 size={18} />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                    {replyingId === rev.id && (
+                      <tr className="bg-blue-50/20">
+                        <td colSpan="8" className="px-6 py-3.5 border-b border-admin-border">
+                          <div className="flex gap-3 items-end max-w-2xl ml-10">
+                            <CornerDownRight size={18} className="text-blue-500 shrink-0 mb-3" />
+                            <div className="flex-1 space-y-1">
+                              <label className="block text-[10px] font-bold text-blue-600 uppercase tracking-wider">Phản hồi của QTV cho #{rev.id}</label>
+                              <input
+                                type="text"
+                                value={replyText}
+                                onChange={(e) => setReplyText(e.target.value)}
+                                placeholder="Nhập nội dung phản hồi của quản trị viên..."
+                                className="w-full bg-white border border-admin-border rounded-md px-3 py-2 text-xs font-semibold text-admin-text-main focus:outline-none focus:border-primary"
+                                autoFocus
+                              />
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => handleSendReply(rev.id)}
+                              className="px-4 py-2 bg-primary hover:bg-primary/95 text-white text-xs font-bold rounded-md transition shrink-0"
+                            >
+                              Gửi phản hồi
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setReplyingId(null);
+                                setReplyText('');
+                              }}
+                              className="px-4 py-2 text-gray-500 hover:text-gray-800 text-xs font-bold transition shrink-0"
+                            >
+                              Hủy
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    )}
+                  </React.Fragment>
                 ))
               ) : (
                 <tr>
