@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import AdminProducts from './AdminProducts';
 import AdminInventory from '../components/AdminInventory';
@@ -12,6 +12,9 @@ import AdminReviews from '../components/AdminReviews';
 import AdminCreateProduct from './AdminCreateProduct';
 import AdminUpdateProduct from './AdminUpdateProduct';
 import { authService } from '../services/authService';
+import { productService } from '../services/productService';
+import { orderService } from '../services/orderService';
+import { userService } from '../services/userService';
 import { Layout, Package, Users, ShoppingCart, Settings, LogOut, Bell, FolderTree, Star, LayoutGrid, Ticket, Layers, Boxes, MessageSquare } from 'lucide-react';
 
 const DASHBOARD_STATS = [
@@ -26,6 +29,114 @@ export default function AdminPage() {
   const activeAdminTab = searchParams.get('tab') || 'dashboard';
   const editProductId = searchParams.get('productId');
   const [selectedBrandId, setSelectedBrandId] = useState(null);
+
+  // States cho tìm kiếm thực thể chéo module
+  const [searchQuery, setSearchQuery] = useState('');
+  const [allProducts, setAllProducts] = useState([]);
+  const [allOrders, setAllOrders] = useState([]);
+  const [allCustomers, setAllCustomers] = useState([]);
+  const [showSearchDropdown, setShowSearchDropdown] = useState(false);
+  const searchRef = useRef(null);
+
+  // Các tab chức năng trong trang Admin
+  const ADMIN_FUNCTIONS = [
+    { label: 'Bảng thống kê', tab: 'dashboard', keywords: ['thong ke', 'dashboard', 'bao cao'] },
+    { label: 'Quản lý danh mục', tab: 'categories', keywords: ['danh muc', 'loai', 'categories'] },
+    { label: 'Quản lý thương hiệu', tab: 'brands', keywords: ['thuong hieu', 'hang', 'brands'] },
+    { label: 'Quản lý sản phẩm', tab: 'products', keywords: ['san pham', 'dien thoai', 'products'] },
+    { label: 'Thêm sản phẩm mới', tab: 'create_product', keywords: ['them san pham', 'tao san pham', 'them moi', 'create'] },
+    { label: 'Quản lý kho hàng', tab: 'inventory', keywords: ['kho', 'ton kho', 'inventory'] },
+    { label: 'Quản lý đơn hàng', tab: 'orders', keywords: ['don hang', 'orders', 'hoa don'] },
+    { label: 'Quản lý khách hàng', tab: 'customers', keywords: ['khach hang', 'nguoi dung', 'users', 'customers', 'tai khoan'] },
+    { label: 'Quản lý khuyến mãi', tab: 'promotions', keywords: ['khuyen mai', 'ma giam gia', 'voucher', 'promotions'] },
+    { label: 'Quản lý đánh giá', tab: 'reviews', keywords: ['danh gia', 'binh luan', 'reviews'] },
+    { label: 'Cài đặt hệ thống', tab: 'settings', keywords: ['cai dat', 'settings', 'cau hinh'] }
+  ];
+
+  // Tải dữ liệu chéo module từ DATABASE
+  useEffect(() => {
+    const fetchSearchData = async () => {
+      try {
+        const [productsData, ordersData, customersData] = await Promise.all([
+          productService.getAll(true).catch(() => []),
+          orderService.getAll().catch(() => []),
+          userService.getAll().catch(() => [])
+        ]);
+
+        if (Array.isArray(productsData)) {
+          setAllProducts(productsData);
+        }
+        if (Array.isArray(ordersData)) {
+          const statusMap = {
+            1: 'Chờ xác nhận',
+            2: 'Đã xác nhận',
+            3: 'Đang giao',
+            4: 'Đã giao',
+            5: 'Đã hủy',
+            6: 'Giao thất bại',
+            7: 'Đã hoàn tiền'
+          };
+          const mappedOrders = ordersData.map(order => ({
+            ...order,
+            statusStr: statusMap[order.statusId] || 'Chờ xác nhận'
+          }));
+          setAllOrders(mappedOrders);
+        }
+        if (Array.isArray(customersData)) {
+          setAllCustomers(customersData);
+        }
+      } catch (err) {
+        console.error("Lỗi tải dữ liệu phục vụ tìm kiếm:", err);
+      }
+    };
+    fetchSearchData();
+  }, []);
+
+  // Đóng dropdown khi click ra bên ngoài
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (searchRef.current && !searchRef.current.contains(event.target)) {
+        setShowSearchDropdown(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
+
+  // Bộ lọc chức năng
+  const filteredFunctions = searchQuery.trim()
+    ? ADMIN_FUNCTIONS.filter(f => 
+        f.label.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        f.keywords.some(k => k.toLowerCase().includes(searchQuery.toLowerCase()))
+      )
+    : [];
+
+  // Bộ lọc sản phẩm: tên sản phẩm hoặc tên thương hiệu
+  const filteredProducts = searchQuery.trim()
+    ? allProducts.filter(p => 
+        p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (p.brandName && p.brandName.toLowerCase().includes(searchQuery.toLowerCase()))
+      )
+    : [];
+
+  // Bộ lọc khách hàng: tên khách hàng (username) hoặc email
+  const filteredCustomers = searchQuery.trim()
+    ? allCustomers.filter(c => 
+        (c.username && c.username.toLowerCase().includes(searchQuery.toLowerCase())) ||
+        (c.email && c.email.toLowerCase().includes(searchQuery.toLowerCase()))
+      )
+    : [];
+
+  // Bộ lọc đơn hàng: mã đơn hàng hoặc số điện thoại người nhận
+  const filteredOrders = searchQuery.trim()
+    ? allOrders.filter(o => 
+        String(o.id).includes(searchQuery.trim()) ||
+        (o.receiverPhone && o.receiverPhone.includes(searchQuery.trim())) ||
+        (o.phone && o.phone.includes(searchQuery.trim()))
+      )
+    : [];
 
   const setActiveAdminTab = (tab, brandId = null) => {
     setSearchParams(prev => {
@@ -142,11 +253,125 @@ export default function AdminPage() {
             </div>
           </div>
 
-          <div className="flex items-center bg-white rounded-full px-4 py-2 border border-admin-border">
+          <div ref={searchRef} className="relative flex items-center bg-white rounded-full px-4 py-2 border border-admin-border z-50">
             <div className="flex items-center bg-admin-bg rounded-full px-4 py-2 mr-4">
               <svg className="w-4 h-4 text-admin-text-main" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
-              <input type="text" placeholder="Tìm kiếm..." className="bg-transparent border-none outline-none text-sm ml-2 w-32 placeholder-admin-text-muted text-admin-text-main" />
+              <input 
+                type="text" 
+                placeholder="Tìm đơn, sản phẩm, khách..." 
+                value={searchQuery}
+                onChange={(e) => {
+                  setSearchQuery(e.target.value);
+                  setShowSearchDropdown(true);
+                }}
+                onFocus={() => setShowSearchDropdown(true)}
+                className="bg-transparent border-none outline-none text-sm ml-2 w-48 placeholder-admin-text-muted text-admin-text-main" 
+              />
             </div>
+
+            {/* Dropdown gợi ý tìm kiếm chéo module */}
+            {showSearchDropdown && searchQuery.trim() && (
+              <div className="absolute right-0 top-full mt-2 w-80 bg-white border border-admin-border rounded-md shadow-2xl z-50 overflow-hidden text-admin-text-main max-h-[350px] overflow-y-auto no-scrollbar animate-in fade-in slide-in-from-top-2 duration-150">
+                {/* 1. CHỨC NĂNG */}
+                {filteredFunctions.length > 0 && (
+                  <div>
+                    <div className="px-4 py-1.5 bg-gray-50 text-[10px] font-bold text-admin-text-muted uppercase border-b border-admin-border">
+                      Chức năng
+                    </div>
+                    {filteredFunctions.map(f => (
+                      <button
+                        key={f.tab}
+                        onClick={() => {
+                          setActiveAdminTab(f.tab);
+                          setSearchQuery('');
+                          setShowSearchDropdown(false);
+                        }}
+                        className="w-full text-left px-4 py-2 hover:bg-admin-bg text-xs font-bold transition-colors flex items-center cursor-pointer border-b border-gray-50"
+                      >
+                        <span className="text-primary mr-1.5 font-bold">⚡ [Chức năng]</span> {f.label}
+                      </button>
+                    ))}
+                  </div>
+                )}
+
+                {/* 2. SẢN PHẨM */}
+                {filteredProducts.length > 0 && (
+                  <div>
+                    <div className="px-4 py-1.5 bg-gray-50 text-[10px] font-bold text-admin-text-muted uppercase border-b border-admin-border">
+                      Sản phẩm
+                    </div>
+                    {filteredProducts.slice(0, 5).map(p => (
+                      <button
+                        key={p.id}
+                        onClick={() => {
+                          setSearchParams(prev => {
+                            prev.set('tab', 'update_product');
+                            prev.set('productId', p.id);
+                            return prev;
+                          });
+                          setSearchQuery('');
+                          setShowSearchDropdown(false);
+                        }}
+                        className="w-full text-left px-4 py-2 hover:bg-admin-bg text-xs font-medium transition-colors truncate block cursor-pointer border-b border-gray-50"
+                      >
+                        <span className="text-orange-500 font-bold mr-1.5">[Sản phẩm]</span> {p.name}
+                      </button>
+                    ))}
+                  </div>
+                )}
+
+                {/* 3. KHÁCH HÀNG */}
+                {filteredCustomers.length > 0 && (
+                  <div>
+                    <div className="px-4 py-1.5 bg-gray-50 text-[10px] font-bold text-admin-text-muted uppercase border-b border-admin-border">
+                      Khách hàng
+                    </div>
+                    {filteredCustomers.slice(0, 5).map(c => (
+                      <button
+                        key={c.id}
+                        onClick={() => {
+                          setActiveAdminTab('customers');
+                          setSearchQuery('');
+                          setShowSearchDropdown(false);
+                        }}
+                        className="w-full text-left px-4 py-2 hover:bg-admin-bg text-xs font-medium transition-colors truncate block cursor-pointer border-b border-gray-50"
+                      >
+                        <span className="text-green-600 font-bold mr-1.5">[Khách hàng]</span> {c.username}
+                      </button>
+                    ))}
+                  </div>
+                )}
+
+                {/* 4. ĐƠN HÀNG */}
+                {filteredOrders.length > 0 && (
+                  <div>
+                    <div className="px-4 py-1.5 bg-gray-50 text-[10px] font-bold text-admin-text-muted uppercase border-b border-admin-border">
+                      Đơn hàng
+                    </div>
+                    {filteredOrders.slice(0, 5).map(o => (
+                      <button
+                        key={o.id}
+                        onClick={() => {
+                          setActiveAdminTab('orders');
+                          setSearchQuery('');
+                          setShowSearchDropdown(false);
+                        }}
+                        className="w-full text-left px-4 py-2 hover:bg-admin-bg text-xs font-medium transition-colors truncate block cursor-pointer border-b border-gray-50"
+                      >
+                        <span className="text-blue-600 font-bold mr-1.5">[Đơn hàng]</span> Đơn hàng #{o.id} ({o.statusStr})
+                      </button>
+                    ))}
+                  </div>
+                )}
+
+                {/* KHÔNG CÓ KẾT QUẢ */}
+                {filteredFunctions.length === 0 && filteredProducts.length === 0 && filteredCustomers.length === 0 && filteredOrders.length === 0 && (
+                  <div className="px-4 py-6 text-center text-xs text-admin-text-muted font-bold">
+                    Không tìm thấy thực thể tương ứng
+                  </div>
+                )}
+              </div>
+            )}
             <button className="relative p-2 text-admin-text-muted hover:text-primary transition-colors mr-2">
               <Bell size={20} />
               <span className="absolute top-2 right-2 w-2 h-2 bg-admin-danger rounded-full border-2 border-white"></span>
@@ -196,6 +421,14 @@ export default function AdminPage() {
           {activeAdminTab === 'reviews' && <AdminReviews />}
           {activeAdminTab === 'dashboard' && (
             <AdminDashboard />
+          )}
+          {activeAdminTab === 'settings' && (
+            <div className="bg-white p-6 rounded-md border border-admin-border animate-in fade-in duration-350">
+              <h2 className="text-2xl font-bold text-admin-text-main mb-4">Cài đặt hệ thống</h2>
+              <div className="p-4 bg-gray-50 rounded-md border border-dashed border-admin-border text-admin-text-muted text-sm font-semibold">
+                🔧 Tính năng cấu hình hệ thống đang được phát triển và hoàn thiện.
+              </div>
+            </div>
           )}
         </main>
       </div>

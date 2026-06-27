@@ -1,6 +1,6 @@
 // src/page/HomePage.jsx
 import { useState, useEffect } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useSearchParams } from 'react-router-dom';
 import ProductCard from '../components/product/ProductCard';
 import Breadcrumb from '../components/Breadcrumb';
 import FilterBar from '../components/FilterBar';
@@ -13,6 +13,8 @@ export default function HomePage({ selectedLocation }) {
   const { brand } = useParams();
   const [prevBrand, setPrevBrand] = useState(brand);
   const [selectedBrand, setSelectedBrand] = useState(brand || null);
+  const [searchParams] = useSearchParams();
+  const searchQuery = searchParams.get('search') || '';
 
   if (brand !== prevBrand) {
     setPrevBrand(brand);
@@ -62,6 +64,16 @@ export default function HomePage({ selectedLocation }) {
   };
 
   const filteredProducts = products.filter(product => {
+    // Lọc theo từ khóa tìm kiếm trên URL (?search=...)
+    if (searchQuery) {
+      const query = searchQuery.toLowerCase().trim();
+      const matchesSearch = 
+        product.name.toLowerCase().includes(query) ||
+        (product.brandName && product.brandName.toLowerCase().includes(query)) ||
+        (product.description && product.description.toLowerCase().includes(query));
+      if (!matchesSearch) return false;
+    }
+
     // Quick brand / category filter
     if (selectedBrand) {
       const brandLower = selectedBrand.toLowerCase();
@@ -114,14 +126,16 @@ export default function HomePage({ selectedLocation }) {
 
   return (
     <>
-      <Breadcrumb items={[{ label: selectedBrand || advancedFilters ? 'Kết quả tìm kiếm' : 'Tất cả sản phẩm điện thoại' }]} />
+      <Breadcrumb items={[{ label: selectedBrand || searchQuery || advancedFilters ? 'Kết quả tìm kiếm' : 'Tất cả sản phẩm điện thoại' }]} />
       <h2 
         className="text-2xl font-bold mb-4 pb-2 border-b"
         style={{ color: THEME.primary, borderColor: THEME.border }}
       >
-        {selectedBrand || advancedFilters ? `Sản phẩm ${selectedBrand || 'đã lọc'}` : 'Chào mừng đến với hệ thống PhoneShop!'}
+        {searchQuery 
+          ? `Kết quả tìm kiếm cho: "${searchQuery}"` 
+          : (selectedBrand || advancedFilters ? `Sản phẩm ${selectedBrand || 'đã lọc'}` : 'Chào mừng đến với hệ thống PhoneShop!')}
       </h2>
-      {!selectedBrand && !advancedFilters && (
+      {!selectedBrand && !searchQuery && !advancedFilters && (
         <div 
           className="p-4 rounded mb-6 border bg-primary/5 text-secondary border-primary/20"
         >
@@ -130,7 +144,7 @@ export default function HomePage({ selectedLocation }) {
       )}
 
       {/* SECTION SẢN PHẨM NỔI BẬT (Điện Máy Xanh Style) */}
-      {!selectedBrand && !advancedFilters && featuredProducts.length > 0 && (
+      {!selectedBrand && !searchQuery && !advancedFilters && featuredProducts.length > 0 && (
         <div className="w-full bg-white rounded-md p-6 mb-8 border border-gray-200 animate-in fade-in zoom-in-95 duration-500">
           <div className="flex items-center justify-between mb-5 border-b border-gray-100 pb-3">
             <h3 className="text-lg font-black flex items-center gap-2" style={{ color: THEME.secondary }}>
