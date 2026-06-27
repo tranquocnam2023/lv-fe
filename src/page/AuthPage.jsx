@@ -215,7 +215,7 @@ export default function AuthPage() {
     if (!isLoggedIn) {
       const initGoogleBtn = () => {
         if (window.google) {
-          const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID || "702529174883-iffoamg48nsk77o02opdvoptl2rhnecb.apps.googleusercontent.com";
+          const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID || "702529174883-k7q714ds1n185oaabhl85hfhhqhqg7dq.apps.googleusercontent.com";
           window.google.accounts.id.initialize({
             client_id: googleClientId,
             callback: handleGoogleLoginSuccess
