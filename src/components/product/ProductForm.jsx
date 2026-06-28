@@ -142,9 +142,9 @@ export default function ProductForm({ productId, onBack, onSaveSuccess }) {
       if (e.code === 'Space' || e.key === ' ') {
         const activeEl = document.activeElement;
         const isTyping = activeEl && (
-          activeEl.tagName === 'INPUT' || 
-          activeEl.tagName === 'TEXTAREA' || 
-          activeEl.tagName === 'SELECT' || 
+          activeEl.tagName === 'INPUT' ||
+          activeEl.tagName === 'TEXTAREA' ||
+          activeEl.tagName === 'SELECT' ||
           activeEl.isContentEditable
         );
         if (!isTyping) {
@@ -204,7 +204,7 @@ export default function ProductForm({ productId, onBack, onSaveSuccess }) {
                         optionNames.push(k);
                       }
                     });
-                  } catch (e) {}
+                  } catch (e) { }
                 }
               });
 
@@ -220,7 +220,7 @@ export default function ProductForm({ productId, onBack, onSaveSuccess }) {
                         const valStr = String(attrs[name]).trim();
                         if (valStr) valueSet.add(valStr);
                       }
-                    } catch (e) {}
+                    } catch (e) { }
                   }
                 });
 
@@ -285,7 +285,7 @@ export default function ProductForm({ productId, onBack, onSaveSuccess }) {
                         chargeTax: attrs.chargeTax !== false
                       };
                     }
-                  } catch (e) {}
+                  } catch (e) { }
                 }
               });
             }
@@ -336,7 +336,7 @@ export default function ProductForm({ productId, onBack, onSaveSuccess }) {
                 values: opt.values.filter(v => v && v.text && String(v.text).trim() !== '')
               })).filter(o => o.name && o.values.length > 0);
 
-              const combArrays = activeOpts.map(opt => 
+              const combArrays = activeOpts.map(opt =>
                 opt.values.map(val => ({
                   optionId: opt.id,
                   valueId: opt.id + ':' + val.internalId,
@@ -346,7 +346,7 @@ export default function ProductForm({ productId, onBack, onSaveSuccess }) {
               const allCombs = combArrays.length > 0 ? cartesianProduct(combArrays) : [];
               const dbKeys = Object.keys(parsedVarsData);
               const initialExcluded = [];
-              
+
               allCombs.forEach(comb => {
                 const sortedParts = [...comb].sort((a, b) => a.optionId.localeCompare(b.optionId));
                 const key = sortedParts.map(p => `${p.optionId}:${p.valueId.split(':').pop()}`).join('|');
@@ -354,7 +354,7 @@ export default function ProductForm({ productId, onBack, onSaveSuccess }) {
                   initialExcluded.push(key);
                 }
               });
-              
+
               setExcludedKeys(initialExcluded);
             }
           }
@@ -485,11 +485,11 @@ export default function ProductForm({ productId, onBack, onSaveSuccess }) {
     if (options.length >= 4) return;
     const nextId = `opt-${Date.now()}`;
     const unusedAttr = AVAILABLE_ATTRIBUTES.find(attr => !options.some(o => o.name === attr)) || '';
-    setOptions(prev => [...prev, { 
-      id: nextId, 
-      name: unusedAttr, 
-      isEditing: true, 
-      values: [{ internalId: `val-${Date.now()}-1`, text: '' }] 
+    setOptions(prev => [...prev, {
+      id: nextId,
+      name: unusedAttr,
+      isEditing: true,
+      values: [{ internalId: `val-${Date.now()}-1`, text: '' }]
     }]);
   };
 
@@ -498,10 +498,10 @@ export default function ProductForm({ productId, onBack, onSaveSuccess }) {
   };
 
   const updateOptionName = (optId, newName) => {
-    setOptions(prev => prev.map(o => o.id === optId ? { 
-      ...o, 
-      name: newName, 
-      values: [{ internalId: `val-${optId.replace('opt-', '')}-${Date.now()}`, text: '' }] 
+    setOptions(prev => prev.map(o => o.id === optId ? {
+      ...o,
+      name: newName,
+      values: [{ internalId: `val-${optId.replace('opt-', '')}-${Date.now()}`, text: '' }]
     } : o));
   };
 
@@ -513,7 +513,7 @@ export default function ProductForm({ productId, onBack, onSaveSuccess }) {
 
     setOptions(prev => prev.map(o => {
       if (o.id === optId) {
-        let newValues = o.values.map(val => 
+        let newValues = o.values.map(val =>
           val.internalId === valId ? { ...val, text: newText } : val
         );
         // Shopify check: if we type in the last row, automatically append a new empty row
@@ -631,7 +631,7 @@ export default function ProductForm({ productId, onBack, onSaveSuccess }) {
     values: opt.values.filter(v => v && v.text && String(v.text).trim() !== '')
   })).filter(o => o.name && o.values.length > 0);
 
-  const combinationArrays = activeOptions.map(opt => 
+  const combinationArrays = activeOptions.map(opt =>
     opt.values.map(val => ({
       optionId: opt.id,
       optionName: opt.name,
@@ -653,7 +653,7 @@ export default function ProductForm({ productId, onBack, onSaveSuccess }) {
   const duplicateSkuKeys = React.useMemo(() => {
     const skus = {};
     const duplicates = new Set();
-    
+
     const selectedBrand = brands.find(b => b.id === Number(formData.brandId));
     const brandCode = selectedBrand?.brandCode || 'GEN';
     const productCode = formData.productCode.trim() || generateProductCode(formData.name, 20);
@@ -664,7 +664,7 @@ export default function ProductForm({ productId, onBack, onSaveSuccess }) {
       const vData = variantsData[key];
       const defaultSku = generateVariantSku(brandCode, productCode, comb);
       const sku = (vData?.sku !== undefined ? vData.sku : defaultSku).trim().toUpperCase();
-      
+
       if (sku) {
         if (skus[sku]) {
           duplicates.add(key);
@@ -850,14 +850,14 @@ export default function ProductForm({ productId, onBack, onSaveSuccess }) {
           </div>
         </div>
         <div className="flex gap-3">
-          <button 
+          <button
             type="button"
             onClick={onBack}
             className="px-5 py-2.5 border border-admin-border text-admin-text-main rounded-md font-bold hover:bg-admin-bg transition-colors text-sm cursor-pointer"
           >
             Hủy
           </button>
-          <button 
+          <button
             type="button"
             onClick={() => handleSave(true)}
             disabled={saving}
@@ -866,7 +866,7 @@ export default function ProductForm({ productId, onBack, onSaveSuccess }) {
             {saving ? <Loader2 size={18} className="animate-spin" /> : <Save size={18} />}
             Lưu & Tiếp tục
           </button>
-          <button 
+          <button
             type="button"
             onClick={() => handleSave(false)}
             disabled={saving}
@@ -880,10 +880,10 @@ export default function ProductForm({ productId, onBack, onSaveSuccess }) {
 
       {/* Middle Grid */}
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
-        
+
         {/* Left Side (Columns 1 & 2) */}
         <div className="xl:col-span-2 flex flex-col gap-6">
-          
+
           {/* Khối A - Thông tin cơ bản */}
           <div className="bg-white p-6 rounded-md border-0 bg-gray-50/50">
             <h3 className="text-lg font-bold text-admin-text-main mb-4">Khối A - Thông tin cơ bản</h3>
@@ -935,9 +935,8 @@ export default function ProductForm({ productId, onBack, onSaveSuccess }) {
                   value={formData.brandId}
                   onChange={(e) => setFormData(prev => ({ ...prev, brandId: e.target.value }))}
                   disabled={!productId && !!searchParams.get('brandId')}
-                  className={`w-full px-4 py-3 border border-admin-border rounded-md focus:border-primary focus:ring-1 focus:ring-primary outline-none text-admin-text-main text-sm font-medium ${
-                    (!productId && searchParams.get('brandId')) ? 'bg-gray-100 cursor-not-allowed text-admin-text-muted' : 'bg-white'
-                  }`}
+                  className={`w-full px-4 py-3 border border-admin-border rounded-md focus:border-primary focus:ring-1 focus:ring-primary outline-none text-admin-text-main text-sm font-medium ${(!productId && searchParams.get('brandId')) ? 'bg-gray-100 cursor-not-allowed text-admin-text-muted' : 'bg-white'
+                    }`}
                 >
                   <option value="">-- Chọn thương hiệu --</option>
                   {brands.map(b => <option key={b.id} value={b.id}>{b.name}</option>)}
@@ -959,7 +958,7 @@ export default function ProductForm({ productId, onBack, onSaveSuccess }) {
           {/* Khối C - Hình ảnh chung */}
           <div className="bg-white p-6 rounded-md border-0 bg-gray-50/50">
             <h3 className="text-lg font-bold text-admin-text-main mb-4">Khối C - Hình ảnh sản phẩm (Gallery)</h3>
-            <div 
+            <div
               onDragOver={(e) => { e.preventDefault(); setIsDragOver(true); }}
               onDragLeave={() => setIsDragOver(false)}
               onDrop={() => setIsDragOver(false)}
@@ -1004,18 +1003,18 @@ export default function ProductForm({ productId, onBack, onSaveSuccess }) {
                           <img src={img.url} alt="preview" className="w-10 h-10 object-cover rounded bg-gray-100" />
                         </td>
                         <td className="py-2 text-center">
-                          <input 
-                            type="radio" 
-                            name="mainImage" 
-                            checked={img.isMain} 
+                          <input
+                            type="radio"
+                            name="mainImage"
+                            checked={img.isMain}
                             onChange={() => setMainImage(idx)}
                             className="w-4 h-4 text-primary cursor-pointer"
                           />
                         </td>
                         <td className="py-2 text-center">
-                          <input 
-                            type="number" 
-                            value={img.order} 
+                          <input
+                            type="number"
+                            value={img.order}
                             onChange={(e) => updateImageOrder(idx, e.target.value)}
                             className="w-10 px-1 py-1 text-center border border-admin-border rounded outline-none focus:border-primary text-xs"
                           />
@@ -1037,7 +1036,7 @@ export default function ProductForm({ productId, onBack, onSaveSuccess }) {
 
         {/* Right Side (Column 3) */}
         <div className="flex flex-col gap-6">
-          
+
           {/* Khối B - Trạng thái & Phân loại */}
           <div className="bg-white p-6 rounded-md border-0 bg-gray-50/50">
             <h3 className="text-lg font-bold text-admin-text-main mb-4">Khối B - Trạng thái & Phân loại</h3>
@@ -1143,13 +1142,13 @@ export default function ProductForm({ productId, onBack, onSaveSuccess }) {
 
         {formData.hasVariants && (
           <div className="space-y-6 mt-4">
-            
+
             {/* Shopify style Options attributes config list */}
             <div className="p-4 rounded-md bg-white">
               <div className="flex items-center justify-between mb-3 border-b border-gray-100 pb-2">
                 <h4 className="text-sm font-bold text-admin-text-main">Cấu hình thuộc tính biến thể</h4>
                 {options.length < 4 && (
-                  <button 
+                  <button
                     type="button"
                     onClick={addOptionRow}
                     className="text-xs font-bold text-primary hover:text-admin-primary-hover flex items-center gap-1 cursor-pointer"
@@ -1177,7 +1176,7 @@ export default function ProductForm({ productId, onBack, onSaveSuccess }) {
                               ))}
                             </select>
                           </div>
-                          <button 
+                          <button
                             type="button"
                             onClick={() => removeOptionRow(opt.id)}
                             className="p-1.5 text-admin-text-muted hover:text-admin-danger hover:bg-red-50 rounded cursor-pointer"
@@ -1190,7 +1189,7 @@ export default function ProductForm({ productId, onBack, onSaveSuccess }) {
                           <label className="block text-xs font-bold text-admin-text-main mb-1">Các giá trị thuộc tính:</label>
                           {opt.values.map((val, vIdx) => (
                             <div key={val.internalId} className="flex items-center gap-2">
-                              <input
+                             <input
                                 type="text"
                                 value={val.text}
                                 onChange={(e) => updateValueText(opt.id, val.internalId, e.target.value)}
@@ -1198,6 +1197,52 @@ export default function ProductForm({ productId, onBack, onSaveSuccess }) {
                                 placeholder={vIdx === opt.values.length - 1 ? "+ Nhập giá trị mới..." : "Giá trị thuộc tính..."}
                                 className="flex-1 px-3 py-2 border border-admin-border rounded-md text-xs outline-none bg-white focus:border-primary value-input font-medium"
                               />
+                              {/*ràng buộc ram - rom, màu sắc */}
+                              {/*{opt.name && (opt.name.toLowerCase().includes("dung lượng") || opt.name.toLowerCase().includes("ram") || opt.name.toLowerCase().includes("rom")) ? (
+                                <select
+                                  value={val.text}
+                                  onChange={(e) => updateValueText(opt.id, val.internalId, e.target.value)}
+                                  className="flex-1 px-3 py-2 border border-admin-border rounded-md text-xs outline-none bg-white focus:border-primary value-input font-semibold"
+                                >
+                                  <option value="">-- Chọn cấu hình RAM/ROM --</option>
+                                  <option value="8GB/128GB">8GB/128GB</option>
+                                  <option value="8GB/256GB">8GB/256GB</option>
+                                  <option value="12GB/256GB">12GB/256GB</option>
+                                  <option value="12GB/512GB">12GB/512GB</option>
+                                  <option value="16GB/512GB">16GB/512GB</option>
+                                  <option value="16GB/1TB">16GB/1TB</option>
+                                </select>
+                              ) :
+                              opt.name && (opt.name.toLowerCase().includes("màu") || opt.name.toLowerCase().includes("sắc")) ? (
+                                // 2. Ràng buộc cứng cho Màu sắc
+                                <select
+                                  value={val.text}
+                                  onChange={(e) => updateValueText(opt.id, val.internalId, e.target.value)}
+                                  className="flex-1 px-3 py-2 border border-admin-border rounded-md text-xs outline-none bg-white focus:border-primary value-input font-semibold"
+                                >
+                                  <option value="">-- Chọn màu sắc --</option>
+                                  <option value="Đen">Đen</option>
+                                  <option value="Trắng">Trắng</option>
+                                  <option value="Xám">Xám</option>
+                                  <option value="Bạc">Bạc</option>
+                                  <option value="Vàng">Vàng</option>
+                                  <option value="Xanh Dương">Xanh Dương</option>
+                                  <option value="Xanh Lá">Xanh Lá</option>
+                                  <option value="Đỏ">Đỏ</option>
+                                  <option value="Hồng">Hồng</option>
+                                  <option value="Tím">Tím</option>
+                                  <option value="Cam">Cam</option>
+                                </select>
+                              ) : (
+                                <input
+                                  type="text"
+                                  value={val.text}
+                                  onChange={(e) => updateValueText(opt.id, val.internalId, e.target.value)}
+                                  onKeyDown={(e) => handleValueKeyDown(e, opt, val.internalId, vIdx)}
+                                  placeholder={vIdx === opt.values.length - 1 ? "+ Nhập giá trị mới..." : "Giá trị thuộc tính..."}
+                                  className="flex-1 px-3 py-2 border border-admin-border rounded-md text-xs outline-none bg-white focus:border-primary value-input font-medium"
+                                />
+                              )}*/}
                               {vIdx !== opt.values.length - 1 && (
                                 <button
                                   type="button"
@@ -1250,7 +1295,7 @@ export default function ProductForm({ productId, onBack, onSaveSuccess }) {
             {activeCombinations.length > 0 && (
               <div className="p-4 rounded-md bg-white">
                 <h4 className="text-sm font-bold text-admin-text-main mb-3">Danh sách ma trận biến thể sinh ra</h4>
-                
+
                 <div className="overflow-x-auto">
                   <table className="w-full text-left border-collapse text-xs">
                     <thead>
@@ -1277,7 +1322,7 @@ export default function ProductForm({ productId, onBack, onSaveSuccess }) {
                         const combName = comb.map(p => p.valueText).join(' - ');
                         const defaultSku = generateVariantSku(brandCode, productCode, comb);
                         const defaultName = `${formData.name} - ${combName}`;
-                        
+
                         const displayName = vData?.name !== undefined ? vData.name : defaultName;
                         const currentSku = vData?.sku !== undefined ? vData.sku : defaultSku;
                         const priceVal = vData?.price !== undefined ? vData.price : '';
@@ -1297,7 +1342,7 @@ export default function ProductForm({ productId, onBack, onSaveSuccess }) {
                                   ) : (
                                     <ImageIcon className="text-admin-text-muted w-4 h-4" />
                                   )}
-                                  <input 
+                                  <input
                                     type="file"
                                     accept=".jpg,.jpeg,.png,.webp,.svg"
                                     onChange={async (e) => {
@@ -1330,7 +1375,7 @@ export default function ProductForm({ productId, onBack, onSaveSuccess }) {
 
                               {/* 3. SKU */}
                               <td className="py-3 px-2">
-                                <input 
+                                <input
                                   type="text"
                                   value={currentSku}
                                   onChange={(e) => updateVariantField(key, 'sku', e.target.value)}
@@ -1354,7 +1399,7 @@ export default function ProductForm({ productId, onBack, onSaveSuccess }) {
 
                               {/* 5. Tồn kho */}
                               <td className="py-3 px-2">
-                                <input 
+                                <input
                                   type="number"
                                   value={stockVal}
                                   onChange={(e) => updateVariantField(key, 'totalStock', parseInt(e.target.value) || 0)}
@@ -1413,7 +1458,7 @@ export default function ProductForm({ productId, onBack, onSaveSuccess }) {
                                       <h5 className="font-bold text-xs text-admin-text-main uppercase tracking-wider">
                                         Cấu hình nâng cao cho: <span className="text-primary">{displayName}</span>
                                       </h5>
-                                      <button 
+                                      <button
                                         type="button"
                                         onClick={() => setExpandedVariantKey(null)}
                                         className="text-xs text-admin-text-muted hover:text-admin-text-main font-bold cursor-pointer"
@@ -1427,7 +1472,7 @@ export default function ProductForm({ productId, onBack, onSaveSuccess }) {
                                       <div className="space-y-3">
                                         <div>
                                           <label className="block text-[11px] font-bold text-admin-text-main mb-1">Tên hiển thị biến thể</label>
-                                          <input 
+                                          <input
                                             type="text"
                                             value={displayName}
                                             onChange={(e) => updateVariantField(key, 'name', e.target.value)}
@@ -1437,7 +1482,7 @@ export default function ProductForm({ productId, onBack, onSaveSuccess }) {
 
                                         <div>
                                           <label className="block text-[11px] font-bold text-admin-text-main mb-1">Mã SKU (Manual)</label>
-                                          <input 
+                                          <input
                                             type="text"
                                             value={currentSku}
                                             onChange={(e) => updateVariantField(key, 'sku', e.target.value)}
@@ -1457,7 +1502,7 @@ export default function ProductForm({ productId, onBack, onSaveSuccess }) {
                                               ) : (
                                                 <ImageIcon className="text-admin-text-muted w-5 h-5" />
                                               )}
-                                              <input 
+                                              <input
                                                 type="file"
                                                 accept=".jpg,.jpeg,.png,.webp,.svg"
                                                 onChange={async (e) => {
@@ -1512,7 +1557,7 @@ export default function ProductForm({ productId, onBack, onSaveSuccess }) {
                                         <div className="grid grid-cols-2 gap-3">
                                           <div>
                                             <label className="block text-[11px] font-bold text-admin-text-main mb-1">Tồn kho</label>
-                                            <input 
+                                            <input
                                               type="number"
                                               value={stockVal}
                                               onChange={(e) => updateVariantField(key, 'totalStock', parseInt(e.target.value) || 0)}
@@ -1521,7 +1566,7 @@ export default function ProductForm({ productId, onBack, onSaveSuccess }) {
                                           </div>
                                           <div className="flex items-end pb-1.5">
                                             <label className="flex items-center gap-2 cursor-pointer">
-                                              <input 
+                                              <input
                                                 type="checkbox"
                                                 checked={vData?.chargeTax !== false}
                                                 onChange={(e) => updateVariantField(key, 'chargeTax', e.target.checked)}
@@ -1563,8 +1608,8 @@ export default function ProductForm({ productId, onBack, onSaveSuccess }) {
                 {excludedKeys.length > 0 && (
                   <div className="mt-4 p-3 bg-gray-50 rounded-md flex items-center justify-between">
                     <span className="text-xs text-admin-text-muted font-medium">Đang ẩn {excludedKeys.length} biến thể không kinh doanh.</span>
-                    <button 
-                      type="button" 
+                    <button
+                      type="button"
                       onClick={() => setExcludedKeys([])}
                       className="text-xs font-bold text-primary hover:text-admin-primary-hover cursor-pointer"
                     >
@@ -1581,11 +1626,10 @@ export default function ProductForm({ productId, onBack, onSaveSuccess }) {
 
       {/* Premium Toast Notification */}
       {toast && (
-        <div className={`fixed bottom-5 right-5 z-[200] max-w-sm w-full bg-white rounded-md shadow-xl border p-4 flex items-start gap-3 animate-in fade-in slide-in-from-bottom-5 duration-300 ${
-          toast.type === 'success' ? 'border-l-4 border-l-success border-admin-border' : 
-          toast.type === 'error' ? 'border-l-4 border-l-admin-danger border-admin-border' : 
-          'border-l-4 border-l-[#FFB800] border-admin-border'
-        }`}>
+        <div className={`fixed bottom-5 right-5 z-[200] max-w-sm w-full bg-white rounded-md shadow-xl border p-4 flex items-start gap-3 animate-in fade-in slide-in-from-bottom-5 duration-300 ${toast.type === 'success' ? 'border-l-4 border-l-success border-admin-border' :
+          toast.type === 'error' ? 'border-l-4 border-l-admin-danger border-admin-border' :
+            'border-l-4 border-l-[#FFB800] border-admin-border'
+          }`}>
           <div className="flex-shrink-0 mt-0.5">
             {toast.type === 'success' ? (
               <div className="w-8 h-8 rounded-full bg-success/10 text-success flex items-center justify-center font-bold">✓</div>
