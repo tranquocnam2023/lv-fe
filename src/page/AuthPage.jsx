@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 import Breadcrumb from '../components/Breadcrumb';
 import { authService } from '../services/authService';
 import { userService } from '../services/userService';
@@ -13,6 +14,7 @@ import SearchableSelect from '../components/SearchableSelect';
 
 
 export default function AuthPage() {
+  const location = useLocation();
 
   // Auth state
   const [isLogin, setIsLogin] = useState(true);
@@ -41,6 +43,15 @@ export default function AuthPage() {
 
   // Profile management state
   const [profileTab, setProfileTab] = useState('info'); // 'info', 'addresses', 'password', 'history'
+
+  useEffect(() => {
+    const searchParams = new URLSearchParams(location.search);
+    const tab = searchParams.get('tab');
+    if (tab && ['info', 'addresses', 'password', 'history'].includes(tab)) {
+      setProfileTab(tab);
+    }
+  }, [location.search]);
+
   const [userProfile, setUserProfile] = useState(initialUser);
   const [shippingInfos, setShippingInfos] = useState([]);
   const [infoLoading, setInfoLoading] = useState(false);
