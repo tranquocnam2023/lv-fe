@@ -42,7 +42,9 @@ export default function HomePage({ selectedLocation }) {
             ...p,
             price: p.price || p.basePrice,
             image: p.image || p.thumbnailImage || p.mainImage,
-            stockQuantity: p.availableStock ?? p.totalStock ?? p.stockQuantity ?? p.stock ?? 0
+            stockQuantity: p.availableStock ?? p.totalStock ?? p.stockQuantity ?? p.stock ?? 0,
+            averageRating: p.averageRating ?? 5,
+            reviewCount: p.reviewCount ?? 0
           }));
           setProducts(normalizedData);
         } else {
@@ -164,6 +166,8 @@ export default function HomePage({ selectedLocation }) {
                  image={product.image}
                  stockQuantity={product.stockQuantity}
                  isFeatured={true}
+                 averageRating={product.averageRating}
+                 reviewCount={product.reviewCount}
               />
             ))}
           </div>
@@ -213,6 +217,8 @@ export default function HomePage({ selectedLocation }) {
                    image={product.image}
                    stockQuantity={product.stockQuantity}
                    isFeatured={product.isFeatured}
+                   averageRating={product.averageRating}
+                   reviewCount={product.reviewCount}
                 />
               ))}
             </div>
@@ -248,6 +254,8 @@ export default function HomePage({ selectedLocation }) {
                      isFeatured={product.isFeatured}
                      badgeText="Khu vực khác"
                      badgeBg="bg-indigo-600"
+                     averageRating={product.averageRating}
+                     reviewCount={product.reviewCount}
                   />
                 ))}
               </div>
