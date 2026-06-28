@@ -38,7 +38,7 @@ export default function ProductVariantsMatrix() {
     bulkStock,
     setBulkStock,
     handleApplyBulkEdit,
-    handleBulkStatusChange,
+    handleBulkStatusToggle,
     handleBulkDelete,
     variantsData,
     brands,
@@ -147,12 +147,15 @@ export default function ProductVariantsMatrix() {
               <div className="flex flex-wrap items-center gap-3">
                 <div className="flex items-center gap-1.5">
                   <span className="text-xs text-admin-text-main font-semibold">Giá mới:</span>
-                  <PriceInput
-                    value={bulkPrice}
-                    onChange={(val) => setBulkPrice(val)}
-                    className="w-32 px-2 py-1 border border-admin-border rounded outline-none text-xs text-admin-text-main font-semibold bg-white"
-                    placeholder="Nhập giá..."
-                  />
+                  <div className="w-32">
+                    <PriceInput
+                      value={bulkPrice}
+                      onChange={(val) => setBulkPrice(val)}
+                      className="w-full px-2 py-1 border border-admin-border rounded outline-none text-xs text-admin-text-main font-semibold bg-white"
+                      placeholder="Nhập giá..."
+                      errorAbsolute={true}
+                    />
+                  </div>
                 </div>
                 <div className="flex items-center gap-1.5">
                   <span className="text-xs text-admin-text-main font-semibold">Tồn kho:</span>
@@ -197,17 +200,10 @@ export default function ProductVariantsMatrix() {
 
                 <button
                   type="button"
-                  onClick={() => handleBulkStatusChange(true)}
-                  className="px-3 py-1.5 border border-admin-border text-green-700 bg-green-50 hover:bg-green-100 text-xs font-bold rounded cursor-pointer transition-all active:scale-[0.97]"
+                  onClick={handleBulkStatusToggle}
+                  className="px-3 py-1.5 border border-admin-border text-primary bg-primary/5 hover:bg-primary/10 text-xs font-bold rounded cursor-pointer transition-all active:scale-[0.97]"
                 >
-                  Kích hoạt
-                </button>
-                <button
-                  type="button"
-                  onClick={() => handleBulkStatusChange(false)}
-                  className="px-3 py-1.5 border border-admin-border text-orange-700 bg-orange-50 hover:bg-orange-100 text-xs font-bold rounded cursor-pointer transition-all active:scale-[0.97]"
-                >
-                  Ngừng kích hoạt
+                  Bật/Tắt kích hoạt
                 </button>
 
                 <button
