@@ -723,6 +723,39 @@ export const useProductForm = ({ productId, onBack, onSaveSuccess, searchParams,
     showToast("success", `Đã cập nhật hàng loạt cho ${selectedVariantKeys.length} biến thể.`);
   };
 
+  const handleBulkStatusChange = (isActive) => {
+    if (selectedVariantKeys.length === 0) return;
+    setVariantsData(prev => {
+      const updated = { ...prev };
+      selectedVariantKeys.forEach(key => {
+        const currentData = updated[key] || {};
+        updated[key] = {
+          ...currentData,
+          isActive: isActive
+        };
+      });
+      return updated;
+    });
+    showToast("success", `Đã ${isActive ? 'kích hoạt' : 'ngừng kích hoạt'} hàng loạt cho ${selectedVariantKeys.length} biến thể.`);
+  };
+
+  const handleBulkDelete = () => {
+    if (selectedVariantKeys.length === 0) return;
+    if (window.confirm(`Bạn có chắc chắn muốn xóa ${selectedVariantKeys.length} biến thể đã chọn?`)) {
+      setExcludedKeys(prev => {
+        const newExcluded = [...prev];
+        selectedVariantKeys.forEach(k => {
+          if (!newExcluded.includes(k)) {
+            newExcluded.push(k);
+          }
+        });
+        return newExcluded;
+      });
+      setSelectedVariantKeys([]);
+      showToast("success", `Đã xóa hàng loạt ${selectedVariantKeys.length} biến thể.`);
+    }
+  };
+
   const allActiveKeys = useMemo(() => {
     return activeCombinations.map(comb => {
       const sortedParts = [...comb].sort((a, b) => a.optionId.localeCompare(b.optionId));
@@ -917,6 +950,8 @@ export const useProductForm = ({ productId, onBack, onSaveSuccess, searchParams,
     updateVariantField,
     handleSelectByAttribute,
     handleApplyBulkEdit,
+    handleBulkStatusChange,
+    handleBulkDelete,
     handleToggleSelectAll,
     handleSave,
     handleNameChange,

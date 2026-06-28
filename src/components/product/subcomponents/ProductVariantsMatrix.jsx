@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { ChevronDown, Image as ImageIcon, Trash2 } from 'lucide-react';
 import { useProductFormContext } from '../context/ProductFormContext';
 import PriceInput from '../../PriceInput';
@@ -6,6 +6,21 @@ import { productService } from '../../../services/productService';
 import { generateProductCode } from '../../../utils/codeGenerator';
 
 export default function ProductVariantsMatrix() {
+  const [isAttrDropdownOpen, setIsAttrDropdownOpen] = useState(false);
+  const dropdownRef = useRef(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setIsAttrDropdownOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
+
   const {
     activeCombinations,
     selectedVariantKeys,
@@ -21,6 +36,8 @@ export default function ProductVariantsMatrix() {
     bulkStock,
     setBulkStock,
     handleApplyBulkEdit,
+    handleBulkStatusChange,
+    handleBulkDelete,
     variantsData,
     brands,
     formData,
@@ -67,38 +84,44 @@ export default function ProductVariantsMatrix() {
               <div className="h-4 w-px bg-admin-border hidden sm:block"></div>
 
               {/* Custom Dropdown: Chọn theo thuộc tính */}
-              <div className="relative inline-block text-left group">
+              <div className="relative inline-block text-left" ref={dropdownRef}>
                 <button
                   type="button"
+                  onClick={() => setIsAttrDropdownOpen(!isAttrDropdownOpen)}
                   className="flex items-center gap-1.5 px-3 py-1 border border-admin-border rounded bg-white text-admin-text-main hover:bg-admin-bg text-[11px] font-bold transition-all cursor-pointer"
                 >
                   <span>Chọn theo thuộc tính</span>
                   <ChevronDown size={12} className="text-admin-text-muted" />
                 </button>
                 
-                <div className="absolute left-0 mt-1 w-56 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 divide-y divide-gray-100 focus:outline-none z-50 hidden group-hover:block hover:block">
-                  <div className="py-1 max-h-60 overflow-y-auto">
-                    {activeOptions.map(opt => (
-                      <div key={opt.id} className="py-1 border-b border-gray-50 last:border-b-0">
-                        <div className="px-3 py-1 text-[10px] font-extrabold text-admin-text-muted uppercase tracking-wider bg-slate-50/50">
-                          {opt.name}
+                {isAttrDropdownOpen && (
+                  <div className="absolute left-0 mt-1 w-56 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 divide-y divide-gray-100 focus:outline-none z-50">
+                    <div className="py-1 max-h-60 overflow-y-auto">
+                      {activeOptions.map(opt => (
+                        <div key={opt.id} className="py-1 border-b border-gray-50 last:border-b-0">
+                          <div className="px-3 py-1 text-[10px] font-extrabold text-admin-text-muted uppercase tracking-wider bg-slate-50/50">
+                            {opt.name}
+                          </div>
+                          <div className="px-1 py-1 space-y-0.5">
+                            {opt.values.map(val => (
+                              <button
+                                key={val.internalId}
+                                type="button"
+                                onClick={() => {
+                                  handleSelectByAttribute(opt.id, val.text);
+                                  setIsAttrDropdownOpen(false);
+                                }}
+                                className="flex w-full items-center px-3 py-1.5 text-xs text-admin-text-main hover:bg-primary/10 hover:text-primary rounded transition-colors text-left font-semibold cursor-pointer"
+                              >
+                                {val.text}
+                              </button>
+                            ))}
+                          </div>
                         </div>
-                        <div className="px-1 py-1 space-y-0.5">
-                          {opt.values.map(val => (
-                            <button
-                              key={val.internalId}
-                              type="button"
-                              onClick={() => handleSelectByAttribute(opt.id, val.text)}
-                              className="flex w-full items-center px-3 py-1.5 text-xs text-admin-text-main hover:bg-primary/10 hover:text-primary rounded transition-colors text-left font-semibold cursor-pointer"
-                            >
-                              {val.text}
-                            </button>
-                          ))}
-                        </div>
-                      </div>
-                    ))}
+                      ))}
+                    </div>
                   </div>
-                </div>
+                )}
               </div>
             </div>
           </div>
@@ -159,6 +182,34 @@ export default function ProductVariantsMatrix() {
                 >
                   Áp dụng
                 </button>
+
+                <div className="h-4 w-px bg-admin-border"></div>
+
+                <button
+                  type="button"
+                  onClick={() => handleBulkStatusChange(true)}
+                  className="px-3 py-1.5 border border-admin-border text-green-700 bg-green-50 hover:bg-green-100 text-xs font-bold rounded cursor-pointer transition-all active:scale-[0.97]"
+                >
+                  Kích hoạt
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleBulkStatusChange(false)}
+                  className="px-3 py-1.5 border border-admin-border text-orange-700 bg-orange-50 hover:bg-orange-100 text-xs font-bold rounded cursor-pointer transition-all active:scale-[0.97]"
+                >
+                  Ngừng kích hoạt
+                </button>
+
+                <button
+                  type="button"
+                  onClick={handleBulkDelete}
+                  className="px-3 py-1.5 border border-admin-border text-red-700 bg-red-50 hover:bg-red-100 text-xs font-bold rounded cursor-pointer transition-all flex items-center gap-1 active:scale-[0.97]"
+                >
+                  <Trash2 size={13} /> Xóa đã chọn
+                </button>
+
+                <div className="h-4 w-px bg-admin-border"></div>
+
                 <button
                   type="button"
                   onClick={() => {
