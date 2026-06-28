@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { ChevronDown, Image as ImageIcon, Trash2 } from 'lucide-react';
+import { ChevronDown, Image as ImageIcon, Trash2, Check } from 'lucide-react';
 import { useProductFormContext } from '../context/ProductFormContext';
 import PriceInput from '../../PriceInput';
 import { productService } from '../../../services/productService';
@@ -25,6 +25,8 @@ export default function ProductVariantsMatrix() {
     activeCombinations,
     selectedVariantKeys,
     setSelectedVariantKeys,
+    selectedAttributes,
+    setSelectedAttributes,
     allActiveKeys,
     isAllSelected,
     isSomeSelected,
@@ -74,7 +76,10 @@ export default function ProductVariantsMatrix() {
                 </button>
                 <button
                   type="button"
-                  onClick={() => setSelectedVariantKeys([])}
+                  onClick={() => {
+                    setSelectedVariantKeys([]);
+                    setSelectedAttributes([]);
+                  }}
                   className="px-2.5 py-1 text-[11px] font-bold border border-admin-border rounded bg-white text-admin-text-main hover:bg-admin-bg cursor-pointer transition-all active:scale-[0.98]"
                 >
                   Bỏ chọn
@@ -103,19 +108,24 @@ export default function ProductVariantsMatrix() {
                             {opt.name}
                           </div>
                           <div className="px-1 py-1 space-y-0.5">
-                            {opt.values.map(val => (
-                              <button
-                                key={val.internalId}
-                                type="button"
-                                onClick={() => {
-                                  handleSelectByAttribute(opt.id, val.text);
-                                  setIsAttrDropdownOpen(false);
-                                }}
-                                className="flex w-full items-center px-3 py-1.5 text-xs text-admin-text-main hover:bg-primary/10 hover:text-primary rounded transition-colors text-left font-semibold cursor-pointer"
-                              >
-                                {val.text}
-                              </button>
-                            ))}
+                            {opt.values.map(val => {
+                              const isAttrSelected = selectedAttributes.includes(`${opt.id}:${val.text}`);
+                              return (
+                                <button
+                                  key={val.internalId}
+                                  type="button"
+                                  onClick={() => handleSelectByAttribute(opt.id, val.text)}
+                                  className={`flex w-full items-center justify-between px-3 py-1.5 text-xs rounded transition-colors text-left cursor-pointer ${
+                                    isAttrSelected
+                                      ? 'text-primary bg-primary/10 hover:bg-primary/20 font-bold'
+                                      : 'text-admin-text-main hover:bg-primary/10 hover:text-primary font-semibold'
+                                  }`}
+                                >
+                                  <span>{val.text}</span>
+                                  {isAttrSelected && <Check size={12} className="text-primary font-extrabold" />}
+                                </button>
+                              );
+                            })}
                           </div>
                         </div>
                       ))}
@@ -216,6 +226,7 @@ export default function ProductVariantsMatrix() {
                     setBulkPrice('');
                     setBulkStock('');
                     setSelectedVariantKeys([]);
+                    setSelectedAttributes([]);
                   }}
                   className="px-3 py-1.5 border border-admin-border text-admin-text-main hover:bg-admin-bg text-xs font-bold rounded cursor-pointer transition-all"
                 >

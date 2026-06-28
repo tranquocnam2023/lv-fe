@@ -131,6 +131,7 @@ export const useProductForm = ({ productId, onBack, onSaveSuccess, searchParams,
 
   // Selected variant keys for bulk actions
   const [selectedVariantKeys, setSelectedVariantKeys] = useState([]);
+  const [selectedAttributes, setSelectedAttributes] = useState([]);
   const [bulkPrice, setBulkPrice] = useState('');
   const [bulkStock, setBulkStock] = useState('');
 
@@ -681,24 +682,30 @@ export const useProductForm = ({ productId, onBack, onSaveSuccess, searchParams,
   };
 
   const handleSelectByAttribute = (optionId, valueText) => {
-    const matchedKeys = [];
-    activeCombinations.forEach(comb => {
-      const hasMatch = comb.some(p => p.optionId === optionId && p.valueText === valueText);
-      if (hasMatch) {
+    const attrKey = `${optionId}:${valueText}`;
+    setSelectedAttributes(prev => {
+      const isAlreadySelected = prev.includes(attrKey);
+      const nextAttrs = isAlreadySelected 
+        ? prev.filter(a => a !== attrKey)
+        : [...prev, attrKey];
+
+      const matchedKeys = [];
+      activeCombinations.forEach(comb => {
         const sortedParts = [...comb].sort((a, b) => a.optionId.localeCompare(b.optionId));
         const key = sortedParts.map(p => `${p.optionId}:${p.valueId.split(':').pop()}`).join('|');
-        matchedKeys.push(key);
-      }
-    });
 
-    setSelectedVariantKeys(prev => {
-      const newSelection = [...prev];
-      matchedKeys.forEach(k => {
-        if (!newSelection.includes(k)) {
-          newSelection.push(k);
+        const matchesAny = nextAttrs.some(attr => {
+          const [optId, valText] = attr.split(':');
+          return comb.some(p => p.optionId === optId && p.valueText === valText);
+        });
+
+        if (matchesAny) {
+          matchedKeys.push(key);
         }
       });
-      return newSelection;
+
+      setSelectedVariantKeys(matchedKeys);
+      return nextAttrs;
     });
   };
 
@@ -934,6 +941,8 @@ export const useProductForm = ({ productId, onBack, onSaveSuccess, searchParams,
     setExpandedVariantKey,
     selectedVariantKeys,
     setSelectedVariantKeys,
+    selectedAttributes,
+    setSelectedAttributes,
     bulkPrice,
     setBulkPrice,
     bulkStock,
