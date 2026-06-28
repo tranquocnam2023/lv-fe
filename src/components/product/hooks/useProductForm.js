@@ -730,20 +730,21 @@ export const useProductForm = ({ productId, onBack, onSaveSuccess, searchParams,
     showToast("success", `Đã cập nhật hàng loạt cho ${selectedVariantKeys.length} biến thể.`);
   };
 
-  const handleBulkStatusChange = (isActive) => {
+  const handleBulkStatusToggle = () => {
     if (selectedVariantKeys.length === 0) return;
     setVariantsData(prev => {
       const updated = { ...prev };
       selectedVariantKeys.forEach(key => {
         const currentData = updated[key] || {};
+        const currentIsActive = currentData.isActive !== false;
         updated[key] = {
           ...currentData,
-          isActive: isActive
+          isActive: !currentIsActive
         };
       });
       return updated;
     });
-    showToast("success", `Đã ${isActive ? 'kích hoạt' : 'ngừng kích hoạt'} hàng loạt cho ${selectedVariantKeys.length} biến thể.`);
+    showToast("success", `Đã bật/tắt kích hoạt hàng loạt cho ${selectedVariantKeys.length} biến thể.`);
   };
 
   const handleBulkDelete = () => {
@@ -959,7 +960,7 @@ export const useProductForm = ({ productId, onBack, onSaveSuccess, searchParams,
     updateVariantField,
     handleSelectByAttribute,
     handleApplyBulkEdit,
-    handleBulkStatusChange,
+    handleBulkStatusToggle,
     handleBulkDelete,
     handleToggleSelectAll,
     handleSave,

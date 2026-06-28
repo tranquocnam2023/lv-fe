@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 
-export default function PriceInput({ value, onChange, placeholder, className, required, id }) {
+export default function PriceInput({ value, onChange, placeholder, className, required, id, errorAbsolute }) {
   const [error, setError] = useState('');
 
   const formatNumber = (numStr) => {
@@ -38,7 +38,7 @@ export default function PriceInput({ value, onChange, placeholder, className, re
   const displayValue = formatNumber(value);
 
   return (
-    <div className="w-full">
+    <div className={`w-full ${errorAbsolute ? 'relative' : ''}`}>
       <input
         id={id}
         type="text"
@@ -48,7 +48,14 @@ export default function PriceInput({ value, onChange, placeholder, className, re
         className={className}
         required={required}
       />
-      {error && <p className="text-admin-danger text-xs font-bold mt-1">{error}</p>}
+      {error && (
+        <p className={errorAbsolute 
+          ? "absolute left-0 top-full mt-1 z-50 text-admin-danger text-[10px] font-bold whitespace-nowrap bg-white px-2 py-0.5 border border-red-200 rounded shadow-md" 
+          : "text-admin-danger text-xs font-bold mt-1"
+        }>
+          {error}
+        </p>
+      )}
     </div>
   );
 }
