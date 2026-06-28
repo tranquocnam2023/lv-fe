@@ -48,6 +48,21 @@ const CategoryRow = ({ category, level = 1, onEdit, onAddSubCategory, onDelete, 
   const isInactive = inheritedInactive || isSelfInactive;
   const currentLevel = category.level || level;
 
+  const getDirectoryPath = (cat) => {
+    const parts = [];
+    let current = cat;
+    while (current) {
+      parts.unshift(current.name);
+      if (current.parentId) {
+        current = allCategories.find(c => c.id === current.parentId);
+      } else {
+        current = null;
+      }
+    }
+    if (parts.length <= 1) return '';
+    return parts.join(' \\ ');
+  };
+
   return (
     <>
       <tr className={`hover:bg-admin-bg transition-colors group border-b border-admin-border ${isInactive ? 'opacity-65 grayscale bg-slate-50/50' : ''}`}>
@@ -68,9 +83,11 @@ const CategoryRow = ({ category, level = 1, onEdit, onAddSubCategory, onDelete, 
             <div>
               <div className="flex items-center gap-2">
                 <span className="text-base font-bold text-admin-text-main">{category.name}</span>
-                <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${getLevelBadgeColor(currentLevel)}`}>
-                  Cấp {currentLevel}
-                </span>
+                {category.categoryCode && (
+                  <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${getLevelBadgeColor(currentLevel)}`}>
+                    {category.categoryCode}
+                  </span>
+                )}
                 {inheritedInactive && (
                   <span className="px-2 py-0.5 rounded-full text-[9px] font-bold bg-admin-danger/10 text-admin-danger">
                     Kế thừa ẩn
@@ -82,8 +99,8 @@ const CategoryRow = ({ category, level = 1, onEdit, onAddSubCategory, onDelete, 
                   </span>
                 )}
               </div>
-              {category.categoryCode && (
-                <span className="block text-xs text-admin-text-muted mt-0.5">Mã: {category.categoryCode}</span>
+              {getDirectoryPath(category) && (
+                <span className="block text-xs text-admin-text-muted mt-0.5">{getDirectoryPath(category)}</span>
               )}
             </div>
           </div>
@@ -299,6 +316,21 @@ export default function AdminCategories() {
       parent = allCategories.find(c => c.id === parent.parentId);
     }
     return false;
+  };
+
+  const getFullDirectoryForSelect = (cat) => {
+    const parts = [];
+    let current = cat;
+    while (current) {
+      parts.unshift(current.name);
+      if (current.parentId) {
+        current = allCategories.find(c => c.id === current.parentId);
+      } else {
+        current = null;
+      }
+    }
+    const codePrefix = cat.categoryCode ? `[${cat.categoryCode}] ` : '';
+    return `${codePrefix}${parts.join(' \\ ')}`;
   };
 
   const loadData = () => {
@@ -689,7 +721,7 @@ export default function AdminCategories() {
                       onChange={(e) => setFormData({...formData, parentId: e.target.value})}
                       disabled={lockParentRoot}
                     >
-                      <option value="">-- Là danh mục gốc (Cấp 1) --</option>
+                      <option value="">-- Là danh mục gốc --</option>
                       {allCategories
                         .filter(c => {
                           if (editingCategory) {
@@ -699,7 +731,7 @@ export default function AdminCategories() {
                         })
                         .map(c => (
                         <option key={c.id} value={c.id}>
-                          {c.level === 1 ? `[Cấp 1] ${c.name}` : `[Cấp ${c.level || 2}] ${c.name}`}
+                          {getFullDirectoryForSelect(c)}
                         </option>
                       ))}
                     </select>

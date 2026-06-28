@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { ArrowLeft, Save, Plus, Trash2, UploadCloud, Loader2, Image as ImageIcon, X } from 'lucide-react';
 import { categoryService } from '../../services/categoryService';
 import { brandService } from '../../services/brandService';
@@ -16,40 +17,92 @@ const cartesianProduct = (arrays) => {
   }, [[]]);
 };
 
-// Helper to generate default SKU
-const generateVariantSku = (productName, combinationParts) => {
-  const cleanProd = productName.toString().toLowerCase()
-    .replace(/[àáạảãâầấậẩẫăằắặẳẵ]/g, "a")
-    .replace(/[èéẹẻẽêềếệểễ]/g, "e")
-    .replace(/[ìíịỉĩ]/g, "i")
-    .replace(/[òóọỏõôồốộổỗơờớợởỡ]/g, "o")
-    .replace(/[ùúụủũưừứựửữ]/g, "u")
-    .replace(/[ỳýỵỷỹ]/g, "y")
-    .replace(/đ/g, "d")
-    .replace(/[^a-z0-9]/g, '')
-    .toUpperCase();
+// Helpers for SKU generation following Backend rules
+const removeDiacritics = (text) => {
+  if (!text) return '';
+  let str = text.toString();
+  str = str.replace(/[àáạảãâầấậẩẫăằắặẳẵ]/g, "a");
+  str = str.replace(/[ÀÁẠẢÃÂẤẦẬẨẪĂẮẰẶẲẴ]/g, "A");
+  str = str.replace(/[èéẹẻẽêềếệểễ]/g, "e");
+  str = str.replace(/[ÈÉẸẺẼÊẾỀỆỂỄ]/g, "E");
+  str = str.replace(/[òóọỏõôồốộổỗơờớợởỡ]/g, "o");
+  str = str.replace(/[ÓÒỌỎÕÔỐỒỘỔỖƠỚỜỢỞỠ]/g, "O");
+  str = str.replace(/[ùúụủũưừứựửữ]/g, "u");
+  str = str.replace(/[ÚÙỤỦŨƯỨỪỰỬỮ]/g, "U");
+  str = str.replace(/[ìíịỉĩ]/g, "i");
+  str = str.replace(/[ÍÌỊỈĨ]/g, "I");
+  str = str.replace(/đ/g, "d");
+  str = str.replace(/Đ/g, "D");
+  str = str.replace(/[ỳýỵỷỹ]/g, "y");
+  str = str.replace(/[ÝỲỴỶỸ]/g, "Y");
+  return str;
+};
 
-  const cleanComb = combinationParts.map(p => 
-    p.valueText.toString().toLowerCase()
-      .replace(/[àáạảãâầấậẩẫăằắặẳẵ]/g, "a")
-      .replace(/[èéẹẻẽêềếệểễ]/g, "e")
-      .replace(/[ìíịỉĩ]/g, "i")
-      .replace(/[òóọỏõôồốộổỗơờớợởỡ]/g, "o")
-      .replace(/[ùúụủũưừứựửữ]/g, "u")
-      .replace(/[ỳýỵỷỹ]/g, "y")
-      .replace(/đ/g, "d")
-      .replace(/[^a-z0-9]/g, '')
-      .toUpperCase()
-  ).join('-');
+const processAttributeValue = (attrName, attrValue) => {
+  if (!attrValue) return '';
+  const cleanVal = attrValue.trim().replace(/\s+/g, ' ');
 
-  return `${cleanProd}-${cleanComb}`;
+  // Case 2: ROM/RAM -> Keep digits only
+  if (attrName.includes("Dung lượng") || attrName.includes("RAM") || attrName.includes("ROM")) {
+    return cleanVal.replace(/\D/g, '');
+  }
+
+  // Case 1: Màu sắc, Kích thước, Phiên bản, etc.
+  const words = cleanVal.split(' ').filter(w => w.length > 0);
+  if (words.length === 1) {
+    const unsigned = removeDiacritics(words[0]);
+    const lettersAndDigits = unsigned.replace(/[^a-zA-Z0-9]/g, '').toUpperCase();
+    return lettersAndDigits.slice(0, 5);
+  } else if (words.length > 1) {
+    const firstLetters = words.map(w => {
+      const unsigned = removeDiacritics(w);
+      const valid = unsigned.replace(/[^a-zA-Z0-9]/g, '');
+      return valid.length > 0 ? valid[0] : '';
+    }).filter(c => c !== '').join('').toUpperCase();
+    return firstLetters.slice(0, 10);
+  }
+
+  return '';
+};
+
+const generateVariantSku = (brandCode, productCode, combinationParts) => {
+  const bCode = (brandCode || 'GEN').toUpperCase();
+  const pCode = (productCode || 'PROD').toUpperCase();
+
+  const sortedParts = [...combinationParts].sort((a, b) => a.optionId.localeCompare(b.optionId));
+
+  const attrParts = [];
+  sortedParts.forEach(part => {
+    const processed = processAttributeValue(part.optionName, part.valueText);
+    if (processed) {
+      attrParts.push(processed);
+    }
+  });
+
+  const suffix = attrParts.length > 0 ? attrParts.join('-') : '';
+  return suffix ? `${bCode}-${pCode}-${suffix}`.toUpperCase() : `${bCode}-${pCode}`.toUpperCase();
 };
 
 export default function ProductForm({ productId, onBack, onSaveSuccess }) {
+  const [searchParams, setSearchParams] = useSearchParams();
   const [categories, setCategories] = useState([]);
   const [brands, setBrands] = useState([]);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [toast, setToast] = useState(null); // { type: 'success' | 'error' | 'warning', message: '', description: '' }
+
+  const showToast = (type, message, description = '') => {
+    setToast({ type, message, description });
+  };
+
+  useEffect(() => {
+    if (toast) {
+      const timer = setTimeout(() => {
+        setToast(null);
+      }, toast.type === 'success' ? 4000 : 7000);
+      return () => clearTimeout(timer);
+    }
+  }, [toast]);
   const [uploading, setUploading] = useState(false);
   const [isDragOver, setIsDragOver] = useState(false);
 
@@ -202,9 +255,27 @@ export default function ProductForm({ productId, onBack, onSaveSuccess }) {
 
                     if (keyParts.length === parsedOpts.length && keyParts.length > 0) {
                       const key = keyParts.join('|');
+
+                      // Tự động đồng bộ hóa tên biến thể bị lệch với giá trị thuộc tính
+                      const combValues = parsedOpts.map(opt => {
+                        const valText = attrs[opt.name];
+                        return valText ? String(valText).trim() : '';
+                      }).filter(t => t !== '');
+                      const combName = combValues.join(' - ');
+                      const defaultName = `${productData.name || ''} - ${combName}`;
+
+                      let isOutOfSync = false;
+                      for (const valText of combValues) {
+                        if (!v.name.toLowerCase().includes(valText.toLowerCase())) {
+                          isOutOfSync = true;
+                          break;
+                        }
+                      }
+                      const finalName = isOutOfSync ? defaultName : v.name;
+
                       parsedVarsData[key] = {
                         id: v.id,
-                        name: v.name,
+                        name: finalName,
                         sku: v.sku || '',
                         price: v.price,
                         totalStock: v.totalStock,
@@ -287,6 +358,11 @@ export default function ProductForm({ productId, onBack, onSaveSuccess }) {
               setExcludedKeys(initialExcluded);
             }
           }
+        } else {
+          const queryBrandId = searchParams.get('brandId');
+          if (queryBrandId) {
+            setFormData(prev => ({ ...prev, brandId: queryBrandId }));
+          }
         }
       } catch (e) {
         console.error("Lỗi tải dữ liệu ban đầu:", e);
@@ -318,12 +394,32 @@ export default function ProductForm({ productId, onBack, onSaveSuccess }) {
   };
 
   const handleNameChange = (e) => {
-    const name = e.target.value;
+    const newName = e.target.value;
+    const oldName = formData.name;
+
     setFormData(prev => ({
       ...prev,
-      name,
-      slug: generateSlug(name)
+      name: newName,
+      slug: generateSlug(newName)
     }));
+
+    if (oldName && oldName.trim() !== '' && oldName !== newName) {
+      setVariantsData(prev => {
+        const updated = { ...prev };
+        Object.keys(updated).forEach(key => {
+          const v = updated[key];
+          if (v && v.name) {
+            const escapedOldName = oldName.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
+            const regex = new RegExp(escapedOldName, 'g');
+            updated[key] = {
+              ...v,
+              name: v.name.replace(regex, newName)
+            };
+          }
+        });
+        return updated;
+      });
+    }
   };
 
   // Image Upload handler
@@ -411,6 +507,10 @@ export default function ProductForm({ productId, onBack, onSaveSuccess }) {
 
   // Shopify-style Option values tags management
   const updateValueText = (optId, valId, newText) => {
+    const targetOpt = options.find(o => o.id === optId);
+    const targetVal = targetOpt?.values.find(v => v.internalId === valId);
+    const oldText = targetVal ? targetVal.text : '';
+
     setOptions(prev => prev.map(o => {
       if (o.id === optId) {
         let newValues = o.values.map(val => 
@@ -425,6 +525,27 @@ export default function ProductForm({ productId, onBack, onSaveSuccess }) {
       }
       return o;
     }));
+
+    if (oldText && oldText.trim() !== '' && oldText !== newText) {
+      setVariantsData(prev => {
+        const updated = { ...prev };
+        Object.keys(updated).forEach(key => {
+          const parts = key.split('|');
+          if (parts.includes(`${optId}:${valId}`)) {
+            const v = updated[key];
+            if (v && v.name) {
+              const escapedOldText = oldText.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
+              const regex = new RegExp(escapedOldText, 'g');
+              updated[key] = {
+                ...v,
+                name: v.name.replace(regex, newText)
+              };
+            }
+          }
+        });
+        return updated;
+      });
+    }
   };
 
   const removeOptionValue = (optId, valId) => {
@@ -444,9 +565,19 @@ export default function ProductForm({ productId, onBack, onSaveSuccess }) {
       if (o.id === optId) {
         const filteredValues = o.values.filter(v => v && v.text && String(v.text).trim() !== '');
         if (filteredValues.length === 0) {
-          alert("Vui lòng nhập ít nhất một giá trị cho tùy chọn này.");
+          showToast("warning", "Vui lòng nhập ít nhất một giá trị cho tùy chọn này.");
           return o;
         }
+
+        // Chốt chặn 1: Validate Màu sắc / Kích thước không được chỉ có số
+        if (o.name === "Màu sắc" || o.name === "Kích thước") {
+          const hasInvalid = filteredValues.some(v => /^\d+$/.test(String(v.text).trim()));
+          if (hasInvalid) {
+            showToast("warning", `Thuộc tính '${o.name}' không được phép chỉ chứa toàn các con số.`);
+            return o;
+          }
+        }
+
         return {
           ...o,
           values: filteredValues,
@@ -523,11 +654,15 @@ export default function ProductForm({ productId, onBack, onSaveSuccess }) {
     const skus = {};
     const duplicates = new Set();
     
+    const selectedBrand = brands.find(b => b.id === Number(formData.brandId));
+    const brandCode = selectedBrand?.brandCode || 'GEN';
+    const productCode = formData.productCode.trim() || generateProductCode(formData.name, 20);
+
     activeCombinations.forEach(comb => {
       const sortedParts = [...comb].sort((a, b) => a.optionId.localeCompare(b.optionId));
       const key = sortedParts.map(p => `${p.optionId}:${p.valueId.split(':').pop()}`).join('|');
       const vData = variantsData[key];
-      const defaultSku = generateVariantSku(formData.name, comb);
+      const defaultSku = generateVariantSku(brandCode, productCode, comb);
       const sku = (vData?.sku !== undefined ? vData.sku : defaultSku).trim().toUpperCase();
       
       if (sku) {
@@ -540,7 +675,7 @@ export default function ProductForm({ productId, onBack, onSaveSuccess }) {
       }
     });
     return duplicates;
-  }, [activeCombinations, variantsData, formData.name]);
+  }, [activeCombinations, variantsData, formData.name, formData.brandId, formData.productCode, brands]);
 
   // Update variant field helper
   const updateVariantField = (key, field, value) => {
@@ -554,19 +689,29 @@ export default function ProductForm({ productId, onBack, onSaveSuccess }) {
   };
 
   // Form Submission
-  const handleSave = async () => {
-    if (!formData.name) return alert("Vui lòng nhập tên sản phẩm.");
-    if (!formData.categoryId) return alert("Vui lòng chọn danh mục.");
+  const handleSave = async (keepEditing = false) => {
+    if (!formData.name) return showToast("warning", "Vui lòng nhập tên sản phẩm.");
+    if (!formData.categoryId) return showToast("warning", "Vui lòng chọn danh mục.");
 
     if (formData.basePrice < 1000 || formData.basePrice > 500000000) {
-      return alert("Giá bán không hợp lệ (phải từ 1.000 đến 500.000.000 VNĐ)");
+      return showToast("warning", "Giá bán không hợp lệ (phải từ 1.000 đến 500.000.000 VNĐ)");
     }
     if (formData.originalPrice && (formData.originalPrice < 1000 || formData.originalPrice > 500000000)) {
-      return alert("Giá gốc không hợp lệ (phải từ 1.000 đến 500.000.000 VNĐ)");
+      return showToast("warning", "Giá gốc không hợp lệ (phải từ 1.000 đến 500.000.000 VNĐ)");
+    }
+
+    // Chốt chặn 1: Validate options before save
+    for (const opt of options) {
+      if (opt.name === "Màu sắc" || opt.name === "Kích thước") {
+        const hasInvalid = opt.values.some(v => v.text && /^\d+$/.test(String(v.text).trim()));
+        if (hasInvalid) {
+          return showToast("warning", `Thuộc tính '${opt.name}' không được phép chỉ chứa toàn các con số.`);
+        }
+      }
     }
 
     if (formData.hasVariants && duplicateSkuKeys.size > 0) {
-      return alert("Không thể lưu sản phẩm. Vui lòng khắc phục các mã SKU bị trùng lặp.");
+      return showToast("warning", "Không thể lưu sản phẩm. Vui lòng khắc phục các mã SKU bị trùng lặp.");
     }
 
     setSaving(true);
@@ -618,6 +763,9 @@ export default function ProductForm({ productId, onBack, onSaveSuccess }) {
 
       if (savedProductId) {
         if (formData.hasVariants && activeCombinations.length > 0) {
+          const selectedBrand = brands.find(b => b.id === Number(formData.brandId));
+          const brandCode = selectedBrand?.brandCode || 'GEN';
+
           // Construct variants payload list for sync API
           const variantsPayload = activeCombinations.map(comb => {
             const sortedParts = [...comb].sort((a, b) => a.optionId.localeCompare(b.optionId));
@@ -639,7 +787,7 @@ export default function ProductForm({ productId, onBack, onSaveSuccess }) {
 
             const combName = comb.map(p => p.valueText).join(' - ');
             const defaultName = `${formData.name} - ${combName}`;
-            const defaultSku = generateVariantSku(formData.name, comb);
+            const defaultSku = generateVariantSku(brandCode, generatedCode, comb);
 
             return {
               id: vData?.id || 0,
@@ -661,14 +809,20 @@ export default function ProductForm({ productId, onBack, onSaveSuccess }) {
         }
       }
 
-      alert(productId ? 'Cập nhật sản phẩm thành công!' : 'Thêm sản phẩm thành công!');
-      if (onSaveSuccess) onSaveSuccess();
+      if (keepEditing) {
+        showToast('success', productId ? 'Cập nhật sản phẩm thành công!' : 'Tạo sản phẩm thành công!');
+        if (!productId && savedProductId) {
+          setSearchParams({ tab: 'update_product', productId: savedProductId });
+        }
+      } else {
+        if (onSaveSuccess) onSaveSuccess();
+      }
     } catch (e) {
       let msg = typeof e === 'object' && e !== null ? (e.message || JSON.stringify(e)) : String(e);
       if (typeof e === 'object' && e.errors) {
         msg = JSON.stringify(e.errors);
       }
-      alert("Lỗi lưu sản phẩm: " + msg);
+      showToast("error", "Lỗi lưu sản phẩm", msg);
     } finally {
       setSaving(false);
     }
@@ -680,24 +834,46 @@ export default function ProductForm({ productId, onBack, onSaveSuccess }) {
 
   return (
     <div className="flex flex-col gap-6 font-sans">
-      {/* Top Header */}
-      <div className="flex items-center justify-between">
+      {/* Top Header (Sticky with Glassmorphism) */}
+      <div className="sticky top-0 z-40 bg-admin-bg/90 backdrop-blur-sm -mt-4 pt-4 pb-4 -mx-8 px-8 border-b border-admin-border/40 flex items-center justify-between mb-4">
         <div className="flex items-center gap-4">
-          <button onClick={onBack} className="p-2 bg-white rounded-full text-admin-text-muted hover:text-admin-text-main transition-colors cursor-pointer">
+          <button onClick={onBack} className="p-2 bg-white rounded-full text-admin-text-muted hover:text-admin-text-main border border-admin-border transition-colors cursor-pointer">
             <ArrowLeft size={20} />
           </button>
-          <h2 className="text-2xl font-bold text-admin-text-main">
-            {productId ? `Cập nhật sản phẩm #${productId}` : 'Thêm sản phẩm mới'}
-          </h2>
+          <div>
+            <h2 className="text-xl font-bold text-admin-text-main">
+              {productId ? `Cập nhật sản phẩm #${productId}` : 'Thêm sản phẩm mới'}
+            </h2>
+            <p className="text-xs text-admin-text-muted font-medium mt-0.5">
+              {productId ? 'Quản lý thông tin chi tiết và các biến thể của sản phẩm này' : 'Thiết lập các thông số để tạo sản phẩm và biến thể'}
+            </p>
+          </div>
         </div>
         <div className="flex gap-3">
           <button 
-            onClick={handleSave}
+            type="button"
+            onClick={onBack}
+            className="px-5 py-2.5 border border-admin-border text-admin-text-main rounded-md font-bold hover:bg-admin-bg transition-colors text-sm cursor-pointer"
+          >
+            Hủy
+          </button>
+          <button 
+            type="button"
+            onClick={() => handleSave(true)}
             disabled={saving}
-            className="flex items-center gap-2 px-6 py-2.5 bg-primary text-white rounded-md font-bold hover:bg-admin-primary-hover transition-colors disabled:opacity-70 text-sm cursor-pointer"
+            className="flex items-center gap-2 px-5 py-2.5 bg-white border border-primary/30 text-primary rounded-md font-bold hover:bg-primary/5 transition-colors disabled:opacity-70 text-sm cursor-pointer"
           >
             {saving ? <Loader2 size={18} className="animate-spin" /> : <Save size={18} />}
-            Lưu sản phẩm
+            Lưu & Tiếp tục
+          </button>
+          <button 
+            type="button"
+            onClick={() => handleSave(false)}
+            disabled={saving}
+            className="flex items-center gap-2 px-5 py-2.5 bg-primary text-white rounded-md font-bold hover:bg-admin-primary-hover transition-colors disabled:opacity-70 text-sm cursor-pointer"
+          >
+            {saving ? <Loader2 size={18} className="animate-spin" /> : <Save size={18} />}
+            Lưu & Quay lại
           </button>
         </div>
       </div>
@@ -758,7 +934,10 @@ export default function ProductForm({ productId, onBack, onSaveSuccess }) {
                 <select
                   value={formData.brandId}
                   onChange={(e) => setFormData(prev => ({ ...prev, brandId: e.target.value }))}
-                  className="w-full px-4 py-3 border border-admin-border rounded-md focus:border-primary focus:ring-1 focus:ring-primary outline-none text-admin-text-main bg-white text-sm font-medium"
+                  disabled={!productId && !!searchParams.get('brandId')}
+                  className={`w-full px-4 py-3 border border-admin-border rounded-md focus:border-primary focus:ring-1 focus:ring-primary outline-none text-admin-text-main text-sm font-medium ${
+                    (!productId && searchParams.get('brandId')) ? 'bg-gray-100 cursor-not-allowed text-admin-text-muted' : 'bg-white'
+                  }`}
                 >
                   <option value="">-- Chọn thương hiệu --</option>
                   {brands.map(b => <option key={b.id} value={b.id}>{b.name}</option>)}
@@ -1091,8 +1270,12 @@ export default function ProductForm({ productId, onBack, onSaveSuccess }) {
                         const key = sortedParts.map(p => `${p.optionId}:${p.valueId.split(':').pop()}`).join('|');
                         const vData = variantsData[key];
 
+                        const selectedBrand = brands.find(b => b.id === Number(formData.brandId));
+                        const brandCode = selectedBrand?.brandCode || 'GEN';
+                        const productCode = formData.productCode.trim() || generateProductCode(formData.name, 20);
+
                         const combName = comb.map(p => p.valueText).join(' - ');
-                        const defaultSku = generateVariantSku(formData.name, comb);
+                        const defaultSku = generateVariantSku(brandCode, productCode, comb);
                         const defaultName = `${formData.name} - ${combName}`;
                         
                         const displayName = vData?.name !== undefined ? vData.name : defaultName;
@@ -1396,6 +1579,33 @@ export default function ProductForm({ productId, onBack, onSaveSuccess }) {
         )}
       </div>
 
+      {/* Premium Toast Notification */}
+      {toast && (
+        <div className={`fixed bottom-5 right-5 z-[200] max-w-sm w-full bg-white rounded-md shadow-xl border p-4 flex items-start gap-3 animate-in fade-in slide-in-from-bottom-5 duration-300 ${
+          toast.type === 'success' ? 'border-l-4 border-l-success border-admin-border' : 
+          toast.type === 'error' ? 'border-l-4 border-l-admin-danger border-admin-border' : 
+          'border-l-4 border-l-[#FFB800] border-admin-border'
+        }`}>
+          <div className="flex-shrink-0 mt-0.5">
+            {toast.type === 'success' ? (
+              <div className="w-8 h-8 rounded-full bg-success/10 text-success flex items-center justify-center font-bold">✓</div>
+            ) : toast.type === 'error' ? (
+              <div className="w-8 h-8 rounded-full bg-admin-danger/10 text-admin-danger flex items-center justify-center font-bold">✕</div>
+            ) : (
+              <div className="w-8 h-8 rounded-full bg-[#FFB800]/10 text-[#FFB800] flex items-center justify-center font-bold">!</div>
+            )}
+          </div>
+          <div className="flex-1">
+            <h4 className="font-bold text-admin-text-main text-sm">
+              {toast.type === 'success' ? 'Thành công' : toast.type === 'error' ? 'Lỗi hệ thống' : 'Thông báo'}
+            </h4>
+            <p className="text-xs text-admin-text-muted mt-1 font-semibold leading-relaxed">{toast.message}</p>
+            {toast.description && (
+              <p className="text-[10px] text-admin-text-muted mt-1 font-medium leading-relaxed">{toast.description}</p>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
