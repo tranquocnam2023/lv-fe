@@ -1,6 +1,7 @@
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import Breadcrumb from '../components/Breadcrumb';
 import React, { useState, useEffect } from 'react';
+import DOMPurify from 'dompurify';
 import { useCart } from '../context/CartContext';
 import { productService } from '../services/productService';
 import { reviewService } from '../services/reviewService';
@@ -644,22 +645,31 @@ export default function ProductDetailPage() {
               <div className="p-8">
                 {activeTab === 'specs' && (
                   <div className="prose prose-blue max-w-none animate-in fade-in slide-in-from-bottom-4 duration-500">
-                    <h3 className="text-xl font-black text-gray-800 mb-4">Trải nghiệm đẳng cấp cùng {product.name}</h3>
-                    <p className="text-gray-600 leading-relaxed text-sm">
-                      Sản phẩm mang đến sự đột phá về mặt hiệu năng với con chip thế hệ mới nhất,
-                      kết hợp cùng hệ thống camera chuyên nghiệp giúp bạn bắt trọn mọi khoảnh khắc.
-                      Thiết kế titan siêu bền và nhẹ tạo nên vẻ ngoài sang trọng bậc nhất.
-                    </p>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 my-6">
-                      <div className="bg-gray-50 p-5 rounded-md">
-                        <h4 className="font-bold text-blue-700 mb-2 text-sm">Màn hình sống động</h4>
-                        <p className="text-xs text-gray-600">Công nghệ LTPO giúp tiết kiệm pin tối đa trong khi vẫn đảm bảo tần số quét 120Hz mượt mà.</p>
-                      </div>
-                      <div className="bg-gray-50 p-5 rounded-md border border-gray-100">
-                        <h4 className="font-bold text-blue-700 mb-2 text-sm">Pin ấn tượng</h4>
-                        <p className="text-xs text-gray-600">Thời lượng sử dụng lên đến 30 giờ phát video liên tục, hỗ trợ sạc siêu nhanh.</p>
-                      </div>
-                    </div>
+                    {product.description ? (
+                      <div 
+                        className="rich-text-content"
+                        dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(product.description) }} 
+                      />
+                    ) : (
+                      <>
+                        <h3 className="text-xl font-black text-gray-800 mb-4">Trải nghiệm đẳng cấp cùng {product.name}</h3>
+                        <p className="text-gray-600 leading-relaxed text-sm">
+                          Sản phẩm mang đến sự đột phá về mặt hiệu năng với con chip thế hệ mới nhất,
+                          kết hợp cùng hệ thống camera chuyên nghiệp giúp bạn bắt trọn mọi khoảnh khắc.
+                          Thiết kế titan siêu bền và nhẹ tạo nên vẻ ngoài sang trọng bậc nhất.
+                        </p>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 my-6">
+                          <div className="bg-gray-50 p-5 rounded-md">
+                            <h4 className="font-bold text-blue-700 mb-2 text-sm">Màn hình sống động</h4>
+                            <p className="text-xs text-gray-600">Công nghệ LTPO giúp tiết kiệm pin tối đa trong khi vẫn đảm bảo tần số quét 120Hz mượt mà.</p>
+                          </div>
+                          <div className="bg-gray-50 p-5 rounded-md border border-gray-100">
+                            <h4 className="font-bold text-blue-700 mb-2 text-sm">Pin ấn tượng</h4>
+                            <p className="text-xs text-gray-600">Thời lượng sử dụng lên đến 30 giờ phát video liên tục, hỗ trợ sạc siêu nhanh.</p>
+                          </div>
+                        </div>
+                      </>
+                    )}
                   </div>
                 )}
 

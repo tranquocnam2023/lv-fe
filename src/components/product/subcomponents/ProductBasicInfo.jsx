@@ -1,6 +1,7 @@
 import React from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useProductFormContext } from '../context/ProductFormContext';
+import RichTextEditor from '../../RichTextEditor';
 
 export default function ProductBasicInfo({ productId }) {
   const [searchParams] = useSearchParams();
@@ -73,12 +74,10 @@ export default function ProductBasicInfo({ productId }) {
         </div>
         <div className="md:col-span-2">
           <label className="block text-sm font-bold text-admin-text-main mb-2">Mô tả chi tiết</label>
-          <textarea
-            rows="4"
+          <RichTextEditor
             value={formData.description}
-            onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
-            className="w-full px-4 py-3 border border-admin-border rounded-md focus:border-primary focus:ring-1 focus:ring-primary outline-none text-admin-text-main bg-white text-sm font-medium"
-            placeholder="Nhập mô tả sản phẩm..."
+            onChange={(val) => setFormData(prev => ({ ...prev, description: val }))}
+            placeholder="Nhập mô tả sản phẩm chi tiết bằng văn bản định dạng (hình ảnh, video, bảng biểu...)..."
           />
         </div>
       </div>
