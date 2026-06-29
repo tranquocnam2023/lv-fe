@@ -12,6 +12,23 @@ import OtpVerification from '../components/OtpVerification';
 import api from '../services/api';
 import SearchableSelect from '../components/SearchableSelect';
 
+const getRankBadgeStyle = (points) => {
+  if (points >= 5000) return 'bg-amber-100 text-amber-800 border border-amber-200';
+  if (points >= 1000) return 'bg-slate-100 text-slate-800 border border-slate-200';
+  return 'bg-orange-100 text-orange-800 border border-orange-200';
+};
+
+const getRankLabel = (points) => {
+  if (points >= 5000) return 'Vàng';
+  if (points >= 1000) return 'Bạc';
+  return 'Đồng';
+};
+
+const getRankColorClass = (points) => {
+  if (points >= 5000) return 'text-amber-600';
+  if (points >= 1000) return 'text-slate-500';
+  return 'text-orange-700';
+};
 
 export default function AuthPage() {
   const location = useLocation();
@@ -618,7 +635,14 @@ export default function AuthPage() {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6 bg-gray-50 p-6 rounded-md border border-gray-100">
                     <div className="space-y-1">
                       <span className="text-xs text-gray-400 font-bold uppercase">Họ và tên</span>
-                      <p className="font-bold text-gray-800 text-lg">{userProfile?.username}</p>
+                      <div className="flex items-center gap-2">
+                        <p className={`font-bold text-lg ${getRankColorClass(userProfile?.accumulatedPoints || 0)}`}>
+                          {userProfile?.username}
+                        </p>
+                        <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${getRankBadgeStyle(userProfile?.accumulatedPoints || 0)}`}>
+                          {getRankLabel(userProfile?.accumulatedPoints || 0)}
+                        </span>
+                      </div>
                     </div>
 
                     <div className="space-y-1">
@@ -636,9 +660,15 @@ export default function AuthPage() {
                       <p className="font-bold text-primary">{userProfile?.role}</p>
                     </div>
 
-                    <div className="space-y-1">
-                      <span className="text-xs text-gray-400 font-bold uppercase">Điểm tích lũy Quà Tặng VIP</span>
-                      <p className="font-bold text-yellow-600 text-lg">{(userProfile?.rewardPoints || 0).toLocaleString('vi-VN')} điểm</p>
+                    <div className="md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-6 bg-white p-4 rounded-md border border-gray-100">
+                      <div className="space-y-1">
+                        <span className="text-xs text-gray-400 font-bold uppercase">Điểm khả dụng (Ví tiêu dùng)</span>
+                        <p className="font-bold text-yellow-600 text-lg">{(userProfile?.rewardPoints || 0).toLocaleString('vi-VN')} điểm</p>
+                      </div>
+                      <div className="space-y-1">
+                        <span className="text-xs text-gray-400 font-bold uppercase">Điểm tích lũy xét hạng (Trọn đời)</span>
+                        <p className="font-bold text-primary text-lg">{(userProfile?.accumulatedPoints || 0).toLocaleString('vi-VN')} điểm</p>
+                      </div>
                     </div>
 
                     <div className="md:col-span-2 pt-4 border-t border-gray-200/50 flex justify-end">
