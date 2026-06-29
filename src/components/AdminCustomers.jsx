@@ -22,7 +22,7 @@ export default function AdminCustomers() {
   const [activeTab, setActiveTab] = useState('all');
   const [searchTerm, setSearchTerm] = useState('');
   const [loading, setLoading] = useState(false);
-  
+
   // Add User Modal State
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [formData, setFormData] = useState({
@@ -99,18 +99,18 @@ export default function AdminCustomers() {
   // Filter logic
   const filteredCustomers = customers.filter(customer => {
     const matchesTab = activeTab === 'all' || customer.role === activeTab;
-    const matchesSearch = (customer.id || '').toLowerCase().includes(searchTerm.toLowerCase()) || 
-                          (customer.username || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-                          (customer.email || '').toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesSearch = (customer.id || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (customer.username || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (customer.email || '').toLowerCase().includes(searchTerm.toLowerCase());
     return matchesTab && matchesSearch;
   });
 
-  const { 
-    currentData: paginatedCustomers, 
-    currentPage, 
-    totalPages, 
-    nextPage, 
-    prevPage, 
+  const {
+    currentData: paginatedCustomers,
+    currentPage,
+    totalPages,
+    nextPage,
+    prevPage,
     goToPage,
     startIndex,
     endIndex,
@@ -138,10 +138,17 @@ export default function AdminCustomers() {
     return 'bg-orange-100 text-orange-800 border border-orange-200';
   };
 
+  //hạng khách hàng
   const getRankLabel = (points) => {
     if (points >= 5000) return 'Vàng';
     if (points >= 1000) return 'Bạc';
     return 'Đồng';
+  };
+
+  const getRankColorClass = (points) => {
+    if (points >= 5000) return 'text-amber-600';
+    if (points >= 1000) return 'text-slate-500';
+    return 'text-orange-700';
   };
 
   return (
@@ -165,7 +172,7 @@ export default function AdminCustomers() {
               onChange={(e) => setSearchTerm(e.target.value)}
             />
           </div>
-          <button 
+          <button
             onClick={handleOpenModal}
             className="flex items-center justify-center gap-2 px-6 py-3 bg-primary text-white rounded-md font-bold hover:bg-admin-primary-hover transition-all active:scale-95 whitespace-nowrap"
           >
@@ -181,8 +188,8 @@ export default function AdminCustomers() {
           const Icon = item.icon;
           const count = tabCounts[item.countKey];
           return (
-            <div 
-              key={i} 
+            <div
+              key={i}
               className="p-5 rounded-md transition-all flex items-center justify-between h-28 bg-white border border-admin-border"
             >
               <div className="flex flex-col">
@@ -211,11 +218,10 @@ export default function AdminCustomers() {
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              className={`flex items-center px-6 py-3 rounded-md text-sm font-bold transition-all whitespace-nowrap border ${
-                isActive 
-                ? 'bg-primary text-white border-primary shadow-md scale-[1.02]' 
+              className={`flex items-center px-6 py-3 rounded-md text-sm font-bold transition-all whitespace-nowrap border ${isActive
+                ? 'bg-primary text-white border-primary shadow-md scale-[1.02]'
                 : 'bg-white text-admin-text-muted border-admin-border hover:border-primary hover:text-primary'
-              }`}
+                }`}
             >
               {Icon && <Icon className={`w-4 h-4 mr-3 ${isActive ? 'text-white' : tab.color}`} />}
               {tab.name}
@@ -240,7 +246,7 @@ export default function AdminCustomers() {
               <thead>
                 <tr className="border-b border-admin-border bg-admin-bg/50">
                   <th className="px-6 py-4 text-[12px] font-bold text-admin-text-muted">Tên người dùng</th>
-                  <th className="px-6 py-4 text-[12px] font-bold text-admin-text-muted">Mã số tài khoản</th>
+                  {/*<th className="px-6 py-4 text-[12px] font-bold text-admin-text-muted">Mã số tài khoản</th>*/}
                   <th className="px-6 py-4 text-[12px] font-bold text-admin-text-muted">Thứ hạng</th>
                   <th className="px-6 py-4 text-[12px] font-bold text-admin-text-muted">Email liên hệ</th>
                   <th className="px-6 py-4 text-[12px] font-bold text-admin-text-muted text-center">Vai trò</th>
@@ -259,18 +265,20 @@ export default function AdminCustomers() {
                             <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold text-sm">
                               {(customer.username || 'U').charAt(0).toUpperCase()}
                             </div>
-                            <span className="font-bold text-admin-text-main">{customer.username}</span>
+                            <span className={`font-bold ${getRankColorClass(customer.accumulatedPoints || 0)}`}>{customer.username}</span>
                           </div>
                         </td>
-                        <td className="px-6 py-4 font-medium text-admin-text-muted">
+                        {/*<td className="px-6 py-4 font-medium text-admin-text-muted">
                           <span className="text-xs">{customer.id}</span>
-                        </td>
+                        </td>*/}
                         <td className="px-6 py-4">
                           <div className="flex flex-col items-start">
-                            <span className={`px-2 py-0.5 rounded text-[11px] font-bold ${getRankBadgeStyle(customer.rewardPoints)}`}>
-                              {getRankLabel(customer.rewardPoints)}
+                            <span className={`px-2 py-0.5 rounded text-[11px] font-bold ${getRankBadgeStyle(customer.accumulatedPoints || 0)}`}>
+                              {getRankLabel(customer.accumulatedPoints || 0)}
                             </span>
-                            <span className="text-xs text-admin-text-muted mt-1 font-bold">{customer.rewardPoints ?? 0} điểm</span>
+                            <span className="text-xs text-admin-text-muted mt-1 font-bold">
+                              Ví: {customer.rewardPoints ?? 0} | Tích lũy: {customer.accumulatedPoints ?? 0}
+                            </span>
                           </div>
                         </td>
                         <td className="px-6 py-4">
@@ -285,23 +293,21 @@ export default function AdminCustomers() {
                           {formatDate(customer.createdAt)}
                         </td>
                         <td className="px-6 py-4 text-center">
-                          <span className={`px-3 py-1 rounded-full text-[11px] font-bold inline-block ${
-                            customer.isActive 
-                            ? 'bg-success/10 text-success' 
+                          <span className={`px-3 py-1 rounded-full text-[11px] font-bold inline-block ${customer.isActive
+                            ? 'bg-success/10 text-success'
                             : 'bg-admin-danger/10 text-admin-danger'
-                          }`}>
+                            }`}>
                             {customer.isActive ? 'Hoạt động' : 'Đã khóa'}
                           </span>
                         </td>
                         <td className="px-6 py-4">
                           <div className="flex items-center justify-center gap-2">
-                            <button 
+                            <button
                               onClick={() => handleToggleStatus(customer.id, customer.username, customer.isActive)}
-                              className={`p-2 rounded-md transition-all ${
-                                customer.isActive 
-                                ? 'text-admin-danger hover:bg-admin-danger/10' 
+                              className={`p-2 rounded-md transition-all ${customer.isActive
+                                ? 'text-admin-danger hover:bg-admin-danger/10'
                                 : 'text-success hover:bg-success/10'
-                              }`}
+                                }`}
                               title={customer.isActive ? "Khóa tài khoản" : "Mở khóa tài khoản"}
                             >
                               {customer.isActive ? <Lock size={18} /> : <Unlock size={18} />}
@@ -326,7 +332,7 @@ export default function AdminCustomers() {
             </table>
           )}
         </div>
-        
+
         {/* Pagination footer */}
         {!loading && filteredCustomers.length > 0 && (
           <div className="px-6 py-4 border-t border-admin-border flex flex-col sm:flex-row items-center justify-between gap-4">
@@ -334,7 +340,7 @@ export default function AdminCustomers() {
               Hiển thị {startIndex}-{endIndex} trên {totalItems} tài khoản
             </span>
             <div className="flex gap-2">
-              <button 
+              <button
                 onClick={prevPage}
                 disabled={currentPage === 1}
                 className="px-4 py-2 bg-admin-bg text-admin-text-main rounded-md text-sm font-bold hover:bg-admin-border transition-colors disabled:opacity-50"
@@ -350,7 +356,7 @@ export default function AdminCustomers() {
                   {i + 1}
                 </button>
               ))}
-              <button 
+              <button
                 onClick={nextPage}
                 disabled={currentPage === totalPages}
                 className="px-4 py-2 bg-admin-bg text-admin-text-main rounded-md text-sm font-bold hover:bg-admin-border transition-colors disabled:opacity-50"
@@ -375,42 +381,42 @@ export default function AdminCustomers() {
                 <X size={24} />
               </button>
             </div>
-            
+
             <form onSubmit={handleCreateUser} className="p-6 space-y-4">
               <div>
                 <label className="block text-sm font-bold text-admin-text-main mb-2">Tên đăng nhập (Username)</label>
-                <input 
-                  type="text" 
+                <input
+                  type="text"
                   required
                   className="w-full px-4 py-3 border border-admin-border rounded-md focus:border-primary focus:ring-1 focus:ring-primary outline-none text-admin-text-main font-medium"
                   placeholder="Nhập tên tài khoản..."
                   value={formData.username}
-                  onChange={(e) => setFormData({...formData, username: e.target.value})}
+                  onChange={(e) => setFormData({ ...formData, username: e.target.value })}
                 />
               </div>
-              
+
               <div>
                 <label className="block text-sm font-bold text-admin-text-main mb-2">Email</label>
-                <input 
-                  type="email" 
+                <input
+                  type="email"
                   required
                   className="w-full px-4 py-3 border border-admin-border rounded-md focus:border-primary focus:ring-1 focus:ring-primary outline-none text-admin-text-main font-medium"
                   placeholder="example@gmail.com..."
                   value={formData.email}
-                  onChange={(e) => setFormData({...formData, email: e.target.value})}
+                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                 />
               </div>
 
               <div>
                 <label className="block text-sm font-bold text-admin-text-main mb-2">Mật khẩu</label>
-                <input 
-                  type="password" 
+                <input
+                  type="password"
                   required
                   minLength={6}
                   className="w-full px-4 py-3 border border-admin-border rounded-md focus:border-primary focus:ring-1 focus:ring-primary outline-none text-admin-text-main font-medium"
                   placeholder="Tối thiểu 6 ký tự..."
                   value={formData.password}
-                  onChange={(e) => setFormData({...formData, password: e.target.value})}
+                  onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                 />
               </div>
 
@@ -420,14 +426,14 @@ export default function AdminCustomers() {
               </div>
 
               <div className="flex gap-3 justify-end pt-2">
-                <button 
+                <button
                   type="button"
                   onClick={() => setIsModalOpen(false)}
                   className="px-6 py-3 bg-admin-bg text-admin-text-main rounded-md font-bold hover:bg-admin-border transition-colors"
                 >
                   Hủy
                 </button>
-                <button 
+                <button
                   type="submit"
                   disabled={modalLoading}
                   className="px-6 py-3 bg-primary text-white rounded-md font-bold hover:bg-admin-primary-hover transition-all active:scale-95 disabled:opacity-50"
