@@ -5,6 +5,7 @@ import DOMPurify from 'dompurify';
 import { useCart } from '../context/CartContext';
 import { productService } from '../services/productService';
 import { reviewService } from '../services/reviewService';
+import { categoryService } from '../services/categoryService';
 import api from '../services/api';
 import { GitCompare, ChevronLeft, ChevronRight, Maximize2, X, Check, Star, ThumbsUp, MessageSquare, AlertCircle } from 'lucide-react';
 
@@ -44,9 +45,13 @@ export default function ProductDetailPage() {
 
 
   // States chọn biến thể
-  const [selectedStorage, setSelectedStorage] = useState('');
-  const [selectedColor, setSelectedColor] = useState('');
+  const [selectedAttributes, setSelectedAttributes] = useState({});
   const [variants, setVariants] = useState([]);
+  const [categories, setCategories] = useState([]);
+
+  // Helpers to resolve selected color & storage for backward compatibility and JSX display
+  const selectedColor = selectedAttributes["Màu sắc"] || Object.entries(selectedAttributes).find(([k]) => k.toLowerCase().includes('màu'))?.[1] || '';
+  const selectedStorage = selectedAttributes["Dung lượng RAM - ROM"] || selectedAttributes["Dung Lượng RAM - ROM"] || Object.entries(selectedAttributes).find(([k]) => k.toLowerCase().includes('dung lượng') || k.toLowerCase().includes('bộ nhớ') || k.toLowerCase().includes('ram') || k.toLowerCase().includes('rom'))?.[1] || '';
 
   // States Thư viện hình ảnh động
   const [activeImage, setActiveImage] = useState('');
@@ -89,18 +94,38 @@ export default function ProductDetailPage() {
     return list;
   };
 
-  // Tải dữ liệu Product & danh sách Variants
+  // Helper to parse key from attributes JSON string case-insensitively
+  const getAttributeValue = (attributesStr, targetKey) => {
+    if (!attributesStr) return '';
+    try {
+      const parsed = JSON.parse(attributesStr);
+      const targetKeyNormalized = targetKey.toLowerCase().trim();
+      for (const key of Object.keys(parsed)) {
+        if (key.toLowerCase().trim() === targetKeyNormalized) {
+          return parsed[key];
+        }
+      }
+    } catch (e) {
+      console.error("Lỗi parse attributes JSON:", e);
+    }
+    return '';
+  };
+
+  // Tải dữ liệu Product, danh sách Variants & Categories
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     setLoading(true);
-    productService.getById(id)
-      .then(async (data) => {
-        if (data) {
+    Promise.all([
+      productService.getById(id),
+      api.get(`/ProductVariant?productId=${id}`).catch(() => []),
+      categoryService.getAll().catch(() => [])
+    ])
+      .then(([productData, variantData, categoryData]) => {
+        if (productData) {
           const normalized = {
-            ...data,
-            price: data.price || data.basePrice || 0,
-            image: data.image || data.thumbnailImage || data.mainImage,
-            stockQuantity: data.availableStock ?? data.totalStock ?? data.stockQuantity ?? data.stock ?? 0
+            ...productData,
+            price: productData.price || productData.basePrice || 0,
+            image: productData.image || productData.thumbnailImage || productData.mainImage,
+            stockQuantity: productData.availableStock ?? productData.totalStock ?? productData.stockQuantity ?? productData.stock ?? 0
           };
           setProduct(normalized);
           setActiveImage(normalized.image);
@@ -109,14 +134,11 @@ export default function ProductDetailPage() {
           const masterImgs = getMasterImages(normalized);
           setGalleryImages(masterImgs);
 
-          // Gọi API tải danh sách biến thể
-          try {
-            const vData = await api.get(`/ProductVariant?productId=${data.id}`);
-            if (Array.isArray(vData)) {
-              setVariants(vData);
-            }
-          } catch (vErr) {
-            console.error("Lỗi lấy danh sách biến thể:", vErr);
+          if (Array.isArray(variantData)) {
+            setVariants(variantData);
+          }
+          if (Array.isArray(categoryData)) {
+            setCategories(categoryData);
           }
         } else {
           setProduct(null);
@@ -225,104 +247,110 @@ export default function ProductDetailPage() {
     window.scrollTo(0, 0);
   }, [product]);
 
-  // Trích xuất các tuỳ chọn màu sắc động từ các biến thể (variants) của API
-  const colorVariants = React.useMemo(() => {
-    if (variants.length === 0) {
-      return [
-        { name: 'Đen bóng', hex: '#1a1a1a' },
-        { name: 'Titan Tự nhiên', hex: '#bebebe' },
-        { name: 'Xanh dương', hex: '#4682b4' },
-        { name: 'Trắng Pearl', hex: '#f8f9fa' }
-      ];
-    }
-
-    const extracted = [];
-    const colorsSeen = new Set();
-
+  // 1. Phân tích các thuộc tính động từ tất cả variants
+  const attributesConfig = React.useMemo(() => {
+    const config = {}; // { [key: string]: Set<string> }
+    
     variants.forEach(v => {
-      let parsedAttr = {};
-      try { parsedAttr = v.attributes ? JSON.parse(v.attributes) : {}; } catch { /* ignore JSON parsing error */ }
-      let colorName = parsedAttr["Màu sắc"] || '';
+      let parsed = {};
+      if (v.attributes) {
+        try {
+          parsed = JSON.parse(v.attributes);
+        } catch (e) {
+          console.error("Lỗi parse attributes:", e);
+        }
+      }
       
-      // Fallback
-      if (!colorName && v.name && v.name.includes(' - ')) {
+      // Fallback nếu không có JSON attributes nhưng có định dạng tên chứa " - "
+      if (Object.keys(parsed).length === 0 && v.name && v.name.includes(' - ')) {
         const parts = v.name.split(' - ');
-        colorName = parts[1] || '';
+        if (parts.length > 1) {
+          parsed["Màu sắc"] = parts[1].trim();
+        }
+        if (parts.length > 2) {
+          parsed["Dung lượng RAM - ROM"] = parts[2].trim();
+        }
       }
-      colorName = colorName.trim();
 
-      if (colorName && !colorsSeen.has(colorName) && colorName !== 'Mặc định') {
-        colorsSeen.add(colorName);
-        extracted.push({
-          name: colorName,
-          hex: getHexForColor(colorName)
-        });
-      }
+      Object.entries(parsed).forEach(([key, val]) => {
+        if (key === 'SKU' || key === 'chargeTax') return;
+        const trimmedKey = key.trim();
+        const trimmedVal = String(val).trim();
+        if (trimmedKey && trimmedVal && trimmedVal !== 'Mặc định') {
+          if (!config[trimmedKey]) {
+            config[trimmedKey] = new Set();
+          }
+          config[trimmedKey].add(trimmedVal);
+        }
+      });
     });
 
-    return extracted.length > 0 ? extracted : [
-      { name: 'Đen bóng', hex: '#1a1a1a' },
-      { name: 'Titan Tự nhiên', hex: '#bebebe' },
-      { name: 'Xanh dương', hex: '#4682b4' },
-      { name: 'Trắng Pearl', hex: '#f8f9fa' }
-    ];
-  }, [variants]);
-
-  // Trích xuất các tuỳ chọn dung lượng động từ variants
-  const storageVariants = React.useMemo(() => {
-    if (variants.length === 0) {
-      return ['128GB', '256GB', '512GB', '1TB'];
-    }
-    const storages = new Set();
-    variants.forEach(v => {
-      let parsedAttr = {};
-      try { parsedAttr = v.attributes ? JSON.parse(v.attributes) : {}; } catch { /* ignore JSON parsing error */ }
-      let storagePart = parsedAttr["Dung Lượng RAM - ROM"] || '';
-
-      // Fallback
-      if (!storagePart && v.name && v.name.includes(' - ')) {
-        const parts = v.name.split(' - ');
-        storagePart = parts[0] || '';
-      }
-      storagePart = storagePart.trim();
-
-      if (storagePart) {
-        storages.add(storagePart);
-      }
+    const result = {};
+    Object.entries(config).forEach(([key, set]) => {
+      result[key] = Array.from(set);
     });
-    return storages.size > 0 ? Array.from(storages) : ['128GB', '256GB', '512GB', '1TB'];
+    return result;
   }, [variants]);
 
   // Tính toán Giá và Tồn kho hiển thị thời gian thực theo biến thể
   const displayDetails = React.useMemo(() => {
     if (!product) return { price: 0, originalPrice: 0, stock: 0 };
 
-    if (selectedColor || selectedStorage) {
-      // Tìm variant khớp màu sắc và dung lượng
-      const matched = variants.find(v => {
-        let parsedAttr = {};
-        try { parsedAttr = v.attributes ? JSON.parse(v.attributes) : {}; } catch { /* ignore JSON parsing error */ }
-        let vColor = parsedAttr["Màu sắc"] || '';
-        let vStorage = parsedAttr["Dung Lượng RAM - ROM"] || '';
-        
-        // Fallback
-        if (!vColor && !vStorage && v.name && v.name.includes(' - ')) {
-            const parts = v.name.split(' - ');
-            vStorage = parts[0] || '';
-            vColor = parts[1] || '';
+    // Phân tích các biến thể thành cấu trúc chuẩn
+    const parsedVariants = variants.map(v => {
+      const parsedAttrs = {};
+      if (v.attributes) {
+        try {
+          Object.entries(JSON.parse(v.attributes)).forEach(([k, val]) => {
+            parsedAttrs[k.toLowerCase().trim()] = String(val).toLowerCase().trim();
+          });
+        } catch (e) {
+          console.error("Lỗi parse attributes:", e);
         }
+      }
+      
+      // Fallback
+      if (Object.keys(parsedAttrs).length === 0 && v.name && v.name.includes(' - ')) {
+        const parts = v.name.split(' - ');
+        if (parts.length > 1) {
+          parsedAttrs["màu sắc"] = parts[1].toLowerCase().trim();
+        }
+        if (parts.length > 2) {
+          parsedAttrs["dung lượng ram - rom"] = parts[2].toLowerCase().trim();
+        }
+      }
 
-        const matchesColor = selectedColor ? vColor.toLowerCase().includes(selectedColor.toLowerCase()) : true;
-        const matchesStorage = selectedStorage ? vStorage.toLowerCase().includes(selectedStorage.toLowerCase()) : true;
-        
-        return matchesColor && matchesStorage;
+      return {
+        ...v,
+        parsedAttrs,
+        availableStock: v.totalStock - v.reservedStock
+      };
+    });
+
+    const hasSelections = Object.values(selectedAttributes).some(v => !!v);
+
+    if (hasSelections) {
+      // Tìm các biến thể thỏa mãn bộ lọc hiện tại
+      const matchedVariants = parsedVariants.filter(v => {
+        for (const [key, val] of Object.entries(selectedAttributes)) {
+          if (!val) continue;
+          const normalizedKey = key.toLowerCase().trim();
+          const normalizedVal = val.toLowerCase().trim();
+          if (v.parsedAttrs[normalizedKey] !== normalizedVal) {
+            return false;
+          }
+        }
+        return true;
       });
 
-      if (matched) {
+      if (matchedVariants.length > 0) {
+        const firstMatch = matchedVariants[0];
+        const finalStock = matchedVariants.reduce((sum, v) => sum + v.availableStock, 0);
+
         return {
-          price: matched.price,
-          originalPrice: matched.price * 1.12,
-          stock: matched.totalStock - matched.reservedStock
+          price: firstMatch.price,
+          originalPrice: firstMatch.price * 1.12,
+          stock: finalStock
         };
       }
     }
@@ -332,63 +360,57 @@ export default function ProductDetailPage() {
       originalPrice: product.originalPrice || (product.price * 1.1),
       stock: product.stockQuantity
     };
-  }, [product, selectedColor, selectedStorage, variants]);
+  }, [product, selectedAttributes, variants]);
 
-  // Xử lý chọn màu sắc & Hủy chọn (Deselect)
-  const handleColorClick = (colorName) => {
-    // 1. Trường hợp click lại màu đang chọn -> HỦY CHỌN (Deselect)
-    if (selectedColor === colorName) {
-      setIsFading(true);
-      setTimeout(() => {
-        setSelectedColor('');
-        setActiveImage(product.image);
+  // Xử lý chọn thuộc tính
+  const handleAttributeClick = (key, value) => {
+    setSelectedAttributes(prev => {
+      const next = { ...prev };
+      const isColorAttr = key.toLowerCase().includes('màu') || key.toLowerCase().includes('color');
 
-        // Reset dải ảnh thumbnail về bộ ảnh chung
-        const masterImgs = getMasterImages(product);
-        setGalleryImages(masterImgs);
-        setIsFading(false);
-      }, 150);
-      return;
-    }
-
-    // 2. Chọn màu mới
-    setIsFading(true);
-    setTimeout(() => {
-      setSelectedColor(colorName);
-
-      // Tìm hình ảnh của màu sắc biến thể vừa chọn
-      const matchedVariant = variants.find(v => {
-        let parsedAttr = {};
-        try { parsedAttr = v.attributes ? JSON.parse(v.attributes) : {}; } catch { /* ignore JSON parsing error */ }
-        let vColor = parsedAttr["Màu sắc"] || '';
-        if (!vColor && v.name && v.name.includes(' - ')) {
-            vColor = v.name.split(' - ')[1] || '';
+      if (next[key] === value) {
+        delete next[key];
+        
+        if (isColorAttr) {
+          setIsFading(true);
+          setTimeout(() => {
+            setActiveImage(product.image);
+            setGalleryImages(getMasterImages(product));
+            setIsFading(false);
+          }, 150);
         }
-        return vColor.toLowerCase().includes(colorName.toLowerCase());
-      });
-
-      if (matchedVariant && matchedVariant.imageId) {
-        const varImg = matchedVariant.imageId;
-        setActiveImage(varImg);
-
-        // Cập nhật thư viện ảnh: ảnh biến thể đưa lên đầu, kèm theo ảnh chung
-        const masterImgs = getMasterImages(product);
-        setGalleryImages([varImg, ...masterImgs.slice(1)]);
       } else {
-        setActiveImage(product.image);
-        setGalleryImages(getMasterImages(product));
-      }
-      setIsFading(false);
-    }, 150);
-  };
+        next[key] = value;
 
-  // Xử lý chọn dung lượng & Hủy chọn
-  const handleStorageClick = (storage) => {
-    if (selectedStorage === storage) {
-      setSelectedStorage('');
-    } else {
-      setSelectedStorage(storage);
-    }
+        if (isColorAttr) {
+          setIsFading(true);
+          setTimeout(() => {
+            const matchedVariant = variants.find(v => {
+              let vColor = getAttributeValue(v.attributes, key) || '';
+              if (!vColor && v.name && v.name.includes(' - ')) {
+                const parts = v.name.split(' - ');
+                if (parts.length > 1) {
+                  vColor = parts[1];
+                }
+              }
+              return vColor.toLowerCase().trim() === value.toLowerCase().trim();
+            });
+
+            if (matchedVariant && matchedVariant.imageId) {
+              const varImg = matchedVariant.imageId;
+              setActiveImage(varImg);
+              const masterImgs = getMasterImages(product);
+              setGalleryImages([varImg, ...masterImgs.slice(1)]);
+            } else {
+              setActiveImage(product.image);
+              setGalleryImages(getMasterImages(product));
+            }
+            setIsFading(false);
+          }, 150);
+        }
+      }
+      return next;
+    });
   };
 
   // Nhấp ảnh thumbnail để xem
@@ -402,20 +424,19 @@ export default function ProductDetailPage() {
 
   // Thêm vào giỏ hàng
   const handleAddToCart = () => {
-    if (!selectedColor) {
-      alert('Vui lòng chọn màu sắc trước khi thêm vào giỏ hàng!');
-      return;
-    }
-    if (!selectedStorage) {
-      alert('Vui lòng chọn dung lượng trước khi thêm vào giỏ hàng!');
-      return;
+    for (const attrKey of Object.keys(attributesConfig)) {
+      if (!selectedAttributes[attrKey]) {
+        alert(`Vui lòng chọn ${attrKey} trước khi thêm vào giỏ hàng!`);
+        return;
+      }
     }
     if (product) {
       addToCart({
         ...product,
-        price: displayDetails.price, // Cập nhật đúng giá của biến thể đã chọn
-        selectedStorage,
-        selectedColor
+        price: displayDetails.price,
+        selectedAttributes: { ...selectedAttributes },
+        selectedColor: selectedAttributes["Màu sắc"] || Object.entries(selectedAttributes).find(([k]) => k.toLowerCase().includes('màu'))?.[1] || null,
+        selectedStorage: selectedAttributes["Dung lượng RAM - ROM"] || selectedAttributes["Dung Lượng RAM - ROM"] || Object.entries(selectedAttributes).find(([k]) => k.toLowerCase().includes('dung lượng') || k.toLowerCase().includes('bộ nhớ') || k.toLowerCase().includes('ram') || k.toLowerCase().includes('rom'))?.[1] || null
       });
       alert('Đã thêm sản phẩm vào giỏ hàng thành công!');
     }
@@ -423,20 +444,19 @@ export default function ProductDetailPage() {
 
   // Mua ngay
   const handleBuyNow = () => {
-    if (!selectedColor) {
-      alert('Vui lòng chọn màu sắc trước khi tiến hành đặt hàng!');
-      return;
-    }
-    if (!selectedStorage) {
-      alert('Vui lòng chọn dung lượng trước khi tiến hành đặt hàng!');
-      return;
+    for (const attrKey of Object.keys(attributesConfig)) {
+      if (!selectedAttributes[attrKey]) {
+        alert(`Vui lòng chọn ${attrKey} trước khi tiến hành đặt hàng!`);
+        return;
+      }
     }
     if (product) {
       addToCart({
         ...product,
         price: displayDetails.price,
-        selectedStorage,
-        selectedColor
+        selectedAttributes: { ...selectedAttributes },
+        selectedColor: selectedAttributes["Màu sắc"] || Object.entries(selectedAttributes).find(([k]) => k.toLowerCase().includes('màu'))?.[1] || null,
+        selectedStorage: selectedAttributes["Dung lượng RAM - ROM"] || selectedAttributes["Dung Lượng RAM - ROM"] || Object.entries(selectedAttributes).find(([k]) => k.toLowerCase().includes('dung lượng') || k.toLowerCase().includes('bộ nhớ') || k.toLowerCase().includes('ram') || k.toLowerCase().includes('rom'))?.[1] || null
       });
       navigate('/cart');
     }
@@ -451,14 +471,39 @@ export default function ProductDetailPage() {
     setLightboxActiveIndex(prev => (prev === galleryImages.length - 1 ? 0 : prev + 1));
   };
 
+  const breadcrumbItems = React.useMemo(() => {
+    if (!product) return [];
+    
+    const items = [];
+    let currentCategoryId = product.categoryId;
+    
+    if (categories && categories.length > 0) {
+      while (currentCategoryId) {
+        const cat = categories.find(c => c.id === currentCategoryId);
+        if (cat) {
+          items.unshift({
+            label: cat.name,
+            path: `/danh-muc/${encodeURIComponent(cat.name.toLowerCase())}`
+          });
+          currentCategoryId = cat.parentId;
+        } else {
+          break;
+        }
+      }
+    } else {
+      // Fallback
+      items.push({
+        label: 'Điện thoại',
+        path: '/'
+      });
+    }
+    
+    items.push({ label: product.name });
+    return items;
+  }, [product, categories]);
+
   if (loading) return <div className="py-20 text-center font-bold text-gray-500">Đang tải thông tin sản phẩm...</div>;
   if (!product) return <div className="py-20 text-center font-bold text-red-500">Sản phẩm không tồn tại.</div>;
-
-  const breadcrumbItems = [
-    { label: 'Điện thoại', link: '/' },
-    { label: product.brand || 'Thương hiệu', link: `/danh-muc/${(product.brand || '').toLowerCase()}` },
-    { label: product.name }
-  ];
 
   const promotions = [
     "Thu cũ Đổi mới: Trợ giá lên đến 2.000.000₫",
@@ -530,8 +575,6 @@ export default function ProductDetailPage() {
               >
                 {stats.total} đánh giá
               </button>
-              <span className="text-sm text-gray-400">|</span>
-              <span className="text-sm text-blue-600 font-bold">52 hỏi đáp</span>
               <span className="text-sm text-gray-400">|</span>
               <span className={`text-sm font-bold ${displayDetails.stock > 0 ? 'text-green-600' : 'text-red-500'}`}>
                 {displayDetails.stock > 0 ? `Còn ${displayDetails.stock} sản phẩm` : 'Hết hàng'}
@@ -940,60 +983,71 @@ export default function ProductDetailPage() {
                     </div>
                   </div>
                 )}
-                {/* 1. Chọn Dung lượng */}
-                <div>
-                  <h4 className="text-xs font-black text-gray-400 uppercase tracking-widest mb-4">Dung lượng:</h4>
-                  <div className="grid grid-cols-2 gap-3">
-                    {storageVariants.map((storage) => {
-                      const isSelected = selectedStorage === storage;
-                      return (
-                        <button
-                          key={storage}
-                          type="button"
-                          onClick={() => handleStorageClick(storage)}
-                          className={`py-3 rounded-md font-black transition-all ${isSelected
-                            ? 'text-blue-600 bg-blue-50 transform scale-[1.02]'
-                            : 'bg-gray-50 text-gray-500 hover:bg-gray-100'
-                            }`}
-                        >
-                          {storage}
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-
-                {/* 2. Chọn Màu sắc: Vòng tròn màu HEX (HEX pickingcolor) */}
-                <div>
-                  <h4 className="text-xs font-black text-gray-400 uppercase tracking-widest mb-4">Màu sắc:</h4>
-                  <div className="flex flex-wrap items-center gap-5">
-                    {colorVariants.map((color) => {
-                      const isSelected = selectedColor === color.name;
-                      return (
-                        <div key={color.name} className="flex flex-col items-center gap-1.5">
-                          <button
-                            type="button"
-                            onClick={() => handleColorClick(color.name)}
-                            className={`w-11 h-11 rounded-full transition-all hover:scale-105 active:scale-95 flex items-center justify-center ${isSelected
-                              ? 'scale-110'
-                              : 'opacity-80 hover:opacity-100'
-                              }`}
-                            style={{ backgroundColor: color.hex }}
-                            title={color.name}
-                          >
-                            {isSelected && (
-                              <Check
-                                size={16}
-                                className={color.hex === '#f8f9fa' ? 'text-gray-800 stroke-[3.5]' : 'text-white stroke-[3.5]'}
-                              />
-                            )}
-                          </button>
-                          <span className="text-[10px] font-bold text-gray-500 tracking-tight">{color.name}</span>
+                {/* Các thuộc tính biến thể động */}
+                {Object.entries(attributesConfig).map(([attrKey, values]) => {
+                  const isColorAttr = attrKey.toLowerCase().includes('màu') || attrKey.toLowerCase().includes('color');
+                  
+                  if (isColorAttr) {
+                    return (
+                      <div key={attrKey} className="space-y-3">
+                        <h4 className="text-xs font-black text-gray-400 uppercase tracking-widest mb-4">{attrKey}:</h4>
+                        <div className="flex flex-wrap items-center gap-5">
+                          {values.map((val) => {
+                            const isSelected = selectedAttributes[attrKey] === val;
+                            const hexColor = getHexForColor(val);
+                            return (
+                              <div key={val} className="flex flex-col items-center gap-1.5">
+                                <button
+                                  type="button"
+                                  onClick={() => handleAttributeClick(attrKey, val)}
+                                  className={`w-11 h-11 rounded-full transition-all hover:scale-105 active:scale-95 flex items-center justify-center ${isSelected
+                                    ? 'scale-110 shadow-md ring-2 ring-offset-2 ring-blue-500'
+                                    : 'opacity-80 hover:opacity-100'
+                                    }`}
+                                  style={{ backgroundColor: hexColor }}
+                                  title={val}
+                                >
+                                  {isSelected && (
+                                    <Check
+                                      size={16}
+                                      className={hexColor === '#f8f9fa' ? 'text-gray-800 stroke-[3.5]' : 'text-white stroke-[3.5]'}
+                                    />
+                                  )}
+                                </button>
+                                <span className="text-[10px] font-bold text-gray-500 tracking-tight">{val}</span>
+                              </div>
+                            );
+                          })}
                         </div>
-                      );
-                    })}
-                  </div>
-                </div>
+                      </div>
+                    );
+                  }
+
+                  // Đối với các thuộc tính thông thường khác (Dung lượng, Kích thước, Phiên bản, v.v.)
+                  return (
+                    <div key={attrKey} className="space-y-3">
+                      <h4 className="text-xs font-black text-gray-400 uppercase tracking-widest mb-4">{attrKey}:</h4>
+                      <div className="grid grid-cols-2 gap-3">
+                        {values.map((val) => {
+                          const isSelected = selectedAttributes[attrKey] === val;
+                          return (
+                            <button
+                              key={val}
+                              type="button"
+                              onClick={() => handleAttributeClick(attrKey, val)}
+                              className={`py-3 rounded-md font-black transition-all ${isSelected
+                                ? 'text-blue-600 bg-blue-50 transform scale-[1.02] border-2 border-blue-500'
+                                : 'bg-gray-50 text-gray-500 hover:bg-gray-100 border border-transparent'
+                                }`}
+                            >
+                              {val}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  );
+                })}
 
                 {/* Hiển thị Giá và Tồn kho động */}
                 <div className="bg-gray-50 rounded-md p-6 space-y-2">
