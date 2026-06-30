@@ -29,7 +29,6 @@ export default function AdminPage() {
   const activeAdminTab = searchParams.get('tab') || 'dashboard';
   const editProductId = searchParams.get('productId');
   const [selectedBrandId, setSelectedBrandId] = useState(null);
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   // States cho tìm kiếm thực thể chéo module
   const [searchQuery, setSearchQuery] = useState('');
@@ -186,10 +185,7 @@ export default function AdminPage() {
   const renderSidebarItem = (id, Icon, label) => (
     <button
       key={id}
-      onClick={() => {
-        setActiveAdminTab(id);
-        setIsSidebarOpen(false); // Close sidebar drawer on mobile after selection
-      }}
+      onClick={() => setActiveAdminTab(id)}
       className={`w-full flex items-center px-4 py-3 rounded-md transition-all duration-200 font-bold cursor-pointer ${activeAdminTab === id
         ? 'bg-admin-sidebar-hover text-primary border-l-4 border-primary'
         : 'text-admin-sidebar-text hover:bg-admin-sidebar-hover hover:text-white'
@@ -202,20 +198,8 @@ export default function AdminPage() {
 
   return (
     <div className="flex h-screen bg-admin-bg overflow-hidden font-sans">
-      {/* MOBILE: Sliding overlay backdrop */}
-      {isSidebarOpen && (
-        <div 
-          className="fixed inset-0 bg-black/60 z-40 md:hidden animate-in fade-in duration-200"
-          onClick={() => setIsSidebarOpen(false)}
-        />
-      )}
-
-      {/* Admin Sidebar - MOBILE: Sliding drawer, TABLET & DESKTOP: Fixed layout */}
-      <aside 
-        className={`fixed inset-y-0 left-0 z-50 w-64 bg-admin-sidebar-bg flex flex-col shrink-0 border-r border-admin-sidebar-border transition-transform duration-300 md:relative md:translate-x-0 md:flex ${
-          isSidebarOpen ? 'translate-x-0' : '-translate-x-full'
-        }`}
-      >
+      {/* Admin Sidebar */}
+      <aside className="w-64 bg-admin-sidebar-bg flex flex-col hidden md:flex shrink-0 border-r border-admin-sidebar-border">
         <div className="h-20 flex items-center px-8 border-b border-admin-sidebar-border">
           <div className="w-8 h-8 bg-primary rounded-md flex items-center justify-center mr-3">
             <span className="font-bold text-lg text-white">AD</span>
@@ -262,20 +246,10 @@ export default function AdminPage() {
       {/* Main Content Area */}
       <div className="flex-1 flex flex-col overflow-hidden">
         {/* Admin Header */}
-        <header className="h-20 bg-white border-b border-admin-border flex items-center justify-between px-4 md:px-8 shrink-0">
-          <div className="flex items-center gap-3">
-            {/* MOBILE & TABLET: Toggle sidebar button */}
-            <button
-              onClick={() => setIsSidebarOpen(true)}
-              className="md:hidden p-2 rounded-md hover:bg-gray-100 transition cursor-pointer text-admin-text-main"
-              aria-label="Open Sidebar"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-6 h-6">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
-              </svg>
-            </button>
+        <header className="h-20 bg-white border-b border-admin-border flex items-center justify-between px-8 shrink-0">
+          <div className="flex items-center">
             <div>
-              <p className="text-xs md:text-sm font-medium text-admin-text-muted">Trang chủ / {getHeaderTitle()}</p>
+              <p className="text-sm font-medium text-admin-text-muted">Trang chủ / {getHeaderTitle()}</p>
             </div>
           </div>
 
