@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Package, Layout, Bell, ShoppingCart, Settings2, Plus, Edit, Trash2, X, FolderTree, UploadCloud, Loader2, Link2, ChevronDown, ChevronUp, Image as ImageIcon, Search } from 'lucide-react';
+import { Package, Layout, Bell, ShoppingCart, Settings2, Plus, Edit, Trash2, X, FolderTree, UploadCloud, Loader2, Link2, ChevronDown, ChevronUp, Image as ImageIcon, Search, Eye } from 'lucide-react';
 // import { TRANSACTIONS_MOCK } from '../utils/constants'; // Removed invalid import
 import AdminProductVariants from '../components/AdminProductVariants';
 import { categoryService } from '../services/categoryService';
@@ -315,6 +315,17 @@ export default function AdminProducts({ onCreate, onEdit, defaultBrandFilter, cl
                                 Nổi bật
                               </span>
                             )}
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                window.open(`/product/${product.id}`, '_blank');
+                              }}
+                              className="p-1 text-admin-text-muted hover:text-primary hover:bg-primary/10 rounded transition-all cursor-pointer"
+                              title="Xem trước trên cửa hàng"
+                            >
+                              <Eye size={15} />
+                            </button>
                             {showCategoryDisabledBadge && (
                               <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-warning/10 text-warning border border-warning/30 whitespace-nowrap animate-pulse">
                                 Đang bị ẩn (Do danh mục tắt)

@@ -151,6 +151,14 @@ export default function ProductDetailPage() {
       .finally(() => setLoading(false));
   }, [id]);
 
+  // Thiết lập tab hiển thị mặc định tuỳ thuộc vào việc có bài viết mô tả sản phẩm hay không
+  useEffect(() => {
+    if (product) {
+      const hasDesc = product.description && product.description.trim() !== '';
+      setActiveTab(hasDesc ? 'specs' : 'info');
+    }
+  }, [product]);
+
   const fetchProductReviews = () => {
     reviewService.getByProductId(id)
       .then(res => {
@@ -583,7 +591,7 @@ export default function ProductDetailPage() {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-start">
           {/* CỘT TRÁI: THƯ VIỆN ẢNH ĐỘNG (Ảnh chính + Thumbnails + Lightbox) */}
           <div className="lg:col-span-7 space-y-6">
             <div className="bg-white rounded-md p-8 flex flex-col items-center relative group">
@@ -659,14 +667,16 @@ export default function ProductDetailPage() {
             {/* Content Tabs (Specs / Info / Reviews) */}
             <div className="bg-white rounded-md overflow-hidden" id="product-tabs-container">
               <div className="flex bg-gray-50/50 border-b border-gray-100">
-                <button
-                  type="button"
-                  onClick={() => setActiveTab('specs')}
-                  className={`flex-1 py-4 font-bold text-xs transition-all relative tracking-wider ${activeTab === 'specs' ? 'text-blue-600' : 'text-gray-500 hover:text-gray-700'}`}
-                >
-                  ĐẶC ĐIỂM NỔI BẬT
-                  {activeTab === 'specs' && <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-12 h-1 bg-blue-600 rounded-t-full"></div>}
-                </button>
+                {product.description && product.description.trim() !== '' && (
+                  <button
+                    type="button"
+                    onClick={() => setActiveTab('specs')}
+                    className={`flex-1 py-4 font-bold text-xs transition-all relative tracking-wider ${activeTab === 'specs' ? 'text-blue-600' : 'text-gray-500 hover:text-gray-700'}`}
+                  >
+                    THÔNG TIN SẢN PHẨM
+                    {activeTab === 'specs' && <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-12 h-1 bg-blue-600 rounded-t-full"></div>}
+                  </button>
+                )}
                 <button
                   type="button"
                   onClick={() => setActiveTab('info')}
@@ -717,26 +727,44 @@ export default function ProductDetailPage() {
                 )}
 
                 {activeTab === 'info' && (
-                  <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
-                    <table className="w-full">
-                      <tbody>
-                        {[
-                          { label: 'Kích thước màn hình', value: product.specs?.[0] || '6.7 inch' },
-                          { label: 'Công nghệ màn hình', value: product.specs?.[1] || 'OLED' },
-                          { label: 'RAM', value: product.specs?.[2] || '8GB' },
-                          { label: 'Bộ nhớ trong', value: product.specs?.[3] || '128GB' },
-                          { label: 'Camera sau', value: '48MP + 12MP + 12MP' },
-                          { label: 'Camera trước', value: '12MP' },
-                          { label: 'Chipset', value: 'A18 Pro (Dự kiến)' },
-                          { label: 'Dung lượng pin', value: '4422 mAh' }
-                        ].map((row, idx) => (
-                          <tr key={idx} className="group">
-                            <td className="py-3.5 font-bold text-gray-500 w-1/3 group-hover:text-blue-600 transition-colors text-xs">{row.label}</td>
-                            <td className="py-3.5 text-gray-800 font-semibold text-xs">{row.value}</td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
+                  <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                    {product.specs ? (
+                      (() => {
+                        try {
+                          const parsedSpecs = JSON.parse(product.specs);
+                          if (!Array.isArray(parsedSpecs) || parsedSpecs.length === 0) {
+                            throw new Error("Empty specs array");
+                          }
+                          return parsedSpecs.map((group, gIdx) => (
+                            <div key={gIdx} className="bg-gray-50/50 border border-gray-100 rounded-lg overflow-hidden shadow-sm">
+                              <div className="bg-gray-100/70 px-5 py-3.5 font-bold text-gray-800 text-xs border-b border-gray-100 uppercase tracking-wider">
+                                {group.groupName}
+                              </div>
+                              <table className="w-full text-xs">
+                                <tbody>
+                                  {group.items.map((item, iIdx) => (
+                                    <tr key={iIdx} className="border-b border-gray-100/60 last:border-0 hover:bg-white transition-colors">
+                                      <td className="py-3 px-5 font-bold text-gray-500 w-1/3 border-r border-gray-100/40">{item.key}</td>
+                                      <td className="py-3 px-5 text-gray-800 font-semibold">{item.value}</td>
+                                    </tr>
+                                  ))}
+                                </tbody>
+                              </table>
+                            </div>
+                          ));
+                        } catch (e) {
+                          return (
+                            <div className="text-center py-10 text-gray-400 font-semibold text-xs bg-gray-50/50 rounded-lg border border-gray-100">
+                              Thông số kỹ thuật đang được cập nhật.
+                            </div>
+                          );
+                        }
+                      })()
+                    ) : (
+                      <div className="text-center py-10 text-gray-400 font-semibold text-xs bg-gray-50/50 rounded-lg border border-gray-100">
+                        Thông số kỹ thuật đang được cập nhật.
+                      </div>
+                    )}
                   </div>
                 )}
 
