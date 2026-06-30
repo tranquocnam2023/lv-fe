@@ -111,6 +111,7 @@ export const useProductForm = ({ productId, onBack, onSaveSuccess, searchParams,
     categoryId: '',
     brandId: '',
     description: '',
+    specs: '',
     basePrice: 0,
     originalPrice: 0,
     totalStock: 0,
@@ -312,6 +313,7 @@ export const useProductForm = ({ productId, onBack, onSaveSuccess, searchParams,
               categoryId: productData.categoryId || '',
               brandId: productData.brandId || '',
               description: productData.description || '',
+              specs: productData.specs || '',
               basePrice: productData.basePrice || 0,
               originalPrice: productData.originalPrice || 0,
               totalStock: productData.totalStock || 0,
@@ -367,6 +369,92 @@ export const useProductForm = ({ productId, onBack, onSaveSuccess, searchParams,
 
     fetchData();
   }, [productId]);
+
+  // Load và gộp specs template từ danh mục và các danh mục cha (Kế thừa thông minh & khử trùng)
+  useEffect(() => {
+    const loadSpecsTemplate = async () => {
+      if (!formData.categoryId) return;
+      try {
+        let category = await categoryService.getById(formData.categoryId);
+        const templatesToMerge = [];
+
+        // Duyệt ngược lên gốc để thu thập tất cả các template cấu hình
+        while (category) {
+          if (category.specsTemplate && category.specsTemplate.trim() !== '' && category.specsTemplate.trim() !== '[]') {
+            templatesToMerge.unshift(category.specsTemplate); // Đưa danh mục cha lên trước danh mục con
+          }
+          if (category.parentId) {
+            category = await categoryService.getById(category.parentId);
+          } else {
+            break;
+          }
+        }
+
+        if (templatesToMerge.length > 0) {
+          const mergedGroups = [];
+
+          // Gộp và loại bỏ các nhóm/thuộc tính trùng lặp (không phân biệt chữ hoa/thường)
+          for (const templateStr of templatesToMerge) {
+            try {
+              const template = JSON.parse(templateStr);
+              if (Array.isArray(template)) {
+                for (const group of template) {
+                  if (!group.groupName) continue;
+                  const normalizedGroupName = group.groupName.trim().toUpperCase();
+
+                  let existingGroup = mergedGroups.find(
+                    g => g.groupName.trim().toUpperCase() === normalizedGroupName
+                  );
+
+                  if (!existingGroup) {
+                    existingGroup = { groupName: group.groupName.trim(), items: [] };
+                    mergedGroups.push(existingGroup);
+                  }
+
+                  for (const item of group.items) {
+                    if (!item) continue;
+                    const trimmedItem = item.trim();
+                    const normalizedItem = trimmedItem.toLowerCase();
+
+                    const isDuplicate = existingGroup.items.some(
+                      existingItem => existingItem.toLowerCase() === normalizedItem
+                    );
+
+                    if (!isDuplicate && trimmedItem !== '') {
+                      existingGroup.items.push(trimmedItem);
+                    }
+                  }
+                }
+              }
+            } catch (parseErr) {
+              console.error("Lỗi parse specs template khi gộp:", parseErr);
+            }
+          }
+
+          if (mergedGroups.length > 0) {
+            const initialSpecs = mergedGroups.map(group => ({
+              groupName: group.groupName,
+              items: group.items.map(name => ({ key: name, value: '' }))
+            }));
+
+            setFormData(prev => {
+              // Chỉ tự động điền nếu trường specs của trạng thái mới nhất thực sự đang trống hoặc bằng mảng rỗng
+              if (!prev.specs || prev.specs.trim() === '' || prev.specs.trim() === '[]') {
+                return {
+                  ...prev,
+                  specs: JSON.stringify(initialSpecs)
+                };
+              }
+              return prev;
+            });
+          }
+        }
+      } catch (e) {
+        console.error("Lỗi nạp specs template từ danh mục:", e);
+      }
+    };
+    loadSpecsTemplate();
+  }, [formData.categoryId]);
 
   const generateSlug = (text) => {
     let str = text.toString().toLowerCase();
@@ -834,6 +922,7 @@ export const useProductForm = ({ productId, onBack, onSaveSuccess, searchParams,
         slug: formData.slug,
         productCode: generatedCode,
         description: formData.description,
+        specs: formData.specs,
         basePrice: Number(formData.basePrice),
         originalPrice: formData.originalPrice ? Number(formData.originalPrice) : null,
         totalStock: calculatedStock,

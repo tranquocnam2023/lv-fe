@@ -2,6 +2,41 @@ import { Link } from 'react-router-dom';
 import { GitCompare } from 'lucide-react';
 import { THEME } from '../../utils/theme';
 
+const parseSpecs = (specsInput) => {
+  if (!specsInput) return [];
+  
+  let parsed = specsInput;
+  if (typeof specsInput === 'string') {
+    try {
+      parsed = JSON.parse(specsInput);
+    } catch (e) {
+      return specsInput.split(',').map(s => s.trim()).filter(Boolean);
+    }
+  }
+  
+  if (!Array.isArray(parsed)) return [];
+  if (parsed.length === 0) return [];
+  
+  if (typeof parsed[0] === 'string') {
+    return parsed;
+  }
+  
+  const tags = [];
+  parsed.forEach(group => {
+    if (group && Array.isArray(group.items)) {
+      group.items.forEach(item => {
+        if (item && item.value && item.value.trim() !== '') {
+          const val = item.value.trim();
+          if (!tags.includes(val)) {
+            tags.push(val);
+          }
+        }
+      });
+    }
+  });
+  return tags;
+};
+
 export default function ProductCard({ 
   id,
   name, 
@@ -17,6 +52,8 @@ export default function ProductCard({
   averageRating = 5,
   reviewCount = 0
 }) {
+  const specTags = parseSpecs(specs);
+
   return (
     <Link 
       to={`/product/${id}`}
@@ -96,9 +133,9 @@ export default function ProductCard({
       </h3>
 
       {/* Specs / Thông số kỹ thuật (e.g. ['6.7"', '8GB', '256GB']) */}
-      {specs && specs.length > 0 && (
+      {specTags && specTags.length > 0 && (
         <div className="flex flex-wrap gap-1 mb-2">
-          {specs.map((spec, idx) => (
+          {specTags.slice(0, 4).map((spec, idx) => (
             <span key={idx} className="text-[11px] bg-gray-50 text-gray-500 px-1.5 py-0.5 border border-gray-200 rounded">
               {spec}
             </span>

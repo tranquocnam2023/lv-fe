@@ -6,8 +6,37 @@ import Breadcrumb from '../components/Breadcrumb';
 import FilterBar from '../components/FilterBar';
 import { productService } from '../services/productService';
 import { categoryService } from '../services/categoryService';
-
 import { THEME } from '../utils/theme';
+
+const parseSpecs = (specsInput) => {
+  if (!specsInput) return [];
+  let parsed = specsInput;
+  if (typeof specsInput === 'string') {
+    try {
+      parsed = JSON.parse(specsInput);
+    } catch (e) {
+      return specsInput.split(',').map(s => s.trim()).filter(Boolean);
+    }
+  }
+  if (!Array.isArray(parsed)) return [];
+  if (parsed.length === 0) return [];
+  if (typeof parsed[0] === 'string') return parsed;
+  
+  const tags = [];
+  parsed.forEach(group => {
+    if (group && Array.isArray(group.items)) {
+      group.items.forEach(item => {
+        if (item && item.value && item.value.trim() !== '') {
+          const val = item.value.trim();
+          if (!tags.includes(val)) {
+            tags.push(val);
+          }
+        }
+      });
+    }
+  });
+  return tags;
+};
 
 export default function HomePage({ selectedLocation }) {
   const { brand } = useParams();
@@ -111,8 +140,9 @@ export default function HomePage({ selectedLocation }) {
       }
 
       if (advancedFilters['RAM'] && advancedFilters['RAM'].length > 0 && product.specs) {
+        const specTags = parseSpecs(product.specs);
         const matchesRam = advancedFilters['RAM'].some(ram => 
-          product.specs.some(spec => spec.includes(ram))
+          specTags.some(spec => spec.includes(ram))
         );
         if (!matchesRam) return false;
       }

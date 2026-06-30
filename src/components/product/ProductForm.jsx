@@ -6,6 +6,7 @@ import { useProductForm } from './hooks/useProductForm';
 import PriceInput from '../PriceInput';
 import ProductBasicInfo from './subcomponents/ProductBasicInfo';
 import ProductImageUpload from './subcomponents/ProductImageUpload';
+import ProductSpecsBuilder from './subcomponents/ProductSpecsBuilder';
 import ProductOptionsBuilder from './subcomponents/ProductOptionsBuilder';
 import ProductVariantsMatrix from './subcomponents/ProductVariantsMatrix';
 
@@ -87,6 +88,9 @@ export default function ProductForm({ productId, onBack, onSaveSuccess }) {
 
             {/* Khối C - Hình ảnh chung */}
             <ProductImageUpload />
+
+            {/* Khối F - Thông số kỹ thuật phân nhóm */}
+            <ProductSpecsBuilder />
           </div>
 
           {/* Right Side (Column 3) */}
