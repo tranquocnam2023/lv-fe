@@ -109,9 +109,8 @@ function App() {
             </Routes>
           </main>
         ) : (
-          <div className="container-box flex flex-1 w-full my-4 md:my-6 flex-col md:flex-row space-y-4 md:space-y-0 md:space-x-6 px-4 md:px-6 lg:px-8">
-            {/* MOBILE: Hide sidebar, adjust spacing | TABLET & DESKTOP: Sidebar visible, wider margins */}
-            {/* Sidebar danh mục - TABLET & DESKTOP only */}
+          <div className="container-box flex flex-1 w-full my-6 flex-col md:flex-row space-y-4 md:space-y-0 md:space-x-6 px-4">
+            {/* Sidebar danh mục (Giữ nguyên khi chuyển trang) */}
             <div className="hidden md:flex flex-col space-y-4 w-64">
               <Sidebar />
               {/*thêm danh mục thì ghi đè*/}

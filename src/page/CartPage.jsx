@@ -744,7 +744,7 @@ export default function CartPage() {
                     <div className="flex-1 min-w-0 flex flex-col justify-between">
                       <div>
                         <div className="flex justify-between items-start gap-2">
-                          <Link to={`/product/${item.id}`} className="font-extrabold text-gray-900 text-xs leading-snug hover:text-blue-600 transition truncate block max-w-[120px] xs:max-w-[180px] sm:max-w-xs md:max-w-[300px]">
+                          <Link to={`/product/${item.id}`} className="font-extrabold text-gray-900 text-xs leading-snug hover:text-blue-600 transition truncate block max-w-[300px]">
                             {item.name}
                           </Link>
                           <div className="text-right shrink-0">
@@ -1373,8 +1373,8 @@ export default function CartPage() {
                 </div>
               </div>
 
-              {/* Name & Phone - MOBILE: Stacked grid, DESKTOP: 2 columns */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              {/* Name & Phone */}
+              <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-1">
                   <label className="block text-[9px] font-bold text-gray-400 uppercase tracking-wider">Họ và Tên *</label>
                   <input
@@ -1416,8 +1416,8 @@ export default function CartPage() {
                 <div className="space-y-3 pt-2 border-t border-gray-100">
                   <p className="block text-[9px] font-bold text-gray-400 uppercase tracking-wider">Địa chỉ giao hàng tận nơi</p>
 
-                  {/* City & Ward - MOBILE: Stacked grid, DESKTOP: 2 columns */}
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  {/* City & Ward */}
+                  <div className="grid grid-cols-2 gap-3">
                     <div className="space-y-1">
                       <label className="block text-[9px] font-bold text-gray-400 uppercase tracking-wider">Tỉnh / Thành phố *</label>
                       <SearchableSelect
@@ -1474,8 +1474,7 @@ export default function CartPage() {
                 </label>
 
                 {modalSomeoneElse && (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 p-3 bg-gray-50 border border-gray-150 rounded-md animate-in slide-in-from-top-2 duration-150">
-                    {/* Someone else picking up - MOBILE: Stacked grid, DESKTOP: 2 columns */}
+                  <div className="grid grid-cols-2 gap-3 p-3 bg-gray-50 border border-gray-150 rounded-md animate-in slide-in-from-top-2 duration-150">
                     <div className="space-y-1">
                       <label className="block text-[8px] font-bold text-gray-400 uppercase">Họ tên người nhận hộ *</label>
                       <input

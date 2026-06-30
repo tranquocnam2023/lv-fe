@@ -540,10 +540,10 @@ export default function ProductDetailPage() {
       <div className="max-w-7xl mx-auto px-4 w-full">
         <Breadcrumb items={breadcrumbItems} />
 
-        {/* Tiêu đề sản phẩm - MOBILE: text-2xl, DESKTOP: text-3xl */}
+        {/* Tiêu đề sản phẩm */}
         <div className="flex flex-col md:flex-row md:items-center justify-between pb-6 mb-8 mt-4 gap-4">
           <div>
-            <h1 className="text-2xl md:text-3xl font-black text-gray-900 tracking-tight">{product.name}</h1>
+            <h1 className="text-3xl font-black text-gray-900 tracking-tight">{product.name}</h1>
             <div className="flex items-center gap-4 mt-2">
               <div className="flex text-yellow-400">
                 {[...Array(5)].map((_, i) => {
@@ -583,9 +583,8 @@ export default function ProductDetailPage() {
           </div>
         </div>
 
-        {/* MOBILE: 1-column layout, stacked sections | DESKTOP: 2-column layout (Image Left, Specs Right) */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
-          {/* CỘT TRÁI - DESKTOP: 7 cols width, MOBILE: Stacked full width */}
+          {/* CỘT TRÁI: THƯ VIỆN ẢNH ĐỘNG (Ảnh chính + Thumbnails + Lightbox) */}
           <div className="lg:col-span-7 space-y-6">
             <div className="bg-white rounded-md p-8 flex flex-col items-center relative group">
               {/* Khung ảnh chính có hiệu ứng fade-in mượt mà */}
