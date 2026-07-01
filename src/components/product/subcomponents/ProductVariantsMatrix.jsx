@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { ChevronDown, Image as ImageIcon, Trash2, Check } from 'lucide-react';
+import { ChevronDown, Image as ImageIcon, Trash2, Check, UploadCloud, Loader2, X } from 'lucide-react';
 import { useProductFormContext } from '../context/ProductFormContext';
 import PriceInput from '../../PriceInput';
 import { productService } from '../../../services/productService';
@@ -7,6 +7,7 @@ import { generateProductCode } from '../../../utils/codeGenerator';
 
 export default function ProductVariantsMatrix() {
   const [isAttrDropdownOpen, setIsAttrDropdownOpen] = useState(false);
+  const [bulkUploading, setBulkUploading] = useState(false);
   const dropdownRef = useRef(null);
 
   useEffect(() => {
@@ -57,7 +58,7 @@ export default function ProductVariantsMatrix() {
     <>
       {activeCombinations.length > 0 && (
         <div className="p-4 rounded-md bg-white">
-          <h4 className="text-sm font-bold text-admin-text-main mb-3">Danh sách ma trận biến thể sinh ra</h4>
+          <h4 className="text-sm font-bold text-admin-text-main mb-3">Danh sách các biến thể sinh ra</h4>
 
           {/* 1. Selection Toolbar */}
           <div className="flex flex-wrap items-center justify-between gap-4 p-3 bg-slate-50 rounded-t-md border border-admin-border mb-0">
@@ -138,96 +139,174 @@ export default function ProductVariantsMatrix() {
 
           {/* 2. Bulk Actions Panel */}
           {selectedVariantKeys.length > 0 && (
-            <div className="p-3 bg-blue-50/60 border border-t-0 border-admin-border flex flex-wrap items-center justify-between gap-4 animate-in slide-in-from-top-2 duration-200 mb-0">
-              <div className="flex items-center gap-2 flex-wrap">
-                <span className="text-xs font-bold text-blue-900">
-                  Chỉnh sửa hàng loạt cho {selectedVariantKeys.length} biến thể:
-                </span>
+            <div className="p-4 bg-blue-50/60 border border-t-0 border-admin-border space-y-3 animate-in slide-in-from-top-2 duration-200 mb-0">
+              {/* Top row: Summary + Cancel/Apply actions */}
+              <div className="flex flex-wrap items-center justify-between gap-2 border-b border-blue-100/50 pb-2">
+                <div className="flex items-center gap-2">
+                  <span className="w-2 h-2 rounded-full bg-primary animate-pulse"></span>
+                  <span className="text-xs font-extrabold text-blue-900">
+                    CHỈNH SỬA HÀNG LOẠT ({selectedVariantKeys.length} biến thể đang chọn)
+                  </span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setBulkPrice('');
+                      setBulkStock('');
+                      setSelectedVariantKeys([]);
+                      setSelectedAttributes([]);
+                    }}
+                    className="px-2.5 py-1 border border-admin-border text-admin-text-main hover:bg-admin-bg text-[11px] font-bold rounded cursor-pointer transition-all"
+                  >
+                    Hủy chọn
+                  </button>
+                </div>
               </div>
-              <div className="flex flex-wrap items-center gap-3">
-                <div className="flex items-center gap-1.5">
-                  <span className="text-xs text-admin-text-main font-semibold">Giá mới:</span>
-                  <div className="w-32">
-                    <PriceInput
-                      value={bulkPrice}
-                      onChange={(val) => setBulkPrice(val)}
-                      className="w-full px-2 py-1 border border-admin-border rounded outline-none text-xs text-admin-text-main font-semibold bg-white"
-                      placeholder="Nhập giá..."
-                      errorAbsolute={true}
+
+              {/* Bottom row: Bulk Edit Controls Grid */}
+              <div className="flex flex-wrap items-center gap-x-6 gap-y-3 text-xs">
+                {/* Group 1: Price & Stock */}
+                <div className="flex items-center gap-3 flex-wrap">
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-[11px] text-admin-text-muted font-bold uppercase">Giá bán:</span>
+                    <div className="w-28">
+                      <PriceInput
+                        value={bulkPrice}
+                        onChange={(val) => setBulkPrice(val)}
+                        className="w-full px-2 py-1 border border-admin-border rounded outline-none text-xs text-admin-text-main font-semibold bg-white"
+                        placeholder="Nhập giá..."
+                        errorAbsolute={true}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-[11px] text-admin-text-muted font-bold uppercase">Tồn kho:</span>
+                    <input
+                      type="number"
+                      value={bulkStock}
+                      onChange={(e) => setBulkStock(e.target.value)}
+                      className="w-16 px-2 py-1 border border-admin-border rounded outline-none text-xs text-admin-text-main font-semibold bg-white"
+                      placeholder="Tồn..."
                     />
                   </div>
-                </div>
-                <div className="flex items-center gap-1.5">
-                  <span className="text-xs text-admin-text-main font-semibold">Tồn kho:</span>
-                  <input
-                    type="number"
-                    value={bulkStock}
-                    onChange={(e) => setBulkStock(e.target.value)}
-                    className="w-20 px-2 py-1 border border-admin-border rounded outline-none text-xs text-admin-text-main font-semibold bg-white"
-                    placeholder="Tồn..."
-                  />
-                </div>
-                <button
-                  type="button"
-                  onClick={() => {
-                    if (bulkPrice === '' && bulkStock === '') {
-                      return showToast("warning", "Vui lòng nhập giá hoặc số lượng tồn kho để áp dụng.");
-                    }
-                    if (bulkPrice !== '') {
-                      const p = Number(bulkPrice);
-                      if (p < 1000 || p > 500000000) {
-                        return showToast("warning", "Giá bán không hợp lệ (phải từ 1.000 đến 500.000.000 VNĐ).");
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (bulkPrice === '' && bulkStock === '') {
+                        return showToast("warning", "Vui lòng nhập giá hoặc số lượng tồn kho để áp dụng.");
                       }
-                    }
-                    let stockNum = undefined;
-                    if (bulkStock !== '') {
-                      stockNum = parseInt(bulkStock);
-                      if (isNaN(stockNum) || stockNum < 0) {
-                        return showToast("warning", "Số lượng tồn kho không được âm.");
+                      if (bulkPrice !== '') {
+                        const p = Number(bulkPrice);
+                        if (p < 1000 || p > 500000000) {
+                          return showToast("warning", "Giá bán không hợp lệ (phải từ 1.000 đến 500.000.000 VNĐ).");
+                        }
                       }
-                    }
+                      let stockNum = undefined;
+                      if (bulkStock !== '') {
+                        stockNum = parseInt(bulkStock);
+                        if (isNaN(stockNum) || stockNum < 0) {
+                          return showToast("warning", "Số lượng tồn kho không được âm.");
+                        }
+                      }
 
-                    handleApplyBulkEdit(bulkPrice !== '' ? Number(bulkPrice) : undefined, stockNum);
-                    setBulkPrice('');
-                    setBulkStock('');
-                  }}
-                  className="px-3.5 py-1.5 bg-primary hover:bg-admin-primary-hover text-white text-xs font-bold rounded cursor-pointer transition-all active:scale-[0.97]"
-                >
-                  Áp dụng
-                </button>
+                      handleApplyBulkEdit(bulkPrice !== '' ? Number(bulkPrice) : undefined, stockNum);
+                      setBulkPrice('');
+                      setBulkStock('');
+                    }}
+                    className="px-3 py-1 bg-primary hover:bg-admin-primary-hover text-white text-[11px] font-bold rounded cursor-pointer transition-all active:scale-[0.97]"
+                  >
+                    Cập nhật số liệu
+                  </button>
+                </div>
 
-                <div className="h-4 w-px bg-admin-border"></div>
+                {/* Vertical Divider */}
+                <div className="hidden lg:block h-6 w-px bg-blue-200"></div>
 
-                <button
-                  type="button"
-                  onClick={handleBulkStatusToggle}
-                  className="px-3 py-1.5 border border-admin-border text-primary bg-primary/5 hover:bg-primary/10 text-xs font-bold rounded cursor-pointer transition-all active:scale-[0.97]"
-                >
-                  Bật/Tắt kích hoạt
-                </button>
+                {/* Group 2: Images (Upload / Delete) */}
+                <div className="flex items-center gap-3">
+                  <span className="text-[11px] text-admin-text-muted font-bold uppercase">Hình ảnh:</span>
+                  
+                  <label className="flex items-center gap-1 px-2.5 py-1 border border-admin-border rounded bg-white text-admin-text-main hover:bg-slate-50 text-[11px] font-bold transition-all cursor-pointer shadow-sm">
+                    {bulkUploading ? (
+                      <Loader2 size={12} className="animate-spin text-primary" />
+                    ) : (
+                      <UploadCloud size={12} className="text-primary" />
+                    )}
+                    <span>{bulkUploading ? 'Đang tải...' : 'Upload ảnh chung'}</span>
+                    <input
+                      type="file"
+                      accept=".jpg,.jpeg,.png,.webp,.svg"
+                      disabled={bulkUploading}
+                      onChange={async (e) => {
+                        const file = e.target.files[0];
+                        if (!file) return;
+                        setBulkUploading(true);
+                        try {
+                          const res = await productService.uploadLocalImage(file, 'variants');
+                          if (res && res.url) {
+                            let finalUrl = res.url;
+                            if (finalUrl.startsWith('/')) {
+                              const apiBase = import.meta.env.VITE_API_URL || 'https://localhost:5001/api';
+                              const hostBase = apiBase.replace('/api', '');
+                              finalUrl = `${hostBase}${finalUrl}`;
+                            }
+                            selectedVariantKeys.forEach(key => {
+                              updateVariantField(key, 'imageId', finalUrl);
+                            });
+                            showToast("success", `Đã upload và áp dụng ảnh cho ${selectedVariantKeys.length} biến thể.`);
+                          }
+                        } catch (err) {
+                          showToast("error", "Lỗi upload ảnh hàng loạt", err.message);
+                        } finally {
+                          setBulkUploading(false);
+                          e.target.value = ''; // Reset input
+                        }
+                      }}
+                      className="hidden"
+                    />
+                  </label>
 
-                <button
-                  type="button"
-                  onClick={handleBulkDelete}
-                  className="px-3 py-1.5 border border-admin-border text-red-700 bg-red-50 hover:bg-red-100 text-xs font-bold rounded cursor-pointer transition-all flex items-center gap-1 active:scale-[0.97]"
-                >
-                  <Trash2 size={13} /> Xóa đã chọn
-                </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (window.confirm(`Bạn có chắc chắn muốn gỡ bỏ hình ảnh của ${selectedVariantKeys.length} biến thể đang chọn?`)) {
+                        selectedVariantKeys.forEach(key => {
+                          updateVariantField(key, 'imageId', '');
+                        });
+                        showToast("success", `Đã gỡ ảnh của ${selectedVariantKeys.length} biến thể.`);
+                      }
+                    }}
+                    className="flex items-center gap-1 px-2.5 py-1 border border-red-200 rounded bg-red-50 text-red-600 hover:bg-red-100 text-[11px] font-bold transition-all cursor-pointer shadow-sm"
+                  >
+                    <Trash2 size={12} />
+                    <span>Gỡ ảnh đã chọn</span>
+                  </button>
+                </div>
 
-                <div className="h-4 w-px bg-admin-border"></div>
+                {/* Vertical Divider */}
+                <div className="hidden lg:block h-6 w-px bg-blue-200"></div>
 
-                <button
-                  type="button"
-                  onClick={() => {
-                    setBulkPrice('');
-                    setBulkStock('');
-                    setSelectedVariantKeys([]);
-                    setSelectedAttributes([]);
-                  }}
-                  className="px-3 py-1.5 border border-admin-border text-admin-text-main hover:bg-admin-bg text-xs font-bold rounded cursor-pointer transition-all"
-                >
-                  Hủy
-                </button>
+                {/* Group 3: Toggle / Delete */}
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={handleBulkStatusToggle}
+                    className="px-2.5 py-1 border border-admin-border text-primary bg-primary/5 hover:bg-primary/10 text-[11px] font-bold rounded cursor-pointer transition-all active:scale-[0.97]"
+                  >
+                    Bật/Tắt kích hoạt
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={handleBulkDelete}
+                    className="px-2.5 py-1 border border-admin-border text-red-700 bg-red-50 hover:bg-red-100 text-[11px] font-bold rounded cursor-pointer transition-all flex items-center gap-1 active:scale-[0.97]"
+                  >
+                    <Trash2 size={12} /> Xóa khỏi bảng
+                  </button>
+                </div>
               </div>
             </div>
           )}
@@ -313,7 +392,7 @@ export default function ProductVariantsMatrix() {
                                 const file = e.target.files[0];
                                 if (!file) return;
                                 try {
-                                  const res = await productService.uploadLocalImage(file);
+                                  const res = await productService.uploadLocalImage(file, 'variants');
                                   if (res && res.url) {
                                     let finalUrl = res.url;
                                     if (finalUrl.startsWith('/')) {
@@ -327,8 +406,22 @@ export default function ProductVariantsMatrix() {
                                   alert("Lỗi tải ảnh: " + err.message);
                                 }
                               }}
-                              className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
+                              className="absolute inset-0 opacity-0 cursor-pointer w-full h-full z-1"
                             />
+                            {imgVal && (
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  e.preventDefault();
+                                  updateVariantField(key, 'imageId', '');
+                                }}
+                                className="absolute top-0 right-0 p-0.5 bg-red-500 hover:bg-red-600 text-white rounded-bl opacity-0 group-hover:opacity-100 transition-opacity z-10 cursor-pointer shadow flex items-center justify-center w-3.5 h-3.5"
+                                title="Xóa hình ảnh"
+                              >
+                                <X size={8} strokeWidth={3} />
+                              </button>
+                            )}
                           </div>
                         </td>
 
@@ -473,7 +566,7 @@ export default function ProductVariantsMatrix() {
                                             const file = e.target.files[0];
                                             if (!file) return;
                                             try {
-                                              const res = await productService.uploadLocalImage(file);
+                                              const res = await productService.uploadLocalImage(file, 'variants');
                                               if (res && res.url) {
                                                 let finalUrl = res.url;
                                                 if (finalUrl.startsWith('/')) {
@@ -490,7 +583,19 @@ export default function ProductVariantsMatrix() {
                                           className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
                                         />
                                       </div>
-                                      <span className="text-[10px] text-admin-text-muted font-medium">Nhấp vào ô để thay đổi ảnh biến thể</span>
+                                      <div className="flex flex-col gap-1.5">
+                                        <span className="text-[10px] text-admin-text-muted font-medium">Nhấp vào ô để thay đổi ảnh biến thể</span>
+                                        {imgVal && (
+                                          <button
+                                            type="button"
+                                            onClick={() => updateVariantField(key, 'imageId', '')}
+                                            className="px-2.5 py-1 border border-red-200 bg-red-50 hover:bg-red-100 text-red-600 rounded text-[10px] font-bold w-fit transition-colors cursor-pointer flex items-center gap-1 shadow-sm"
+                                          >
+                                            <Trash2 size={11} />
+                                            Xóa hình ảnh
+                                          </button>
+                                        )}
+                                      </div>
                                     </div>
                                   </div>
                                 </div>

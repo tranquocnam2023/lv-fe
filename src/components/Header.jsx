@@ -5,6 +5,7 @@ import { useCart } from '../context/CartContext';
 import { THEME } from '../utils/theme';
 import { locationService } from '../services/locationService';
 import { productService } from '../services/productService';
+import { categoryService } from '../services/categoryService';
 
 export default function Header({ selectedLocation, setSelectedLocation }) {
   const { cartCount } = useCart();
@@ -12,6 +13,8 @@ export default function Header({ selectedLocation, setSelectedLocation }) {
   
   const [provinces, setProvinces] = useState([]);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [categories, setCategories] = useState([]);
+  const [isCategoryHovered, setIsCategoryHovered] = useState(false);
 
   // States cho tìm kiếm
   const [searchQuery, setSearchQuery] = useState('');
@@ -29,6 +32,17 @@ export default function Header({ selectedLocation, setSelectedLocation }) {
       }
     };
     fetchProvinces();
+  }, []);
+
+  // Lấy dữ liệu danh mục từ DATABASE
+  useEffect(() => {
+    categoryService.getAll()
+      .then(data => {
+        if (Array.isArray(data)) {
+          setCategories(data);
+        }
+      })
+      .catch(err => console.error("Lỗi lấy danh sách danh mục Header:", err));
   }, []);
 
   // Lấy dữ liệu sản phẩm từ DATABASE
@@ -136,6 +150,51 @@ export default function Header({ selectedLocation, setSelectedLocation }) {
           <Link to="/">
             <h1 className="text-2xl font-bold italic tracking-wider">PhoneShop</h1>
           </Link>
+        </div>
+
+        {/* Danh mục Dropdown Button (Hover style như CellphoneS) */}
+        <div 
+          className="relative shrink-0 ml-4 hidden md:block"
+          onMouseEnter={() => setIsCategoryHovered(true)}
+          onMouseLeave={() => setIsCategoryHovered(false)}
+        >
+          <button
+            type="button"
+            className="flex items-center gap-1.5 px-3 py-2 rounded font-black text-xs transition duration-150 select-none cursor-pointer text-white"
+            style={{ backgroundColor: 'rgba(255,255,255,0.15)' }}
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.2} stroke="currentColor" className="w-4 h-4">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6A2.25 2.25 0 0 1 6 3.75h2.25A2.25 2.25 0 0 1 10.5 6v2.25a2.25 2.25 0 0 1-2.25 2.25H6a2.25 2.25 0 0 1-2.25-2.25V6ZM3.75 15.75A2.25 2.25 0 0 1 6 13.5h2.25a2.25 2.25 0 0 1 2.25 2.25V18a2.25 2.25 0 0 1-2.25 2.25H6A2.25 2.25 0 0 1 3.75 18v-2.25ZM13.5 6a2.25 2.25 0 0 1 2.25-2.25H18A2.25 2.25 0 0 1 20.25 6v2.25A2.25 2.25 0 0 1 18 10.5h-2.25a2.25 2.25 0 0 1-2.25-2.25V6ZM13.5 15.75a2.25 2.25 0 0 1 2.25-2.25H18a2.25 2.25 0 0 1 2.25 2.25V18A2.25 2.25 0 0 1 18 20.25h-2.25A2.25 2.25 0 0 1 13.5 18v-2.25Z" />
+            </svg>
+            <span>Danh mục</span>
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-3 h-3 ml-0.5 opacity-80">
+              <path strokeLinecap="round" strokeLinejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
+            </svg>
+          </button>
+
+          {isCategoryHovered && categories.length > 0 && (
+            <>
+              <div className="absolute top-full left-0 w-full h-2 bg-transparent" />
+              <div className="absolute left-0 mt-2 w-60 bg-white border border-gray-100 rounded-md shadow-2xl py-1 z-[100] animate-in fade-in slide-in-from-top-1 duration-150">
+                {categories.map((cat, idx) => {
+                  const path = `/danh-muc/${encodeURIComponent(cat.name.toLowerCase())}`;
+                  return (
+                    <Link
+                      key={idx}
+                      to={path}
+                      onClick={() => setIsCategoryHovered(false)}
+                      className="flex items-center justify-between px-4 py-3 text-xs font-bold text-gray-700 hover:bg-red-50 hover:text-red-600 transition-colors border-b border-gray-50 last:border-0"
+                    >
+                      <span>{cat.name}</span>
+                      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-3.5 h-3.5 text-gray-300">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5" />
+                      </svg>
+                    </Link>
+                  );
+                })}
+              </div>
+            </>
+          )}
         </div>
 
         {/* Cụm chức năng (Location, Search, etc) theo style mượt mà */}

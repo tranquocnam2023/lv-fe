@@ -7,7 +7,14 @@ import { productService } from '../services/productService';
 import { reviewService } from '../services/reviewService';
 import { categoryService } from '../services/categoryService';
 import api from '../services/api';
-import { GitCompare, ChevronLeft, ChevronRight, Maximize2, X, Check, Star, ThumbsUp, MessageSquare, AlertCircle } from 'lucide-react';
+import { GitCompare, ChevronLeft, ChevronRight, Maximize2, X, Check, Star, ThumbsUp, MessageSquare, AlertCircle, Play } from 'lucide-react';
+
+const getYouTubeId = (url) => {
+  if (!url) return null;
+  const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
+  const match = url.match(regExp);
+  return (match && match[2].length === 11) ? match[2] : null;
+};
 
 
 // Unused theme removed
@@ -54,42 +61,60 @@ export default function ProductDetailPage() {
   const selectedStorage = selectedAttributes["Dung lượng RAM - ROM"] || selectedAttributes["Dung Lượng RAM - ROM"] || Object.entries(selectedAttributes).find(([k]) => k.toLowerCase().includes('dung lượng') || k.toLowerCase().includes('bộ nhớ') || k.toLowerCase().includes('ram') || k.toLowerCase().includes('rom'))?.[1] || '';
 
   // States Thư viện hình ảnh động
-  const [activeImage, setActiveImage] = useState('');
+  const [activeImage, setActiveImage] = useState(null);
   const [galleryImages, setGalleryImages] = useState([]);
   const [isFading, setIsFading] = useState(false);
+  const [isVideoLoaded, setIsVideoLoaded] = useState(false);
 
   // States Lightbox popup "Xem hình thực tế"
   const [isLightboxOpen, setIsLightboxOpen] = useState(false);
   const [lightboxActiveIndex, setLightboxActiveIndex] = useState(0);
+  const [isHoveringImage, setIsHoveringImage] = useState(false);
 
   // Phân tách ảnh chung (Master Images)
   const getMasterImages = (prod) => {
     if (!prod) return [];
     let list = [];
+    
+    // 1. Chèn Video YouTube ở đầu tiên nếu có
+    if (prod.videoUrl) {
+      list.push({ type: 'video', url: prod.videoUrl });
+    }
+
+    // 2. Chèn ảnh chính
+    const baseImg = prod.image || prod.thumbnailImage || prod.mainImage;
+    if (baseImg) {
+      list.push({ type: 'image', url: baseImg });
+    }
+
+    // 3. Phân tích ảnh phụ
     try {
       if (prod.images) {
+        let otherImgs = [];
         if (Array.isArray(prod.images)) {
-          list = prod.images;
+          otherImgs = prod.images;
         } else if (typeof prod.images === 'string') {
           if (prod.images.trim().startsWith('[')) {
-            list = JSON.parse(prod.images);
+            otherImgs = JSON.parse(prod.images);
           } else {
-            list = prod.images.split(',').map(img => img.trim());
+            otherImgs = prod.images.split(',').map(img => img.trim());
           }
+        }
+        if (Array.isArray(otherImgs)) {
+          otherImgs.forEach(img => {
+            if (img && img !== baseImg && !list.some(item => item.url === img)) {
+              list.push({ type: 'image', url: img });
+            }
+          });
         }
       }
     } catch (e) {
       console.error("Lỗi phân tách ảnh sản phẩm:", e);
     }
 
-    if (list.length === 0) {
-      list = [prod.image || prod.thumbnailImage || prod.mainImage];
-    }
-
     // Đảm bảo dải thumbnail có tối thiểu 4 hình ảnh phong phú
-    const baseImg = prod.image || prod.thumbnailImage || prod.mainImage;
-    while (list.length < 4) {
-      list.push(baseImg);
+    while (list.length < 4 && baseImg) {
+      list.push({ type: 'image', url: baseImg });
     }
     return list;
   };
@@ -128,11 +153,10 @@ export default function ProductDetailPage() {
             stockQuantity: productData.availableStock ?? productData.totalStock ?? productData.stockQuantity ?? productData.stock ?? 0
           };
           setProduct(normalized);
-          setActiveImage(normalized.image);
-
           // Lấy dải ảnh mặc định (Ảnh chung)
           const masterImgs = getMasterImages(normalized);
           setGalleryImages(masterImgs);
+          setActiveImage(masterImgs[0]);
 
           if (Array.isArray(variantData)) {
             setVariants(variantData);
@@ -382,8 +406,9 @@ export default function ProductDetailPage() {
         if (isColorAttr) {
           setIsFading(true);
           setTimeout(() => {
-            setActiveImage(product.image);
-            setGalleryImages(getMasterImages(product));
+            const masterImgs = getMasterImages(product);
+            setGalleryImages(masterImgs);
+            setActiveImage(masterImgs[0]);
             setIsFading(false);
           }, 150);
         }
@@ -406,12 +431,22 @@ export default function ProductDetailPage() {
 
             if (matchedVariant && matchedVariant.imageId) {
               const varImg = matchedVariant.imageId;
-              setActiveImage(varImg);
+              const varImgObj = { type: 'image', url: varImg };
               const masterImgs = getMasterImages(product);
-              setGalleryImages([varImg, ...masterImgs.slice(1)]);
+              let newGallery = [...masterImgs];
+              const videoIndex = newGallery.findIndex(item => item.type === 'video');
+              const mainImgIndex = videoIndex !== -1 ? 1 : 0;
+              if (newGallery.length > mainImgIndex) {
+                newGallery[mainImgIndex] = varImgObj;
+              } else {
+                newGallery.push(varImgObj);
+              }
+              setGalleryImages(newGallery);
+              setActiveImage(varImgObj);
             } else {
-              setActiveImage(product.image);
-              setGalleryImages(getMasterImages(product));
+              const masterImgs = getMasterImages(product);
+              setGalleryImages(masterImgs);
+              setActiveImage(masterImgs[0]);
             }
             setIsFading(false);
           }, 150);
@@ -426,6 +461,9 @@ export default function ProductDetailPage() {
     setIsFading(true);
     setTimeout(() => {
       setActiveImage(img);
+      if (img.type === 'video') {
+        setIsVideoLoaded(true);
+      }
       setIsFading(false);
     }, 120);
   };
@@ -469,6 +507,42 @@ export default function ProductDetailPage() {
       navigate('/cart');
     }
   };
+
+  // Auto-play slideshow effect (5 seconds)
+  useEffect(() => {
+    const isActiveVideo = activeImage?.type === 'video';
+    if (galleryImages.length <= 1 || isLightboxOpen || isHoveringImage || isActiveVideo) return;
+
+    const timer = setInterval(() => {
+      handleMainImageNext();
+    }, 5000);
+
+    return () => clearInterval(timer);
+  }, [galleryImages, activeImage, isLightboxOpen, isHoveringImage]);
+
+  // Control YouTube video playback based on active slide
+  useEffect(() => {
+    if (!activeImage) return;
+
+    if (activeImage.type === 'video') {
+      if (isVideoLoaded) {
+        const timer = setTimeout(() => {
+          const iframe = document.getElementById('product-youtube-iframe');
+          if (iframe && iframe.contentWindow) {
+            iframe.contentWindow.postMessage('{"event":"command","func":"playVideo","args":""}', '*');
+          }
+        }, 150);
+        return () => clearTimeout(timer);
+      }
+    } else {
+      if (isVideoLoaded) {
+        const iframe = document.getElementById('product-youtube-iframe');
+        if (iframe && iframe.contentWindow) {
+          iframe.contentWindow.postMessage('{"event":"command","func":"pauseVideo","args":""}', '*');
+        }
+      }
+    }
+  }, [activeImage, isVideoLoaded]);
 
   // Lightbox navigation
   const handleLightboxPrev = () => {
@@ -520,11 +594,22 @@ export default function ProductDetailPage() {
     "Ưu đãi mua kèm Phụ kiện Apple giảm đến 30%"
   ];
 
+
+
   // main image carousel navigation
   const handleMainImagePrev = () => {
-    const currentIndex = galleryImages.indexOf(activeImage);
+    const currentIndex = galleryImages.findIndex(img => img.url === activeImage?.url && img.type === activeImage?.type);
     if (currentIndex === -1) return;
-    const prevIndex = currentIndex === 0 ? galleryImages.length - 1 : currentIndex - 1;
+    const hasVideo = galleryImages.some(img => img.type === 'video');
+    const targetFirstIndex = hasVideo ? 1 : 0;
+    
+    // Nếu đang ở video (index 0) mà bấm prev -> nhảy về cuối slide hình
+    let prevIndex = currentIndex === 0 ? galleryImages.length - 1 : currentIndex - 1;
+    // Nếu đang ở hình đầu tiên mà bấm prev -> nhảy về cuối slide hình (không qua video)
+    if (currentIndex === targetFirstIndex) {
+      prevIndex = galleryImages.length - 1;
+    }
+    
     setIsFading(true);
     setTimeout(() => {
       setActiveImage(galleryImages[prevIndex]);
@@ -533,9 +618,18 @@ export default function ProductDetailPage() {
   };
 
   const handleMainImageNext = () => {
-    const currentIndex = galleryImages.indexOf(activeImage);
+    const currentIndex = galleryImages.findIndex(img => img.url === activeImage?.url && img.type === activeImage?.type);
     if (currentIndex === -1) return;
-    const nextIndex = currentIndex === galleryImages.length - 1 ? 0 : currentIndex + 1;
+    const hasVideo = galleryImages.some(img => img.type === 'video');
+    const targetFirstIndex = hasVideo ? 1 : 0;
+    
+    // Nếu đang ở video (index 0) mà bấm next -> nhảy sang hình đầu tiên
+    let nextIndex = currentIndex === 0 ? targetFirstIndex : currentIndex + 1;
+    // Nếu đang ở cuối slide hình mà bấm next -> nhảy về hình đầu tiên (không qua video)
+    if (currentIndex === galleryImages.length - 1) {
+      nextIndex = targetFirstIndex;
+    }
+
     setIsFading(true);
     setTimeout(() => {
       setActiveImage(galleryImages[nextIndex]);
@@ -594,22 +688,26 @@ export default function ProductDetailPage() {
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-start">
           {/* CỘT TRÁI: THƯ VIỆN ẢNH ĐỘNG (Ảnh chính + Thumbnails + Lightbox) */}
           <div className="lg:col-span-7 space-y-6">
-            <div className="bg-white rounded-md p-8 flex flex-col items-center relative group">
-              {/* Khung ảnh chính có hiệu ứng fade-in mượt mà */}
-              <div className="relative w-full aspect-square max-w-[420px] mb-6 flex items-center justify-center overflow-hidden">
+            <div className="bg-white rounded-md p-8 flex flex-col items-center relative group" id="product-slideshow-container">
+              {/* Khung ảnh chính có hiệu ứng slide ngang mượt mà kiểu CellphoneS */}
+              <div 
+                className="relative w-full aspect-[16/10] max-w-[620px] mb-6 overflow-hidden rounded-md border border-gray-100"
+                onMouseEnter={() => setIsHoveringImage(true)}
+                onMouseLeave={() => setIsHoveringImage(false)}
+              >
                 {/* Left/Right Carousel Control overlay */}
                 {galleryImages.length > 1 && (
                   <>
                     <button
                       onClick={handleMainImagePrev}
-                      className="absolute left-2 top-1/2 -translate-y-1/2 z-10 p-2 bg-white/80 hover:bg-white text-gray-800 rounded-full transition-all opacity-0 group-hover:opacity-100 hover:scale-105 active:scale-95"
+                      className="absolute left-2 top-1/2 -translate-y-1/2 z-10 p-2 bg-white/90 hover:bg-white text-gray-800 rounded-full shadow-md transition-all opacity-0 group-hover:opacity-100 hover:scale-105 active:scale-95 focus:outline-none"
                       title="Ảnh trước"
                     >
                       <ChevronLeft size={20} strokeWidth={2.5} />
                     </button>
                     <button
                       onClick={handleMainImageNext}
-                      className="absolute right-2 top-1/2 -translate-y-1/2 z-10 p-2 bg-white/80 hover:bg-white text-gray-800 rounded-full transition-all opacity-0 group-hover:opacity-100 hover:scale-105 active:scale-95"
+                      className="absolute right-2 top-1/2 -translate-y-1/2 z-10 p-2 bg-white/90 hover:bg-white text-gray-800 rounded-full shadow-md transition-all opacity-0 group-hover:opacity-100 hover:scale-105 active:scale-95 focus:outline-none"
                       title="Ảnh tiếp theo"
                     >
                       <ChevronRight size={20} strokeWidth={2.5} />
@@ -617,15 +715,54 @@ export default function ProductDetailPage() {
                   </>
                 )}
 
-                <img
-                  src={activeImage}
-                  alt={product.name}
-                  className={`max-w-full max-h-full object-contain transition-all duration-200 transform ${isFading ? 'opacity-30 scale-95' : 'opacity-100 scale-100'
-                    }`}
-                />
+                {/* Sliding Flex Container */}
+                <div 
+                  className="w-full flex flex-nowrap h-full transition-transform duration-500 ease-in-out"
+                  style={{ 
+                    transform: `translateX(-${(galleryImages.findIndex(img => img.url === activeImage?.url && img.type === activeImage?.type) !== -1 ? galleryImages.findIndex(img => img.url === activeImage?.url && img.type === activeImage?.type) : 0) * 100}%)`
+                  }}
+                >
+                  {galleryImages.map((item, idx) => (
+                    <div key={idx} className="w-full h-full flex-shrink-0 flex items-center justify-center bg-white p-2">
+                      {item.type === 'video' ? (
+                        <div className="w-full h-full relative">
+                          {isVideoLoaded ? (
+                            <iframe
+                              id="product-youtube-iframe"
+                              src={`https://www.youtube.com/embed/${getYouTubeId(item.url)}?autoplay=1&rel=0&enablejsapi=1`}
+                              className="w-full h-full object-contain absolute inset-0 border-0"
+                              title="Product Video"
+                              allowFullScreen
+                              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                            />
+                          ) : (
+                            <div className="w-full h-full relative flex items-center justify-center bg-gray-50 cursor-pointer" onClick={() => setIsVideoLoaded(true)}>
+                              <img 
+                                src={`https://img.youtube.com/vi/${getYouTubeId(item.url)}/hqdefault.jpg`} 
+                                className="w-full h-full object-cover rounded-md opacity-90" 
+                                alt="Video preview" 
+                              />
+                              <div className="absolute inset-0 bg-black/15 flex items-center justify-center rounded-md">
+                                <div className="w-14 h-14 bg-red-600 rounded-full flex items-center justify-center shadow-lg hover:scale-105 active:scale-95 transition-all">
+                                  <Play size={24} className="text-white ml-0.5" fill="currentColor" />
+                                </div>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      ) : (
+                        <img
+                          src={item.url}
+                          alt=""
+                          className="max-w-full max-h-full object-contain"
+                        />
+                      )}
+                    </div>
+                  ))}
+                </div>
 
                 {product.discount && (
-                  <div className="absolute top-0 right-0 bg-red-600 text-white font-black text-base px-3.5 py-1.5 rounded-md transform rotate-3 z-10">
+                  <div className="absolute top-2 right-2 bg-red-600 text-white font-black text-xs px-2 py-1 rounded transform rotate-3 z-10">
                     -{product.discount}%
                   </div>
                 )}
@@ -633,29 +770,64 @@ export default function ProductDetailPage() {
 
               {/* Dải ảnh nhỏ bên dưới */}
               <div className="w-full space-y-4">
-                <div className="flex gap-3 overflow-x-auto w-full py-2 justify-center scroll-smooth">
+                <div className="flex gap-3 overflow-x-auto w-full py-2 justify-center scroll-smooth [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
                   {galleryImages.map((img, idx) => (
                     <div
                       key={idx}
                       onClick={() => handleThumbnailClick(img)}
-                      className={`flex-shrink-0 w-16 h-16 rounded-md p-1.5 cursor-pointer transition-all hover:scale-105 active:scale-95 ${activeImage === img
-                        ? 'bg-blue-50 opacity-100 scale-105'
-                        : 'opacity-60 hover:opacity-100'
-                        }`}
+                      className={`flex-shrink-0 w-16 h-16 rounded-md p-0.5 cursor-pointer transition-all hover:scale-105 active:scale-95 border flex items-center justify-center bg-white overflow-hidden ${
+                        activeImage?.url === img.url && activeImage?.type === img.type
+                          ? 'border-2 border-blue-600 bg-blue-50/50 opacity-100 scale-105 shadow-sm'
+                          : 'border-gray-200 opacity-60 hover:opacity-100'
+                      }`}
                     >
-                      <img src={img} className="w-full h-full object-contain" alt="" />
+                      {img.type === 'video' ? (
+                        <div className="w-full h-full relative flex items-center justify-center bg-black/5 rounded">
+                          <img 
+                            src={`https://img.youtube.com/vi/${getYouTubeId(img.url)}/mqdefault.jpg`} 
+                            className="w-full h-full object-cover opacity-80" 
+                            alt="Video Thumbnail" 
+                          />
+                          <div className="absolute inset-0 bg-black/30 flex flex-col items-center justify-center text-white">
+                            <Play size={16} className="text-white mb-0.5" fill="currentColor" />
+                            <span className="text-[9px] font-black uppercase tracking-tight scale-90">Video</span>
+                          </div>
+                        </div>
+                      ) : (
+                        <img src={img.url} className="w-full h-full object-contain" alt="" />
+                      )}
                     </div>
                   ))}
                 </div>
 
-                {/* Nút Xem hình thực tế (Lightbox) */}
-                <div className="flex justify-center">
+                {/* Nút Xem hình thực tế & Xem Video giới thiệu (Kiểu CellphoneS) */}
+                <div className="flex justify-center gap-3">
+                  {product.videoUrl && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const videoIdx = galleryImages.findIndex(img => img.type === 'video');
+                        if (videoIdx !== -1) {
+                          setActiveImage(galleryImages[videoIdx]);
+                          setIsVideoLoaded(true);
+                          const el = document.getElementById('product-slideshow-container');
+                          if (el) el.scrollIntoView({ behavior: 'smooth' });
+                        }
+                      }}
+                      className="flex items-center gap-1.5 px-4 py-2 bg-red-50 hover:bg-red-100 text-red-600 rounded-full text-xs font-black transition-colors focus:outline-none border border-red-200 cursor-pointer"
+                    >
+                      <Play size={13} fill="currentColor" className="text-red-600" />
+                      <span>Xem Video giới thiệu</span>
+                    </button>
+                  )}
                   <button
+                    type="button"
                     onClick={() => {
-                      setLightboxActiveIndex(galleryImages.indexOf(activeImage) !== -1 ? galleryImages.indexOf(activeImage) : 0);
+                      const activeIdx = galleryImages.findIndex(img => img.url === activeImage?.url && img.type === activeImage?.type);
+                      setLightboxActiveIndex(activeIdx !== -1 ? activeIdx : 0);
                       setIsLightboxOpen(true);
                     }}
-                    className="flex items-center gap-1.5 px-4 py-2 bg-gray-100 hover:bg-blue-50 hover:text-blue-600 text-gray-500 rounded-full text-xs font-black transition-colors"
+                    className="flex items-center gap-1.5 px-4 py-2 bg-gray-100 hover:bg-blue-50 hover:text-blue-600 text-gray-500 rounded-full text-xs font-black transition-colors focus:outline-none border border-gray-200 cursor-pointer"
                   >
                     <Maximize2 size={13} />
                     <span>Xem hình thực tế {selectedColor && `màu ${selectedColor}`}</span>
@@ -1226,11 +1398,23 @@ export default function ProductDetailPage() {
               className="w-full h-full flex items-center justify-center px-12 md:px-20"
               onClick={(e) => e.stopPropagation()}
             >
-              <img
-                src={galleryImages[lightboxActiveIndex]}
-                alt=""
-                className="max-w-full max-h-full object-contain rounded-md animate-in zoom-in-95 duration-200"
-              />
+              {galleryImages[lightboxActiveIndex]?.type === 'video' ? (
+                <div className="w-full h-full max-w-[800px] aspect-video relative flex items-center justify-center">
+                  <iframe
+                    src={`https://www.youtube.com/embed/${getYouTubeId(galleryImages[lightboxActiveIndex].url)}?autoplay=1&rel=0`}
+                    className="w-full h-full object-contain absolute inset-0 border-0"
+                    title="Product Video"
+                    allowFullScreen
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                  />
+                </div>
+              ) : (
+                <img
+                  src={galleryImages[lightboxActiveIndex]?.url}
+                  alt=""
+                  className="max-w-full max-h-full object-contain rounded-md animate-in zoom-in-95 duration-200"
+                />
+              )}
             </div>
 
             {/* Button Next */}
@@ -1244,19 +1428,27 @@ export default function ProductDetailPage() {
 
           {/* Bottom strip: Thumbnails carousel scroll */}
           <div
-            className="py-4 shrink-0 w-full flex justify-center gap-3 overflow-x-auto"
+            className="py-4 shrink-0 w-full flex justify-center gap-3 overflow-x-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]"
             onClick={(e) => e.stopPropagation()}
           >
             {galleryImages.map((img, idx) => (
               <div
                 key={idx}
-                onClick={() => setLightboxActiveIndex(idx)}
-                className={`w-14 h-14 rounded-md p-1 bg-white cursor-pointer transition-all ${lightboxActiveIndex === idx
-                  ? 'opacity-100 scale-105'
-                  : 'opacity-50 hover:opacity-80'
-                  }`}
+                onClick={(e) => { e.stopPropagation(); setLightboxActiveIndex(idx); }}
+                className={`w-14 h-14 rounded-md p-1 bg-white cursor-pointer transition-all border flex items-center justify-center overflow-hidden ${
+                  lightboxActiveIndex === idx
+                    ? 'border-2 border-blue-600 opacity-100 scale-105 shadow-md'
+                    : 'border-gray-200 opacity-50 hover:opacity-80'
+                }`}
               >
-                <img src={img} className="w-full h-full object-contain rounded" alt="" />
+                {img.type === 'video' ? (
+                  <div className="w-full h-full bg-black flex items-center justify-center rounded relative overflow-hidden">
+                    <Play size={16} className="text-white z-10 animate-pulse" />
+                    <div className="absolute inset-0 bg-black/40" />
+                  </div>
+                ) : (
+                  <img src={img.url} className="w-full h-full object-contain rounded" alt="" />
+                )}
               </div>
             ))}
           </div>

@@ -6,10 +6,78 @@ import { generateBrandOrCategoryCode, generateSlug } from '../utils/codeGenerato
 import CategorySpecsTemplateEditor from './CategorySpecsTemplateEditor';
 
 // Component đệ quy hiển thị 1 dòng danh mục và (tùy chọn) bảng danh mục con bên dưới
-const CategoryRow = ({ category, level = 1, onEdit, onAddSubCategory, onDelete, allCategories = [] }) => {
+const CategoryRow = ({ category, level = 1, onEdit, onAddSubCategory, onDelete, allCategories = [], onRefresh }) => {
   const [expanded, setExpanded] = useState(false);
   const [details, setDetails] = useState(null);
   const [loadingDetails, setLoadingDetails] = useState(false);
+  const [inlineUploading, setInlineUploading] = useState(false);
+
+  const handleDeleteIconInline = async (e) => {
+    e.stopPropagation();
+    e.preventDefault();
+    if (!window.confirm(`Bạn có chắc chắn muốn xóa hình ảnh/icon của danh mục "${category.name}"?`)) return;
+
+    try {
+      const payload = {
+        name: category.name,
+        categoryCode: category.categoryCode,
+        description: category.description || '',
+        iconUrl: '',
+        parentId: category.parentId || null,
+        isActive: category.isActive !== false,
+        specsTemplate: category.specsTemplate || ''
+      };
+      await categoryService.update(category.id, payload);
+      if (onRefresh) onRefresh();
+    } catch (err) {
+      console.error(err);
+      alert('Lỗi xóa hình ảnh/icon: ' + err.message);
+    }
+  };
+
+  const handleUploadIconInline = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const validExtensions = ['image/svg+xml', 'image/webp', 'image/png', 'image/jpeg', 'image/jpg'];
+    if (!validExtensions.includes(file.type)) {
+      return alert('Hệ thống chỉ hỗ trợ SVG, WebP, PNG, JPG/JPEG.');
+    }
+    
+    if (file.size > 2 * 1024 * 1024) {
+      return alert('Vui lòng chọn ảnh nhỏ hơn 2MB.');
+    }
+
+    setInlineUploading(true);
+    try {
+      const res = await productService.uploadLocalImage(file, 'categories');
+      if (res && res.url) {
+        let finalUrl = res.url;
+        if (finalUrl.startsWith('/')) {
+          const apiBase = import.meta.env.VITE_API_URL || 'https://localhost:5001/api';
+          const hostBase = apiBase.replace('/api', '');
+          finalUrl = `${hostBase}${finalUrl}`;
+        }
+        
+        const payload = {
+          name: category.name,
+          categoryCode: category.categoryCode,
+          description: category.description || '',
+          iconUrl: finalUrl,
+          parentId: category.parentId || null,
+          isActive: category.isActive !== false,
+          specsTemplate: category.specsTemplate || ''
+        };
+        await categoryService.update(category.id, payload);
+        if (onRefresh) onRefresh();
+      }
+    } catch (err) {
+      console.error(err);
+      alert('Lỗi tải ảnh: ' + err.message);
+    } finally {
+      setInlineUploading(false);
+    }
+  };
 
   const handleToggle = async () => {
     if (!expanded && !details) {
@@ -74,11 +142,32 @@ const CategoryRow = ({ category, level = 1, onEdit, onAddSubCategory, onDelete, 
                 {currentLevel === 2 ? '├──' : '└──'}
               </span>
             )}
-            <div className="w-10 h-10 rounded-md bg-white border border-admin-border flex items-center justify-center overflow-hidden flex-shrink-0">
-              {category.iconUrl ? (
-                <img src={category.iconUrl} alt={category.name} className="w-full h-full object-cover" />
+            <div className="relative w-10 h-10 rounded-md bg-white border border-admin-border flex items-center justify-center overflow-hidden flex-shrink-0 group/icon cursor-pointer hover:border-primary transition-colors">
+              {inlineUploading ? (
+                <Loader2 className="animate-spin text-primary animate-in fade-in duration-300" size={16} />
+              ) : category.iconUrl ? (
+                <>
+                  <img src={category.iconUrl} alt={category.name} className="w-full h-full object-contain p-1" />
+                  <button
+                    type="button"
+                    onClick={handleDeleteIconInline}
+                    className="absolute top-0 right-0 p-0.5 bg-red-500 hover:bg-red-600 text-white rounded-bl opacity-0 group-hover/icon:opacity-100 transition-opacity z-20 cursor-pointer shadow flex items-center justify-center w-4 h-4"
+                    title="Xóa icon"
+                  >
+                    <X size={10} strokeWidth={3} />
+                  </button>
+                </>
               ) : (
                 <ImageIcon className="text-admin-text-muted" size={20} />
+              )}
+              {!inlineUploading && (
+                <input
+                  type="file"
+                  accept=".svg,.webp,.png,.jpg,.jpeg"
+                  onChange={handleUploadIconInline}
+                  className="absolute inset-0 opacity-0 cursor-pointer w-full h-full z-10"
+                  title={category.iconUrl ? "Nhấp để thay đổi icon" : "Nhấp để tải lên icon"}
+                />
               )}
             </div>
             <div>
@@ -197,6 +286,7 @@ const CategoryRow = ({ category, level = 1, onEdit, onAddSubCategory, onDelete, 
                           onAddSubCategory={onAddSubCategory}
                           onDelete={onDelete}
                           allCategories={allCategories}
+                          onRefresh={onRefresh}
                         />
                       ))
                     ) : (
@@ -436,7 +526,7 @@ export default function AdminCategories() {
     
     setUploading(true);
     try {
-      const res = await productService.uploadLocalImage(file);
+      const res = await productService.uploadLocalImage(file, 'categories');
       if (res && res.url) {
         let finalUrl = res.url;
         if (finalUrl.startsWith('/')) {
@@ -705,7 +795,7 @@ export default function AdminCategories() {
                   {uploading ? (
                     <Loader2 className="animate-spin text-primary" size={32} />
                   ) : formData.iconUrl ? (
-                    <img src={formData.iconUrl} alt="Preview" className="w-full h-full object-cover" />
+                    <img src={formData.iconUrl} alt="Preview" className="w-full h-full object-contain p-2" />
                   ) : (
                     <ImageIcon className="text-admin-text-muted" size={40} />
                   )}
@@ -714,17 +804,29 @@ export default function AdminCategories() {
                   <p className="text-xs font-bold text-admin-text-main">Hỗ trợ JPG, PNG, WEBP, SVG</p>
                   <p className="text-[10px] text-admin-text-muted">Kích thước file tối đa 2MB</p>
                 </div>
-                <label className="inline-flex items-center gap-2 px-4 py-2.5 bg-white border border-admin-border text-admin-text-main text-sm font-bold rounded-md cursor-pointer hover:bg-slate-50 transition-colors shadow-sm">
-                  <UploadCloud size={16} />
-                  Tải ảnh lên
-                  <input 
-                    type="file" 
-                    accept=".jpg,.jpeg,.png,.webp,.svg" 
-                    onChange={handleImageUpload} 
-                    className="hidden" 
-                    disabled={uploading}
-                  />
-                </label>
+                <div className="flex flex-wrap items-center gap-2 justify-center">
+                  <label className="inline-flex items-center gap-2 px-4 py-2.5 bg-white border border-admin-border text-admin-text-main text-sm font-bold rounded-md cursor-pointer hover:bg-slate-50 transition-colors shadow-sm">
+                    <UploadCloud size={16} />
+                    Tải ảnh lên
+                    <input 
+                      type="file" 
+                      accept=".jpg,.jpeg,.png,.webp,.svg" 
+                      onChange={handleImageUpload} 
+                      className="hidden" 
+                      disabled={uploading}
+                    />
+                  </label>
+                  {formData.iconUrl && (
+                    <button
+                      type="button"
+                      onClick={() => setFormData(prev => ({ ...prev, iconUrl: '' }))}
+                      className="inline-flex items-center gap-2 px-4 py-2.5 bg-red-50 border border-red-200 text-red-600 text-sm font-bold rounded-md cursor-pointer hover:bg-red-100 transition-colors shadow-sm"
+                    >
+                      <Trash2 size={16} />
+                      Xóa hình
+                    </button>
+                  )}
+                </div>
               </div>
             </div>
           </div>
@@ -833,6 +935,7 @@ export default function AdminCategories() {
                       onAddSubCategory={(parentId, nextLevel, parentNameVal) => handleOpenModal(null, parentId, true, parentNameVal)}
                       onDelete={handleDeleteCategory}
                       allCategories={allCategories}
+                      onRefresh={loadData}
                     />
                   ))
                 ) : (
