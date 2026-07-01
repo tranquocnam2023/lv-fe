@@ -118,7 +118,8 @@ export const useProductForm = ({ productId, onBack, onSaveSuccess, searchParams,
     isActive: true,
     isFeatured: false,
     images: [],
-    hasVariants: false
+    hasVariants: false,
+    videoUrl: ''
   });
 
   // Options state
@@ -320,7 +321,8 @@ export const useProductForm = ({ productId, onBack, onSaveSuccess, searchParams,
               isActive: productData.isActive !== false,
               isFeatured: productData.isFeatured || false,
               images: loadedImages,
-              hasVariants: hasVars
+              hasVariants: hasVars,
+              videoUrl: productData.videoUrl || ''
             });
 
             if (hasVars) {
@@ -515,7 +517,7 @@ export const useProductForm = ({ productId, onBack, onSaveSuccess, searchParams,
           alert(`File ${file.name} quá lớn (>2MB).`);
           continue;
         }
-        const res = await productService.uploadLocalImage(file);
+        const res = await productService.uploadLocalImage(file, 'products');
         if (res && res.url) {
           let finalUrl = res.url;
           if (finalUrl.startsWith('/')) {
@@ -539,25 +541,40 @@ export const useProductForm = ({ productId, onBack, onSaveSuccess, searchParams,
   };
 
   const setMainImage = (index) => {
-    const newImages = formData.images.map((img, i) => ({
+    if (index < 0 || index >= formData.images.length) return;
+    const newImages = [...formData.images];
+    const [selectedImage] = newImages.splice(index, 1);
+    newImages.unshift(selectedImage);
+    const updatedImages = newImages.map((img, i) => ({
       ...img,
-      isMain: i === index
+      isMain: i === 0,
+      order: i
     }));
-    setFormData(prev => ({ ...prev, images: newImages }));
+    setFormData(prev => ({ ...prev, images: updatedImages }));
   };
 
   const updateImageOrder = (index, newOrder) => {
+    if (index < 0 || index >= formData.images.length) return;
     const newImages = [...formData.images];
-    newImages[index].order = parseInt(newOrder) || 0;
-    setFormData(prev => ({ ...prev, images: newImages }));
+    newImages[index].order = parseFloat(newOrder) || 0;
+    newImages.sort((a, b) => a.order - b.order);
+    const updatedImages = newImages.map((img, i) => ({
+      ...img,
+      isMain: i === 0,
+      order: i
+    }));
+    setFormData(prev => ({ ...prev, images: updatedImages }));
   };
 
   const removeImage = (index) => {
+    if (index < 0 || index >= formData.images.length) return;
     const newImages = formData.images.filter((_, i) => i !== index);
-    if (newImages.length > 0 && formData.images[index].isMain) {
-      newImages[0].isMain = true;
-    }
-    setFormData(prev => ({ ...prev, images: newImages }));
+    const updatedImages = newImages.map((img, i) => ({
+      ...img,
+      isMain: i === 0,
+      order: i
+    }));
+    setFormData(prev => ({ ...prev, images: updatedImages }));
   };
 
   // Option / Attribute management
@@ -900,9 +917,8 @@ export const useProductForm = ({ productId, onBack, onSaveSuccess, searchParams,
 
     setSaving(true);
     try {
-      const sortedImages = [...formData.images].sort((a, b) => a.order - b.order);
-      const mainImage = sortedImages.find(i => i.isMain)?.url || "";
-      const otherImages = sortedImages.filter(i => !i.isMain).map(i => i.url);
+      const mainImage = formData.images[0]?.url || "";
+      const otherImages = formData.images.slice(1).map(i => i.url);
       const generatedCode = formData.productCode.trim() || generateProductCode(formData.name, 20);
 
       let calculatedStock = 0;
@@ -932,7 +948,8 @@ export const useProductForm = ({ productId, onBack, onSaveSuccess, searchParams,
         brandId: formData.brandId ? parseInt(formData.brandId) : null,
         thumbnailImage: mainImage,
         mainImage: mainImage,
-        images: JSON.stringify(otherImages)
+        images: JSON.stringify(otherImages),
+        videoUrl: formData.videoUrl || "" 
       };
 
       let resultProduct;
@@ -985,7 +1002,7 @@ export const useProductForm = ({ productId, onBack, onSaveSuccess, searchParams,
           });
 
           await variantService.sync(savedProductId, variantsPayload);
-        } else if (!formData.hasVariants && productId) {
+        } else if (productId) {
           await variantService.sync(savedProductId, []);
         }
       }

@@ -109,15 +109,16 @@ function App() {
             </Routes>
           </main>
         ) : (
-          <div className="container-box flex flex-1 w-full my-6 flex-col md:flex-row space-y-4 md:space-y-0 md:space-x-6 px-4">
-            {/* Sidebar danh mục (Giữ nguyên khi chuyển trang) */}
-            <div className="hidden md:flex flex-col space-y-4 w-64">
-              <Sidebar />
-              {/*thêm danh mục thì ghi đè*/}
-            </div>
+          <div className="container-box flex flex-1 w-full my-6 flex-col md:flex-row space-y-4 md:space-y-0 px-4">
+            {/* Sidebar danh mục (Chỉ hiện ở trang chủ / trang danh mục) */}
+            {(location.pathname === '/' || location.pathname.startsWith('/danh-muc/')) && (
+              <div className="hidden md:flex flex-col space-y-4 w-64 md:mr-6 shrink-0">
+                <Sidebar />
+              </div>
+            )}
 
-            {/* Nội dung chính linh hoạt theo Route */}
-            <main className="flex-1 bg-white p-6 rounded border border-bordercustom min-h-[50vh]">
+            {/* Nội dung chính linh hoạt theo Route (Kéo rộng tối đa khi ẩn sidebar) */}
+            <main className="flex-1 bg-white p-6 rounded border border-bordercustom min-h-[50vh] min-w-0 w-full">
               <Routes>
                 <Route path="/" element={<HomePage selectedLocation={selectedLocation} />} />
                 <Route path="/auth" element={<AuthPage />} />

@@ -86,9 +86,6 @@ export default function ProductForm({ productId, onBack, onSaveSuccess }) {
             {/* Khối A - Thông tin cơ bản */}
             <ProductBasicInfo productId={productId} />
 
-            {/* Khối C - Hình ảnh chung */}
-            <ProductImageUpload />
-
             {/* Khối F - Thông số kỹ thuật phân nhóm */}
             <ProductSpecsBuilder />
           </div>
@@ -132,6 +129,9 @@ export default function ProductForm({ productId, onBack, onSaveSuccess }) {
                 </div>
               </div>
             </div>
+
+            {/* Khối C - Hình ảnh chung */}
+            <ProductImageUpload />
 
             {/* Khối D - Giá & Tồn kho mặc định */}
             <div className="bg-white p-6 rounded-md border-0 bg-gray-50/50">

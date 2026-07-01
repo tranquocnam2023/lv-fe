@@ -15,10 +15,10 @@ export const productService = {
   
   delete: (id) => api.delete(`/Product/${id}`),
 
-  uploadLocalImage: (file) => {
+  uploadLocalImage: (file, folder = 'general') => {
     const formData = new FormData();
     formData.append('file', file);
-    return api.post('/Upload/local', formData, {
+    return api.post(`/Upload/local?folder=${folder}`, formData, {
       headers: {
         'Content-Type': 'multipart/form-data'
       }
