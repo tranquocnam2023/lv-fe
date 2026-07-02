@@ -26,6 +26,15 @@ function App() {
 
   const [selectedLocation, setSelectedLocation] = useState(() => localStorage.getItem('selectedLocation') || '');
   const [provinces, setProvinces] = useState([]);
+  const [isSidebarFocused, setIsSidebarFocused] = useState(false);
+
+  useEffect(() => {
+    if (location.state?.focusSidebar) {
+      setIsSidebarFocused(true);
+      // Clear location state to avoid refocusing on page reloads/back actions
+      window.history.replaceState({}, document.title);
+    }
+  }, [location]);
 
   useEffect(() => {
     if (!selectedLocation && !isAdminPath) {
@@ -93,12 +102,27 @@ function App() {
 
   return (
     <div
-      className="w-full flex justify-center font-sans min-h-screen"
+      className="w-full flex justify-center font-sans min-h-screen relative"
       style={{ backgroundColor: THEME.bgPage, color: THEME.textDark }}
     >
-      <div className="w-full h-full flex flex-col">
+      {/* Overlay Backdrop */}
+      {isSidebarFocused && (
+        <div 
+          className="fixed inset-0 bg-black/45 backdrop-blur-[2px] z-[80] transition-opacity duration-300 animate-in fade-in cursor-pointer"
+          onClick={() => setIsSidebarFocused(false)}
+        />
+      )}
+
+      <div className="w-full h-full flex flex-col relative">
         {/* Header full width */}
-        <Header selectedLocation={selectedLocation} setSelectedLocation={setSelectedLocation} />
+        <div className={`relative ${isSidebarFocused ? 'z-[85]' : 'z-30'}`}>
+          <Header 
+            selectedLocation={selectedLocation} 
+            setSelectedLocation={setSelectedLocation} 
+            isSidebarFocused={isSidebarFocused}
+            setIsSidebarFocused={setIsSidebarFocused}
+          />
+        </div>
 
         {/* Main Container */}
         {isCartOrCheckout ? (
@@ -109,7 +133,7 @@ function App() {
             </Routes>
           </main>
         ) : (
-          <div className="container-box flex flex-1 w-full my-6 flex-col md:flex-row space-y-4 md:space-y-0 px-4">
+          <div className="container-box flex flex-1 w-full mt-3 mb-6 flex-col md:flex-row space-y-4 md:space-y-0 px-4">
             {/* Sidebar danh mục (Chỉ hiện ở trang chủ / trang danh mục) */}
             {(location.pathname === '/' || location.pathname.startsWith('/danh-muc/')) && (
               <div className="hidden md:flex flex-col space-y-4 w-64 md:mr-6 shrink-0">
