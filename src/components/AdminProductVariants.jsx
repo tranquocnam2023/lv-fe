@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Search, Plus, Edit2, Trash2, Image as ImageIcon, X, FolderOpen, ChevronLeft, ChevronRight, PlusCircle, MinusCircle } from 'lucide-react';
+import { Search, Plus, Edit2, Trash2, Image as ImageIcon, X, FolderOpen, ChevronLeft, ChevronRight, PlusCircle, MinusCircle, Loader2 } from 'lucide-react';
 import { productService } from '../services/productService';
 import { variantService } from '../services/variantService';
 import { usePagination } from '../hooks/usePagination';
@@ -53,6 +53,7 @@ export default function AdminProductVariants() {
 
   const [imageInputMethod, setImageInputMethod] = useState('url'); // 'url' | 'upload'
   const [uploading, setUploading] = useState(false);
+  const [inlineUploadingVariantId, setInlineUploadingVariantId] = useState(null);
 
   // Load products and variants
   const loadData = () => {
@@ -138,7 +139,7 @@ export default function AdminProductVariants() {
 
     setUploading(true);
     try {
-      const res = await productService.uploadLocalImage(file);
+      const res = await productService.uploadLocalImage(file, 'variants');
       if (res && res.url) {
         let finalUrl = res.url;
         if (finalUrl.startsWith('/')) {
@@ -244,6 +245,73 @@ export default function AdminProductVariants() {
     } catch (err) {
       console.error('Lưu biến thể thất bại:', err);
       alert('Có lỗi xảy ra: ' + (err.message || 'Lỗi không xác định'));
+    }
+  };
+
+  const handleUploadImageInline = async (e, variant) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const validExtensions = ['image/svg+xml', 'image/webp', 'image/png', 'image/jpeg', 'image/jpg'];
+    if (!validExtensions.includes(file.type)) {
+      return alert('Hệ thống chỉ hỗ trợ SVG, WebP, PNG, JPG/JPEG.');
+    }
+    
+    if (file.size > 2 * 1024 * 1024) {
+      return alert('Vui lòng chọn ảnh nhỏ hơn 2MB.');
+    }
+
+    setInlineUploadingVariantId(variant.id);
+    try {
+      const res = await productService.uploadLocalImage(file, 'variants');
+      if (res && res.url) {
+        let finalUrl = res.url;
+        if (finalUrl.startsWith('/')) {
+          const apiBase = import.meta.env.VITE_API_URL || 'https://localhost:5001/api';
+          const hostBase = apiBase.replace('/api', '');
+          finalUrl = `${hostBase}${finalUrl}`;
+        }
+        
+        const payload = {
+          name: variant.name,
+          price: variant.price,
+          totalStock: variant.totalStock,
+          productId: variant.productId,
+          imageId: finalUrl,
+          attributes: variant.attributes,
+          isActive: variant.isActive
+        };
+        await variantService.update(variant.id, payload);
+        loadData();
+      }
+    } catch (err) {
+      console.error(err);
+      alert('Lỗi tải ảnh: ' + err.message);
+    } finally {
+      setInlineUploadingVariantId(null);
+    }
+  };
+
+  const handleDeleteImageInline = async (e, variant) => {
+    e.stopPropagation();
+    e.preventDefault();
+    if (!window.confirm(`Bạn có chắc chắn muốn xóa hình ảnh của biến thể này?`)) return;
+
+    try {
+      const payload = {
+        name: variant.name,
+        price: variant.price,
+        totalStock: variant.totalStock,
+        productId: variant.productId,
+        imageId: '',
+        attributes: variant.attributes,
+        isActive: variant.isActive
+      };
+      await variantService.update(variant.id, payload);
+      loadData();
+    } catch (err) {
+      console.error(err);
+      alert('Lỗi xóa hình ảnh: ' + err.message);
     }
   };
 
@@ -355,11 +423,32 @@ export default function AdminProductVariants() {
                         <span className="text-admin-text-muted font-bold">#{v.id}</span>
                       </td>
                       <td className="px-4 py-4">
-                        <div className="w-14 h-14 rounded-md bg-admin-bg flex items-center justify-center overflow-hidden border border-admin-border p-1">
-                          {v.imageId ? (
-                            <img src={v.imageId} alt="Variant" className="w-full h-full object-contain" />
+                        <div className="relative w-14 h-14 rounded-md bg-white border border-admin-border flex items-center justify-center overflow-hidden flex-shrink-0 group/img cursor-pointer hover:border-primary transition-colors p-1">
+                          {inlineUploadingVariantId === v.id ? (
+                            <Loader2 className="animate-spin text-primary animate-in fade-in duration-300" size={16} />
+                          ) : v.imageId ? (
+                            <>
+                              <img src={v.imageId} alt="Variant" className="w-full h-full object-contain" />
+                              <button
+                                type="button"
+                                onClick={(e) => handleDeleteImageInline(e, v)}
+                                className="absolute top-0 right-0 p-0.5 bg-red-500 hover:bg-red-600 text-white rounded-bl opacity-0 group-hover/img:opacity-100 transition-opacity z-20 cursor-pointer shadow flex items-center justify-center w-4 h-4"
+                                title="Xóa hình ảnh"
+                              >
+                                <X size={10} strokeWidth={3} />
+                              </button>
+                            </>
                           ) : (
                             <ImageIcon className="text-admin-text-muted" size={20} />
+                          )}
+                          {inlineUploadingVariantId !== v.id && (
+                            <input
+                              type="file"
+                              accept=".svg,.webp,.png,.jpg,.jpeg"
+                              onChange={(e) => handleUploadImageInline(e, v)}
+                              className="absolute inset-0 opacity-0 cursor-pointer w-full h-full z-10"
+                              title={v.imageId ? "Nhấp để thay đổi hình ảnh" : "Nhấp để tải lên hình ảnh"}
+                            />
                           )}
                         </div>
                       </td>
@@ -650,7 +739,17 @@ export default function AdminProductVariants() {
                   {variantImage && (
                     <div className="flex items-center gap-3 mt-3 p-2 border border-admin-border rounded-md w-fit bg-gray-50">
                       <img src={variantImage} alt="Preview" className="w-12 h-12 object-contain rounded" />
-                      <span className="text-xs text-admin-text-muted font-bold">Hình ảnh xem trước</span>
+                      <div className="flex flex-col gap-1">
+                        <span className="text-xs text-admin-text-muted font-bold font-mono">Hình ảnh xem trước</span>
+                        <button
+                          type="button"
+                          onClick={() => setVariantImage('')}
+                          className="px-2 py-0.5 border border-red-200 bg-red-50 hover:bg-red-100 text-red-600 rounded text-[10px] font-bold w-fit transition-colors cursor-pointer flex items-center gap-1 shadow-sm"
+                        >
+                          <Trash2 size={11} />
+                          Xóa hình ảnh
+                        </button>
+                      </div>
                     </div>
                   )}
                 </div>

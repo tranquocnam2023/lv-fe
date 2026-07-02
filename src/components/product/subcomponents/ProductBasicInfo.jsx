@@ -73,6 +73,16 @@ export default function ProductBasicInfo({ productId }) {
           </select>
         </div>
         <div className="md:col-span-2">
+          <label className="block text-sm font-bold text-admin-text-main mb-2">Đường dẫn Video YouTube giới thiệu (Tùy chọn)</label>
+          <input
+            type="text"
+            value={formData.videoUrl || ''}
+            onChange={(e) => setFormData(prev => ({ ...prev, videoUrl: e.target.value }))}
+            className="w-full px-4 py-3 border border-admin-border rounded-md focus:border-primary focus:ring-1 focus:ring-primary outline-none text-admin-text-main bg-white text-sm font-medium"
+            placeholder="Ví dụ: https://www.youtube.com/watch?v=TkasNWy_Ps0"
+          />
+        </div>
+        <div className="md:col-span-2">
           <label className="block text-sm font-bold text-admin-text-main mb-2">Mô tả chi tiết</label>
           <RichTextEditor
             value={formData.description}

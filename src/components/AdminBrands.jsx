@@ -19,6 +19,7 @@ export default function AdminBrands({ onRedirectToProducts, onRedirectToCreatePr
   const [editingBrand, setEditingBrand] = useState(null);
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [inlineUploadingBrandId, setInlineUploadingBrandId] = useState(null);
   const [isCodeEditable, setIsCodeEditable] = useState(true);
   const [catErrorMessage, setCatErrorMessage] = useState('');
 
@@ -202,7 +203,7 @@ export default function AdminBrands({ onRedirectToProducts, onRedirectToCreatePr
     
     setUploading(true);
     try {
-      const res = await productService.uploadLocalImage(file);
+      const res = await productService.uploadLocalImage(file, 'brands');
       if (res && res.url) {
         let finalUrl = res.url;
         if (finalUrl.startsWith('/')) {
@@ -303,6 +304,73 @@ export default function AdminBrands({ onRedirectToProducts, onRedirectToCreatePr
       console.error(err);
       const parsed = parseError(err);
       showToast('error', 'Lỗi thay đổi trạng thái', parsed.message);
+    }
+  };
+
+  const handleDeleteLogo = async (brand) => {
+    if (!window.confirm(`Bạn có chắc chắn muốn xóa logo của thương hiệu "${brand.name}"?`)) return;
+
+    try {
+      const payload = {
+        name: brand.name,
+        slug: brand.slug,
+        brandCode: brand.brandCode,
+        description: brand.description || '',
+        imageUrl: '',
+        isActive: brand.isActive
+      };
+      await brandService.update(brand.id, payload);
+      showToast('success', 'Xóa logo thương hiệu thành công!');
+      fetchBrands();
+    } catch (err) {
+      console.error(err);
+      const parsed = parseError(err);
+      showToast('error', 'Lỗi xóa logo', parsed.message);
+    }
+  };
+
+  const handleUploadLogoInline = async (e, brand) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const validExtensions = ['image/svg+xml', 'image/webp', 'image/png', 'image/jpeg', 'image/jpg'];
+    if (!validExtensions.includes(file.type)) {
+      return showToast('warning', 'Định dạng file không hợp lệ', 'Hệ thống chỉ hỗ trợ SVG, WebP, PNG, JPG/JPEG.');
+    }
+    
+    if (file.size > 2 * 1024 * 1024) {
+      return showToast('warning', 'File quá lớn (>2MB)', 'Vui lòng chọn ảnh nhỏ hơn.');
+    }
+
+    setInlineUploadingBrandId(brand.id);
+    try {
+      const res = await productService.uploadLocalImage(file, 'brands');
+      if (res && res.url) {
+        let finalUrl = res.url;
+        if (finalUrl.startsWith('/')) {
+          const apiBase = import.meta.env.VITE_API_URL || 'https://localhost:5001/api';
+          const hostBase = apiBase.replace('/api', '');
+          finalUrl = `${hostBase}${finalUrl}`;
+        }
+        
+        const payload = {
+          name: brand.name,
+          slug: brand.slug,
+          brandCode: brand.brandCode,
+          description: brand.description || '',
+          imageUrl: finalUrl,
+          isActive: brand.isActive
+        };
+        await brandService.update(brand.id, payload);
+        showToast('success', 'Cập nhật logo thương hiệu thành công!');
+        fetchBrands();
+      }
+    } catch (err) {
+      console.error(err);
+      const parsed = parseError(err);
+      showToast('error', 'Lỗi cập nhật logo', parsed.message);
+    } finally {
+      setInlineUploadingBrandId(null);
     }
   };
 
@@ -432,11 +500,36 @@ export default function AdminBrands({ onRedirectToProducts, onRedirectToCreatePr
                         <tr className={`hover:bg-admin-bg transition-all group border-b border-admin-border ${!isBrandActive ? 'opacity-50 grayscale bg-gray-50/50' : ''}`}>
                           <td className="px-6 py-4">
                             <div className="flex items-center gap-3">
-                              <div className="w-10 h-10 rounded-md bg-white border border-admin-border flex items-center justify-center overflow-hidden flex-shrink-0">
-                                {brand.imageUrl ? (
-                                  <img src={brand.imageUrl} alt={brand.name} className="w-full h-full object-cover" />
+                              <div className="relative w-10 h-10 rounded-md bg-white border border-admin-border flex items-center justify-center overflow-hidden flex-shrink-0 group/logo cursor-pointer hover:border-primary transition-colors">
+                                {inlineUploadingBrandId === brand.id ? (
+                                  <Loader2 className="animate-spin text-primary" size={16} />
+                                ) : brand.imageUrl ? (
+                                  <>
+                                    <img src={brand.imageUrl} alt={brand.name} className="w-full h-full object-contain p-1" />
+                                    <button
+                                      type="button"
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        e.preventDefault();
+                                        handleDeleteLogo(brand);
+                                      }}
+                                      className="absolute top-0 right-0 p-0.5 bg-red-500 hover:bg-red-600 text-white rounded-bl opacity-0 group-hover/logo:opacity-100 transition-opacity z-20 cursor-pointer shadow flex items-center justify-center w-4 h-4"
+                                      title="Xóa logo"
+                                    >
+                                      <X size={10} strokeWidth={3} />
+                                    </button>
+                                  </>
                                 ) : (
                                   <ImageIcon className="text-admin-text-muted" size={20} />
+                                )}
+                                {inlineUploadingBrandId !== brand.id && (
+                                  <input
+                                    type="file"
+                                    accept=".svg,.webp,.png,.jpg,.jpeg"
+                                    onChange={(e) => handleUploadLogoInline(e, brand)}
+                                    className="absolute inset-0 opacity-0 cursor-pointer w-full h-full z-10"
+                                    title={brand.imageUrl ? "Nhấp để thay đổi logo" : "Nhấp để tải lên logo"}
+                                  />
                                 )}
                               </div>
                               <div>
@@ -703,7 +796,7 @@ export default function AdminBrands({ onRedirectToProducts, onRedirectToCreatePr
                     {uploading ? (
                       <Loader2 className="animate-spin text-primary" size={24} />
                     ) : formData.imageUrl ? (
-                      <img src={formData.imageUrl} alt="Preview Logo" className="w-full h-full object-cover" />
+                      <img src={formData.imageUrl} alt="Preview Logo" className="w-full h-full object-contain p-2" />
                     ) : (
                       <ImageIcon className="text-admin-text-muted" size={32} />
                     )}
@@ -711,17 +804,29 @@ export default function AdminBrands({ onRedirectToProducts, onRedirectToCreatePr
                   <div className="flex-1 text-center sm:text-left">
                     <h4 className="font-bold text-admin-text-main mb-1">Logo thương hiệu *</h4>
                     <p className="text-xs text-admin-text-muted mb-3">Chỉ hỗ trợ định dạng WebP, SVG, PNG, JPG/JPEG. Tối đa 2MB.</p>
-                    <label className="inline-flex items-center gap-2 px-4 py-2 bg-white border border-admin-border text-admin-text-main text-sm font-bold rounded-md cursor-pointer hover:bg-slate-50 transition-colors">
-                      <UploadCloud size={16} />
-                      Tải ảnh lên
-                      <input 
-                        type="file" 
-                        accept=".svg,.webp,.png,.jpg,.jpeg" 
-                        onChange={handleImageUpload} 
-                        className="hidden" 
-                        disabled={uploading}
-                      />
-                    </label>
+                    <div className="flex flex-wrap items-center gap-2 justify-center sm:justify-start">
+                      <label className="inline-flex items-center gap-2 px-4 py-2 bg-white border border-admin-border text-admin-text-main text-sm font-bold rounded-md cursor-pointer hover:bg-slate-50 transition-colors">
+                        <UploadCloud size={16} />
+                        Tải ảnh lên
+                        <input 
+                          type="file" 
+                          accept=".svg,.webp,.png,.jpg,.jpeg" 
+                          onChange={handleImageUpload} 
+                          className="hidden" 
+                          disabled={uploading}
+                        />
+                      </label>
+                      {formData.imageUrl && (
+                        <button
+                          type="button"
+                          onClick={() => setFormData(prev => ({ ...prev, imageUrl: '' }))}
+                          className="inline-flex items-center gap-2 px-4 py-2 bg-red-50 border border-red-200 text-red-600 text-sm font-bold rounded-md cursor-pointer hover:bg-red-100 transition-colors"
+                        >
+                          <Trash2 size={16} />
+                          Xóa hình
+                        </button>
+                      )}
+                    </div>
                   </div>
                 </div>
 
