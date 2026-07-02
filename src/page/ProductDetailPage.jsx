@@ -7,13 +7,133 @@ import { productService } from '../services/productService';
 import { reviewService } from '../services/reviewService';
 import { categoryService } from '../services/categoryService';
 import api from '../services/api';
-import { GitCompare, ChevronLeft, ChevronRight, Maximize2, X, Check, Star, ThumbsUp, MessageSquare, AlertCircle, Play } from 'lucide-react';
+import { GitCompare, ChevronLeft, ChevronRight, Maximize2, X, Check, Star, ThumbsUp, MessageSquare, AlertCircle, Play, Smartphone, Cpu, Layers, HardDrive, Camera, BatteryCharging, ChevronDown } from 'lucide-react';
 
 const getYouTubeId = (url) => {
   if (!url) return null;
   const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
   const match = url.match(regExp);
   return (match && match[2].length === 11) ? match[2] : null;
+};
+
+// Spec Icon Renderer helper
+const renderSpecIcon = (iconName, props) => {
+  switch (iconName) {
+    case 'screen':
+      return <Smartphone {...props} />;
+    case 'cpu':
+      return <Cpu {...props} />;
+    case 'ram':
+      return <Layers {...props} />;
+    case 'rom':
+      return <HardDrive {...props} />;
+    case 'camera':
+      return <Camera {...props} />;
+    case 'battery':
+      return <BatteryCharging {...props} />;
+    default:
+      return <Cpu {...props} />;
+  }
+};
+
+const getHighlightSpecs = (specsStr) => {
+  const highlights = [];
+  if (!specsStr) return highlights;
+
+  try {
+    const parsed = JSON.parse(specsStr);
+    if (!Array.isArray(parsed)) return highlights;
+
+    // Flatten all items from all groups into a single array of { key, value }
+    const allItems = [];
+    parsed.forEach(group => {
+      (group.items || []).forEach(item => {
+        allItems.push({
+          key: item.key || '',
+          value: item.value || ''
+        });
+      });
+    });
+
+    // Helper to find value by key keywords
+    const findValue = (keywords) => {
+      const match = allItems.find(item => 
+        keywords.some(kw => item.key.toLowerCase().includes(kw.toLowerCase()))
+      );
+      return match ? match.value : null;
+    };
+
+    // Find Screen
+    const screen = findValue(["màn hình", "kích thước màn hình", "công nghệ màn hình", "screen"]);
+    if (screen) {
+      highlights.push({
+        id: "screen",
+        label: "Màn hình",
+        value: screen,
+        iconName: "screen"
+      });
+    }
+
+    // Find CPU/Chip
+    const chip = findValue(["vi xử lý", "chip", "cpu", "he thong dieu hanh"]);
+    if (chip) {
+      highlights.push({
+        id: "cpu",
+        label: "Vi xử lý (CPU)",
+        value: chip,
+        iconName: "cpu"
+      });
+    }
+
+    // Find RAM
+    const ram = findValue(["ram", "dung lượng ram", "bộ nhớ ram"]);
+    if (ram) {
+      highlights.push({
+        id: "ram",
+        label: "Bộ nhớ RAM",
+        value: ram,
+        iconName: "ram"
+      });
+    }
+
+    // Find ROM
+    const rom = findValue(["bộ nhớ trong", "rom", "lưu trữ", "storage"]);
+    if (rom) {
+      highlights.push({
+        id: "rom",
+        label: "Bộ nhớ trong",
+        value: rom,
+        iconName: "rom"
+      });
+    }
+
+    // Find Camera
+    const camera = findValue(["camera sau", "camera chính", "máy ảnh sau", "rear camera"]);
+    if (camera) {
+      highlights.push({
+        id: "camera",
+        label: "Camera sau",
+        value: camera,
+        iconName: "camera"
+      });
+    }
+
+    // Find Battery
+    const battery = findValue(["pin", "dung lượng pin", "battery"]);
+    if (battery) {
+      highlights.push({
+        id: "battery",
+        label: "Pin & Sạc",
+        value: battery,
+        iconName: "battery"
+      });
+    }
+
+  } catch (e) {
+    console.error("Lỗi parse highlights specs:", e);
+  }
+
+  return highlights.slice(0, 6); // Limit to maximum 6 highlights
 };
 
 
@@ -70,6 +190,7 @@ export default function ProductDetailPage() {
   const [isLightboxOpen, setIsLightboxOpen] = useState(false);
   const [lightboxActiveIndex, setLightboxActiveIndex] = useState(0);
   const [isHoveringImage, setIsHoveringImage] = useState(false);
+  const [isSpecsModalOpen, setIsSpecsModalOpen] = useState(false);
 
   // Phân tách ảnh chung (Master Images)
   const getMasterImages = (prod) => {
@@ -393,6 +514,34 @@ export default function ProductDetailPage() {
       stock: product.stockQuantity
     };
   }, [product, selectedAttributes, variants]);
+
+  const parsedSpecs = React.useMemo(() => {
+    if (!product || !product.specs) return [];
+    try {
+      return JSON.parse(product.specs);
+    } catch (e) {
+      console.error("Lỗi parse specs:", e);
+      return [];
+    }
+  }, [product]);
+
+  const allSpecItems = React.useMemo(() => {
+    const items = [];
+    parsedSpecs.forEach(group => {
+      (group.items || []).forEach(item => {
+        items.push({
+          groupName: group.groupName,
+          key: item.key,
+          value: item.value
+        });
+      });
+    });
+    return items;
+  }, [parsedSpecs]);
+
+  const highlightSpecs = React.useMemo(() => {
+    return getHighlightSpecs(product?.specs);
+  }, [product]);
 
   // Xử lý chọn thuộc tính
   const handleAttributeClick = (key, value) => {
@@ -900,38 +1049,55 @@ export default function ProductDetailPage() {
 
                 {activeTab === 'info' && (
                   <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-                    {product.specs ? (
-                      (() => {
-                        try {
-                          const parsedSpecs = JSON.parse(product.specs);
-                          if (!Array.isArray(parsedSpecs) || parsedSpecs.length === 0) {
-                            throw new Error("Empty specs array");
-                          }
-                          return parsedSpecs.map((group, gIdx) => (
-                            <div key={gIdx} className="bg-gray-50/50 border border-gray-100 rounded-lg overflow-hidden shadow-sm">
-                              <div className="bg-gray-100/70 px-5 py-3.5 font-bold text-gray-800 text-xs border-b border-gray-100 uppercase tracking-wider">
-                                {group.groupName}
-                              </div>
-                              <table className="w-full text-xs">
-                                <tbody>
-                                  {group.items.map((item, iIdx) => (
-                                    <tr key={iIdx} className="border-b border-gray-100/60 last:border-0 hover:bg-white transition-colors">
-                                      <td className="py-3 px-5 font-bold text-gray-500 w-1/3 border-r border-gray-100/40">{item.key}</td>
-                                      <td className="py-3 px-5 text-gray-800 font-semibold">{item.value}</td>
-                                    </tr>
-                                  ))}
-                                </tbody>
-                              </table>
+                    {/* Highlight Spec Cards */}
+                    {highlightSpecs && highlightSpecs.length > 0 && (
+                      <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-6">
+                        {highlightSpecs.map((spec) => (
+                          <div key={spec.id} className="bg-slate-50 border border-gray-100 rounded-xl p-4 flex items-center gap-3 hover:shadow-sm transition-all duration-200">
+                            <div className="p-3 bg-blue-50 text-blue-600 rounded-lg shrink-0">
+                              {renderSpecIcon(spec.iconName, { size: 20, className: "text-blue-600 stroke-[1.5]" })}
                             </div>
-                          ));
-                        } catch (e) {
-                          return (
-                            <div className="text-center py-10 text-gray-400 font-semibold text-xs bg-gray-50/50 rounded-lg border border-gray-100">
-                              Thông số kỹ thuật đang được cập nhật.
+                            <div className="min-w-0">
+                              <span className="block text-[10px] font-bold text-gray-400 uppercase tracking-wider">{spec.label}</span>
+                              <span className="block text-xs font-black text-gray-800 truncate mt-0.5" title={spec.value}>{spec.value}</span>
                             </div>
-                          );
-                        }
-                      })()
+                          </div>
+                        ))}
+                      </div>
+                    )}
+
+                    {/* Shortened Table */}
+                    {allSpecItems && allSpecItems.length > 0 ? (
+                      <div>
+                        <div className="bg-white border border-gray-100 rounded-lg overflow-hidden relative shadow-sm">
+                          <table className="w-full text-xs">
+                            <tbody>
+                              {allSpecItems.slice(0, 6).map((item, idx) => (
+                                <tr key={idx} className="border-b border-gray-100 last:border-0 hover:bg-slate-50/50 transition-colors">
+                                  <td className="py-3 px-5 font-bold text-gray-500 w-1/3 border-r border-gray-100/40">{item.key}</td>
+                                  <td className="py-3 px-5 text-gray-800 font-semibold">{item.value}</td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                          {allSpecItems.length > 6 && (
+                            <div className="absolute bottom-0 left-0 right-0 h-12 bg-gradient-to-t from-white to-transparent pointer-events-none" />
+                          )}
+                        </div>
+
+                        {allSpecItems.length > 6 && (
+                          <div className="text-center mt-4">
+                            <button
+                              type="button"
+                              onClick={() => setIsSpecsModalOpen(true)}
+                              className="inline-flex items-center gap-2 px-6 py-3 bg-blue-50 text-blue-600 hover:bg-blue-100 active:scale-95 text-xs font-black rounded-md transition-all uppercase tracking-wider border border-blue-100"
+                            >
+                              <span>Xem cấu hình chi tiết</span>
+                              <ChevronDown size={14} />
+                            </button>
+                          </div>
+                        )}
+                      </div>
                     ) : (
                       <div className="text-center py-10 text-gray-400 font-semibold text-xs bg-gray-50/50 rounded-lg border border-gray-100">
                         Thông số kỹ thuật đang được cập nhật.
@@ -1451,6 +1617,74 @@ export default function ProductDetailPage() {
                 )}
               </div>
             ))}
+          </div>
+        </div>
+      )}
+
+      {/* DETAILED SPECIFICATIONS MODAL */}
+      {isSpecsModalOpen && product && (
+        <div
+          className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-300"
+          onClick={() => setIsSpecsModalOpen(false)}
+        >
+          <div
+            className="bg-white rounded-xl w-full max-w-2xl overflow-hidden shadow-2xl flex flex-col max-h-[85vh] animate-in zoom-in-95 duration-200"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Modal Header */}
+            <div className="flex justify-between items-center bg-gray-50 border-b border-gray-100 px-6 py-4">
+              <h3 className="text-sm font-black text-gray-800 uppercase tracking-wider">
+                Thông số kỹ thuật chi tiết
+              </h3>
+              <button
+                type="button"
+                onClick={() => setIsSpecsModalOpen(false)}
+                className="text-gray-400 hover:text-red-500 p-1.5 rounded-full hover:bg-red-50 transition-all focus:outline-none"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            {/* Modal Body */}
+            <div className="flex-1 overflow-y-auto p-6 space-y-6 scrollbar-thin">
+              <p className="text-base font-black text-gray-800 border-b border-gray-100 pb-2 mb-4">
+                {product.name}
+              </p>
+              {parsedSpecs && parsedSpecs.length > 0 ? (
+                parsedSpecs.map((group, gIdx) => (
+                  <div key={gIdx} className="bg-gray-50/50 border border-gray-100 rounded-lg overflow-hidden shadow-sm">
+                    <div className="bg-gray-100/70 px-5 py-3 font-bold text-gray-800 text-[11px] border-b border-gray-100 uppercase tracking-wider">
+                      {group.groupName}
+                    </div>
+                    <table className="w-full text-xs">
+                      <tbody>
+                        {(group.items || []).map((item, iIdx) => (
+                          <tr key={iIdx} className="border-b border-gray-100 last:border-0 hover:bg-white transition-colors">
+                            <td className="py-3 px-5 font-bold text-gray-500 w-1/3 border-r border-gray-100/40">{item.key}</td>
+                            <td className="py-3 px-5 text-gray-800 font-semibold">{item.value}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                ))
+              ) : (
+                <div className="text-center py-10 text-gray-400 font-semibold text-xs bg-gray-50/50 rounded-lg border border-gray-100">
+                  Thông số kỹ thuật đang được cập nhật.
+                </div>
+              )}
+            </div>
+
+            {/* Modal Footer */}
+            <div className="bg-gray-50 border-t border-gray-100 px-6 py-4 flex justify-end shrink-0">
+              <button
+                type="button"
+                onClick={() => setIsSpecsModalOpen(false)}
+                className="px-6 py-2.5 bg-gray-200 hover:bg-gray-300 text-gray-700 text-xs font-black rounded-md uppercase tracking-wider transition-colors"
+              >
+                Đóng
+              </button>
+            </div>
           </div>
         </div>
       )}
