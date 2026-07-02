@@ -1,214 +1,128 @@
-import { useParams, Link, useNavigate } from 'react-router-dom';
-import Breadcrumb from '../components/Breadcrumb';
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
 import DOMPurify from 'dompurify';
+import Breadcrumb from '../components/Breadcrumb';
 import { useCart } from '../context/CartContext';
 import { productService } from '../services/productService';
 import { reviewService } from '../services/reviewService';
 import { categoryService } from '../services/categoryService';
 import api from '../services/api';
-import { GitCompare, ChevronLeft, ChevronRight, Maximize2, X, Check, Star, ThumbsUp, MessageSquare, AlertCircle, Play, Smartphone, Cpu, Layers, HardDrive, Camera, BatteryCharging, ChevronDown } from 'lucide-react';
 
-const getYouTubeId = (url) => {
-  if (!url) return null;
-  const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
-  const match = url.match(regExp);
-  return (match && match[2].length === 11) ? match[2] : null;
-};
+// Subcomponents
+import ProductGallery from './product-detail/components/ProductGallery';
+import ProductSummaryInfo from './product-detail/components/ProductSummaryInfo';
+import ProductSpecsTab from './product-detail/components/ProductSpecsTab';
+import ProductSpecsModal from './product-detail/components/ProductSpecsModal';
+import ProductReviews from './product-detail/components/ProductReviews';
 
-// Spec Icon Renderer helper
-const renderSpecIcon = (iconName, props) => {
-  switch (iconName) {
-    case 'screen':
-      return <Smartphone {...props} />;
-    case 'cpu':
-      return <Cpu {...props} />;
-    case 'ram':
-      return <Layers {...props} />;
-    case 'rom':
-      return <HardDrive {...props} />;
-    case 'camera':
-      return <Camera {...props} />;
-    case 'battery':
-      return <BatteryCharging {...props} />;
-    default:
-      return <Cpu {...props} />;
-  }
-};
-
-const getHighlightSpecs = (specsStr) => {
-  const highlights = [];
-  if (!specsStr) return highlights;
-
+const getMergedSpecs = (baseSpecsStr, specsOverrideStr) => {
+  if (!baseSpecsStr) return null;
+  
+  let baseSpecs = [];
   try {
-    const parsed = JSON.parse(specsStr);
-    if (!Array.isArray(parsed)) return highlights;
+    baseSpecs = JSON.parse(baseSpecsStr);
+    if (!Array.isArray(baseSpecs)) return null;
+  } catch (e) {
+    console.error("Error parsing base specs:", e);
+    return null;
+  }
 
-    // Flatten all items from all groups into a single array of { key, value }
-    const allItems = [];
-    parsed.forEach(group => {
-      (group.items || []).forEach(item => {
-        allItems.push({
-          key: item.key || '',
-          value: item.value || ''
-        });
-      });
+  if (!specsOverrideStr) return baseSpecs;
+
+  let overrides = {};
+  try {
+    overrides = JSON.parse(specsOverrideStr);
+    if (typeof overrides !== 'object' || overrides === null) {
+      return baseSpecs;
+    }
+  } catch (e) {
+    console.error("Error parsing specs override:", e);
+    return baseSpecs;
+  }
+
+  const overridesMap = {};
+  Object.entries(overrides).forEach(([key, val]) => {
+    overridesMap[key.toLowerCase().trim()] = val;
+  });
+
+  return baseSpecs.map(group => {
+    if (!group.items || !Array.isArray(group.items)) return group;
+
+    const mergedItems = group.items.map(item => {
+      if (!item.key) return item;
+      const normalizedKey = item.key.toLowerCase().trim();
+
+      let newValue = item.value;
+      
+      if (overridesMap[normalizedKey] !== undefined) {
+        newValue = overridesMap[normalizedKey];
+      } 
+      else if (normalizedKey === 'rom' || normalizedKey.includes('bộ nhớ trong') || normalizedKey === 'internal storage') {
+        const romOverrideKey = Object.keys(overridesMap).find(k => k === 'rom' || k.includes('bộ nhớ trong') || k === 'internal storage');
+        if (romOverrideKey) {
+          newValue = overridesMap[romOverrideKey];
+        }
+      }
+      else if (normalizedKey === 'ram' || normalizedKey === 'bộ nhớ ram') {
+        const ramOverrideKey = Object.keys(overridesMap).find(k => k === 'ram' || k === 'bộ nhớ ram');
+        if (ramOverrideKey) {
+          newValue = overridesMap[ramOverrideKey];
+        }
+      }
+
+      return {
+        ...item,
+        value: newValue
+      };
     });
 
-    // Helper to find value by key keywords
-    const findValue = (keywords) => {
-      const match = allItems.find(item => 
-        keywords.some(kw => item.key.toLowerCase().includes(kw.toLowerCase()))
-      );
-      return match ? match.value : null;
+    return {
+      ...group,
+      items: mergedItems
     };
-
-    // Find Screen
-    const screen = findValue(["màn hình", "kích thước màn hình", "công nghệ màn hình", "screen"]);
-    if (screen) {
-      highlights.push({
-        id: "screen",
-        label: "Màn hình",
-        value: screen,
-        iconName: "screen"
-      });
-    }
-
-    // Find CPU/Chip
-    const chip = findValue(["vi xử lý", "chip", "cpu", "he thong dieu hanh"]);
-    if (chip) {
-      highlights.push({
-        id: "cpu",
-        label: "Vi xử lý (CPU)",
-        value: chip,
-        iconName: "cpu"
-      });
-    }
-
-    // Find RAM
-    const ram = findValue(["ram", "dung lượng ram", "bộ nhớ ram"]);
-    if (ram) {
-      highlights.push({
-        id: "ram",
-        label: "Bộ nhớ RAM",
-        value: ram,
-        iconName: "ram"
-      });
-    }
-
-    // Find ROM
-    const rom = findValue(["bộ nhớ trong", "rom", "lưu trữ", "storage"]);
-    if (rom) {
-      highlights.push({
-        id: "rom",
-        label: "Bộ nhớ trong",
-        value: rom,
-        iconName: "rom"
-      });
-    }
-
-    // Find Camera
-    const camera = findValue(["camera sau", "camera chính", "máy ảnh sau", "rear camera"]);
-    if (camera) {
-      highlights.push({
-        id: "camera",
-        label: "Camera sau",
-        value: camera,
-        iconName: "camera"
-      });
-    }
-
-    // Find Battery
-    const battery = findValue(["pin", "dung lượng pin", "battery"]);
-    if (battery) {
-      highlights.push({
-        id: "battery",
-        label: "Pin & Sạc",
-        value: battery,
-        iconName: "battery"
-      });
-    }
-
-  } catch (e) {
-    console.error("Lỗi parse highlights specs:", e);
-  }
-
-  return highlights.slice(0, 6); // Limit to maximum 6 highlights
-};
-
-
-// Unused theme removed
-
-// Hàm phụ trợ phân loại màu sang mã HEX tương đương
-const getHexForColor = (colorName) => {
-  const c = colorName.toLowerCase();
-  if (c.includes('đen') || c.includes('black')) return '#1a1a1a';
-  if (c.includes('titan') || c.includes('xám') || c.includes('gray')) return '#bebebe';
-  if (c.includes('xanh') || c.includes('blue')) return '#4682b4';
-  if (c.includes('trắng') || c.includes('white')) return '#f8f9fa';
-  if (c.includes('vàng') || c.includes('gold')) return '#ffd700';
-  if (c.includes('đỏ') || c.includes('red')) return '#e63946';
-  if (c.includes('hồng') || c.includes('pink')) return '#ffb6c1';
-  return '#bebebe'; // Mặc định là titan/xám
+  });
 };
 
 export default function ProductDetailPage() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { addToCart } = useCart();
+  
   const [product, setProduct] = useState(null);
   const [activeTab, setActiveTab] = useState('specs');
   const [loading, setLoading] = useState(true);
-
-  // States cho hệ thống đánh giá sản phẩm (Review & Rating)
-  const [reviews, setReviews] = useState([]);
-  const [currentUser, setCurrentUser] = useState(null);
-  const [writeRating, setWriteRating] = useState(5);
-  const [writeComment, setWriteComment] = useState('');
-  const [isSubmittingReview, setIsSubmittingReview] = useState(false);
-  const [reviewError, setReviewError] = useState('');
-  const [reviewSuccess, setReviewSuccess] = useState('');
-  const [showReviewForm, setShowReviewForm] = useState(false);
-
+  const [isSpecsModalOpen, setIsSpecsModalOpen] = useState(false);
 
   // States chọn biến thể
   const [selectedAttributes, setSelectedAttributes] = useState({});
   const [variants, setVariants] = useState([]);
   const [categories, setCategories] = useState([]);
 
-  // Helpers to resolve selected color & storage for backward compatibility and JSX display
-  const selectedColor = selectedAttributes["Màu sắc"] || Object.entries(selectedAttributes).find(([k]) => k.toLowerCase().includes('màu'))?.[1] || '';
-  const selectedStorage = selectedAttributes["Dung lượng RAM - ROM"] || selectedAttributes["Dung Lượng RAM - ROM"] || Object.entries(selectedAttributes).find(([k]) => k.toLowerCase().includes('dung lượng') || k.toLowerCase().includes('bộ nhớ') || k.toLowerCase().includes('ram') || k.toLowerCase().includes('rom'))?.[1] || '';
-
   // States Thư viện hình ảnh động
   const [activeImage, setActiveImage] = useState(null);
   const [galleryImages, setGalleryImages] = useState([]);
   const [isFading, setIsFading] = useState(false);
-  const [isVideoLoaded, setIsVideoLoaded] = useState(false);
 
-  // States Lightbox popup "Xem hình thực tế"
-  const [isLightboxOpen, setIsLightboxOpen] = useState(false);
-  const [lightboxActiveIndex, setLightboxActiveIndex] = useState(0);
-  const [isHoveringImage, setIsHoveringImage] = useState(false);
-  const [isSpecsModalOpen, setIsSpecsModalOpen] = useState(false);
+  // States Đánh giá & bình luận
+  const [reviews, setReviews] = useState([]);
+  const [currentUser, setCurrentUser] = useState(null);
+
+  const selectedColor = selectedAttributes["Màu sắc"] || Object.entries(selectedAttributes).find(([k]) => k.toLowerCase().includes('màu'))?.[1] || '';
 
   // Phân tách ảnh chung (Master Images)
   const getMasterImages = (prod) => {
     if (!prod) return [];
     let list = [];
     
-    // 1. Chèn Video YouTube ở đầu tiên nếu có
     if (prod.videoUrl) {
       list.push({ type: 'video', url: prod.videoUrl });
     }
 
-    // 2. Chèn ảnh chính
     const baseImg = prod.image || prod.thumbnailImage || prod.mainImage;
     if (baseImg) {
       list.push({ type: 'image', url: baseImg });
     }
 
-    // 3. Phân tích ảnh phụ
     try {
       if (prod.images) {
         let otherImgs = [];
@@ -233,7 +147,6 @@ export default function ProductDetailPage() {
       console.error("Lỗi phân tách ảnh sản phẩm:", e);
     }
 
-    // Đảm bảo dải thumbnail có tối thiểu 4 hình ảnh phong phú
     while (list.length < 4 && baseImg) {
       list.push({ type: 'image', url: baseImg });
     }
@@ -274,7 +187,6 @@ export default function ProductDetailPage() {
             stockQuantity: productData.availableStock ?? productData.totalStock ?? productData.stockQuantity ?? productData.stock ?? 0
           };
           setProduct(normalized);
-          // Lấy dải ảnh mặc định (Ảnh chung)
           const masterImgs = getMasterImages(normalized);
           setGalleryImages(masterImgs);
           setActiveImage(masterImgs[0]);
@@ -296,7 +208,29 @@ export default function ProductDetailPage() {
       .finally(() => setLoading(false));
   }, [id]);
 
-  // Thiết lập tab hiển thị mặc định tuỳ thuộc vào việc có bài viết mô tả sản phẩm hay không
+  // Tự động chọn biến thể hoạt động đầu tiên làm mặc định khi tải trang
+  useEffect(() => {
+    if (variants.length > 0 && Object.keys(selectedAttributes).length === 0) {
+      const defaultVar = variants.find(v => v.isActive !== false) || variants[0];
+      if (defaultVar && defaultVar.attributes) {
+        try {
+          const parsed = JSON.parse(defaultVar.attributes);
+          const initialSelections = {};
+          Object.entries(parsed).forEach(([key, val]) => {
+            const kLower = key.toLowerCase();
+            if (kLower !== 'sku') {
+              initialSelections[key.trim()] = String(val).trim();
+            }
+          });
+          setSelectedAttributes(initialSelections);
+        } catch (e) {
+          console.error("Lỗi parse attributes cho default variant:", e);
+        }
+      }
+    }
+  }, [variants, selectedAttributes]);
+
+  // Thiết lập tab hiển thị mặc định tuỳ thuộc vào mô tả sản phẩm
   useEffect(() => {
     if (product) {
       const hasDesc = product.description && product.description.trim() !== '';
@@ -328,7 +262,8 @@ export default function ProductDetailPage() {
     }
   }, [id]);
 
-  const stats = React.useMemo(() => {
+  // Thống kê đánh giá
+  const stats = useMemo(() => {
     if (reviews.length === 0) {
       return {
         average: 5,
@@ -357,52 +292,14 @@ export default function ProductDetailPage() {
     return { average, total, counts, percentages, satisfiedPercent };
   }, [reviews]);
 
-  const handleSubmitReview = async (e) => {
-    e.preventDefault();
-    if (!currentUser) {
-      setReviewError("Vui lòng đăng nhập để gửi đánh giá.");
-      return;
-    }
-    // if (currentUser.role === 'Admin') {
-    //   setReviewError("Tài khoản Quản trị viên không được phép viết đánh giá sản phẩm.");
-    //   return;
-    // }
-    if (!writeComment || writeComment.trim().length < 10) {
-      setReviewError("Nội dung đánh giá phải có tối thiểu 10 ký tự.");
-      return;
-    }
-    
-    setIsSubmittingReview(true);
-    setReviewError('');
-    setReviewSuccess('');
-
-    try {
-      await reviewService.create({
-        productId: parseInt(id),
-        rating: writeRating,
-        comment: writeComment
-      });
-      setReviewSuccess("Cảm ơn bạn đã gửi đánh giá! Đánh giá của bạn đã được ghi nhận.");
-      setWriteComment('');
-      setWriteRating(5);
-      setShowReviewForm(false);
-      fetchProductReviews();
-    } catch (err) {
-      console.error("Lỗi khi gửi đánh giá:", err);
-      setReviewError(err.message || err || "Có lỗi xảy ra khi gửi đánh giá. Vui lòng kiểm tra lại đơn hàng của bạn.");
-    } finally {
-      setIsSubmittingReview(false);
-    }
-  };
-
   // Cuộn trang lên đầu khi tải xong
   useEffect(() => {
     window.scrollTo(0, 0);
   }, [product]);
 
-  // 1. Phân tích các thuộc tính động từ tất cả variants
-  const attributesConfig = React.useMemo(() => {
-    const config = {}; // { [key: string]: Set<string> }
+  // Phân tích các thuộc tính động từ tất cả variants
+  const attributesConfig = useMemo(() => {
+    const config = {};
     
     variants.forEach(v => {
       let parsed = {};
@@ -414,7 +311,6 @@ export default function ProductDetailPage() {
         }
       }
       
-      // Fallback nếu không có JSON attributes nhưng có định dạng tên chứa " - "
       if (Object.keys(parsed).length === 0 && v.name && v.name.includes(' - ')) {
         const parts = v.name.split(' - ');
         if (parts.length > 1) {
@@ -426,7 +322,8 @@ export default function ProductDetailPage() {
       }
 
       Object.entries(parsed).forEach(([key, val]) => {
-        if (key === 'SKU' || key === 'chargeTax') return;
+        const kLower = key.toLowerCase().trim();
+        if (kLower === 'sku' || kLower === 'chargetax' || kLower === 'costprice') return;
         const trimmedKey = key.trim();
         const trimmedVal = String(val).trim();
         if (trimmedKey && trimmedVal && trimmedVal !== 'Mặc định') {
@@ -445,11 +342,97 @@ export default function ProductDetailPage() {
     return result;
   }, [variants]);
 
+  // Tìm biến thể khớp với các thuộc tính đang chọn
+  const selectedVariant = useMemo(() => {
+    if (!product || variants.length === 0) return null;
+
+    const requiredKeys = Object.keys(attributesConfig);
+    const hasAllSelections = requiredKeys.every(k => !!selectedAttributes[k]);
+    if (!hasAllSelections) return null;
+
+    return variants.find(v => {
+      let parsedAttrs = {};
+      if (v.attributes) {
+        try {
+          parsedAttrs = JSON.parse(v.attributes);
+        } catch (e) {
+          console.error("Lỗi parse attributes:", e);
+        }
+      }
+      
+      return requiredKeys.every(key => {
+        const val = selectedAttributes[key];
+        const vVal = Object.entries(parsedAttrs).find(([k]) => k.toLowerCase().trim() === key.toLowerCase().trim())?.[1];
+        return String(vVal || '').toLowerCase().trim() === String(val).toLowerCase().trim();
+      });
+    });
+  }, [product, selectedAttributes, variants, attributesConfig]);
+
+  // Tìm biến thể khớp tốt nhất (hỗ trợ khớp một phần khi chọn chưa đủ thuộc tính)
+  const matchedVariant = useMemo(() => {
+    if (!product || variants.length === 0) return null;
+
+    const activeSelections = Object.entries(selectedAttributes).filter(([_, val]) => !!val);
+    if (activeSelections.length === 0) {
+      return variants.find(v => v.isActive !== false) || variants[0];
+    }
+
+    return variants.find(v => {
+      let parsedAttrs = {};
+      if (v.attributes) {
+        try {
+          parsedAttrs = JSON.parse(v.attributes);
+        } catch (e) {
+          console.error("Lỗi parse attributes:", e);
+        }
+      }
+      
+      return activeSelections.every(([key, val]) => {
+        const vVal = Object.entries(parsedAttrs).find(([k]) => k.toLowerCase().trim() === key.toLowerCase().trim())?.[1];
+        return String(vVal || '').toLowerCase().trim() === String(val).toLowerCase().trim();
+      });
+    });
+  }, [product, selectedAttributes, variants]);
+
+  // Lấy thông số kỹ thuật đã gộp
+  const mergedSpecs = useMemo(() => {
+    if (!product) return null;
+    return getMergedSpecs(product.specs, matchedVariant?.specsOverride);
+  }, [product, matchedVariant]);
+
+  // Cấu hình hiển thị tên sản phẩm động
+  const displayProductName = useMemo(() => {
+    if (!product) return '';
+    const targetVar = matchedVariant || selectedVariant;
+    if (!targetVar) return product.name;
+
+    let parsedAttrs = {};
+    if (targetVar.attributes) {
+      try {
+        parsedAttrs = JSON.parse(targetVar.attributes);
+      } catch (e) {
+        console.error(e);
+      }
+    }
+
+    const nonColorParts = [];
+    Object.entries(parsedAttrs).forEach(([key, val]) => {
+      const kLower = key.toLowerCase().trim();
+      if (kLower !== 'sku' && kLower !== 'chargetax' && kLower !== 'costprice' && !kLower.includes('màu') && !kLower.includes('color')) {
+        nonColorParts.push(String(val));
+      }
+    });
+
+    if (nonColorParts.length > 0) {
+      return `${product.name} ${nonColorParts.join(' ')}`;
+    }
+    return product.name;
+  }, [product, matchedVariant, selectedVariant]);
+
   // Tính toán Giá và Tồn kho hiển thị thời gian thực theo biến thể
-  const displayDetails = React.useMemo(() => {
+  const displayDetails = useMemo(() => {
     if (!product) return { price: 0, originalPrice: 0, stock: 0 };
 
-    // Phân tích các biến thể thành cấu trúc chuẩn
     const parsedVariants = variants.map(v => {
       const parsedAttrs = {};
       if (v.attributes) {
@@ -462,7 +445,6 @@ export default function ProductDetailPage() {
         }
       }
       
-      // Fallback
       if (Object.keys(parsedAttrs).length === 0 && v.name && v.name.includes(' - ')) {
         const parts = v.name.split(' - ');
         if (parts.length > 1) {
@@ -483,7 +465,6 @@ export default function ProductDetailPage() {
     const hasSelections = Object.values(selectedAttributes).some(v => !!v);
 
     if (hasSelections) {
-      // Tìm các biến thể thỏa mãn bộ lọc hiện tại
       const matchedVariants = parsedVariants.filter(v => {
         for (const [key, val] of Object.entries(selectedAttributes)) {
           if (!val) continue;
@@ -514,34 +495,6 @@ export default function ProductDetailPage() {
       stock: product.stockQuantity
     };
   }, [product, selectedAttributes, variants]);
-
-  const parsedSpecs = React.useMemo(() => {
-    if (!product || !product.specs) return [];
-    try {
-      return JSON.parse(product.specs);
-    } catch (e) {
-      console.error("Lỗi parse specs:", e);
-      return [];
-    }
-  }, [product]);
-
-  const allSpecItems = React.useMemo(() => {
-    const items = [];
-    parsedSpecs.forEach(group => {
-      (group.items || []).forEach(item => {
-        items.push({
-          groupName: group.groupName,
-          key: item.key,
-          value: item.value
-        });
-      });
-    });
-    return items;
-  }, [parsedSpecs]);
-
-  const highlightSpecs = React.useMemo(() => {
-    return getHighlightSpecs(product?.specs);
-  }, [product]);
 
   // Xử lý chọn thuộc tính
   const handleAttributeClick = (key, value) => {
@@ -605,18 +558,6 @@ export default function ProductDetailPage() {
     });
   };
 
-  // Nhấp ảnh thumbnail để xem
-  const handleThumbnailClick = (img) => {
-    setIsFading(true);
-    setTimeout(() => {
-      setActiveImage(img);
-      if (img.type === 'video') {
-        setIsVideoLoaded(true);
-      }
-      setIsFading(false);
-    }, 120);
-  };
-
   // Thêm vào giỏ hàng
   const handleAddToCart = () => {
     for (const attrKey of Object.keys(attributesConfig)) {
@@ -657,52 +598,7 @@ export default function ProductDetailPage() {
     }
   };
 
-  // Auto-play slideshow effect (5 seconds)
-  useEffect(() => {
-    const isActiveVideo = activeImage?.type === 'video';
-    if (galleryImages.length <= 1 || isLightboxOpen || isHoveringImage || isActiveVideo) return;
-
-    const timer = setInterval(() => {
-      handleMainImageNext();
-    }, 5000);
-
-    return () => clearInterval(timer);
-  }, [galleryImages, activeImage, isLightboxOpen, isHoveringImage]);
-
-  // Control YouTube video playback based on active slide
-  useEffect(() => {
-    if (!activeImage) return;
-
-    if (activeImage.type === 'video') {
-      if (isVideoLoaded) {
-        const timer = setTimeout(() => {
-          const iframe = document.getElementById('product-youtube-iframe');
-          if (iframe && iframe.contentWindow) {
-            iframe.contentWindow.postMessage('{"event":"command","func":"playVideo","args":""}', '*');
-          }
-        }, 150);
-        return () => clearTimeout(timer);
-      }
-    } else {
-      if (isVideoLoaded) {
-        const iframe = document.getElementById('product-youtube-iframe');
-        if (iframe && iframe.contentWindow) {
-          iframe.contentWindow.postMessage('{"event":"command","func":"pauseVideo","args":""}', '*');
-        }
-      }
-    }
-  }, [activeImage, isVideoLoaded]);
-
-  // Lightbox navigation
-  const handleLightboxPrev = () => {
-    setLightboxActiveIndex(prev => (prev === 0 ? galleryImages.length - 1 : prev - 1));
-  };
-
-  const handleLightboxNext = () => {
-    setLightboxActiveIndex(prev => (prev === galleryImages.length - 1 ? 0 : prev + 1));
-  };
-
-  const breadcrumbItems = React.useMemo(() => {
+  const breadcrumbItems = useMemo(() => {
     if (!product) return [];
     
     const items = [];
@@ -722,7 +618,6 @@ export default function ProductDetailPage() {
         }
       }
     } else {
-      // Fallback
       items.push({
         label: 'Điện thoại',
         path: '/'
@@ -736,56 +631,6 @@ export default function ProductDetailPage() {
   if (loading) return <div className="py-20 text-center font-bold text-gray-500">Đang tải thông tin sản phẩm...</div>;
   if (!product) return <div className="py-20 text-center font-bold text-red-500">Sản phẩm không tồn tại.</div>;
 
-  const promotions = [
-    "Thu cũ Đổi mới: Trợ giá lên đến 2.000.000₫",
-    "Giảm thêm 500.000₫ khi thanh toán qua VNPay-QR",
-    "Tặng gói bảo hành rơi vỡ 12 tháng (Trị giá 1.500.000₫)",
-    "Ưu đãi mua kèm Phụ kiện Apple giảm đến 30%"
-  ];
-
-
-
-  // main image carousel navigation
-  const handleMainImagePrev = () => {
-    const currentIndex = galleryImages.findIndex(img => img.url === activeImage?.url && img.type === activeImage?.type);
-    if (currentIndex === -1) return;
-    const hasVideo = galleryImages.some(img => img.type === 'video');
-    const targetFirstIndex = hasVideo ? 1 : 0;
-    
-    // Nếu đang ở video (index 0) mà bấm prev -> nhảy về cuối slide hình
-    let prevIndex = currentIndex === 0 ? galleryImages.length - 1 : currentIndex - 1;
-    // Nếu đang ở hình đầu tiên mà bấm prev -> nhảy về cuối slide hình (không qua video)
-    if (currentIndex === targetFirstIndex) {
-      prevIndex = galleryImages.length - 1;
-    }
-    
-    setIsFading(true);
-    setTimeout(() => {
-      setActiveImage(galleryImages[prevIndex]);
-      setIsFading(false);
-    }, 120);
-  };
-
-  const handleMainImageNext = () => {
-    const currentIndex = galleryImages.findIndex(img => img.url === activeImage?.url && img.type === activeImage?.type);
-    if (currentIndex === -1) return;
-    const hasVideo = galleryImages.some(img => img.type === 'video');
-    const targetFirstIndex = hasVideo ? 1 : 0;
-    
-    // Nếu đang ở video (index 0) mà bấm next -> nhảy sang hình đầu tiên
-    let nextIndex = currentIndex === 0 ? targetFirstIndex : currentIndex + 1;
-    // Nếu đang ở cuối slide hình mà bấm next -> nhảy về hình đầu tiên (không qua video)
-    if (currentIndex === galleryImages.length - 1) {
-      nextIndex = targetFirstIndex;
-    }
-
-    setIsFading(true);
-    setTimeout(() => {
-      setActiveImage(galleryImages[nextIndex]);
-      setIsFading(false);
-    }, 120);
-  };
-
   return (
     <div className="flex flex-col w-full pb-20 bg-white">
       <div className="max-w-7xl mx-auto px-4 w-full">
@@ -794,7 +639,7 @@ export default function ProductDetailPage() {
         {/* Tiêu đề sản phẩm */}
         <div className="flex flex-col md:flex-row md:items-center justify-between pb-6 mb-8 mt-4 gap-4">
           <div>
-            <h1 className="text-3xl font-black text-gray-900 tracking-tight">{product.name}</h1>
+            <h1 className="text-3xl font-black text-gray-900 tracking-tight">{displayProductName}</h1>
             <div className="flex items-center gap-4 mt-2">
               <div className="flex text-yellow-400">
                 {[...Array(5)].map((_, i) => {
@@ -835,859 +680,118 @@ export default function ProductDetailPage() {
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-start">
-          {/* CỘT TRÁI: THƯ VIỆN ẢNH ĐỘNG (Ảnh chính + Thumbnails + Lightbox) */}
-          <div className="lg:col-span-7 space-y-6">
-            <div className="bg-white rounded-md p-8 flex flex-col items-center relative group" id="product-slideshow-container">
-              {/* Khung ảnh chính có hiệu ứng slide ngang mượt mà kiểu CellphoneS */}
-              <div 
-                className="relative w-full aspect-[16/10] max-w-[620px] mb-6 overflow-hidden rounded-md border border-gray-100"
-                onMouseEnter={() => setIsHoveringImage(true)}
-                onMouseLeave={() => setIsHoveringImage(false)}
-              >
-                {/* Left/Right Carousel Control overlay */}
-                {galleryImages.length > 1 && (
-                  <>
-                    <button
-                      onClick={handleMainImagePrev}
-                      className="absolute left-2 top-1/2 -translate-y-1/2 z-10 p-2 bg-white/90 hover:bg-white text-gray-800 rounded-full shadow-md transition-all opacity-0 group-hover:opacity-100 hover:scale-105 active:scale-95 focus:outline-none"
-                      title="Ảnh trước"
-                    >
-                      <ChevronLeft size={20} strokeWidth={2.5} />
-                    </button>
-                    <button
-                      onClick={handleMainImageNext}
-                      className="absolute right-2 top-1/2 -translate-y-1/2 z-10 p-2 bg-white/90 hover:bg-white text-gray-800 rounded-full shadow-md transition-all opacity-0 group-hover:opacity-100 hover:scale-105 active:scale-95 focus:outline-none"
-                      title="Ảnh tiếp theo"
-                    >
-                      <ChevronRight size={20} strokeWidth={2.5} />
-                    </button>
-                  </>
-                )}
-
-                {/* Sliding Flex Container */}
-                <div 
-                  className="w-full flex flex-nowrap h-full transition-transform duration-500 ease-in-out"
-                  style={{ 
-                    transform: `translateX(-${(galleryImages.findIndex(img => img.url === activeImage?.url && img.type === activeImage?.type) !== -1 ? galleryImages.findIndex(img => img.url === activeImage?.url && img.type === activeImage?.type) : 0) * 100}%)`
-                  }}
-                >
-                  {galleryImages.map((item, idx) => (
-                    <div key={idx} className="w-full h-full flex-shrink-0 flex items-center justify-center bg-white p-2">
-                      {item.type === 'video' ? (
-                        <div className="w-full h-full relative">
-                          {isVideoLoaded ? (
-                            <iframe
-                              id="product-youtube-iframe"
-                              src={`https://www.youtube.com/embed/${getYouTubeId(item.url)}?autoplay=1&rel=0&enablejsapi=1`}
-                              className="w-full h-full object-contain absolute inset-0 border-0"
-                              title="Product Video"
-                              allowFullScreen
-                              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                            />
-                          ) : (
-                            <div className="w-full h-full relative flex items-center justify-center bg-gray-50 cursor-pointer" onClick={() => setIsVideoLoaded(true)}>
-                              <img 
-                                src={`https://img.youtube.com/vi/${getYouTubeId(item.url)}/hqdefault.jpg`} 
-                                className="w-full h-full object-cover rounded-md opacity-90" 
-                                alt="Video preview" 
-                              />
-                              <div className="absolute inset-0 bg-black/15 flex items-center justify-center rounded-md">
-                                <div className="w-14 h-14 bg-red-600 rounded-full flex items-center justify-center shadow-lg hover:scale-105 active:scale-95 transition-all">
-                                  <Play size={24} className="text-white ml-0.5" fill="currentColor" />
-                                </div>
-                              </div>
-                            </div>
-                          )}
-                        </div>
-                      ) : (
-                        <img
-                          src={item.url}
-                          alt=""
-                          className="max-w-full max-h-full object-contain"
-                        />
-                      )}
-                    </div>
-                  ))}
-                </div>
-
-                {product.discount && (
-                  <div className="absolute top-2 right-2 bg-red-600 text-white font-black text-xs px-2 py-1 rounded transform rotate-3 z-10">
-                    -{product.discount}%
-                  </div>
-                )}
-              </div>
-
-              {/* Dải ảnh nhỏ bên dưới */}
-              <div className="w-full space-y-4">
-                <div className="flex gap-3 overflow-x-auto w-full py-2 justify-center scroll-smooth [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
-                  {galleryImages.map((img, idx) => (
-                    <div
-                      key={idx}
-                      onClick={() => handleThumbnailClick(img)}
-                      className={`flex-shrink-0 w-16 h-16 rounded-md p-0.5 cursor-pointer transition-all hover:scale-105 active:scale-95 border flex items-center justify-center bg-white overflow-hidden ${
-                        activeImage?.url === img.url && activeImage?.type === img.type
-                          ? 'border-2 border-blue-600 bg-blue-50/50 opacity-100 scale-105 shadow-sm'
-                          : 'border-gray-200 opacity-60 hover:opacity-100'
-                      }`}
-                    >
-                      {img.type === 'video' ? (
-                        <div className="w-full h-full relative flex items-center justify-center bg-black/5 rounded">
-                          <img 
-                            src={`https://img.youtube.com/vi/${getYouTubeId(img.url)}/mqdefault.jpg`} 
-                            className="w-full h-full object-cover opacity-80" 
-                            alt="Video Thumbnail" 
-                          />
-                          <div className="absolute inset-0 bg-black/30 flex flex-col items-center justify-center text-white">
-                            <Play size={16} className="text-white mb-0.5" fill="currentColor" />
-                            <span className="text-[9px] font-black uppercase tracking-tight scale-90">Video</span>
-                          </div>
-                        </div>
-                      ) : (
-                        <img src={img.url} className="w-full h-full object-contain" alt="" />
-                      )}
-                    </div>
-                  ))}
-                </div>
-
-                {/* Nút Xem hình thực tế & Xem Video giới thiệu (Kiểu CellphoneS) */}
-                <div className="flex justify-center gap-3">
-                  {product.videoUrl && (
-                    <button
-                      type="button"
-                      onClick={() => {
-                        const videoIdx = galleryImages.findIndex(img => img.type === 'video');
-                        if (videoIdx !== -1) {
-                          setActiveImage(galleryImages[videoIdx]);
-                          setIsVideoLoaded(true);
-                          const el = document.getElementById('product-slideshow-container');
-                          if (el) el.scrollIntoView({ behavior: 'smooth' });
-                        }
-                      }}
-                      className="flex items-center gap-1.5 px-4 py-2 bg-red-50 hover:bg-red-100 text-red-600 rounded-full text-xs font-black transition-colors focus:outline-none border border-red-200 cursor-pointer"
-                    >
-                      <Play size={13} fill="currentColor" className="text-red-600" />
-                      <span>Xem Video giới thiệu</span>
-                    </button>
-                  )}
-                  <button
-                    type="button"
-                    onClick={() => {
-                      const activeIdx = galleryImages.findIndex(img => img.url === activeImage?.url && img.type === activeImage?.type);
-                      setLightboxActiveIndex(activeIdx !== -1 ? activeIdx : 0);
-                      setIsLightboxOpen(true);
-                    }}
-                    className="flex items-center gap-1.5 px-4 py-2 bg-gray-100 hover:bg-blue-50 hover:text-blue-600 text-gray-500 rounded-full text-xs font-black transition-colors focus:outline-none border border-gray-200 cursor-pointer"
-                  >
-                    <Maximize2 size={13} />
-                    <span>Xem hình thực tế {selectedColor && `màu ${selectedColor}`}</span>
-                  </button>
-                </div>
-              </div>
-            </div>
-
-            {/* Content Tabs (Specs / Info / Reviews) */}
-            <div className="bg-white rounded-md overflow-hidden" id="product-tabs-container">
-              <div className="flex bg-gray-50/50 border-b border-gray-100">
-                {product.description && product.description.trim() !== '' && (
-                  <button
-                    type="button"
-                    onClick={() => setActiveTab('specs')}
-                    className={`flex-1 py-4 font-bold text-xs transition-all relative tracking-wider ${activeTab === 'specs' ? 'text-blue-600' : 'text-gray-500 hover:text-gray-700'}`}
-                  >
-                    THÔNG TIN SẢN PHẨM
-                    {activeTab === 'specs' && <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-12 h-1 bg-blue-600 rounded-t-full"></div>}
-                  </button>
-                )}
-                <button
-                  type="button"
-                  onClick={() => setActiveTab('info')}
-                  className={`flex-1 py-4 font-bold text-xs transition-all relative tracking-wider ${activeTab === 'info' ? 'text-blue-600' : 'text-gray-500 hover:text-gray-700'}`}
-                >
-                  THÔNG SỐ KỸ THUẬT
-                  {activeTab === 'info' && <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-12 h-1 bg-blue-600 rounded-t-full"></div>}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setActiveTab('reviews')}
-                  className={`flex-1 py-4 font-bold text-xs transition-all relative tracking-wider ${activeTab === 'reviews' ? 'text-blue-600' : 'text-gray-500 hover:text-gray-700'}`}
-                >
-                  ĐÁNH GIÁ & BÌNH LUẬN ({stats.total})
-                  {activeTab === 'reviews' && <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-12 h-1 bg-blue-600 rounded-t-full"></div>}
-                </button>
-              </div>
-
-              <div className="p-8">
-                {activeTab === 'specs' && (
-                  <div className="prose prose-blue max-w-none animate-in fade-in slide-in-from-bottom-4 duration-500">
-                    {product.description ? (
-                      <div 
-                        className="rich-text-content"
-                        dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(product.description) }} 
-                      />
-                    ) : (
-                      <>
-                        <h3 className="text-xl font-black text-gray-800 mb-4">Trải nghiệm đẳng cấp cùng {product.name}</h3>
-                        <p className="text-gray-600 leading-relaxed text-sm">
-                          Sản phẩm mang đến sự đột phá về mặt hiệu năng với con chip thế hệ mới nhất,
-                          kết hợp cùng hệ thống camera chuyên nghiệp giúp bạn bắt trọn mọi khoảnh khắc.
-                          Thiết kế titan siêu bền và nhẹ tạo nên vẻ ngoài sang trọng bậc nhất.
-                        </p>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 my-6">
-                          <div className="bg-gray-50 p-5 rounded-md">
-                            <h4 className="font-bold text-blue-700 mb-2 text-sm">Màn hình sống động</h4>
-                            <p className="text-xs text-gray-600">Công nghệ LTPO giúp tiết kiệm pin tối đa trong khi vẫn đảm bảo tần số quét 120Hz mượt mà.</p>
-                          </div>
-                          <div className="bg-gray-50 p-5 rounded-md border border-gray-100">
-                            <h4 className="font-bold text-blue-700 mb-2 text-sm">Pin ấn tượng</h4>
-                            <p className="text-xs text-gray-600">Thời lượng sử dụng lên đến 30 giờ phát video liên tục, hỗ trợ sạc siêu nhanh.</p>
-                          </div>
-                        </div>
-                      </>
-                    )}
-                  </div>
-                )}
-
-                {activeTab === 'info' && (
-                  <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-                    {/* Highlight Spec Cards */}
-                    {highlightSpecs && highlightSpecs.length > 0 && (
-                      <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-6">
-                        {highlightSpecs.map((spec) => (
-                          <div key={spec.id} className="bg-slate-50 border border-gray-100 rounded-xl p-4 flex items-center gap-3 hover:shadow-sm transition-all duration-200">
-                            <div className="p-3 bg-blue-50 text-blue-600 rounded-lg shrink-0">
-                              {renderSpecIcon(spec.iconName, { size: 20, className: "text-blue-600 stroke-[1.5]" })}
-                            </div>
-                            <div className="min-w-0">
-                              <span className="block text-[10px] font-bold text-gray-400 uppercase tracking-wider">{spec.label}</span>
-                              <span className="block text-xs font-black text-gray-800 truncate mt-0.5" title={spec.value}>{spec.value}</span>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-
-                    {/* Shortened Table */}
-                    {allSpecItems && allSpecItems.length > 0 ? (
-                      <div>
-                        <div className="bg-white border border-gray-100 rounded-lg overflow-hidden relative shadow-sm">
-                          <table className="w-full text-xs">
-                            <tbody>
-                              {allSpecItems.slice(0, 6).map((item, idx) => (
-                                <tr key={idx} className="border-b border-gray-100 last:border-0 hover:bg-slate-50/50 transition-colors">
-                                  <td className="py-3 px-5 font-bold text-gray-500 w-1/3 border-r border-gray-100/40">{item.key}</td>
-                                  <td className="py-3 px-5 text-gray-800 font-semibold">{item.value}</td>
-                                </tr>
-                              ))}
-                            </tbody>
-                          </table>
-                          {allSpecItems.length > 6 && (
-                            <div className="absolute bottom-0 left-0 right-0 h-12 bg-gradient-to-t from-white to-transparent pointer-events-none" />
-                          )}
-                        </div>
-
-                        {allSpecItems.length > 6 && (
-                          <div className="text-center mt-4">
-                            <button
-                              type="button"
-                              onClick={() => setIsSpecsModalOpen(true)}
-                              className="inline-flex items-center gap-2 px-6 py-3 bg-blue-50 text-blue-600 hover:bg-blue-100 active:scale-95 text-xs font-black rounded-md transition-all uppercase tracking-wider border border-blue-100"
-                            >
-                              <span>Xem cấu hình chi tiết</span>
-                              <ChevronDown size={14} />
-                            </button>
-                          </div>
-                        )}
-                      </div>
-                    ) : (
-                      <div className="text-center py-10 text-gray-400 font-semibold text-xs bg-gray-50/50 rounded-lg border border-gray-100">
-                        Thông số kỹ thuật đang được cập nhật.
-                      </div>
-                    )}
-                  </div>
-                )}
-
-                {activeTab === 'reviews' && (
-                  <div className="space-y-8 animate-in fade-in duration-300">
-                    {/* Bảng thống kê đánh giá (TGDĐ Style) */}
-                    <div className="grid grid-cols-1 md:grid-cols-12 bg-gray-50 rounded-xl p-6 md:p-8 items-center gap-6 md:gap-10 border border-gray-100">
-                      {/* Cột trái: Điểm trung bình */}
-                      <div className="md:col-span-5 text-center border-b md:border-b-0 md:border-r border-gray-200/80 pb-6 md:pb-0 md:pr-10">
-                        <div className="flex items-center justify-center gap-2">
-                          <span className="text-5xl font-black text-orange-500 tracking-tight">{stats.average}</span>
-                          <span className="text-2xl font-bold text-gray-400">/5</span>
-                        </div>
-                        <div className="flex justify-center text-yellow-400 my-2">
-                          {[...Array(5)].map((_, i) => (
-                            <Star
-                              key={i}
-                              size={20}
-                              fill={i < Math.round(stats.average) ? "currentColor" : "none"}
-                              stroke="currentColor"
-                              className="text-yellow-400"
-                            />
-                          ))}
-                        </div>
-                        <p className="text-xs font-bold text-blue-600">{stats.total} đánh giá thực tế</p>
-                        <p className="text-[11px] font-semibold text-gray-400 mt-0.5">{stats.satisfiedPercent}% khách hàng hài lòng</p>
-                      </div>
-
-                      {/* Cột phải: Thanh tỉ lệ % */}
-                      <div className="md:col-span-7 space-y-2">
-                        {[5, 4, 3, 2, 1].map((star) => (
-                          <div key={star} className="flex items-center text-xs font-bold text-gray-600 gap-3">
-                            <span className="w-3 text-right">{star}</span>
-                            <Star size={12} fill="currentColor" className="text-yellow-400 shrink-0" />
-                            <div className="flex-1 bg-gray-200/70 h-2.5 rounded-full overflow-hidden">
-                              <div
-                                className="bg-orange-500 h-full rounded-full transition-all duration-500"
-                                style={{ width: `${stats.percentages[star]}%` }}
-                              ></div>
-                            </div>
-                            <span className="w-10 text-right text-gray-400 font-semibold">{stats.percentages[star]}%</span>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-
-                    {/* Khu vực nút Viết đánh giá & Form */}
-                    <div className="border-t border-b border-gray-100 py-6 flex flex-col items-center">
-                      {!showReviewForm ? (
-                        <div className="text-center space-y-3">
-                          <p className="text-xs text-gray-400 font-medium">Bạn đã từng mua và trải nghiệm sản phẩm này?</p>
-                          <button
-                            type="button"
-                            onClick={() => {
-                              if (!currentUser) {
-                                setReviewError("Vui lòng đăng nhập tài khoản Khách hàng để viết đánh giá.");
-                              // } else if (currentUser.role === 'Admin') {
-                              //   setReviewError("Tài khoản Quản trị viên không được phép đánh giá sản phẩm.");
-                              } else {
-                                setReviewError('');
-                                setShowReviewForm(true);
-                              }
-                            }}
-                            className="px-8 py-3 bg-blue-600 hover:bg-blue-700 active:scale-95 text-white font-black text-xs rounded-md transition-all uppercase tracking-wider shadow-sm"
-                          >
-                            Viết đánh giá của bạn
-                          </button>
-                          {reviewError && (
-                            <p className="text-red-500 text-xs font-bold flex items-center gap-1 justify-center mt-2 animate-bounce">
-                              <AlertCircle size={14} />
-                              <span>{reviewError}</span>
-                            </p>
-                          )}
-                          {reviewSuccess && (
-                            <p className="text-green-600 text-xs font-bold flex items-center gap-1 justify-center mt-2">
-                              <Check size={14} className="bg-green-100 text-green-600 rounded-full p-0.5" />
-                              <span>{reviewSuccess}</span>
-                            </p>
-                          )}
-                        </div>
-                      ) : (
-                        <form onSubmit={handleSubmitReview} className="w-full max-w-xl bg-gray-50 rounded-xl p-6 border border-gray-200/60 space-y-4 animate-in zoom-in-95 duration-200">
-                          <h4 className="font-black text-gray-800 text-sm">Đánh giá sản phẩm {product.name}</h4>
-                          
-                          {/* Chọn sao */}
-                          <div className="space-y-1">
-                            <label className="block text-[10px] text-gray-400 font-black uppercase tracking-wider">Số sao của bạn *</label>
-                            <div className="flex gap-2 text-gray-300">
-                              {[1, 2, 3, 4, 5].map((star) => (
-                                <button
-                                  type="button"
-                                  key={star}
-                                  onClick={() => setWriteRating(star)}
-                                  className="transition-transform hover:scale-110 focus:outline-none"
-                                >
-                                  <Star
-                                    size={24}
-                                    fill={star <= writeRating ? "currentColor" : "none"}
-                                    stroke="currentColor"
-                                    className={star <= writeRating ? "text-yellow-400" : "text-gray-300"}
-                                  />
-                                </button>
-                              ))}
-                            </div>
-                          </div>
-
-                          {/* Nhập bình luận */}
-                          <div className="space-y-1">
-                            <label className="block text-[10px] text-gray-400 font-black uppercase tracking-wider">Ý kiến chia sẻ *</label>
-                            <textarea
-                              rows="3"
-                              value={writeComment}
-                              onChange={(e) => setWriteComment(e.target.value)}
-                              placeholder="Mời bạn chia sẻ cảm nhận về thiết kế, tính năng, hiệu năng máy (Tối thiểu 10 ký tự)..."
-                              className="w-full bg-white border border-gray-200 rounded-md p-3 text-xs font-semibold text-gray-800 placeholder-gray-400 focus:outline-none focus:border-blue-500"
-                            ></textarea>
-                          </div>
-
-                          {reviewError && (
-                            <p className="text-red-500 text-xs font-bold flex items-center gap-1">
-                              <AlertCircle size={14} className="shrink-0" />
-                              <span>{reviewError}</span>
-                            </p>
-                          )}
-
-                          <div className="flex items-center gap-3 justify-end pt-1">
-                            <button
-                              type="button"
-                              onClick={() => {
-                                setShowReviewForm(false);
-                                setReviewError('');
-                              }}
-                              className="px-4 py-2 text-gray-500 hover:text-gray-800 text-xs font-bold transition"
-                            >
-                              Hủy bỏ
-                            </button>
-                            <button
-                              type="submit"
-                              disabled={isSubmittingReview}
-                              className="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white text-xs font-black rounded-md uppercase tracking-wider transition"
-                            >
-                              {isSubmittingReview ? "Đang gửi..." : "Gửi đánh giá"}
-                            </button>
-                          </div>
-                        </form>
-                      )}
-                    </div>
-
-                    {/* Danh sách bình luận khách hàng */}
-                    <div className="space-y-6 divide-y divide-gray-100">
-                      {reviews.length > 0 ? (
-                        reviews.map((rev) => (
-                          <div key={rev.id} className="pt-6 first:pt-0 space-y-2">
-                            {/* Tên & Huy hiệu Đã mua */}
-                            <div className="flex flex-wrap items-center gap-2">
-                              <span className="font-black text-gray-800 text-xs">{rev.username}</span>
-                              <span className="inline-flex items-center gap-0.5 bg-green-50 border border-green-200 text-green-600 px-2 py-0.5 rounded text-[9px] font-bold">
-                                <Check size={10} strokeWidth={3} />
-                                <span>Đã mua tại PhoneShop</span>
-                              </span>
-                            </div>
-
-                            {/* Số sao & Thời gian */}
-                            <div className="flex items-center gap-3">
-                              <div className="flex text-yellow-400">
-                                {[...Array(5)].map((_, i) => (
-                                  <Star
-                                    key={i}
-                                    size={12}
-                                    fill={i < rev.rating ? "currentColor" : "none"}
-                                    stroke="currentColor"
-                                    className="text-yellow-400 shrink-0"
-                                  />
-                                ))}
-                              </div>
-                              <span className="text-[10px] text-gray-400 font-semibold">
-                                {new Date(rev.createdAt).toLocaleDateString('vi-VN')}
-                              </span>
-                            </div>
-
-                            {/* Ý kiến */}
-                            <p className="text-gray-700 text-xs font-medium leading-relaxed">
-                              {rev.comment}
-                            </p>
-
-                            {/* Nút hành động */}
-                            <div className="flex items-center gap-4 text-[10px] text-gray-400 font-bold">
-                              <button className="flex items-center gap-1.5 hover:text-blue-600 transition">
-                                <ThumbsUp size={11} />
-                                <span>Hữu ích</span>
-                              </button>
-                              <span className="text-gray-200">|</span>
-                              <span>Đã dùng khoảng 1 ngày</span>
-                            </div>
-
-                            {/* Khung phản hồi của QTV */}
-                            {rev.adminReply && (
-                              <div className="bg-gray-50 border border-gray-200/50 border-l-4 border-l-blue-500 rounded-r-md p-4 mt-3 ml-2 space-y-1.5">
-                                <p className="text-xs font-bold text-blue-600 flex items-center gap-1.5">
-                                  <MessageSquare size={13} className="shrink-0" />
-                                  <span>Phản hồi của QTV</span>
-                                </p>
-                                <p className="text-xs text-gray-700 font-semibold leading-relaxed">
-                                  {rev.adminReply}
-                                </p>
-                                {rev.repliedAt && (
-                                  <p className="text-[9px] text-gray-400 font-bold tracking-tight">
-                                    Phản hồi lúc {new Date(rev.repliedAt).toLocaleDateString('vi-VN')}
-                                  </p>
-                                )}
-                              </div>
-                            )}
-                          </div>
-                        ))
-                      ) : (
-                        <div className="text-center py-12 text-gray-400 space-y-2">
-                          <MessageSquare className="mx-auto opacity-30" size={48} strokeWidth={1} />
-                          <p className="text-xs font-bold text-gray-500">Chưa có đánh giá nào cho sản phẩm này.</p>
-                          <p className="text-[11px] text-gray-400 font-medium">Hãy là người đầu tiên trải nghiệm và chia sẻ nhận xét!</p>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-
+          {/* CỘT TRÁI: THƯ VIỆN ẢNH ĐỘNG */}
+          <ProductGallery 
+            product={product}
+            selectedColor={selectedColor}
+            galleryImages={galleryImages}
+            activeImage={activeImage}
+            setActiveImage={setActiveImage}
+          />
 
           {/* CỘT PHẢI: KHU VỰC CHỌN BIẾN THỂ & ĐẶT MUA */}
-          <div className="lg:col-span-5 space-y-8">
-            <div className="sticky top-10 space-y-6">
-              <div className="bg-white rounded-md p-8 space-y-8">
-                {product.isAvailable === false && (
-                  <div className="bg-admin-danger/10 rounded-md p-5 flex gap-3 items-start animate-in fade-in duration-200">
-                    <div className="w-8 h-8 rounded-full bg-admin-danger/15 text-admin-danger flex items-center justify-center font-bold flex-shrink-0">
-                      <X size={20} />
+          <ProductSummaryInfo 
+            product={product}
+            displayProductName={displayProductName}
+            displayDetails={displayDetails}
+            attributesConfig={attributesConfig}
+            selectedAttributes={selectedAttributes}
+            onAttributeClick={handleAttributeClick}
+            onAddToCart={handleAddToCart}
+            onBuyNow={handleBuyNow}
+          />
+        </div>
+
+        {/* Khu vực Tabs chi tiết mô tả / Thông số / Reviews */}
+        <div className="bg-white rounded-md overflow-hidden mt-12 border border-gray-100" id="product-tabs-container">
+          <div className="flex bg-gray-50/50 border-b border-gray-100">
+            {product.description && product.description.trim() !== '' && (
+              <button
+                type="button"
+                onClick={() => setActiveTab('specs')}
+                className={`flex-1 py-4 font-bold text-xs transition-all relative tracking-wider ${activeTab === 'specs' ? 'text-blue-600' : 'text-gray-500 hover:text-gray-700'}`}
+              >
+                THÔNG TIN SẢN PHẨM
+                {activeTab === 'specs' && <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-12 h-1 bg-blue-600 rounded-t-full"></div>}
+              </button>
+            )}
+            <button
+              type="button"
+              onClick={() => setActiveTab('info')}
+              className={`flex-1 py-4 font-bold text-xs transition-all relative tracking-wider ${activeTab === 'info' ? 'text-blue-600' : 'text-gray-500 hover:text-gray-700'}`}
+            >
+              THÔNG SỐ KỸ THUẬT
+              {activeTab === 'info' && <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-12 h-1 bg-blue-600 rounded-t-full"></div>}
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveTab('reviews')}
+              className={`flex-1 py-4 font-bold text-xs transition-all relative tracking-wider ${activeTab === 'reviews' ? 'text-blue-600' : 'text-gray-500 hover:text-gray-700'}`}
+            >
+              ĐÁNH GIÁ & BÌNH LUẬN ({stats.total})
+              {activeTab === 'reviews' && <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-12 h-1 bg-blue-600 rounded-t-full"></div>}
+            </button>
+          </div>
+
+          <div className="p-8">
+            {activeTab === 'specs' && (
+              <div className="prose prose-blue max-w-none animate-in fade-in slide-in-from-bottom-4 duration-500">
+                {product.description ? (
+                  <div 
+                    className="rich-text-content"
+                    dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(product.description) }} 
+                  />
+                ) : (
+                  <>
+                    <h3 className="text-xl font-black text-gray-800 mb-4">Trải nghiệm đẳng cấp cùng {product.name}</h3>
+                    <p className="text-gray-600 leading-relaxed text-sm">
+                      Sản phẩm mang đến sự đột phá về mặt hiệu năng với con chip thế hệ mới nhất,
+                      kết hợp cùng hệ thống camera chuyên nghiệp giúp bạn bắt trọn mọi khoảnh khắc.
+                      Thiết kế titan siêu bền và nhẹ tạo nên vẻ ngoài sang trọng bậc nhất.
+                    </p>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 my-6">
+                      <div className="bg-gray-50 p-5 rounded-md">
+                        <h4 className="font-bold text-blue-700 mb-2 text-sm">Màn hình sống động</h4>
+                        <p className="text-xs text-gray-600">Công nghệ LTPO giúp tiết kiệm pin tối đa trong khi vẫn đảm bảo tần số quét 120Hz mượt mà.</p>
+                      </div>
+                      <div className="bg-gray-50 p-5 rounded-md border border-gray-100">
+                        <h4 className="font-bold text-blue-700 mb-2 text-sm">Pin ấn tượng</h4>
+                        <p className="text-xs text-gray-600">Thời lượng sử dụng lên đến 30 giờ phát video liên tục, hỗ trợ sạc siêu nhanh.</p>
+                      </div>
                     </div>
-                    <div>
-                      <h5 className="font-bold text-admin-danger text-sm">Sản phẩm tạm ngưng kinh doanh</h5>
-                      <p className="text-xs text-admin-text-main/80 mt-1">
-                        Danh mục của sản phẩm này hiện đang tạm ngưng hoạt động. Quý khách vui lòng tham khảo các dòng sản phẩm khác.
-                      </p>
-                    </div>
-                  </div>
+                  </>
                 )}
-                {/* Các thuộc tính biến thể động */}
-                {Object.entries(attributesConfig).map(([attrKey, values]) => {
-                  const isColorAttr = attrKey.toLowerCase().includes('màu') || attrKey.toLowerCase().includes('color');
-                  
-                  if (isColorAttr) {
-                    return (
-                      <div key={attrKey} className="space-y-3">
-                        <h4 className="text-xs font-black text-gray-400 uppercase tracking-widest mb-4">{attrKey}:</h4>
-                        <div className="flex flex-wrap items-center gap-5">
-                          {values.map((val) => {
-                            const isSelected = selectedAttributes[attrKey] === val;
-                            const hexColor = getHexForColor(val);
-                            return (
-                              <div key={val} className="flex flex-col items-center gap-1.5">
-                                <button
-                                  type="button"
-                                  onClick={() => handleAttributeClick(attrKey, val)}
-                                  className={`w-11 h-11 rounded-full transition-all hover:scale-105 active:scale-95 flex items-center justify-center ${isSelected
-                                    ? 'scale-110 shadow-md ring-2 ring-offset-2 ring-blue-500'
-                                    : 'opacity-80 hover:opacity-100'
-                                    }`}
-                                  style={{ backgroundColor: hexColor }}
-                                  title={val}
-                                >
-                                  {isSelected && (
-                                    <Check
-                                      size={16}
-                                      className={hexColor === '#f8f9fa' ? 'text-gray-800 stroke-[3.5]' : 'text-white stroke-[3.5]'}
-                                    />
-                                  )}
-                                </button>
-                                <span className="text-[10px] font-bold text-gray-500 tracking-tight">{val}</span>
-                              </div>
-                            );
-                          })}
-                        </div>
-                      </div>
-                    );
-                  }
-
-                  // Đối với các thuộc tính thông thường khác (Dung lượng, Kích thước, Phiên bản, v.v.)
-                  return (
-                    <div key={attrKey} className="space-y-3">
-                      <h4 className="text-xs font-black text-gray-400 uppercase tracking-widest mb-4">{attrKey}:</h4>
-                      <div className="grid grid-cols-2 gap-3">
-                        {values.map((val) => {
-                          const isSelected = selectedAttributes[attrKey] === val;
-                          return (
-                            <button
-                              key={val}
-                              type="button"
-                              onClick={() => handleAttributeClick(attrKey, val)}
-                              className={`py-3 rounded-md font-black transition-all ${isSelected
-                                ? 'text-blue-600 bg-blue-50 transform scale-[1.02] border-2 border-blue-500'
-                                : 'bg-gray-50 text-gray-500 hover:bg-gray-100 border border-transparent'
-                                }`}
-                            >
-                              {val}
-                            </button>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  );
-                })}
-
-                {/* Hiển thị Giá và Tồn kho động */}
-                <div className="bg-gray-50 rounded-md p-6 space-y-2">
-                  <div className="flex items-baseline flex-wrap gap-3">
-                    <span className="text-3xl font-black text-red-600">
-                      {displayDetails.price.toLocaleString('vi-VN')}₫
-                    </span>
-                    {displayDetails.originalPrice && (
-                      <span className="text-sm text-gray-400 line-through">
-                        {displayDetails.originalPrice.toLocaleString('vi-VN')}₫
-                      </span>
-                    )}
-                  </div>
-                  <div className="flex items-center flex-wrap gap-2">
-                    {displayDetails.originalPrice > displayDetails.price && (
-                      <span className="bg-red-600 text-white text-[9px] font-black px-2 py-0.5 rounded-md uppercase whitespace-nowrap">
-                        TIẾT KIỆM {((displayDetails.originalPrice - displayDetails.price) || 0).toLocaleString('vi-VN')}₫
-                      </span>
-                    )}
-                    <span className={`text-xs font-bold italic ${displayDetails.stock > 0 ? 'text-green-600' : 'text-red-500'}`}>
-                      {displayDetails.stock > 0 ? `Sẵn hàng (Còn ${displayDetails.stock} máy)` : 'Tạm hết hàng'}
-                    </span>
-                  </div>
-                </div>
-
-                {/* Khuyến mãi */}
-                <div className="space-y-4">
-                  <h4 className="text-xs font-black text-gray-800 uppercase tracking-widest flex items-center gap-2">
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5 text-orange-500">
-                      <path fillRule="evenodd" d="M12.964 2.815a.75.75 0 0 1 .494.314l3.426 5.138a.75.75 0 0 1-.161.944l-4.999 4.074a.75.75 0 0 1-.947 0l-4.999-4.074a.75.75 0 0 1-.161-.944l3.426-5.138a.75.75 0 0 1 .494-.314l1.2-.12a.75.75 0 0 1 .184 0l1.2.12Zm-3.411 9.421 2.22 1.81a.75.75 0 0 0 .954 0l2.22-1.81 2.304 3.456a.75.75 0 0 1-.16.944l-4.75 3.87a.75.75 0 0 1-.954 0l-4.75-3.87a.75.75 0 0 1-.16-.944l2.304-3.456Z" clipRule="evenodd" />
-                    </svg>
-                    KHUYẾN MÃI
-                  </h4>
-                  <div className="space-y-3">
-                    {promotions.map((promo, idx) => (
-                      <div key={idx} className="flex gap-3 items-start group">
-                        <div className="w-5 h-5 rounded-full bg-orange-100 flex items-center justify-center text-[10px] font-black text-orange-600 mt-0.5 group-hover:bg-orange-500 group-hover:text-white transition-all">
-                          {idx + 1}
-                        </div>
-                        <p className="text-xs text-gray-600 leading-relaxed font-medium">{promo}</p>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                {/* CTAs */}
-                <div className="space-y-4 pt-2">
-                  <button
-                    onClick={handleBuyNow}
-                    disabled={displayDetails.stock === 0 || product.isAvailable === false}
-                    className={`w-full bg-gradient-to-r ${displayDetails.stock > 0 && product.isAvailable !== false ? 'from-red-600 to-red-700 hover:from-red-700 hover:to-red-800' : 'from-gray-400 to-gray-500 cursor-not-allowed'} text-white font-black py-4.5 rounded-md text-xl uppercase transition-all transform active:scale-95 flex flex-col items-center`}
-                  >
-                    {product.isAvailable === false ? 'TẠM NGƯNG KINH DOANH' : (displayDetails.stock > 0 ? 'MUA NGAY' : 'HẾT HÀNG')}
-                    <span className="text-[10px] font-bold opacity-80 normal-case mt-0.5">
-                      {product.isAvailable === false ? '(Sản phẩm tạm ngưng kinh doanh)' : (displayDetails.stock > 0 ? '(Giao tận nơi hoặc nhận tại cửa hàng)' : '(Vui lòng quay lại sau)')}
-                    </span>
-                  </button>
-                   <button
-                    onClick={handleAddToCart}
-                    disabled={displayDetails.stock === 0 || product.isAvailable === false}
-                    className={`w-full ${displayDetails.stock > 0 && product.isAvailable !== false ? 'bg-blue-50 text-blue-600 hover:bg-blue-100' : 'bg-gray-100 text-gray-400 cursor-not-allowed'} font-black py-3.5 rounded-md text-md uppercase transition-all flex items-center justify-center gap-2`}
-                  >
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-5 h-5">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 3h1.386c.51 0 .955.343 1.087.835l.383 1.437M7.5 14.25a3 3 0 0 0-3 3h15.75m-12.75-3h11.218c1.121-2.3 2.1-4.684 2.924-7.138a60.114 60.114 0 0 0-16.536-1.84M7.5 14.25 5.106 5.272M6 20.25a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0Zm12.75 0a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0Z" />
-                    </svg>
-                    {product.isAvailable === false ? 'SẢN PHẨM TẠM NGƯNG KINH DOANH' : 'THÊM VÀO GIỎ HÀNG'}
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => {
-                      const event = new CustomEvent('add-to-compare', {
-                        detail: {
-                          id: product.id,
-                          name: product.name,
-                          thumbnailImage: product.image,
-                          basePrice: product.price,
-                          originalPrice: product.originalPrice,
-                          discount: product.discount,
-                          stockQuantity: product.stockQuantity,
-                          brand: { name: product.brand },
-                          category: { name: product.category },
-                          description: product.description,
-                          productCode: product.productCode
-                        }
-                      });
-                      window.dispatchEvent(event);
-                    }}
-                    className="w-full bg-gray-50 hover:bg-gray-100 text-gray-700 font-black py-3 rounded-md text-sm uppercase transition-all flex items-center justify-center gap-2"
-                  >
-                    <GitCompare size={16} />
-                    SO SÁNH SẢN PHẨM NÀY
-                  </button>
-                </div>
               </div>
+            )}
 
-              {/* cửa hàng gần bạn */}
-              <div className="bg-gray-50 rounded-md p-6">
-                <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 rounded-md bg-white flex items-center justify-center text-blue-600">
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M15 10.5a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1 1 15 0Z" />
-                    </svg>
-                  </div>
-                  <div>
-                    <p className="text-xs font-black text-gray-400 uppercase tracking-widest">Hỗ trợ nhanh</p>
-                    <p className="text-base font-black text-gray-800">Tìm cửa hàng gần bạn</p>
-                  </div>
-                </div>
-              </div>
-            </div>
+            {activeTab === 'info' && (
+              <ProductSpecsTab 
+                mergedSpecs={mergedSpecs}
+                onOpenModal={() => setIsSpecsModalOpen(true)}
+              />
+            )}
+
+            {activeTab === 'reviews' && (
+              <ProductReviews 
+                productId={id}
+                reviews={reviews}
+                currentUser={currentUser}
+                stats={stats}
+                onReviewSubmitted={fetchProductReviews}
+                productName={displayProductName || product.name}
+              />
+            )}
           </div>
         </div>
       </div>
 
-      {/* POPUP LIGHTBOX "XEM HÌNH THỰC TẾ" (Fullscreen Carousel Modal) */}
-      {isLightboxOpen && (
-        <div
-          className="fixed inset-0 z-50 bg-black/95 flex flex-col justify-between p-4 md:p-6 animate-in fade-in duration-300"
-          onClick={() => setIsLightboxOpen(false)}
-        >
-          {/* Header Lightbox */}
-          <div className="flex items-center justify-between text-white py-2 shrink-0">
-            <span className="font-bold text-xs uppercase tracking-widest text-gray-400">
-              Hình thực tế {selectedColor ? `màu ${selectedColor}` : 'sản phẩm'} ({lightboxActiveIndex + 1}/{galleryImages.length})
-            </span>
-            <button
-              onClick={() => setIsLightboxOpen(false)}
-              className="p-2 bg-white/10 hover:bg-white/20 text-white rounded-full transition-colors focus:outline-none"
-            >
-              <X size={20} />
-            </button>
-          </div>
-
-          {/* Main Content: Carousel Container */}
-          <div className="flex-1 flex items-center justify-between relative max-h-[70vh] md:max-h-[75vh]">
-            {/* Button Prev */}
-            <button
-              onClick={(e) => { e.stopPropagation(); handleLightboxPrev(); }}
-              className="absolute left-2 md:left-4 z-10 p-3 bg-white/10 hover:bg-white/20 text-white rounded-full transition-colors focus:outline-none"
-            >
-              <ChevronLeft size={24} strokeWidth={2.5} />
-            </button>
-
-            {/* Large Active Image wrapper */}
-            <div
-              className="w-full h-full flex items-center justify-center px-12 md:px-20"
-              onClick={(e) => e.stopPropagation()}
-            >
-              {galleryImages[lightboxActiveIndex]?.type === 'video' ? (
-                <div className="w-full h-full max-w-[800px] aspect-video relative flex items-center justify-center">
-                  <iframe
-                    src={`https://www.youtube.com/embed/${getYouTubeId(galleryImages[lightboxActiveIndex].url)}?autoplay=1&rel=0`}
-                    className="w-full h-full object-contain absolute inset-0 border-0"
-                    title="Product Video"
-                    allowFullScreen
-                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                  />
-                </div>
-              ) : (
-                <img
-                  src={galleryImages[lightboxActiveIndex]?.url}
-                  alt=""
-                  className="max-w-full max-h-full object-contain rounded-md animate-in zoom-in-95 duration-200"
-                />
-              )}
-            </div>
-
-            {/* Button Next */}
-            <button
-              onClick={(e) => { e.stopPropagation(); handleLightboxNext(); }}
-              className="absolute right-2 md:right-4 z-10 p-3 bg-white/10 hover:bg-white/20 text-white rounded-full transition-colors focus:outline-none"
-            >
-              <ChevronRight size={24} strokeWidth={2.5} />
-            </button>
-          </div>
-
-          {/* Bottom strip: Thumbnails carousel scroll */}
-          <div
-            className="py-4 shrink-0 w-full flex justify-center gap-3 overflow-x-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]"
-            onClick={(e) => e.stopPropagation()}
-          >
-            {galleryImages.map((img, idx) => (
-              <div
-                key={idx}
-                onClick={(e) => { e.stopPropagation(); setLightboxActiveIndex(idx); }}
-                className={`w-14 h-14 rounded-md p-1 bg-white cursor-pointer transition-all border flex items-center justify-center overflow-hidden ${
-                  lightboxActiveIndex === idx
-                    ? 'border-2 border-blue-600 opacity-100 scale-105 shadow-md'
-                    : 'border-gray-200 opacity-50 hover:opacity-80'
-                }`}
-              >
-                {img.type === 'video' ? (
-                  <div className="w-full h-full bg-black flex items-center justify-center rounded relative overflow-hidden">
-                    <Play size={16} className="text-white z-10 animate-pulse" />
-                    <div className="absolute inset-0 bg-black/40" />
-                  </div>
-                ) : (
-                  <img src={img.url} className="w-full h-full object-contain rounded" alt="" />
-                )}
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* DETAILED SPECIFICATIONS MODAL */}
-      {isSpecsModalOpen && product && (
-        <div
-          className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-300"
-          onClick={() => setIsSpecsModalOpen(false)}
-        >
-          <div
-            className="bg-white rounded-xl w-full max-w-2xl overflow-hidden shadow-2xl flex flex-col max-h-[85vh] animate-in zoom-in-95 duration-200"
-            onClick={(e) => e.stopPropagation()}
-          >
-            {/* Modal Header */}
-            <div className="flex justify-between items-center bg-gray-50 border-b border-gray-100 px-6 py-4">
-              <h3 className="text-sm font-black text-gray-800 uppercase tracking-wider">
-                Thông số kỹ thuật chi tiết
-              </h3>
-              <button
-                type="button"
-                onClick={() => setIsSpecsModalOpen(false)}
-                className="text-gray-400 hover:text-red-500 p-1.5 rounded-full hover:bg-red-50 transition-all focus:outline-none"
-              >
-                <X size={18} />
-              </button>
-            </div>
-
-            {/* Modal Body */}
-            <div className="flex-1 overflow-y-auto p-6 space-y-6 scrollbar-thin">
-              <p className="text-base font-black text-gray-800 border-b border-gray-100 pb-2 mb-4">
-                {product.name}
-              </p>
-              {parsedSpecs && parsedSpecs.length > 0 ? (
-                parsedSpecs.map((group, gIdx) => (
-                  <div key={gIdx} className="bg-gray-50/50 border border-gray-100 rounded-lg overflow-hidden shadow-sm">
-                    <div className="bg-gray-100/70 px-5 py-3 font-bold text-gray-800 text-[11px] border-b border-gray-100 uppercase tracking-wider">
-                      {group.groupName}
-                    </div>
-                    <table className="w-full text-xs">
-                      <tbody>
-                        {(group.items || []).map((item, iIdx) => (
-                          <tr key={iIdx} className="border-b border-gray-100 last:border-0 hover:bg-white transition-colors">
-                            <td className="py-3 px-5 font-bold text-gray-500 w-1/3 border-r border-gray-100/40">{item.key}</td>
-                            <td className="py-3 px-5 text-gray-800 font-semibold">{item.value}</td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                ))
-              ) : (
-                <div className="text-center py-10 text-gray-400 font-semibold text-xs bg-gray-50/50 rounded-lg border border-gray-100">
-                  Thông số kỹ thuật đang được cập nhật.
-                </div>
-              )}
-            </div>
-
-            {/* Modal Footer */}
-            <div className="bg-gray-50 border-t border-gray-100 px-6 py-4 flex justify-end shrink-0">
-              <button
-                type="button"
-                onClick={() => setIsSpecsModalOpen(false)}
-                className="px-6 py-2.5 bg-gray-200 hover:bg-gray-300 text-gray-700 text-xs font-black rounded-md uppercase tracking-wider transition-colors"
-              >
-                Đóng
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* MODAL THÔNG SỐ KỸ THUẬT ĐẦY ĐỦ */}
+      <ProductSpecsModal 
+        isOpen={isSpecsModalOpen}
+        onClose={() => setIsSpecsModalOpen(false)}
+        mergedSpecs={mergedSpecs}
+        productName={displayProductName || product.name}
+      />
     </div>
   );
 }

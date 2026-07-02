@@ -1,5 +1,5 @@
-import React, { useState, useRef, useEffect } from 'react';
-import { ChevronDown, Image as ImageIcon, Trash2, Check, UploadCloud, Loader2, X } from 'lucide-react';
+import React, { useState, useRef, useEffect, useMemo } from 'react';
+import { ChevronDown, Image as ImageIcon, Trash2, Check, UploadCloud, Loader2, X, PlusCircle, MinusCircle } from 'lucide-react';
 import { useProductFormContext } from '../context/ProductFormContext';
 import PriceInput from '../../PriceInput';
 import { productService } from '../../../services/productService';
@@ -9,6 +9,11 @@ export default function ProductVariantsMatrix() {
   const [isAttrDropdownOpen, setIsAttrDropdownOpen] = useState(false);
   const [bulkUploading, setBulkUploading] = useState(false);
   const dropdownRef = useRef(null);
+
+  const [bulkSpecKey, setBulkSpecKey] = useState('');
+  const [bulkSpecValue, setBulkSpecValue] = useState('');
+  const [isBulkCustomKey, setIsBulkCustomKey] = useState(false);
+  const [customBulkSpecKey, setCustomBulkSpecKey] = useState('');
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -53,6 +58,102 @@ export default function ProductVariantsMatrix() {
     setExcludedKeys,
     showToast
   } = useProductFormContext();
+
+  // Tự động đóng mục xem chi tiết biến thể đang mở khi admin chọn hàng loạt biến thể
+  useEffect(() => {
+    if (selectedVariantKeys.length > 0) {
+      setExpandedVariantKey(null);
+    }
+  }, [selectedVariantKeys.length, setExpandedVariantKey]);
+
+  const handleAddSpecOverride = (key) => {
+    const vData = variantsData[key] || {};
+    const specsList = Array.isArray(vData.specsOverrideList) ? [...vData.specsOverrideList] : [];
+    specsList.push({ key: '', value: '' });
+    updateVariantField(key, 'specsOverrideList', specsList);
+  };
+
+  const handleRemoveSpecOverride = (key, index) => {
+    const vData = variantsData[key] || {};
+    const specsList = Array.isArray(vData.specsOverrideList) ? [...vData.specsOverrideList] : [];
+    const updated = specsList.filter((_, i) => i !== index);
+    updateVariantField(key, 'specsOverrideList', updated);
+  };
+
+  const handleSpecOverrideChange = (key, index, field, value) => {
+    const vData = variantsData[key] || {};
+    const specsList = Array.isArray(vData.specsOverrideList) ? [...vData.specsOverrideList] : [];
+    specsList[index] = {
+      ...specsList[index],
+      [field]: value
+    };
+    updateVariantField(key, 'specsOverrideList', specsList);
+  };
+
+  const availableSpecKeys = useMemo(() => {
+    if (!formData?.specs) return [];
+    try {
+      const parsed = typeof formData.specs === 'string' ? JSON.parse(formData.specs) : formData.specs;
+      if (Array.isArray(parsed)) {
+        const keys = [];
+        parsed.forEach(group => {
+          if (group.items && Array.isArray(group.items)) {
+            group.items.forEach(item => {
+              if (item && item.key && item.key.trim()) {
+                keys.push(item.key.trim());
+              }
+            });
+          }
+        });
+        return Array.from(new Set(keys));
+      }
+    } catch (e) {
+      console.error("Lỗi parse specs để trích xuất keys:", e);
+    }
+    return [];
+  }, [formData?.specs]);
+
+  const handleApplyBulkSpecOverride = () => {
+    const finalKey = isBulkCustomKey ? customBulkSpecKey.trim() : bulkSpecKey.trim();
+    if (!finalKey) {
+      return showToast("warning", "Vui lòng chọn hoặc nhập tên thông số kỹ thuật.");
+    }
+    if (!bulkSpecValue.trim()) {
+      return showToast("warning", "Vui lòng nhập giá trị ghi đè.");
+    }
+
+    selectedVariantKeys.forEach(key => {
+      const vData = variantsData[key] || {};
+      const specsList = Array.isArray(vData.specsOverrideList) ? [...vData.specsOverrideList] : [];
+      const index = specsList.findIndex(s => s.key.trim().toLowerCase() === finalKey.toLowerCase());
+      if (index !== -1) {
+        specsList[index] = { key: finalKey, value: bulkSpecValue.trim() };
+      } else {
+        specsList.push({ key: finalKey, value: bulkSpecValue.trim() });
+      }
+      updateVariantField(key, 'specsOverrideList', specsList);
+    });
+
+    showToast("success", `Đã áp dụng ghi đè thông số '${finalKey}' cho ${selectedVariantKeys.length} biến thể.`);
+    setBulkSpecValue('');
+  };
+
+  const handleRemoveBulkSpecOverride = () => {
+    const finalKey = isBulkCustomKey ? customBulkSpecKey.trim() : bulkSpecKey.trim();
+    if (!finalKey) {
+      return showToast("warning", "Vui lòng chọn hoặc nhập tên thông số để xóa.");
+    }
+
+    if (window.confirm(`Bạn có chắc chắn muốn gỡ thông số '${finalKey}' khỏi các biến thể đang chọn?`)) {
+      selectedVariantKeys.forEach(key => {
+        const vData = variantsData[key] || {};
+        const specsList = Array.isArray(vData.specsOverrideList) ? [...vData.specsOverrideList] : [];
+        const updated = specsList.filter(s => s.key.trim().toLowerCase() !== finalKey.toLowerCase());
+        updateVariantField(key, 'specsOverrideList', updated);
+      });
+      showToast("success", `Đã gỡ bỏ thông số '${finalKey}' khỏi ${selectedVariantKeys.length} biến thể.`);
+    }
+  };
 
   return (
     <>
@@ -306,6 +407,83 @@ export default function ProductVariantsMatrix() {
                   >
                     <Trash2 size={12} /> Xóa khỏi bảng
                   </button>
+                </div>
+
+                {/* Group 4: Bulk Specs Override */}
+                <div className="w-full border-t border-blue-200/40 pt-3 mt-1.5 flex flex-wrap items-center gap-3 text-xs">
+                  <span className="text-[11px] text-blue-900 font-bold uppercase tracking-wider">
+                    Ghi đè thông số hàng loạt:
+                  </span>
+                  
+                  <div className="flex items-center gap-2 flex-wrap">
+                    {availableSpecKeys.length > 0 && !isBulkCustomKey ? (
+                      <select
+                        className="px-2.5 py-1.5 border border-admin-border rounded outline-none text-[11px] text-admin-text-main font-semibold bg-white focus:border-primary cursor-pointer shadow-sm"
+                        value={bulkSpecKey}
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          if (val === '__custom__') {
+                            setIsBulkCustomKey(true);
+                            setBulkSpecKey('');
+                          } else {
+                            setBulkSpecKey(val);
+                          }
+                        }}
+                      >
+                        <option value="">-- Chọn thuộc tính ghi đè --</option>
+                        {availableSpecKeys.map(k => (
+                          <option key={k} value={k}>{k}</option>
+                        ))}
+                        <option value="__custom__">✍️ Tự gõ thuộc tính khác...</option>
+                      </select>
+                    ) : (
+                      <div className="flex items-center gap-1.5">
+                        <input
+                          type="text"
+                          placeholder="Tên thông số tự gõ..."
+                          className="px-2.5 py-1.5 border border-admin-border rounded outline-none text-[11px] text-admin-text-main font-semibold bg-white focus:border-primary w-40 shadow-sm"
+                          value={customBulkSpecKey}
+                          onChange={(e) => setCustomBulkSpecKey(e.target.value)}
+                        />
+                        {availableSpecKeys.length > 0 && (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setIsBulkCustomKey(false);
+                              setCustomBulkSpecKey('');
+                            }}
+                            className="text-[10px] text-primary hover:underline border-0 bg-transparent cursor-pointer font-bold"
+                          >
+                            Quay lại chọn
+                          </button>
+                        )}
+                      </div>
+                    )}
+
+                    <input
+                      type="text"
+                      placeholder="Nhập giá trị (VD: 256GB)..."
+                      className="px-2.5 py-1.5 border border-admin-border rounded outline-none text-[11px] text-admin-text-main font-medium bg-white focus:border-primary w-48 shadow-sm"
+                      value={bulkSpecValue}
+                      onChange={(e) => setBulkSpecValue(e.target.value)}
+                    />
+
+                    <button
+                      type="button"
+                      onClick={handleApplyBulkSpecOverride}
+                      className="px-3 py-1.5 bg-primary hover:bg-admin-primary-hover text-white text-[11px] font-bold rounded cursor-pointer transition-all active:scale-[0.97] shadow-sm"
+                    >
+                      Áp dụng ghi đè
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={handleRemoveBulkSpecOverride}
+                      className="px-3 py-1.5 border border-red-200 text-red-600 bg-red-50 hover:bg-red-100 text-[11px] font-bold rounded cursor-pointer transition-all active:scale-[0.97] shadow-sm"
+                    >
+                      Xóa thuộc tính này
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>
@@ -633,18 +811,102 @@ export default function ProductVariantsMatrix() {
                                         className="w-full px-3 py-2 border border-admin-border rounded outline-none text-xs text-admin-text-main font-medium"
                                       />
                                     </div>
-                                    <div className="flex items-end pb-1.5">
-                                      <label className="flex items-center gap-2 cursor-pointer">
-                                        <input
-                                          type="checkbox"
-                                          checked={vData?.chargeTax !== false}
-                                          onChange={(e) => updateVariantField(key, 'chargeTax', e.target.checked)}
-                                          className="w-4 h-4 text-primary border-admin-border rounded focus:ring-primary cursor-pointer"
-                                        />
-                                        <span className="text-xs font-bold text-admin-text-main">Áp dụng thuế</span>
-                                      </label>
-                                    </div>
                                   </div>
+                                </div>
+                              </div>
+
+                              {/* Ghi đè thông số kỹ thuật (Specs Override) */}
+                              <div className="border-t border-slate-100 pt-3 mt-2 space-y-2">
+                                <div className="flex justify-between items-center">
+                                  <label className="text-[10px] font-bold text-admin-text-muted uppercase tracking-wider">
+                                    Thông số ghi đè (Specs Override)
+                                  </label>
+                                  <button
+                                    type="button"
+                                    onClick={() => handleAddSpecOverride(key)}
+                                    className="text-[10px] font-bold text-primary hover:text-admin-primary-hover flex items-center gap-1 border-0 bg-transparent cursor-pointer"
+                                  >
+                                    <PlusCircle size={12} /> Thêm ghi đè
+                                  </button>
+                                </div>
+
+                                <div className="space-y-1.5 max-h-48 overflow-y-auto pr-1">
+                                  {Array.isArray(vData?.specsOverrideList) && vData.specsOverrideList.map((spec, specIdx) => {
+                                    const isKeyInSpecs = availableSpecKeys.includes(spec.key);
+                                    const isCustomKey = spec.key !== '' && !isKeyInSpecs;
+
+                                    return (
+                                      <div key={specIdx} className="grid grid-cols-12 gap-2 items-center bg-slate-50/30 px-2 py-1 rounded border border-admin-border/30 hover:bg-slate-50 transition-colors">
+                                        <div className="col-span-5">
+                                          {availableSpecKeys.length > 0 && !isCustomKey ? (
+                                            <select
+                                              className="w-full px-2 py-1 border border-admin-border rounded outline-none text-[11px] text-admin-text-main font-semibold bg-white focus:border-primary cursor-pointer h-7"
+                                              value={spec.key}
+                                              onChange={(e) => {
+                                                const val = e.target.value;
+                                                if (val === '__custom__') {
+                                                  handleSpecOverrideChange(key, specIdx, 'key', ' ');
+                                                } else {
+                                                  handleSpecOverrideChange(key, specIdx, 'key', val);
+                                                }
+                                              }}
+                                            >
+                                              <option value="">-- Chọn thuộc tính --</option>
+                                              {availableSpecKeys.map(k => (
+                                                <option key={k} value={k}>{k}</option>
+                                              ))}
+                                              <option value="__custom__">✍️ Nhập khác...</option>
+                                            </select>
+                                          ) : (
+                                            <div className="relative flex items-center h-7">
+                                              <input
+                                                type="text"
+                                                placeholder="Tên thông số..."
+                                                className="w-full px-2 py-1 pr-14 border border-admin-border rounded outline-none text-[11px] text-admin-text-main font-semibold bg-white focus:border-primary h-full"
+                                                value={spec.key.trim() === '' ? '' : spec.key}
+                                                onChange={(e) => handleSpecOverrideChange(key, specIdx, 'key', e.target.value)}
+                                                required
+                                              />
+                                              {availableSpecKeys.length > 0 && (
+                                                <button
+                                                  type="button"
+                                                  onClick={() => handleSpecOverrideChange(key, specIdx, 'key', '')}
+                                                  className="absolute right-1.5 text-[9px] text-primary hover:underline border-0 bg-transparent cursor-pointer font-bold"
+                                                >
+                                                  Chọn lại
+                                                </button>
+                                              )}
+                                            </div>
+                                          )}
+                                        </div>
+                                        <div className="col-span-6">
+                                          <input
+                                            type="text"
+                                            placeholder="Giá trị ghi đè (VD: 512GB)..."
+                                            className="w-full px-2 py-1 border border-admin-border rounded outline-none text-[11px] text-admin-text-main font-medium bg-white focus:border-primary h-7"
+                                            value={spec.value}
+                                            onChange={(e) => handleSpecOverrideChange(key, specIdx, 'value', e.target.value)}
+                                            required
+                                          />
+                                        </div>
+                                        <div className="col-span-1 flex justify-center">
+                                          <button
+                                            type="button"
+                                            onClick={() => handleRemoveSpecOverride(key, specIdx)}
+                                            className="text-admin-danger hover:text-red-700 transition-colors p-1 border-0 bg-transparent cursor-pointer flex items-center justify-center flex-shrink-0"
+                                            title="Xóa ghi đè"
+                                          >
+                                            <MinusCircle size={14} />
+                                          </button>
+                                        </div>
+                                      </div>
+                                    );
+                                  })}
+                                  {(!Array.isArray(vData?.specsOverrideList) || vData.specsOverrideList.length === 0) && (
+                                    <div className="text-center py-2 text-[10px] text-admin-text-muted italic bg-slate-50/20 rounded border border-dashed border-admin-border/50">
+                                      Không có thông số nào bị ghi đè.
+                                    </div>
+                                  )}
                                 </div>
                               </div>
 

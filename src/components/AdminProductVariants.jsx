@@ -1,8 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { Search, Plus, Edit2, Trash2, Image as ImageIcon, X, FolderOpen, ChevronLeft, ChevronRight, PlusCircle, MinusCircle, Loader2 } from 'lucide-react';
+import { Search, Plus } from 'lucide-react';
 import { productService } from '../services/productService';
 import { variantService } from '../services/variantService';
 import { usePagination } from '../hooks/usePagination';
+
+// Subcomponents
+import VariantTable from './admin-variants/components/VariantTable';
+import VariantModal from './admin-variants/components/VariantModal';
 
 // Helper to remove Vietnamese diacritics and generate uppercase SKU
 const generateSkuFromName = (name) => {
@@ -51,6 +55,9 @@ export default function AdminProductVariants() {
   // Dynamic attributes list [{ key: '', value: '' }]
   const [attributes, setAttributes] = useState([]);
 
+  // Dynamic specs override list [{ key: '', value: '' }]
+  const [specsOverride, setSpecsOverride] = useState([]);
+
   const [imageInputMethod, setImageInputMethod] = useState('url'); // 'url' | 'upload'
   const [uploading, setUploading] = useState(false);
   const [inlineUploadingVariantId, setInlineUploadingVariantId] = useState(null);
@@ -97,12 +104,21 @@ export default function AdminProductVariants() {
       const attrList = Object.entries(parsedAttributes)
         .filter(([key]) => key !== 'SKU')
         .map(([key, value]) => ({ key, value }));
-      // muốn hiện sẵn thì vô đây
+      
       if (attrList.length === 0) {
         attrList.push({ key: 'Màu sắc', value: '' });
         attrList.push({ key: 'Dung Lượng RAM - ROM', value: '' });
       }
       setAttributes(attrList);
+
+      let parsedSpecsOverride = {};
+      try {
+        parsedSpecsOverride = v.specsOverride ? JSON.parse(v.specsOverride) : {};
+      } catch (e) {
+        console.error("Lỗi parse specsOverride", e);
+      }
+      const specsOverrideList = Object.entries(parsedSpecsOverride).map(([key, value]) => ({ key, value }));
+      setSpecsOverride(specsOverrideList);
     } else {
       setEditingVariant(null);
       setSelectedProductId(products[0]?.id?.toString() || '');
@@ -114,6 +130,7 @@ export default function AdminProductVariants() {
         { key: 'Màu sắc', value: '' },
         { key: 'Dung Lượng RAM - ROM', value: '' }
       ]);
+      setSpecsOverride([]);
     }
     setShowModal(true);
   };
@@ -131,6 +148,21 @@ export default function AdminProductVariants() {
     const updated = [...attributes];
     updated[index][field] = val;
     setAttributes(updated);
+  };
+
+  const handleAddSpecOverride = () => {
+    setSpecsOverride([...specsOverride, { key: '', value: '' }]);
+  };
+
+  const handleRemoveSpecOverride = (index) => {
+    const updated = specsOverride.filter((_, i) => i !== index);
+    setSpecsOverride(updated);
+  };
+
+  const handleSpecOverrideChange = (index, field, val) => {
+    const updated = [...specsOverride];
+    updated[index][field] = val;
+    setSpecsOverride(updated);
   };
 
   const handleFileChange = async (e) => {
@@ -222,6 +254,13 @@ export default function AdminProductVariants() {
       attributesObj["SKU"] = generatedSku;
     }
 
+    const specsOverrideObj = {};
+    specsOverride.forEach(s => {
+      if (s.key.trim() && s.value.trim()) {
+        specsOverrideObj[s.key.trim()] = s.value.trim();
+      }
+    });
+
     const payload = {
       name: generatedVariantName,
       price: priceVal,
@@ -229,6 +268,7 @@ export default function AdminProductVariants() {
       productId: selectedProduct.id,
       imageId: variantImage,
       attributes: JSON.stringify(attributesObj),
+      specsOverride: Object.keys(specsOverrideObj).length > 0 ? JSON.stringify(specsOverrideObj) : null,
       isActive: isActive
     };
 
@@ -279,6 +319,7 @@ export default function AdminProductVariants() {
           productId: variant.productId,
           imageId: finalUrl,
           attributes: variant.attributes,
+          specsOverride: variant.specsOverride,
           isActive: variant.isActive
         };
         await variantService.update(variant.id, payload);
@@ -305,6 +346,7 @@ export default function AdminProductVariants() {
         productId: variant.productId,
         imageId: '',
         attributes: variant.attributes,
+        specsOverride: variant.specsOverride,
         isActive: variant.isActive
       };
       await variantService.update(variant.id, payload);
@@ -363,7 +405,7 @@ export default function AdminProductVariants() {
       {/* Header & Search */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
-          <h2 className="text-2xl font-bold text-admin-text-main">Quản lý Biến thể({variants.length}) </h2>
+          <h2 className="text-2xl font-bold text-admin-text-main">Quản lý Biến thể ({variants.length})</h2>
           <p className="text-sm text-admin-text-muted font-medium mt-1">Quản lý SKU, thông số, kích thước, màu sắc và tồn kho của sản phẩm</p>
         </div>
         <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
@@ -384,7 +426,7 @@ export default function AdminProductVariants() {
           </div>
           <button
             onClick={() => handleOpenModal()}
-            className="flex items-center justify-center gap-2 px-6 py-3 bg-primary text-white rounded-md font-bold hover:bg-admin-primary-hover transition-all active:scale-95 whitespace-nowrap"
+            className="flex items-center justify-center gap-2 px-6 py-3 bg-primary text-white rounded-md font-bold hover:bg-admin-primary-hover transition-all active:scale-95 whitespace-nowrap cursor-pointer border-0"
           >
             <Plus size={18} />
             <span>Thêm biến thể</span>
@@ -393,417 +435,58 @@ export default function AdminProductVariants() {
       </div>
 
       {/* Table Section */}
-      <div className="bg-white rounded-md overflow-hidden mb-8 p-6 flex flex-col">
-        <div className="overflow-x-auto flex-1">
-          <table className="w-full text-left border-collapse">
-            <thead>
-              <tr className="border-b border-admin-border">
-                <th className="px-4 py-4 text-[12px] font-bold text-admin-text-muted w-16">ID</th>
-                <th className="px-4 py-4 text-[12px] font-bold text-admin-text-muted w-24">Hình ảnh</th>
-                <th className="px-4 py-4 text-[12px] font-bold text-admin-text-muted">Sản phẩm gốc</th>
-                <th className="px-4 py-4 text-[12px] font-bold text-admin-text-muted">Mã SKU</th>
-                <th className="px-4 py-4 text-[12px] font-bold text-admin-text-muted">Thông số biến thể</th>
-                <th className="px-4 py-4 text-[12px] font-bold text-admin-text-muted text-right">Giá bán</th>
-                <th className="px-4 py-4 text-[12px] font-bold text-admin-text-muted text-center">Tồn kho</th>
-                <th className="px-4 py-4 text-[12px] font-bold text-admin-text-muted text-center">Trạng thái</th>
-                <th className="px-4 py-4 text-[12px] font-bold text-admin-text-muted text-center">Thao tác</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-admin-border text-sm">
-              {paginatedVariants.length > 0 ? (
-                paginatedVariants.map((v) => {
-                  const product = getProductById(v.productId);
-                  let parsedAttr = {};
-                  try { parsedAttr = v.attributes ? JSON.parse(v.attributes) : {}; } catch { /* ignore JSON parse error */ }
-                  const sku = parsedAttr["SKU"] || generateSkuFromName(v.name);
-
-                  return (
-                    <tr key={v.id} className="hover:bg-admin-bg transition-colors group">
-                      <td className="px-4 py-4">
-                        <span className="text-admin-text-muted font-bold">#{v.id}</span>
-                      </td>
-                      <td className="px-4 py-4">
-                        <div className="relative w-14 h-14 rounded-md bg-white border border-admin-border flex items-center justify-center overflow-hidden flex-shrink-0 group/img cursor-pointer hover:border-primary transition-colors p-1">
-                          {inlineUploadingVariantId === v.id ? (
-                            <Loader2 className="animate-spin text-primary animate-in fade-in duration-300" size={16} />
-                          ) : v.imageId ? (
-                            <>
-                              <img src={v.imageId} alt="Variant" className="w-full h-full object-contain" />
-                              <button
-                                type="button"
-                                onClick={(e) => handleDeleteImageInline(e, v)}
-                                className="absolute top-0 right-0 p-0.5 bg-red-500 hover:bg-red-600 text-white rounded-bl opacity-0 group-hover/img:opacity-100 transition-opacity z-20 cursor-pointer shadow flex items-center justify-center w-4 h-4"
-                                title="Xóa hình ảnh"
-                              >
-                                <X size={10} strokeWidth={3} />
-                              </button>
-                            </>
-                          ) : (
-                            <ImageIcon className="text-admin-text-muted" size={20} />
-                          )}
-                          {inlineUploadingVariantId !== v.id && (
-                            <input
-                              type="file"
-                              accept=".svg,.webp,.png,.jpg,.jpeg"
-                              onChange={(e) => handleUploadImageInline(e, v)}
-                              className="absolute inset-0 opacity-0 cursor-pointer w-full h-full z-10"
-                              title={v.imageId ? "Nhấp để thay đổi hình ảnh" : "Nhấp để tải lên hình ảnh"}
-                            />
-                          )}
-                        </div>
-                      </td>
-                      <td className="px-4 py-4">
-                        <span className="font-bold text-admin-text-main">{product ? product.name : `Sản phẩm #${v.productId}`}</span>
-                      </td>
-                      <td className="px-4 py-4">
-                        <span className="font-mono text-xs font-bold text-gray-600 bg-gray-100 px-2 py-1 rounded border border-gray-200">
-                          {sku}
-                        </span>
-                      </td>
-                      <td className="px-4 py-4">
-                        <div className="flex flex-wrap gap-1.5">
-                          {Object.entries(parsedAttr)
-                            .filter(([key]) => key !== 'SKU')
-                            .map(([key, val]) => (
-                              <span key={key} className="text-[11px] font-semibold text-gray-700 bg-gray-50 border border-gray-200 px-2 py-0.5 rounded-md">
-                                <strong className="text-gray-500">{key}:</strong> {String(val)}
-                              </span>
-                            ))
-                          }
-                          {Object.keys(parsedAttr).filter(k => k !== 'SKU').length === 0 && (
-                            <span className="text-xs text-gray-400 italic">Mặc định</span>
-                          )}
-                        </div>
-                      </td>
-                      <td className="px-4 py-4 text-right">
-                        <span className="font-bold text-admin-text-main text-base">{v.price.toLocaleString('vi-VN')} ₫</span>
-                      </td>
-                      <td className="px-4 py-4 text-center">
-                        <span className={`px-3 py-1 rounded-full text-[10px] font-bold ${v.totalStock > 0 ? 'bg-success/10 text-success' : 'bg-admin-danger/10 text-admin-danger'}`}>
-                          {v.totalStock > 0 ? `Còn ${v.totalStock}` : 'Hết hàng'}
-                        </span>
-                      </td>
-                      <td className="px-4 py-4 text-center">
-                        <span className={`px-2 py-0.5 rounded text-[11px] font-bold ${v.isActive ? 'bg-success/10 text-success' : 'bg-admin-danger/10 text-admin-danger'}`}>
-                          {v.isActive ? 'Active' : 'Inactive'}
-                        </span>
-                      </td>
-                      <td className="px-4 py-4">
-                        <div className="flex items-center justify-center gap-2">
-                          <button
-                            onClick={() => handleOpenModal(v)}
-                            className="p-2 text-admin-text-muted hover:text-warning hover:bg-warning/10 rounded-md transition-all"
-                            title="Chỉnh sửa"
-                          >
-                            <Edit2 size={16} />
-                          </button>
-                          <button
-                            onClick={() => handleDelete(v.id)}
-                            className="p-2 text-admin-text-muted hover:text-admin-danger hover:bg-admin-danger/10 rounded-md transition-all"
-                            title="Xóa"
-                          >
-                            <Trash2 size={16} />
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  );
-                })
-              ) : (
-                <tr>
-                  <td colSpan="9" className="px-6 py-20 text-center bg-white">
-                    <div className="flex flex-col items-center justify-center text-admin-text-muted">
-                      <FolderOpen size={64} strokeWidth={1} className="mb-4 opacity-50" />
-                      <p className="text-lg font-bold text-admin-text-main">Không tìm thấy biến thể nào</p>
-                    </div>
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
-
-        {/* Pagination controls */}
-        {totalPages > 1 && (
-          <div className="mt-6 flex flex-col sm:flex-row justify-between items-center gap-4 border-t border-admin-border pt-4">
-            <div className="text-sm font-bold text-admin-text-muted">
-              Hiển thị {startIndex}-{endIndex} trên {totalItems} biến thể
-            </div>
-            <div className="flex gap-2">
-              <button
-                onClick={prevPage}
-                disabled={currentPage === 1}
-                className="px-4 py-2 bg-admin-bg text-admin-text-main rounded-md text-sm font-bold hover:bg-admin-border transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1"
-              >
-                <ChevronLeft size={16} /> TRƯỚC
-              </button>
-              {[...Array(totalPages)].map((_, i) => (
-                <button
-                  key={i}
-                  onClick={() => goToPage(i + 1)}
-                  className={`w-9 h-9 rounded-full text-sm font-bold transition-all ${currentPage === i + 1 ? 'bg-primary text-white shadow-md' : 'bg-transparent text-admin-text-muted hover:bg-admin-bg'}`}
-                >
-                  {i + 1}
-                </button>
-              ))}
-              <button
-                onClick={nextPage}
-                disabled={currentPage === totalPages}
-                className="px-4 py-2 bg-admin-bg text-admin-text-main rounded-md text-sm font-bold hover:bg-admin-border transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1"
-              >
-                SAU <ChevronRight size={16} />
-              </button>
-            </div>
-          </div>
-        )}
-      </div>
+      <VariantTable
+        paginatedVariants={paginatedVariants}
+        getProductById={getProductById}
+        generateSkuFromName={generateSkuFromName}
+        inlineUploadingVariantId={inlineUploadingVariantId}
+        handleDeleteImageInline={handleDeleteImageInline}
+        handleUploadImageInline={handleUploadImageInline}
+        handleOpenModal={handleOpenModal}
+        handleDelete={handleDelete}
+        totalPages={totalPages}
+        currentPage={currentPage}
+        goToPage={goToPage}
+        prevPage={prevPage}
+        nextPage={nextPage}
+        startIndex={startIndex}
+        endIndex={endIndex}
+        totalItems={totalItems}
+      />
 
       {/* CRUD Modal */}
       {showModal && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[100] flex items-center justify-center p-4 overflow-y-auto">
-          <div className="bg-white rounded-md w-full max-w-2xl overflow-hidden my-8 animate-in zoom-in-95 duration-200">
-            <div className="p-6 border-b border-admin-border flex justify-between items-center bg-admin-bg">
-              <h3 className="text-xl font-bold text-admin-text-main">{editingVariant ? 'Cập nhật Biến thể' : 'Thêm Biến thể mới'}</h3>
-              <button onClick={() => setShowModal(false)} className="text-admin-text-muted hover:text-admin-danger transition-colors">
-                <X size={24} />
-              </button>
-            </div>
-
-            <form onSubmit={handleSave} className="p-6 space-y-5">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                {/* Product Selection */}
-                <div className="md:col-span-2">
-                  <label className="block text-sm font-bold text-admin-text-main mb-2">Sản phẩm gốc *</label>
-                  <select
-                    className="w-full px-4 py-3 border border-admin-border rounded-md focus:border-primary focus:ring-1 focus:ring-primary outline-none text-admin-text-main bg-white font-medium"
-                    value={selectedProductId}
-                    onChange={(e) => setSelectedProductId(e.target.value)}
-                    required
-                  >
-                    {products.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
-                  </select>
-                </div>
-
-                {/* Variant Name & SKU Preview */}
-                <div>
-                  <label className="block text-sm font-bold text-admin-text-main mb-2">Tên biến thể (Tự động sinh)</label>
-                  <input
-                    type="text"
-                    readOnly
-                    className="w-full px-4 py-3 border border-admin-border bg-admin-bg rounded-md outline-none text-admin-text-main font-medium select-all"
-                    value={generatedVariantName}
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-bold text-admin-text-main mb-2">Mã SKU (Tự động sinh)</label>
-                  <input
-                    type="text"
-                    readOnly
-                    className="w-full px-4 py-3 border border-admin-border bg-admin-bg rounded-md outline-none text-red-600 font-mono font-bold select-all"
-                    value={generatedSku}
-                  />
-                </div>
-
-                {/* Price */}
-                <div>
-                  <label className="block text-sm font-bold text-admin-text-main mb-2">Giá bán (Để trống = Theo sản phẩm gốc)</label>
-                  <input
-                    type="number"
-                    placeholder={selectedProduct ? `Giá gốc: ${selectedProduct.basePrice?.toLocaleString('vi-VN')} ₫` : 'Giá bán'}
-                    className="w-full px-4 py-3 border border-admin-border rounded-md focus:border-primary focus:ring-1 focus:ring-primary outline-none text-admin-text-main font-medium"
-                    value={variantPrice}
-                    onChange={(e) => setVariantPrice(e.target.value)}
-                  />
-                </div>
-
-                {/* Stock */}
-                <div>
-                  <label className="block text-sm font-bold text-admin-text-main mb-2">Tồn kho ban đầu</label>
-                  <input
-                    type="number"
-                    min="0"
-                    step="1"
-                    className="w-full px-4 py-3 border border-admin-border rounded-md focus:border-primary focus:ring-1 focus:ring-primary outline-none text-admin-text-main font-medium bg-white"
-                    value={variantStock}
-                    onChange={(e) => setVariantStock(e.target.value)}
-                    required
-                  />
-                </div>
-
-                {/* Is Active */}
-                <div className="flex items-center gap-2 md:col-span-2">
-                  <input
-                    type="checkbox"
-                    id="isActive"
-                    checked={isActive}
-                    onChange={(e) => setIsActive(e.target.checked)}
-                    className="w-5 h-5 rounded border-admin-border text-primary focus:ring-primary"
-                  />
-                  <label htmlFor="isActive" className="text-sm font-bold text-admin-text-main cursor-pointer">Hoạt động (Is Active)</label>
-                </div>
-
-                {/* Dynamic Attributes section */}
-                <div className="md:col-span-2 space-y-3">
-                  <div className="flex justify-between items-center">
-                    <label className="block text-sm font-bold text-admin-text-main">Thuộc tính của biến thể (Dynamic Attributes)</label>
-                    <button
-                      type="button"
-                      onClick={handleAddAttribute}
-                      className="text-xs font-bold text-primary hover:text-admin-primary-hover flex items-center gap-1"
-                    >
-                      <PlusCircle size={14} /> Thêm thuộc tính
-                    </button>
-                  </div>
-
-                  <div className="space-y-3 max-h-60 overflow-y-auto pr-1 border border-admin-border rounded-md p-3 bg-gray-50">
-                    {attributes.map((attr, index) => (
-                      <div key={index} className="flex items-center gap-3 bg-white p-2.5 rounded-md border border-admin-border">
-                        <div className="flex-1">
-                          <input
-                            type="text"
-                            placeholder="Tên thuộc tính (VD: Màu sắc)"
-                            className="w-full px-3 py-1.5 border border-admin-border rounded-md text-xs font-semibold outline-none focus:border-primary"
-                            value={attr.key}
-                            onChange={(e) => handleAttributeChange(index, 'key', e.target.value)}
-                            required
-                          />
-                        </div>
-                        <div className="flex-1">
-                          <input
-                            type="text"
-                            placeholder="Giá trị (VD: Đen)"
-                            className="w-full px-3 py-1.5 border border-admin-border rounded-md text-xs outline-none focus:border-primary"
-                            value={attr.value}
-                            onChange={(e) => handleAttributeChange(index, 'value', e.target.value)}
-                            required
-                          />
-                        </div>
-                        <button
-                          type="button"
-                          onClick={() => handleRemoveAttribute(index)}
-                          className="text-admin-danger hover:text-red-700 transition-colors p-1"
-                          title="Xóa thuộc tính"
-                        >
-                          <MinusCircle size={18} />
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Image Upload/URL Input */}
-                <div className="md:col-span-2">
-                  <label className="block text-sm font-bold text-admin-text-main mb-2">Hình ảnh biến thể</label>
-                  <div className="flex border-b border-admin-border mb-3">
-                    <button
-                      type="button"
-                      onClick={() => setImageInputMethod('upload')}
-                      className={`py-2 px-4 font-bold text-sm border-b-2 transition-colors ${imageInputMethod === 'upload' ? 'border-primary text-primary' : 'border-transparent text-admin-text-muted'}`}
-                    >
-                      Tải lên từ máy
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setImageInputMethod('url')}
-                      className={`py-2 px-4 font-bold text-sm border-b-2 transition-colors ${imageInputMethod === 'url' ? 'border-primary text-primary' : 'border-transparent text-admin-text-muted'}`}
-                    >
-                      Nhập liên kết URL
-                    </button>
-                  </div>
-
-                  {imageInputMethod === 'upload' ? (
-                    <div className="relative border-2 border-dashed border-admin-border rounded-md p-6 flex flex-col items-center justify-center bg-admin-bg/10 h-28 cursor-pointer hover:border-primary transition-colors">
-                      <input
-                        type="file"
-                        accept=".jpg,.jpeg,.png,.webp,.svg"
-                        onChange={handleFileChange}
-                        disabled={uploading}
-                        className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                      />
-                      {uploading ? (
-                        <span className="text-xs font-bold text-primary">Đang tải ảnh...</span>
-                      ) : (
-                        <span className="text-xs font-bold text-admin-text-muted">Nhấp để tải lên ảnh biến thể</span>
-                      )}
-                    </div>
-                  ) : (
-                    <input
-                      type="text"
-                      className="w-full px-4 py-3 border border-admin-border rounded-md focus:border-primary focus:ring-1 focus:ring-primary outline-none text-admin-text-main"
-                      placeholder="Dán link ảnh biến thể (https://...)"
-                      value={variantImage}
-                      onChange={(e) => setVariantImage(e.target.value)}
-                    />
-                  )}
-                  {variantImage && (
-                    <div className="flex items-center gap-3 mt-3 p-2 border border-admin-border rounded-md w-fit bg-gray-50">
-                      <img src={variantImage} alt="Preview" className="w-12 h-12 object-contain rounded" />
-                      <div className="flex flex-col gap-1">
-                        <span className="text-xs text-admin-text-muted font-bold font-mono">Hình ảnh xem trước</span>
-                        <button
-                          type="button"
-                          onClick={() => setVariantImage('')}
-                          className="px-2 py-0.5 border border-red-200 bg-red-50 hover:bg-red-100 text-red-600 rounded text-[10px] font-bold w-fit transition-colors cursor-pointer flex items-center gap-1 shadow-sm"
-                        >
-                          <Trash2 size={11} />
-                          Xóa hình ảnh
-                        </button>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              {/* Inventory history (Mocked table as requested by UI design) */}
-              <div className="border border-admin-border rounded-md overflow-hidden mt-6">
-                <div className="bg-gray-50 px-4 py-2 border-b border-admin-border text-[10px] font-black text-gray-500 uppercase tracking-widest">
-                  Lịch sử tồn kho
-                </div>
-                <div className="overflow-x-auto">
-                  <table className="w-full text-left text-xs">
-                    <thead>
-                      <tr className="bg-white text-gray-400 border-b border-admin-border">
-                        <th className="px-4 py-2 font-bold uppercase">Loại</th>
-                        <th className="px-4 py-2 font-bold uppercase">Số lượng</th>
-                        <th className="px-4 py-2 font-bold uppercase">Tồn trước</th>
-                        <th className="px-4 py-2 font-bold uppercase">Tồn sau</th>
-                        <th className="px-4 py-2 font-bold uppercase">Ghi chú</th>
-                        <th className="px-4 py-2 font-bold uppercase">Thời gian</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-admin-border text-gray-600">
-                      <tr className="hover:bg-gray-50">
-                        <td className="px-4 py-2 font-bold text-green-600">NHẬP KHO</td>
-                        <td className="px-4 py-2 font-bold">{variantStock}</td>
-                        <td className="px-4 py-2">0</td>
-                        <td className="px-4 py-2">{variantStock}</td>
-                        <td className="px-4 py-2">Khởi tạo tồn kho ban đầu</td>
-                        <td className="px-4 py-2 text-admin-text-muted">{new Date().toLocaleDateString('vi-VN')}</td>
-                      </tr>
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-
-              <div className="flex gap-3 justify-end pt-4 border-t border-admin-border">
-                <button
-                  type="button"
-                  onClick={() => setShowModal(false)}
-                  className="px-6 py-3 bg-admin-bg text-admin-text-main rounded-md font-bold hover:bg-admin-border transition-colors"
-                >
-                  Hủy
-                </button>
-                <button
-                  type="submit"
-                  className="px-6 py-3 bg-primary text-white rounded-md font-bold hover:bg-admin-primary-hover transition-all active:scale-95"
-                >
-                  Lưu Lại
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
+        <VariantModal
+          setShowModal={setShowModal}
+          editingVariant={editingVariant}
+          handleSave={handleSave}
+          products={products}
+          selectedProductId={selectedProductId}
+          setSelectedProductId={setSelectedProductId}
+          generatedVariantName={generatedVariantName}
+          generatedSku={generatedSku}
+          variantPrice={variantPrice}
+          setVariantPrice={setVariantPrice}
+          selectedProduct={selectedProduct}
+          variantStock={variantStock}
+          setVariantStock={setVariantStock}
+          isActive={isActive}
+          setIsActive={setIsActive}
+          handleAddAttribute={handleAddAttribute}
+          attributes={attributes}
+          handleAttributeChange={handleAttributeChange}
+          handleRemoveAttribute={handleRemoveAttribute}
+          handleAddSpecOverride={handleAddSpecOverride}
+          specsOverride={specsOverride}
+          handleSpecOverrideChange={handleSpecOverrideChange}
+          handleRemoveSpecOverride={handleRemoveSpecOverride}
+          imageInputMethod={imageInputMethod}
+          setImageInputMethod={setImageInputMethod}
+          handleFileChange={handleFileChange}
+          uploading={uploading}
+          variantImage={variantImage}
+          setVariantImage={setVariantImage}
+        />
       )}
     </div>
   );

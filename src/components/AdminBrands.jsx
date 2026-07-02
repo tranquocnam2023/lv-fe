@@ -1,8 +1,13 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Search, Plus, Edit, Trash2, FolderOpen, Image as ImageIcon, X, ChevronDown, ChevronUp, Loader2, UploadCloud, AlertCircle, AlertTriangle, HelpCircle, Check } from 'lucide-react';
+import { Search, Plus, HelpCircle } from 'lucide-react';
 import { brandService } from '../services/brandService';
 import { productService } from '../services/productService';
 import { generateBrandOrCategoryCode, generateSlug } from '../utils/codeGenerator';
+
+// Subcomponents
+import BrandTable from './admin-brands/components/BrandTable';
+import BrandModal from './admin-brands/components/BrandModal';
+import BrandToast from './admin-brands/components/BrandToast';
 
 export default function AdminBrands({ onRedirectToProducts, onRedirectToCreateProduct }) {
   const [currentPage, setCurrentPage] = useState(1);
@@ -190,13 +195,11 @@ export default function AdminBrands({ onRedirectToProducts, onRedirectToCreatePr
     const file = e.target.files[0];
     if (!file) return;
 
-    // Validate file type
     const validExtensions = ['image/svg+xml', 'image/webp', 'image/png', 'image/jpeg', 'image/jpg'];
     if (!validExtensions.includes(file.type)) {
       return showToast('warning', 'Định dạng file không hợp lệ', 'Hệ thống chỉ hỗ trợ SVG, WebP, PNG, JPG/JPEG.');
     }
     
-    // Validate size (2MB)
     if (file.size > 2 * 1024 * 1024) {
       return showToast('warning', 'File quá lớn (>2MB)', 'Vui lòng chọn ảnh nhỏ hơn.');
     }
@@ -268,10 +271,8 @@ export default function AdminBrands({ onRedirectToProducts, onRedirectToCreatePr
     const brandId = brand.id;
     const isCurrentlyExpanded = expandedBrands[brandId];
     
-    // Toggle state
     setExpandedBrands(prev => ({ ...prev, [brandId]: !isCurrentlyExpanded }));
 
-    // If expanding and stats are not loaded, call API
     if (!isCurrentlyExpanded && !brandStats[brandId]) {
       setLoadingStats(prev => ({ ...prev, [brandId]: true }));
       try {
@@ -392,8 +393,6 @@ export default function AdminBrands({ onRedirectToProducts, onRedirectToCreatePr
     }
   };
 
-  const filteredBrands = brands;
-
   return (
     <div className="animate-in fade-in duration-500 space-y-6">
       {/* Header & Search */}
@@ -418,7 +417,7 @@ export default function AdminBrands({ onRedirectToProducts, onRedirectToCreatePr
           <div className="flex items-center gap-2">
             <button
               onClick={() => handleOpenModal()}
-              className="flex items-center justify-center gap-2 px-6 py-3 bg-primary text-white rounded-md font-bold hover:bg-admin-primary-hover transition-all active:scale-95 whitespace-nowrap"
+              className="flex items-center justify-center gap-2 px-6 py-3 bg-primary text-white rounded-md font-bold hover:bg-admin-primary-hover transition-all active:scale-95 whitespace-nowrap cursor-pointer border-0"
               title="Thêm thương hiệu mới. Phím tắt: Shift + N"
             >
               <Plus size={18} />
@@ -443,533 +442,48 @@ export default function AdminBrands({ onRedirectToProducts, onRedirectToCreatePr
         </div>
       </div>
 
-      {/* Main Table */}
-      <div className="bg-white rounded-md overflow-hidden mb-8 border border-admin-border">
-        <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse">
-            <thead className="bg-slate-50">
-              <tr className="border-b border-admin-border">
-                <th className="px-6 py-4 text-[12px] font-bold text-admin-text-muted uppercase">Thương hiệu</th>
-                <th className="px-6 py-4 text-[12px] font-bold text-admin-text-muted uppercase text-center">Mã (BrandCode)</th>
-                <th className="px-6 py-4 text-[12px] font-bold text-admin-text-muted uppercase text-center">Tổng sản phẩm</th>
-                <th className="px-6 py-4 text-[12px] font-bold text-admin-text-muted uppercase text-center">Trạng thái</th>
-                <th className="px-6 py-4 text-[12px] font-bold text-admin-text-muted uppercase text-center">Thao tác</th>
-              </tr>
-            </thead>
-            <tbody className={`text-sm bg-white transition-opacity duration-200 ${loading && filteredBrands.length > 0 ? 'opacity-60 pointer-events-none' : ''}`}>
-              {loading && filteredBrands.length === 0 ? (
-                [...Array(pageSize)].map((_, idx) => (
-                  <tr key={idx} className="border-b border-admin-border h-[68px]">
-                    <td className="px-6 py-4">
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-md bg-neutral-100 animate-pulse border border-admin-border"></div>
-                        <div className="space-y-2">
-                          <div className="w-24 h-4 bg-neutral-100 rounded animate-pulse"></div>
-                          <div className="w-36 h-3 bg-neutral-100 rounded animate-pulse"></div>
-                        </div>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 text-center">
-                      <div className="w-16 h-6 bg-neutral-100 rounded-md animate-pulse mx-auto"></div>
-                    </td>
-                    <td className="px-6 py-4 text-center">
-                      <div className="w-20 h-4 bg-neutral-100 rounded animate-pulse mx-auto"></div>
-                    </td>
-                    <td className="px-6 py-4 text-center">
-                      <div className="w-12 h-6 bg-neutral-100 rounded-full animate-pulse mx-auto"></div>
-                    </td>
-                    <td className="px-6 py-4 text-center">
-                      <div className="flex items-center justify-center gap-2">
-                        <div className="w-8 h-8 rounded-md bg-neutral-100 animate-pulse"></div>
-                        <div className="w-8 h-8 rounded-md bg-neutral-100 animate-pulse"></div>
-                        <div className="w-8 h-8 rounded-md bg-neutral-100 animate-pulse"></div>
-                      </div>
-                    </td>
-                  </tr>
-                ))
-              ) : filteredBrands.length > 0 ? (
-                filteredBrands.map((brand) => {
-                    const isExpanded = expandedBrands[brand.id];
-                    const stats = brandStats[brand.id];
-                    const statsLoading = loadingStats[brand.id];
-                    const isBrandActive = brand.isActive !== false;
+      {/* Main Table Component */}
+      <BrandTable
+        brands={brands}
+        loading={loading}
+        pageSize={pageSize}
+        currentPage={currentPage}
+        setCurrentPage={setCurrentPage}
+        totalItems={totalItems}
+        totalPages={totalPages}
+        expandedBrands={expandedBrands}
+        brandStats={brandStats}
+        loadingStats={loadingStats}
+        inlineUploadingBrandId={inlineUploadingBrandId}
+        handleToggleExpand={handleToggleExpand}
+        handleToggleActive={handleToggleActive}
+        handleDeleteLogo={handleDeleteLogo}
+        handleUploadLogoInline={handleUploadLogoInline}
+        handleOpenModal={handleOpenModal}
+        handleDelete={handleDelete}
+        onRedirectToProducts={onRedirectToProducts}
+        onRedirectToCreateProduct={onRedirectToCreateProduct}
+      />
 
-                    return (
-                      <React.Fragment key={brand.id}>
-                        {/* Main Row */}
-                        <tr className={`hover:bg-admin-bg transition-all group border-b border-admin-border ${!isBrandActive ? 'opacity-50 grayscale bg-gray-50/50' : ''}`}>
-                          <td className="px-6 py-4">
-                            <div className="flex items-center gap-3">
-                              <div className="relative w-10 h-10 rounded-md bg-white border border-admin-border flex items-center justify-center overflow-hidden flex-shrink-0 group/logo cursor-pointer hover:border-primary transition-colors">
-                                {inlineUploadingBrandId === brand.id ? (
-                                  <Loader2 className="animate-spin text-primary" size={16} />
-                                ) : brand.imageUrl ? (
-                                  <>
-                                    <img src={brand.imageUrl} alt={brand.name} className="w-full h-full object-contain p-1" />
-                                    <button
-                                      type="button"
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        e.preventDefault();
-                                        handleDeleteLogo(brand);
-                                      }}
-                                      className="absolute top-0 right-0 p-0.5 bg-red-500 hover:bg-red-600 text-white rounded-bl opacity-0 group-hover/logo:opacity-100 transition-opacity z-20 cursor-pointer shadow flex items-center justify-center w-4 h-4"
-                                      title="Xóa logo"
-                                    >
-                                      <X size={10} strokeWidth={3} />
-                                    </button>
-                                  </>
-                                ) : (
-                                  <ImageIcon className="text-admin-text-muted" size={20} />
-                                )}
-                                {inlineUploadingBrandId !== brand.id && (
-                                  <input
-                                    type="file"
-                                    accept=".svg,.webp,.png,.jpg,.jpeg"
-                                    onChange={(e) => handleUploadLogoInline(e, brand)}
-                                    className="absolute inset-0 opacity-0 cursor-pointer w-full h-full z-10"
-                                    title={brand.imageUrl ? "Nhấp để thay đổi logo" : "Nhấp để tải lên logo"}
-                                  />
-                                )}
-                              </div>
-                              <div>
-                                <div className="flex items-center gap-2">
-                                  <span className="text-base font-bold text-admin-text-main">{brand.name}</span>
-                                  {!isBrandActive && (
-                                    <span className="px-2 py-0.5 rounded-full text-[9px] font-bold bg-admin-danger/25 text-admin-danger border border-admin-danger/35">
-                                      Đang ẩn
-                                    </span>
-                                  )}
-                                </div>
-                                {brand.description && (
-                                  <span className="block text-xs text-admin-text-muted max-w-xs truncate mt-0.5">{brand.description}</span>
-                                )}
-                              </div>
-                            </div>
-                          </td>
-                          <td className="px-6 py-4 text-center">
-                            <span className="text-sm font-semibold text-primary bg-admin-bg px-3 py-1 rounded-md">
-                              {brand.brandCode}
-                            </span>
-                          </td>
-                          <td className="px-6 py-4 text-center font-bold text-admin-text-main">
-                            {brand.productsCount || 0} sản phẩm
-                          </td>
-                          <td className="px-6 py-4 text-center">
-                            <div className="flex flex-col items-center justify-center">
-                              <label className="relative inline-flex items-center cursor-pointer">
-                                <input
-                                  type="checkbox"
-                                  className="sr-only peer"
-                                  checked={isBrandActive}
-                                  onChange={() => handleToggleActive(brand)}
-                                />
-                                <div className="w-11 h-6 bg-admin-border peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-success"></div>
-                              </label>
-                            </div>
-                          </td>
-                          <td className="px-6 py-4 text-center">
-                            <div className="flex items-center justify-center gap-2">
-                              <button
-                                onClick={() => handleOpenModal(brand)}
-                                className="p-2 text-primary hover:bg-primary/10 rounded-md transition-colors"
-                                title="Chỉnh sửa"
-                              >
-                                <Edit size={18} />
-                              </button>
-                              <button
-                                onClick={() => handleDelete(brand)}
-                                className="p-2 text-admin-danger hover:bg-admin-danger/10 rounded-md transition-colors"
-                                title="Xóa thương hiệu"
-                              >
-                                <Trash2 size={18} />
-                              </button>
-                              <button
-                                onClick={() => handleToggleExpand(brand)}
-                                className={`p-2 rounded-md transition-all ${isExpanded ? 'bg-primary text-white' : 'text-admin-text-muted hover:text-primary hover:bg-admin-bg'}`}
-                                title={isExpanded ? 'Thu gọn' : 'Xem thống kê'}
-                              >
-                                {isExpanded ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
-                              </button>
-                            </div>
-                          </td>
-                        </tr>
+      {/* Form Dialog Modal Component */}
+      <BrandModal
+        isModalOpen={isModalOpen}
+        setIsModalOpen={setIsModalOpen}
+        editingBrand={editingBrand}
+        saving={saving}
+        uploading={uploading}
+        isCodeEditable={isCodeEditable}
+        setIsCodeEditable={setIsCodeEditable}
+        catErrorMessage={catErrorMessage}
+        formData={formData}
+        setFormData={setFormData}
+        formError={formError}
+        handleImageUpload={handleImageUpload}
+        handleSave={handleSave}
+      />
 
-                        {/* Expanded Stats Row */}
-                        {isExpanded && (
-                          <tr className="bg-slate-50/40">
-                            <td colSpan="5" className="p-0 border-b border-admin-border">
-                              <div className="px-12 py-5 border-l-4 border-primary/30 bg-gray-50/20">
-                                {statsLoading ? (
-                                  <div className="flex justify-center items-center py-6">
-                                    <Loader2 size={24} className="animate-spin text-primary" />
-                                    <span className="text-sm font-semibold text-admin-text-main ml-2">Đang tải thống kê nhanh...</span>
-                                  </div>
-                                ) : (brand.productsCount === 0 || !stats || (stats.totalActive === 0 && stats.totalStock === 0)) ? (
-                                  /* Empty State Layout */
-                                  <div className="flex items-center justify-between h-16 px-6 bg-white rounded-md border border-dashed border-admin-border">
-                                    <div className="flex items-center text-admin-text-muted gap-2">
-                                      <FolderOpen size={20} className="text-admin-text-muted opacity-50" />
-                                      <span className="text-sm font-semibold">Chưa có sản phẩm nào thuộc thương hiệu này.</span>
-                                    </div>
-                                    <button 
-                                      type="button" 
-                                      className="flex items-center gap-1.5 px-4 py-2 bg-admin-bg text-primary hover:bg-primary/10 rounded-md text-xs font-bold transition-all active:scale-[0.98]"
-                                      onClick={() => onRedirectToCreateProduct && onRedirectToCreateProduct(brand.id)}
-                                    >
-                                      <Plus size={14} />
-                                      <span>Thêm sản phẩm</span>
-                                    </button>
-                                  </div>
-                                ) : (
-                                  /* 3-Column Quick Insights Seamless Grid with Dividers */
-                                  <div className="grid grid-cols-1 md:grid-cols-3 bg-neutral-50/80 rounded-md border border-neutral-100 p-5 divide-y md:divide-y-0 md:divide-x divide-gray-200 animate-in slide-in-from-top-2 duration-300">
-                                    {/* Cột 1: Hiệu suất (Performance) */}
-                                    <div className="pb-4 md:pb-0 md:pr-6 flex flex-col justify-center">
-                                      <h5 className="text-xs font-extrabold text-admin-text-muted uppercase tracking-wider mb-3">Hiệu suất (Performance)</h5>
-                                      <div className="space-y-2">
-                                        <div className="flex justify-between items-center text-sm font-medium">
-                                          <span className="text-admin-text-main flex items-center gap-2">
-                                            <span className="w-2.5 h-2.5 rounded-full bg-success inline-block"></span>
-                                            Đang bán:
-                                          </span>
-                                          <span className="text-success font-bold">{stats.totalActive} SP</span>
-                                        </div>
-                                        <div className="flex justify-between items-center text-sm font-medium">
-                                          <span className="text-admin-text-main flex items-center gap-2">
-                                            <span className="w-2.5 h-2.5 rounded-full bg-admin-danger inline-block"></span>
-                                            Hết hàng:
-                                          </span>
-                                          <span className="text-admin-danger font-bold">{stats.outOfStock} SP</span>
-                                        </div>
-                                        <div className="flex justify-between items-center text-sm font-medium">
-                                          <span className="text-admin-text-main flex items-center gap-2">
-                                            <span className="w-2.5 h-2.5 rounded-full bg-primary inline-block"></span>
-                                            Tồn kho tổng:
-                                          </span>
-                                          <span className="text-admin-text-main font-bold">{stats.totalStock?.toLocaleString('vi-VN') || 0} thiết bị</span>
-                                        </div>
-                                      </div>
-                                    </div>
-
-                                    {/* Cột 2: Sản phẩm bán chạy (Top Sellers) */}
-                                    <div className="py-4 md:py-0 md:px-6 flex flex-col justify-center">
-                                      <h5 className="text-xs font-extrabold text-admin-text-muted uppercase tracking-wider mb-3">Sản phẩm bán chạy (Top Sellers)</h5>
-                                      {stats.topSellers && stats.topSellers.length > 0 ? (
-                                        <div className="space-y-2">
-                                          {stats.topSellers.map((item, idx) => (
-                                            <div key={idx} className="flex items-center gap-2.5">
-                                              <div className="w-6 h-6 rounded bg-white border border-admin-border flex items-center justify-center overflow-hidden shrink-0">
-                                                {item.thumbnailImage ? (
-                                                  <img src={item.thumbnailImage} alt={item.name} className="w-full h-full object-cover" />
-                                                ) : (
-                                                  <ImageIcon className="text-admin-text-muted" size={12} />
-                                                )}
-                                              </div>
-                                              <span className="truncate text-xs font-bold text-admin-text-main" title={item.name}>{item.name}</span>
-                                            </div>
-                                          ))}
-                                        </div>
-                                      ) : (
-                                        <span className="text-xs text-admin-text-muted italic py-2">Chưa có thông tin bán hàng.</span>
-                                      )}
-                                    </div>
-
-                                    {/* Cột 3: Hành động nhanh (Quick Actions) */}
-                                    <div className="pt-4 md:pt-0 md:pl-6 flex flex-col justify-center gap-2">
-                                      <button
-                                        onClick={() => onRedirectToProducts && onRedirectToProducts(brand.id)}
-                                        className="w-full py-2 bg-primary hover:bg-admin-primary-hover text-white text-xs font-bold rounded-md transition-all flex items-center justify-center gap-1.5 active:scale-[0.98]"
-                                      >
-                                        <span>Xem toàn bộ {brand.productsCount || 0} sản phẩm</span>
-                                      </button>
-                                      <button
-                                        onClick={() => onRedirectToCreateProduct && onRedirectToCreateProduct(brand.id)}
-                                        className="w-full py-2 bg-transparent hover:bg-neutral-100 text-primary text-xs font-bold rounded-md transition-all border border-admin-border flex items-center justify-center gap-1.5 active:scale-[0.98]"
-                                      >
-                                        <Plus size={14} />
-                                        <span>Thêm sản phẩm</span>
-                                      </button>
-                                    </div>
-                                  </div>
-                                )}
-                              </div>
-                            </td>
-                          </tr>
-                        )}
-                      </React.Fragment>
-                    );
-                  })
-                ) : (
-                  <tr>
-                    <td colSpan="5" className="px-6 py-20 text-center">
-                      <div className="flex flex-col items-center justify-center text-admin-text-muted">
-                        <FolderOpen size={64} strokeWidth={1} className="mb-4 opacity-50 text-primary" />
-                        <p className="text-lg font-bold text-admin-text-main">Không tìm thấy thương hiệu nào</p>
-                      </div>
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
-        <div className="px-6 py-4 border-t border-admin-border flex flex-col sm:flex-row items-center justify-between gap-4 text-sm font-bold text-admin-text-muted">
-          <div className="flex flex-wrap items-center gap-4">
-            <div>
-              Hiển thị {totalItems > 0 ? (currentPage - 1) * pageSize + 1 : 0}-
-              {Math.min(currentPage * pageSize, totalItems)} trên tổng số {totalItems} thương hiệu
-            </div>
-          </div>
-          {totalPages > 1 && (
-            <div className="flex items-center gap-2">
-              <button
-                onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
-                disabled={currentPage === 1}
-                className="px-4 py-2 bg-admin-bg text-admin-text-main rounded-md text-xs font-bold hover:bg-admin-border transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                Trước
-              </button>
-              {[...Array(totalPages)].map((_, i) => (
-                <button
-                  key={i}
-                  onClick={() => setCurrentPage(i + 1)}
-                  className={`w-8 h-8 rounded-full text-xs font-bold transition-all ${currentPage === i + 1 ? 'bg-primary text-white shadow-md' : 'bg-transparent text-admin-text-muted hover:bg-admin-bg'}`}
-                >
-                  {i + 1}
-                </button>
-              ))}
-              <button
-                onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
-                disabled={currentPage === totalPages}
-                className="px-4 py-2 bg-admin-bg text-admin-text-main rounded-md text-xs font-bold hover:bg-admin-border transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                Sau
-              </button>
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* CRUD Modal */}
-      {isModalOpen && (
-        <div className="fixed inset-0 bg-indigo-950/50 backdrop-blur-sm z-[100] flex items-center justify-center p-4 overflow-y-auto">
-          <div className="bg-white rounded-md w-full max-w-2xl overflow-hidden animate-in zoom-in-95 duration-200">
-            <div className="p-6 border-b border-admin-border flex justify-between items-center bg-slate-50">
-              <h3 className="text-xl font-bold text-admin-text-main flex items-center gap-2">
-                {editingBrand ? <Edit size={20} className="text-primary" /> : <Plus size={20} className="text-primary" />}
-                {editingBrand ? 'Cập nhật thương hiệu' : 'Thêm thương hiệu mới'}
-              </h3>
-              <button
-                onClick={() => setIsModalOpen(false)}
-                className="text-admin-text-muted hover:text-admin-danger hover:bg-red-50 p-2 rounded-full transition-colors"
-              >
-                <X size={20} />
-              </button>
-            </div>
-
-            <form onSubmit={handleSave} className="p-6">
-              {formError && (
-                <div className="mb-6 p-4 bg-admin-danger/10 border border-admin-danger/30 rounded-md flex gap-3 items-start animate-in fade-in duration-200">
-                  <div className="w-8 h-8 rounded-full bg-admin-danger/15 text-admin-danger flex items-center justify-center font-bold flex-shrink-0">
-                    <AlertCircle size={20} />
-                  </div>
-                  <div className="flex-1">
-                    <h5 className="font-bold text-admin-danger text-sm">{formError.message}</h5>
-                    {formError.details && formError.details.length > 0 && (
-                      <ul className="list-none text-xs text-admin-text-main mt-2 space-y-1.5 bg-white/60 p-3 rounded-md border border-admin-danger/10">
-                        {formError.details.map((d, i) => (
-                          <li key={i} className="flex items-start gap-1.5 leading-relaxed">
-                            <span className="text-admin-danger mt-0.5">•</span>
-                            <span>{d}</span>
-                          </li>
-                        ))}
-                      </ul>
-                    )}
-                  </div>
-                </div>
-              )}
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {/* Image Upload Area */}
-                <div className="md:col-span-2 flex flex-col items-center sm:flex-row gap-6 p-4 bg-admin-bg rounded-md border border-admin-border border-dashed">
-                  <div className="w-24 h-24 bg-white rounded-md border border-admin-border flex items-center justify-center overflow-hidden flex-shrink-0">
-                    {uploading ? (
-                      <Loader2 className="animate-spin text-primary" size={24} />
-                    ) : formData.imageUrl ? (
-                      <img src={formData.imageUrl} alt="Preview Logo" className="w-full h-full object-contain p-2" />
-                    ) : (
-                      <ImageIcon className="text-admin-text-muted" size={32} />
-                    )}
-                  </div>
-                  <div className="flex-1 text-center sm:text-left">
-                    <h4 className="font-bold text-admin-text-main mb-1">Logo thương hiệu *</h4>
-                    <p className="text-xs text-admin-text-muted mb-3">Chỉ hỗ trợ định dạng WebP, SVG, PNG, JPG/JPEG. Tối đa 2MB.</p>
-                    <div className="flex flex-wrap items-center gap-2 justify-center sm:justify-start">
-                      <label className="inline-flex items-center gap-2 px-4 py-2 bg-white border border-admin-border text-admin-text-main text-sm font-bold rounded-md cursor-pointer hover:bg-slate-50 transition-colors">
-                        <UploadCloud size={16} />
-                        Tải ảnh lên
-                        <input 
-                          type="file" 
-                          accept=".svg,.webp,.png,.jpg,.jpeg" 
-                          onChange={handleImageUpload} 
-                          className="hidden" 
-                          disabled={uploading}
-                        />
-                      </label>
-                      {formData.imageUrl && (
-                        <button
-                          type="button"
-                          onClick={() => setFormData(prev => ({ ...prev, imageUrl: '' }))}
-                          className="inline-flex items-center gap-2 px-4 py-2 bg-red-50 border border-red-200 text-red-600 text-sm font-bold rounded-md cursor-pointer hover:bg-red-100 transition-colors"
-                        >
-                          <Trash2 size={16} />
-                          Xóa hình
-                        </button>
-                      )}
-                    </div>
-                  </div>
-                </div>
-
-                {/* Form Fields */}
-                <div className="md:col-span-1 space-y-4">
-                  <div>
-                    <label className="block text-sm font-bold text-admin-text-main mb-2">Tên thương hiệu *</label>
-                    <input
-                      type="text"
-                      required
-                      placeholder="VD: Samsung, Apple, Xiaomi..."
-                      className="w-full px-4 py-3 border border-admin-border rounded-md focus:border-primary outline-none text-admin-text-main font-medium"
-                      value={formData.name}
-                      onChange={(e) => setFormData(prev => ({ 
-                        ...prev, 
-                        name: e.target.value,
-                        slug: generateSlug(e.target.value)
-                      }))}
-                    />
-                  </div>
-
-                  <div>
-                    <div className="flex justify-between items-center mb-2">
-                      <label className="block text-sm font-bold text-admin-text-main">Mã (BrandCode)</label>
-                      {editingBrand && !isCodeEditable && (
-                        <button
-                          type="button"
-                          onClick={() => {
-                            if (window.confirm("Việc đổi mã thương hiệu sẽ không cập nhật lại các mã SKU đã tạo trước đó ở các sản phẩm. Bạn vẫn muốn sửa?")) {
-                              setIsCodeEditable(true);
-                            }
-                          }}
-                          className="text-xs text-primary hover:underline font-bold"
-                        >
-                          Thay đổi mã
-                        </button>
-                      )}
-                    </div>
-                    <input
-                      type="text"
-                      placeholder="Tự động tạo nếu để trống"
-                      className="w-full px-4 py-3 border border-admin-border rounded-md focus:border-primary outline-none text-admin-text-main font-medium uppercase disabled:bg-admin-bg disabled:text-admin-text-muted"
-                      value={formData.brandCode}
-                      onChange={(e) => setFormData(prev => ({ ...prev, brandCode: e.target.value.toUpperCase().replace(/\s+/g, '') }))}
-                      disabled={!isCodeEditable}
-                    />
-                    {catErrorMessage && <p className="text-admin-danger text-xs font-bold mt-1">{catErrorMessage}</p>}
-                  </div>
-                </div>
-
-                <div className="md:col-span-1 space-y-4">
-                  <div>
-                    <label className="block text-sm font-bold text-admin-text-main mb-2">Đường dẫn (Slug)</label>
-                    <input
-                      type="text"
-                      required
-                      placeholder="VD: samsung, apple..."
-                      className="w-full px-4 py-3 border border-admin-border rounded-md focus:border-primary outline-none text-admin-text-main font-medium"
-                      value={formData.slug}
-                      onChange={(e) => setFormData(prev => ({ ...prev, slug: generateSlug(e.target.value) }))}
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-bold text-admin-text-main mb-2">Trạng thái hoạt động</label>
-                    <label className="flex items-center gap-3 p-3 border border-admin-border rounded-md bg-slate-50 cursor-pointer">
-                      <div className="relative inline-flex items-center">
-                        <input
-                          type="checkbox"
-                          className="sr-only peer"
-                          checked={formData.isActive}
-                          onChange={(e) => setFormData(prev => ({ ...prev, isActive: e.target.checked }))}
-                        />
-                        <div className="w-11 h-6 bg-admin-border peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-success"></div>
-                      </div>
-                      <span className="text-sm font-bold text-admin-text-main">
-                        {formData.isActive ? 'Đang hoạt động' : 'Tạm dừng/Ẩn'}
-                      </span>
-                    </label>
-                  </div>
-                </div>
-
-                <div className="md:col-span-2">
-                  <label className="block text-sm font-bold text-admin-text-main mb-2">Mô tả thương hiệu</label>
-                  <textarea
-                    rows="3"
-                    placeholder="Mô tả tóm tắt về hãng..."
-                    className="w-full px-4 py-3 border border-admin-border rounded-md focus:border-primary outline-none text-admin-text-main font-medium resize-none"
-                    value={formData.description}
-                    onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
-                  />
-                </div>
-              </div>
-
-              <div className="flex gap-3 justify-end pt-6 mt-6 border-t border-admin-border">
-                <button
-                  type="button"
-                  onClick={() => setIsModalOpen(false)}
-                  className="px-6 py-2.5 bg-admin-bg text-admin-text-main rounded-md font-bold hover:bg-admin-border transition-colors"
-                >
-                  Hủy
-                </button>
-                <button
-                  type="submit"
-                  disabled={saving || uploading}
-                  className="px-6 py-2.5 bg-primary text-white rounded-md font-bold hover:bg-admin-primary-hover transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
-                >
-                  {saving && <Loader2 size={18} className="animate-spin" />}
-                  {saving ? "Đang lưu..." : (editingBrand ? "Cập nhật" : "Tạo mới")}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
-
-      {/* Premium Toast Notification */}
-      {toast && (
-        <div className={`fixed bottom-5 right-5 z-[200] max-w-sm w-full bg-white rounded-md shadow-xl border p-4 flex items-start gap-3 animate-in fade-in slide-in-from-bottom-5 duration-300 ${
-          toast.type === 'success' ? 'border-l-4 border-l-success border-admin-border' : 
-          toast.type === 'error' ? 'border-l-4 border-l-admin-danger border-admin-border' : 
-          'border-l-4 border-l-[#FFB800] border-admin-border'
-        }`}>
-          <div className="flex-shrink-0 mt-0.5">
-            {toast.type === 'success' ? (
-              <div className="w-8 h-8 rounded-full bg-success/10 text-success flex items-center justify-center font-bold">✓</div>
-            ) : toast.type === 'error' ? (
-              <div className="w-8 h-8 rounded-full bg-admin-danger/10 text-admin-danger flex items-center justify-center font-bold">✕</div>
-            ) : (
-              <div className="w-8 h-8 rounded-full bg-warning/10 text-warning flex items-center justify-center font-bold">!</div>
-            )}
-          </div>
-          <div className="flex-1">
-            <h4 className="font-bold text-admin-text-main text-sm">
-              {toast.type === 'success' ? 'Thành công' : toast.type === 'error' ? 'Lỗi hệ thống' : 'Thông tin'}
-            </h4>
-            <p className="text-xs text-admin-text-muted mt-1 font-semibold leading-relaxed">{toast.message}</p>
-            {toast.description && (
-              <p className="text-[10px] text-admin-text-muted mt-1 font-medium leading-relaxed">{toast.description}</p>
-            )}
-          </div>
-        </div>
-      )}
+      {/* Custom Alert Toast Notification */}
+      <BrandToast toast={toast} />
     </div>
   );
 }

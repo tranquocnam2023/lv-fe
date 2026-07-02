@@ -201,7 +201,8 @@ export const useProductForm = ({ productId, onBack, onSaveSuccess, searchParams,
                   try {
                     const attrs = JSON.parse(v.attributes);
                     Object.keys(attrs).forEach(k => {
-                      if (k !== 'costPrice' && k !== 'chargeTax' && !optionNames.includes(k)) {
+                      const kLower = k.toLowerCase();
+                      if (kLower !== 'costprice' && kLower !== 'chargetax' && !optionNames.includes(k)) {
                         optionNames.push(k);
                       }
                     });
@@ -271,6 +272,14 @@ export const useProductForm = ({ productId, onBack, onSaveSuccess, searchParams,
                       }
                       const finalName = isOutOfSync ? defaultName : v.name;
 
+                      let specsList = [];
+                      if (v.specsOverride) {
+                        try {
+                          const parsed = JSON.parse(v.specsOverride);
+                          specsList = Object.entries(parsed).map(([k, val]) => ({ key: k, value: val }));
+                        } catch (e) {}
+                      }
+
                       parsedVarsData[key] = {
                         id: v.id,
                         name: finalName,
@@ -280,10 +289,11 @@ export const useProductForm = ({ productId, onBack, onSaveSuccess, searchParams,
                         isActive: v.isActive !== false,
                         imageId: v.imageId || '',
                         costPrice: attrs.costPrice || '',
-                        chargeTax: attrs.chargeTax !== false
+                        specsOverrideList: specsList
                       };
                     }
                   } catch (e) { }
+
                 }
               });
             }
@@ -980,13 +990,20 @@ export const useProductForm = ({ productId, onBack, onSaveSuccess, searchParams,
             if (vData?.costPrice) {
               attributeObj.costPrice = Number(vData.costPrice);
             }
-            if (vData?.chargeTax !== undefined) {
-              attributeObj.chargeTax = !!vData.chargeTax;
-            }
 
             const combName = comb.map(p => p.valueText).join(' - ');
             const defaultName = `${formData.name} - ${combName}`;
             const defaultSku = generateVariantSku(brandCode, generatedCode, comb);
+
+            const specsOverrideObj = {};
+            if (Array.isArray(vData?.specsOverrideList)) {
+              vData.specsOverrideList.forEach(s => {
+                if (s.key.trim() && s.value.trim()) {
+                  specsOverrideObj[s.key.trim()] = s.value.trim();
+                }
+              });
+            }
+            const specsOverrideStr = Object.keys(specsOverrideObj).length > 0 ? JSON.stringify(specsOverrideObj) : null;
 
             return {
               id: vData?.id || 0,
@@ -997,6 +1014,7 @@ export const useProductForm = ({ productId, onBack, onSaveSuccess, searchParams,
               productId: savedProductId,
               imageId: vData?.imageId || '',
               attributes: JSON.stringify(attributeObj),
+              specsOverride: specsOverrideStr,
               isActive: vData?.isActive !== false
             };
           });

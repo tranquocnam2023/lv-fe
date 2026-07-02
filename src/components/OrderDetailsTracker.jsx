@@ -1,6 +1,10 @@
 import React, { useState } from 'react';
-import { CheckCircle2, Clock, Package, Truck, Smile, ExternalLink, Calendar, MapPin, CreditCard, Tag, X, AlertTriangle } from 'lucide-react';
+import { Clock, Package, Truck, Smile, Calendar, MapPin, CreditCard, AlertTriangle } from 'lucide-react';
 import api from '../services/api';
+
+// Subcomponents
+import OrderTimeline from './order-tracker/OrderTimeline';
+import OrderCancelModal from './order-tracker/OrderCancelModal';
 
 const getPaymentMethodLabel = (method) => {
   if (!method) return 'Chưa xác định';
@@ -156,7 +160,7 @@ export default function OrderDetailsTracker({ order, onOrderCancelled }) {
   };
 
   return (
-    <div className="w-full bg-white rounded-md p-6 md:p-8 border border-gray-100 space-y-8 animate-in fade-in duration-300">
+    <div className="w-full bg-white rounded-md p-6 md:p-8 border border-gray-100 space-y-8 animate-in fade-in duration-300 font-sans shadow-sm">
       {/* Header đơn hàng */}
       <div className="flex flex-wrap items-center justify-between border-b border-gray-50 pb-6 gap-4">
         <div>
@@ -168,7 +172,7 @@ export default function OrderDetailsTracker({ order, onOrderCancelled }) {
             Ngày đặt: {new Date(order.createdAt).toLocaleDateString('vi-VN')}
           </p>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 select-none">
           <span className={`px-4 py-1.5 rounded-full text-xs font-black uppercase tracking-wider border ${
             statusId === 5
               ? 'bg-red-50 border-red-200 text-red-500'
@@ -183,7 +187,7 @@ export default function OrderDetailsTracker({ order, onOrderCancelled }) {
           {canCancel && (
             <button
               onClick={() => setIsCancelModalOpen(true)}
-              className="px-4 py-1.5 border border-red-500 text-red-500 hover:bg-red-50 text-xs font-black uppercase tracking-wider rounded-full transition-all active:scale-95 flex items-center gap-1.5"
+              className="px-4 py-1.5 border border-red-500 text-red-500 hover:bg-red-50 text-xs font-black uppercase tracking-wider rounded-full transition-all active:scale-95 flex items-center gap-1.5 cursor-pointer bg-white"
             >
               Hủy đơn hàng
             </button>
@@ -191,89 +195,20 @@ export default function OrderDetailsTracker({ order, onOrderCancelled }) {
         </div>
       </div>
 
-      {/* TIMELINE / STEPPER TRẠNG THÁI (Green theme kiểu TGDĐ/ĐMX) */}
+      {/* TIMELINE / STEPPER TRẠNG THÁI */}
       {statusId !== 5 ? (
-        <div className="space-y-6 pt-2">
-          <h3 className="text-sm font-black text-gray-800 uppercase tracking-widest pl-1">Trạng thái đơn hàng</h3>
-          
-          <div className="relative pl-8 md:pl-10 space-y-8">
-            {/* Đường thẳng chạy dọc kết nối */}
-            <div className="absolute left-4 top-4 bottom-4 w-1 bg-gray-100 rounded-full">
-              <div 
-                className="w-full bg-green-500 rounded-full transition-all duration-700"
-                style={{ height: `${((currentStep - 1) / (steps.length - 1)) * 100}%` }}
-              ></div>
-            </div>
-
-            {/* Render các bước trong Timeline */}
-            {steps.map((step, idx) => {
-              const stepNum = idx + 1;
-              const isCompleted = currentStep >= stepNum;
-              const StepIcon = step.icon;
-              const stepTime = getStepTime(order.createdAt, stepNum);
-
-              return (
-                <div key={idx} className="relative flex gap-4 md:gap-6 animate-in slide-in-from-left duration-300">
-                  {/* Node hình tròn ở cột bên trái */}
-                  <div className={`absolute -left-7 md:-left-[1.875rem] w-6 h-6 rounded-full border-4 flex items-center justify-center transition-all ${
-                    isCompleted 
-                      ? 'bg-green-500 border-green-100 text-white scale-110 shadow-md shadow-green-100' 
-                      : 'bg-white border-gray-200 text-gray-300'
-                  }`}>
-                    {isCompleted ? <CheckCircle2 size={10} className="stroke-[3]" /> : <div className="w-1.5 h-1.5 bg-gray-300 rounded-full"></div>}
-                  </div>
-
-                  {/* Nội dung text */}
-                  <div className="flex-1 space-y-1">
-                    <div className="flex flex-wrap items-baseline gap-2">
-                      <h4 className={`text-sm font-black ${isCompleted ? 'text-gray-900 font-black' : 'text-gray-400'}`}>
-                        {step.title}
-                      </h4>
-                      {stepTime && (
-                        <span className="text-[10px] bg-gray-100 font-bold px-2 py-0.5 rounded text-gray-500 shrink-0">
-                          {stepTime}
-                        </span>
-                      )}
-                    </div>
-                    <p className={`text-xs ${isCompleted ? 'text-gray-600' : 'text-gray-400 opacity-60'}`}>
-                      {step.desc}
-                    </p>
-
-                    {/* Bài toán Đơn vị vận chuyển thứ 3: GHN tracking code */}
-                    {step.hasTracking && isCompleted && (
-                      <div className="mt-3 bg-gray-50 p-4 rounded-md border border-gray-100 flex flex-wrap items-center justify-between gap-4 animate-in zoom-in-95">
-                        <div className="space-y-1">
-                          <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest block">Đối tác giao nhận</span>
-                          <div className="flex items-center gap-2">
-                            <strong className="text-xs text-orange-600 font-extrabold uppercase">Giao Hàng Nhanh</strong>
-                            <span className="text-[10px] font-bold text-gray-500 bg-gray-200/60 px-2 py-0.5 rounded">
-                              Mã vận đơn: GHN-PS{order.id}128
-                            </span>
-                          </div>
-                        </div>
-                        <a 
-                          href="https://giaohangnhanh.vn" 
-                          target="_blank" 
-                          rel="noreferrer"
-                          className="px-4 py-2 bg-white hover:bg-gray-100 border border-gray-200 rounded-md text-[11px] font-black text-gray-700 flex items-center gap-1 transition-all"
-                        >
-                          Tra cứu trang GHN
-                          <ExternalLink size={12} />
-                        </a>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
+        <OrderTimeline
+          order={order}
+          currentStep={currentStep}
+          steps={steps}
+          getStepTime={getStepTime}
+        />
       ) : (
         <div className="bg-red-50 border border-red-100 text-red-700 p-4 rounded-md flex items-center gap-3 animate-in zoom-in-95">
           <AlertTriangle className="stroke-[2.5]" />
           <div>
             <h4 className="text-sm font-black">Đơn hàng này đã bị hủy</h4>
-            <p className="text-xs opacity-80 mt-0.5">Không còn hiển thị tiến trình giao nhận vận chuyển.</p>
+            <p className="text-xs opacity-80 mt-0.5 font-medium">Không còn hiển thị tiến trình giao nhận vận chuyển.</p>
           </div>
         </div>
       )}
@@ -305,7 +240,7 @@ export default function OrderDetailsTracker({ order, onOrderCancelled }) {
 
       {/* THÔNG TIN NGƯỜI NHẬN & PHƯƠNG THỨC */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 border-t border-gray-50 pt-6">
-        <div className="space-y-3 bg-gray-50/50 p-5 rounded-md border border-gray-100">
+        <div className="space-y-3 bg-gray-50/50 p-5 rounded-md border border-gray-100 shadow-inner">
           <h4 className="text-xs font-black text-gray-800 uppercase tracking-widest flex items-center gap-1.5">
             <MapPin size={14} className="text-blue-500" />
             Thông tin nhận hàng
@@ -317,7 +252,7 @@ export default function OrderDetailsTracker({ order, onOrderCancelled }) {
           </div>
         </div>
 
-        <div className="space-y-3 bg-gray-50/50 p-5 rounded-md border border-gray-100">
+        <div className="space-y-3 bg-gray-50/50 p-5 rounded-md border border-gray-100 shadow-inner">
           <h4 className="text-xs font-black text-gray-800 uppercase tracking-widest flex items-center gap-1.5">
             <CreditCard size={14} className="text-blue-500" />
             Thanh toán chi tiết
@@ -355,104 +290,19 @@ export default function OrderDetailsTracker({ order, onOrderCancelled }) {
 
       {/* TGDĐ-STYLE CANCEL REASON MODAL */}
       {isCancelModalOpen && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50 animate-in fade-in duration-200">
-          <div className="bg-white rounded-md border border-gray-100 w-full max-w-lg overflow-hidden animate-in zoom-in-95 duration-200">
-            {/* Modal Header */}
-            <div className="flex items-center justify-between border-b border-gray-50 p-6 bg-gray-50/50">
-              <div>
-                <h3 className="text-lg font-black text-gray-900">Yêu cầu hủy đơn hàng</h3>
-                <p className="text-xs text-gray-500 font-bold tracking-tight">Đơn hàng #PS{order.id}</p>
-              </div>
-              <button 
-                onClick={() => {
-                  setIsCancelModalOpen(false);
-                  setCancelReason('');
-                  setCustomReason('');
-                  setCancelError('');
-                }}
-                className="w-8 h-8 rounded-full bg-white hover:bg-gray-100 border border-gray-100 flex items-center justify-center text-gray-500 transition-colors"
-              >
-                <X size={16} />
-              </button>
-            </div>
-
-            {/* Modal Body */}
-            <div className="p-6 space-y-4 max-h-[60vh] overflow-y-auto">
-              <p className="text-xs text-gray-500 font-bold uppercase tracking-wider mb-2">Vui lòng chọn lý do hủy đơn:</p>
-              
-              {cancelError && (
-                <div className="p-3.5 bg-red-50 border border-red-100 text-red-600 rounded-md text-xs font-bold flex items-center gap-2 animate-in shake">
-                  <AlertTriangle size={14} className="shrink-0" />
-                  <span>{cancelError}</span>
-                </div>
-              )}
-
-              <div className="space-y-3">
-                {cancelReasons.map((reason, idx) => (
-                  <label 
-                    key={idx} 
-                    className={`flex items-center gap-3 p-3.5 rounded-md border transition-all cursor-pointer ${
-                      cancelReason === reason 
-                        ? 'border-red-500 bg-red-50/30' 
-                        : 'border-gray-100 hover:border-gray-200 bg-white'
-                    }`}
-                  >
-                    <input 
-                      type="radio" 
-                      name="cancel_reason" 
-                      value={reason}
-                      checked={cancelReason === reason}
-                      onChange={(e) => {
-                        setCancelReason(e.target.value);
-                        setCancelError('');
-                      }}
-                      className="w-4 h-4 text-red-600 border-gray-300 focus:ring-red-500"
-                    />
-                    <span className="text-xs font-bold text-gray-700">{reason}</span>
-                  </label>
-                ))}
-              </div>
-
-              {cancelReason === 'Lý do khác' && (
-                <div className="pt-2 animate-in slide-in-from-top-2 duration-200">
-                  <textarea
-                    placeholder="Vui lòng nhập lý do cụ thể..."
-                    value={customReason}
-                    onChange={(e) => {
-                      setCustomReason(e.target.value);
-                      setCancelError('');
-                    }}
-                    rows={3}
-                    className="w-full border border-gray-200 p-3 rounded-md text-xs font-semibold focus:outline-none focus:border-red-500 focus:ring-1 focus:ring-red-500"
-                  ></textarea>
-                </div>
-              )}
-            </div>
-
-            {/* Modal Footer */}
-            <div className="border-t border-gray-50 p-6 flex gap-3 bg-gray-50/30">
-              <button
-                onClick={() => {
-                  setIsCancelModalOpen(false);
-                  setCancelReason('');
-                  setCustomReason('');
-                  setCancelError('');
-                }}
-                disabled={cancelling}
-                className="flex-1 py-3 border border-gray-200 rounded-md text-xs font-black text-gray-700 hover:bg-gray-50 transition active:scale-95 disabled:opacity-50"
-              >
-                ĐÓNG
-              </button>
-              <button
-                onClick={handleCancelOrder}
-                disabled={cancelling}
-                className="flex-1 py-3 bg-red-500 hover:bg-red-600 text-white rounded-md text-xs font-black transition active:scale-95 disabled:opacity-50 flex items-center justify-center gap-1.5"
-              >
-                {cancelling ? 'ĐANG XỬ LÝ...' : 'XÁC NHẬN HỦY ĐƠN'}
-              </button>
-            </div>
-          </div>
-        </div>
+        <OrderCancelModal
+          order={order}
+          setIsCancelModalOpen={setIsCancelModalOpen}
+          cancelReason={cancelReason}
+          setCancelReason={setCancelReason}
+          customReason={customReason}
+          setCustomReason={setCustomReason}
+          cancelling={cancelling}
+          cancelError={cancelError}
+          setCancelError={setCancelError}
+          handleCancelOrder={handleCancelOrder}
+          cancelReasons={cancelReasons}
+        />
       )}
     </div>
   );
