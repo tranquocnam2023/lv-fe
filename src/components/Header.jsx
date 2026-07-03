@@ -1,6 +1,8 @@
 import { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
+import { useTheme } from '../context/ThemeContext';
+import { Sun, Moon } from 'lucide-react';
 
 import { THEME } from '../utils/theme';
 import { locationService } from '../services/locationService';
@@ -10,6 +12,7 @@ import { categoryService } from '../services/categoryService';
 export default function Header({ selectedLocation, setSelectedLocation }) {
   const { cartCount } = useCart();
   const navigate = useNavigate();
+  const { toggleTheme, isDark } = useTheme();
   
   const [provinces, setProvinces] = useState([]);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
@@ -402,6 +405,21 @@ export default function Header({ selectedLocation, setSelectedLocation }) {
               <span className="font-semibold text-sm">Giỏ hàng</span>
             </Link>
 
+            {/* Theme Toggle Button */}
+            <button
+              type="button"
+              onClick={toggleTheme}
+              className="theme-toggle-btn p-2 rounded-full hover:bg-white/10 text-white focus:outline-none flex items-center justify-center cursor-pointer"
+              title={isDark ? "Chuyển sang Chế độ sáng" : "Chuyển sang Chế độ tối"}
+              aria-label="Toggle Theme"
+            >
+              {isDark ? (
+                <Sun className="w-5 h-5 text-yellow-400 fill-yellow-400/20" />
+              ) : (
+                <Moon className="w-5 h-5 text-indigo-100 fill-indigo-100/10" />
+              )}
+            </button>
+
             {isLoggedIn ? (
               <div className="relative group py-2">
                 <div className="flex items-center px-3 py-1 rounded bg-white/10 gap-3 cursor-pointer hover:bg-white/20 transition-all">
@@ -509,6 +527,21 @@ export default function Header({ selectedLocation, setSelectedLocation }) {
               </span>
             )}
           </Link>
+
+          {/* Theme Toggle Button (Mobile) */}
+          <button
+            type="button"
+            onClick={toggleTheme}
+            className="theme-toggle-btn p-2 rounded-full hover:bg-white/10 text-white focus:outline-none flex items-center justify-center cursor-pointer"
+            title={isDark ? "Chuyển sang Chế độ sáng" : "Chuyển sang Chế độ tối"}
+            aria-label="Toggle Theme Mobile"
+          >
+            {isDark ? (
+              <Sun className="w-5.5 h-5.5 text-yellow-400 fill-yellow-400/20" />
+            ) : (
+              <Moon className="w-5.5 h-5.5 text-indigo-100 fill-indigo-100/10" />
+            )}
+          </button>
 
           {/* User Profile / Auth link */}
           {isLoggedIn ? (

@@ -52,13 +52,13 @@ export default function AdminDashboard() {
       const prodList = Array.isArray(products) ? products : [];
       const orderList = Array.isArray(orders) ? orders : [];
 
-      // A. Calculate weekly sales (past 7 days, excluding cancelled)
+      // A. Calculate weekly sales (past 7 days, completed only)
       const sevenDaysAgo = new Date();
       sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
       const weeklyTotal = orderList.reduce((sum, o) => {
         const orderDate = new Date(o.createdAt);
-        const isCancelled = o.status && (o.status.toLowerCase() === 'cancelled' || o.status === 'Đã hủy' || o.statusId === 5);
-        if (isCancelled) return sum;
+        const isCompleted = o.statusId === 4 || o.statusName === 'Đã giao' || o.statusName === 'Hoàn thành';
+        if (!isCompleted) return sum;
         if (orderDate >= sevenDaysAgo) {
           return sum + (o.totalPrice || 0);
         }
@@ -80,8 +80,8 @@ export default function AdminDashboard() {
       // C. Brand performance (calculate stock from products, sold from orders)
       const brandSold = {};
       orderList.forEach(order => {
-        const isCancelled = order.status && (order.status.toLowerCase() === 'cancelled' || order.status === 'Đã hủy' || order.statusId === 5);
-        if (isCancelled) return;
+        const isCompleted = order.statusId === 4 || order.statusName === 'Đã giao' || order.statusName === 'Hoàn thành';
+        if (!isCompleted) return;
         if (order.items) {
           order.items.forEach(item => {
             const prod = prodList.find(p => p.id === item.productId || p.name === item.productName);
@@ -113,8 +113,8 @@ export default function AdminDashboard() {
       // D. Calculate best selling products
       const statsMap = {};
       orderList.forEach(order => {
-        const isCancelled = order.status && (order.status.toLowerCase() === 'cancelled' || order.status === 'Đã hủy' || order.statusId === 5);
-        if (isCancelled) return;
+        const isCompleted = order.statusId === 4 || order.statusName === 'Đã giao' || order.statusName === 'Hoàn thành';
+        if (!isCompleted) return;
         if (order.items && order.items.length > 0) {
           order.items.forEach(item => {
             const name = item.productName || 'Sản phẩm không tên';

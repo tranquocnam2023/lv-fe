@@ -1201,8 +1201,8 @@ export default function ProductDetailPage() {
                                 <button
                                   type="button"
                                   onClick={() => handleAttributeClick(attrKey, val)}
-                                  className={`w-11 h-11 rounded-full transition-all hover:scale-105 active:scale-95 flex items-center justify-center ${isSelected
-                                    ? 'scale-110 shadow-md ring-2 ring-offset-2 ring-blue-500'
+                                  className={`w-11 h-11 rounded-full transition-all hover:scale-105 active:scale-95 flex items-center justify-center border border-gray-200 dark:border-white/30 ${isSelected
+                                    ? 'scale-110 shadow-md ring-2 ring-offset-2 ring-blue-500 ring-offset-bgcard'
                                     : 'opacity-80 hover:opacity-100'
                                     }`}
                                   style={{ backgroundColor: hexColor }}
