@@ -1,7 +1,7 @@
 import api from './api';
 
 export const reviewService = {
-  getAll: () => api.get('/Review'),
+  getAll: () => api.get('/Review/admin/all'),
   getByProductId: (productId) => api.get(`/Review/product/${productId}`),
   create: (data) => api.post('/Review', data),
   reply: (id, replyText) => api.put(`/Review/${id}/reply`, { reply: replyText }),

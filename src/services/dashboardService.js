@@ -9,7 +9,8 @@ export const dashboardService = {
         api.get('/User').catch(() => [])
       ]);
 
-      const totalRevenue = orders.reduce((sum, o) => sum + (o.totalPrice || 0), 0);
+      const completedOrders = orders.filter(o => o.statusId === 4 || o.statusName === 'Đã giao' || o.statusName === 'Hoàn thành');
+      const totalRevenue = completedOrders.reduce((sum, o) => sum + (o.totalPrice || 0), 0);
 
       return {
         totalRevenue,
@@ -44,6 +45,8 @@ export const dashboardService = {
       sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
       
       orders.forEach(o => {
+        const isCompleted = o.statusId === 4 || o.statusName === 'Đã giao' || o.statusName === 'Hoàn thành';
+        if (!isCompleted) return;
         const orderDate = new Date(o.createdAt);
         if (orderDate >= sevenDaysAgo) {
           const dayName = days[orderDate.getDay()];

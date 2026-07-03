@@ -636,10 +636,10 @@ export default function ProductDetailPage() {
       <div className="max-w-7xl mx-auto px-4 w-full">
         <Breadcrumb items={breadcrumbItems} />
 
-        {/* Tiêu đề sản phẩm */}
+        {/* Tiêu đề sản phẩm - MOBILE: text-2xl, DESKTOP: text-3xl */}
         <div className="flex flex-col md:flex-row md:items-center justify-between pb-6 mb-8 mt-4 gap-4">
           <div>
-            <h1 className="text-3xl font-black text-gray-900 tracking-tight">{displayProductName}</h1>
+            <h1 className="text-2xl md:text-3xl font-black text-gray-900 tracking-tight">{displayProductName || product.name}</h1>
             <div className="flex items-center gap-4 mt-2">
               <div className="flex text-yellow-400">
                 {[...Array(5)].map((_, i) => {

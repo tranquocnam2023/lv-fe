@@ -1,32 +1,174 @@
 @import "tailwindcss";
 
+:root {
+  /* HSL bases for Light Theme */
+  --primary-hue: 251;
+  --primary-saturation: 100%;
+  --primary-lightness: 55%;
+
+  --primary: hsl(var(--primary-hue) var(--primary-saturation) var(--primary-lightness));
+  --secondary: hsl(209 85% 43%);
+  --success: hsl(160 100% 43%);
+  --warning: hsl(25 100% 61%);
+  --danger: hsl(353 100% 62%);
+  --info: hsl(198 98% 57%);
+  --yellow: hsl(48 97% 60%);
+  --bg: hsl(220 14% 96%);
+  --text: hsl(210 20% 15%);
+  --textmuted: hsl(216 19% 67%);
+  --textmain: hsl(214 21% 26%);
+  --bgcard: hsl(0 0% 100%);
+  --bordercustom: hsl(214 41% 95%);
+  --headerbg: hsl(var(--primary-hue) var(--primary-saturation) var(--primary-lightness));
+  --footerbg: hsl(0 0% 100%);
+  --sidebarbg: hsl(0 0% 100%);
+
+  /* Admin colors in light mode */
+  --admin-sidebar-bg: hsl(227 60% 17%);
+  --admin-sidebar-border: hsl(228 47% 20%);
+  --admin-sidebar-hover: hsl(228 47% 20%);
+  --admin-sidebar-text: hsl(225 33% 73%);
+  --admin-bg: hsl(223 77% 98%);
+  --admin-border: hsl(223 36% 92%);
+  --admin-text-main: hsl(231 46% 31%);
+  --admin-text-muted: hsl(225 33% 73%);
+  --admin-danger: hsl(5 83% 62%);
+  --admin-primary-hover: hsl(252 85% 45%);
+}
+
+.dark {
+  /* HSL bases for Dark Mode */
+  --primary-hue: 251;
+  --primary-saturation: 100%;
+  --primary-lightness: 65%;
+
+  --primary: hsl(var(--primary-hue) var(--primary-saturation) var(--primary-lightness));
+  --secondary: hsl(209 90% 55%);
+  --success: hsl(160 100% 45%);
+  --warning: hsl(25 100% 65%);
+  --danger: hsl(353 100% 65%);
+  --info: hsl(198 98% 65%);
+  --yellow: hsl(48 97% 65%);
+  --bg: hsl(222 47% 10%); /* Deep sleek slate */
+  --text: hsl(210 40% 98%); /* Crisp off-white */
+  --textmuted: hsl(215 20% 65%);
+  --textmain: hsl(210 40% 90%);
+  --bgcard: hsl(222 47% 15%); /* Sleek navy-slate card */
+  --bordercustom: hsl(222 30% 22%);
+  --headerbg: hsl(222 47% 14%); /* Premium dark header */
+  --footerbg: hsl(222 47% 14%);
+  --sidebarbg: hsl(222 47% 15%);
+
+  /* Admin colors in dark mode */
+  --admin-sidebar-bg: hsl(222 47% 12%);
+  --admin-sidebar-border: hsl(222 30% 20%);
+  --admin-sidebar-hover: hsl(222 30% 18%);
+  --admin-sidebar-text: hsl(225 33% 73%);
+  --admin-bg: hsl(222 47% 8%);
+  --admin-border: hsl(222 30% 20%);
+  --admin-text-main: hsl(210 40% 95%);
+  --admin-text-muted: hsl(215 20% 65%);
+  --admin-danger: hsl(5 83% 62%);
+  --admin-primary-hover: hsl(252 85% 55%);
+}
+
 @theme {
-  --color-primary: #4318FF;
-  --color-secondary: #1070CD;
-  --color-success: #00D990;
-  --color-warning: #FF8B38;
-  --color-danger: #FF3D54;
-  --color-info: #27bcfd;
-  --color-yellow: #fbd535;
-  --color-bg: #f3f4f6;
-  --color-text: #333333;
-  --color-textmuted: #9da9bb;
-  --color-textmain: #344050;
-  --color-bgcard: #FFFFFF;
-  --color-bordercustom: #edf2f9;
-  --color-headerbg: #4318FF;
-  --color-footerbg: #ffffff;
-  --color-sidebarbg: #ffffff;
-  --color-admin-sidebar-bg: #111c44;
-  --color-admin-sidebar-border: #1b254b;
-  --color-admin-sidebar-hover: #1b254b;
-  --color-admin-sidebar-text: #a3aed0;
-  --color-admin-bg: #F4F7FE;
-  --color-admin-border: #E0E5F2;
-  --color-admin-text-main: #2B3674;
-  --color-admin-text-muted: #A3AED0;
-  --color-admin-danger: #EE5D50;
-  --color-admin-primary-hover: #3911D1;
+  --color-primary: var(--primary);
+  --color-secondary: var(--secondary);
+  --color-success: var(--success);
+  --color-warning: var(--warning);
+  --color-danger: var(--danger);
+  --color-info: var(--info);
+  --color-yellow: var(--yellow);
+  --color-bg: var(--bg);
+  --color-text: var(--text);
+  --color-textmuted: var(--textmuted);
+  --color-textmain: var(--textmain);
+  --color-bgcard: var(--bgcard);
+  --color-bordercustom: var(--bordercustom);
+  --color-headerbg: var(--headerbg);
+  --color-footerbg: var(--footerbg);
+  --color-sidebarbg: var(--sidebarbg);
+  --color-admin-sidebar-bg: var(--admin-sidebar-bg);
+  --color-admin-sidebar-border: var(--admin-sidebar-border);
+  --color-admin-sidebar-hover: var(--admin-sidebar-hover);
+  --color-admin-sidebar-text: var(--admin-sidebar-text);
+  --color-admin-bg: var(--admin-bg);
+  --color-admin-border: var(--admin-border);
+  --color-admin-text-main: var(--admin-text-main);
+  --color-admin-text-muted: var(--admin-text-muted);
+  --color-admin-danger: var(--admin-danger);
+  --color-admin-primary-hover: var(--admin-primary-hover);
+}
+
+/* Dark mode utility overrides for standard Tailwind color classes */
+.dark {
+  /* Override backgrounds to deep card style */
+  .bg-white,
+  div.bg-white,
+  section.bg-white,
+  main.bg-white,
+  aside.bg-white,
+  header.bg-white,
+  footer.bg-white,
+  article.bg-white,
+  nav.bg-white {
+    background-color: var(--bgcard) !important;
+  }
+  
+  .bg-gray-50, .bg-slate-50, .bg-zinc-50, .bg-gray-100, .bg-slate-100, .bg-zinc-100, .bg-slate-50\/40, .bg-gray-50\/40 {
+    background-color: var(--bg) !important;
+  }
+
+  /* Override text colors to light mode counterparts */
+  .text-gray-900, .text-gray-800, .text-slate-900, .text-slate-800, .text-zinc-900, .text-zinc-800, .text-admin-text-main {
+    color: var(--text) !important;
+  }
+  
+  .text-gray-700, .text-gray-600, .text-slate-700, .text-slate-600, .text-zinc-700, .text-zinc-600 {
+    color: var(--textmain) !important;
+  }
+  
+  .text-gray-500, .text-slate-500, .text-zinc-500, .text-admin-text-muted {
+    color: var(--textmuted) !important;
+  }
+
+  /* Override borders to subtle dark border */
+  .border-gray-200, .border-gray-150, .border-gray-100, .border-slate-200, .border-slate-100, .border-zinc-200, .border-zinc-100, .border-admin-border {
+    border-color: var(--bordercustom) !important;
+  }
+
+  /* Form inputs, selections and textareas inside dark mode */
+  input, select, textarea {
+    background-color: var(--bgcard) !important;
+    color: var(--text) !important;
+    border-color: var(--bordercustom) !important;
+  }
+  
+  input::placeholder, textarea::placeholder {
+    color: var(--textmuted) !important;
+  }
+
+  select option {
+    background-color: var(--bgcard) !important;
+    color: var(--text) !important;
+  }
+
+  /* Shadows override to look more premium in dark environment */
+  .shadow, .shadow-sm, .shadow-md, .shadow-lg, .shadow-xl, .shadow-2xl {
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.4), 0 2px 4px -1px rgba(0, 0, 0, 0.2) !important;
+  }
+}
+
+/* Micro-interactions for theme toggling with rotation and scale spring animation */
+.theme-toggle-btn {
+  transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.theme-toggle-btn:hover {
+  transform: scale(1.12) rotate(12deg);
+}
+.theme-toggle-btn:active {
+  transform: scale(0.92) rotate(-6deg);
 }
 
 /* Container dùng chung cho layout 1200px */

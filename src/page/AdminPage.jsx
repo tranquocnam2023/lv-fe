@@ -15,7 +15,9 @@ import { authService } from '../services/authService';
 import { productService } from '../services/productService';
 import { orderService } from '../services/orderService';
 import { userService } from '../services/userService';
-import { Layout, Package, Users, ShoppingCart, Settings, LogOut, Bell, FolderTree, Star, LayoutGrid, Ticket, Layers, Boxes, MessageSquare } from 'lucide-react';
+import { Layout, Package, Users, ShoppingCart, Settings, LogOut, Bell, FolderTree, Star, LayoutGrid, Ticket, Layers, Boxes, MessageSquare, Sun, Moon, History } from 'lucide-react';
+import AdminAuditLogs from '../components/AdminAuditLogs';
+import { useTheme } from '../context/ThemeContext';
 
 const DASHBOARD_STATS = [
   { label: 'Tổng khách hàng', icon: Users, bgColor: '#5856d6', textColor: '#ffffff' },
@@ -27,8 +29,10 @@ const DASHBOARD_STATS = [
 export default function AdminPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const activeAdminTab = searchParams.get('tab') || 'dashboard';
+  const { toggleTheme, isDark, setTheme } = useTheme();
   const editProductId = searchParams.get('productId');
   const [selectedBrandId, setSelectedBrandId] = useState(null);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   // States cho tìm kiếm thực thể chéo module
   const [searchQuery, setSearchQuery] = useState('');
@@ -50,7 +54,8 @@ export default function AdminPage() {
     { label: 'Quản lý khách hàng', tab: 'customers', keywords: ['khach hang', 'nguoi dung', 'users', 'customers', 'tai khoan'] },
     { label: 'Quản lý khuyến mãi', tab: 'promotions', keywords: ['khuyen mai', 'ma giam gia', 'voucher', 'promotions'] },
     { label: 'Quản lý đánh giá', tab: 'reviews', keywords: ['danh gia', 'binh luan', 'reviews'] },
-    { label: 'Cài đặt hệ thống', tab: 'settings', keywords: ['cai dat', 'settings', 'cau hinh'] }
+    { label: 'Cài đặt hệ thống', tab: 'settings', keywords: ['cai dat', 'settings', 'cau hinh'] },
+    { label: 'Nhật ký hoạt động', tab: 'audit_logs', keywords: ['nhat ky', 'kiem toan', 'audit', 'logs', 'hoat dong'] }
   ];
 
   // Tải dữ liệu chéo module từ DATABASE
@@ -178,6 +183,8 @@ export default function AdminPage() {
       case 'dashboard': return 'Bảng thống kê số liệu';
       case 'create_product': return 'Thêm sản phẩm mới';
       case 'update_product': return 'Cập nhật sản phẩm';
+      case 'audit_logs': return 'Nhật ký hoạt động';
+      case 'settings': return 'Cài đặt hệ thống';
       default: return 'Trang quản trị';
     }
   };
@@ -185,7 +192,10 @@ export default function AdminPage() {
   const renderSidebarItem = (id, Icon, label) => (
     <button
       key={id}
-      onClick={() => setActiveAdminTab(id)}
+      onClick={() => {
+        setActiveAdminTab(id);
+        setIsSidebarOpen(false); // Close sidebar drawer on mobile after selection
+      }}
       className={`w-full flex items-center px-4 py-3 rounded-md transition-all duration-200 font-bold cursor-pointer ${activeAdminTab === id
         ? 'bg-admin-sidebar-hover text-primary border-l-4 border-primary'
         : 'text-admin-sidebar-text hover:bg-admin-sidebar-hover hover:text-white'
@@ -198,8 +208,20 @@ export default function AdminPage() {
 
   return (
     <div className="flex h-screen bg-admin-bg overflow-hidden font-sans">
-      {/* Admin Sidebar */}
-      <aside className="w-64 bg-admin-sidebar-bg flex flex-col hidden md:flex shrink-0 border-r border-admin-sidebar-border">
+      {/* MOBILE: Sliding overlay backdrop */}
+      {isSidebarOpen && (
+        <div 
+          className="fixed inset-0 bg-black/60 z-40 md:hidden animate-in fade-in duration-200"
+          onClick={() => setIsSidebarOpen(false)}
+        />
+      )}
+
+      {/* Admin Sidebar - MOBILE: Sliding drawer, TABLET & DESKTOP: Fixed layout */}
+      <aside 
+        className={`fixed inset-y-0 left-0 z-50 w-64 bg-admin-sidebar-bg flex flex-col shrink-0 border-r border-admin-sidebar-border transition-transform duration-300 md:relative md:translate-x-0 md:flex ${
+          isSidebarOpen ? 'translate-x-0' : '-translate-x-full'
+        }`}
+      >
         <div className="h-20 flex items-center px-8 border-b border-admin-sidebar-border">
           <div className="w-8 h-8 bg-primary rounded-md flex items-center justify-center mr-3">
             <span className="font-bold text-lg text-white">AD</span>
@@ -222,6 +244,7 @@ export default function AdminPage() {
           <div className="pt-6">
             <p className="px-4 text-[12px] font-bold text-admin-sidebar-text/60 uppercase tracking-widest mb-4">Hệ thống</p>
             {renderSidebarItem("settings", Settings, "Cài đặt")}
+            {renderSidebarItem("audit_logs", History, "Nhật ký hoạt động")}
           </div>
         </nav>
 
@@ -246,10 +269,20 @@ export default function AdminPage() {
       {/* Main Content Area */}
       <div className="flex-1 flex flex-col overflow-hidden">
         {/* Admin Header */}
-        <header className="h-20 bg-white border-b border-admin-border flex items-center justify-between px-8 shrink-0">
-          <div className="flex items-center">
+        <header className="h-20 bg-white border-b border-admin-border flex items-center justify-between px-4 md:px-8 shrink-0">
+          <div className="flex items-center gap-3">
+            {/* MOBILE & TABLET: Toggle sidebar button */}
+            <button
+              onClick={() => setIsSidebarOpen(true)}
+              className="md:hidden p-2 rounded-md hover:bg-gray-100 transition cursor-pointer text-admin-text-main"
+              aria-label="Open Sidebar"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-6 h-6">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
+              </svg>
+            </button>
             <div>
-              <p className="text-sm font-medium text-admin-text-muted">Trang chủ / {getHeaderTitle()}</p>
+              <p className="text-xs md:text-sm font-medium text-admin-text-muted">Trang chủ / {getHeaderTitle()}</p>
             </div>
           </div>
 
@@ -422,11 +455,53 @@ export default function AdminPage() {
           {activeAdminTab === 'dashboard' && (
             <AdminDashboard />
           )}
+          {activeAdminTab === 'audit_logs' && <AdminAuditLogs />}
           {activeAdminTab === 'settings' && (
-            <div className="bg-white p-6 rounded-md border border-admin-border animate-in fade-in duration-350">
-              <h2 className="text-2xl font-bold text-admin-text-main mb-4">Cài đặt hệ thống</h2>
-              <div className="p-4 bg-gray-50 rounded-md border border-dashed border-admin-border text-admin-text-muted text-sm font-semibold">
-                🔧 Tính năng cấu hình hệ thống đang được phát triển và hoàn thiện.
+            <div className="bg-white p-6 rounded-lg border border-admin-border shadow-sm animate-in fade-in duration-350">
+              <h2 className="text-2xl font-bold text-admin-text-main mb-6 flex items-center gap-2">
+                <Settings className="w-6 h-6 text-primary" />
+                Cài đặt hệ thống
+              </h2>
+              
+              <div className="space-y-6">
+                {/* Visual Settings Section */}
+                <div className="p-5 border border-admin-border rounded-xl bg-gray-50/50">
+                  <h3 className="text-base font-bold text-admin-text-main mb-2">Giao diện & Trực quan</h3>
+                  <p className="text-xs text-admin-text-muted mb-4">
+                    Thay đổi cấu hình hiển thị giao diện của ứng dụng để tối ưu hóa trải nghiệm sử dụng.
+                  </p>
+                  
+                  {/* Preset Themes Selector */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <button
+                      type="button"
+                      onClick={() => setTheme('light')}
+                      className={`flex flex-col items-start p-4 rounded-xl border-2 text-left cursor-pointer transition-all ${
+                        !isDark ? 'border-primary bg-primary/5 shadow-sm' : 'border-admin-border bg-white hover:bg-gray-50'
+                      }`}
+                    >
+                      <div className="flex items-center gap-2 mb-2">
+                        <span className="w-3.5 h-3.5 rounded-full bg-yellow-450 block" />
+                        <span className="text-sm font-bold text-admin-text-main">Giao diện Sáng</span>
+                      </div>
+                      <span className="text-[11px] text-admin-text-muted">Giao diện truyền thống sắc nét, độ sáng tốt cho ban ngày.</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => setTheme('dark')}
+                      className={`flex flex-col items-start p-4 rounded-xl border-2 text-left cursor-pointer transition-all ${
+                        isDark ? 'border-primary bg-primary/5 shadow-sm' : 'border-admin-border bg-white hover:bg-gray-50'
+                      }`}
+                    >
+                      <div className="flex items-center gap-2 mb-2">
+                        <span className="w-3.5 h-3.5 rounded-full bg-indigo-600 block" />
+                        <span className="text-sm font-bold text-admin-text-main">Giao diện Tối</span>
+                      </div>
+                      <span className="text-[11px] text-admin-text-muted">Giao diện tối huyền bí, bảo vệ mắt và tiết kiệm điện năng.</span>
+                    </button>
+                  </div>
+                </div>
               </div>
             </div>
           )}
