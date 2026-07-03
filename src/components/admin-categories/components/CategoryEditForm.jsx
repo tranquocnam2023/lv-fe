@@ -1,6 +1,8 @@
 import React from 'react';
 import { ArrowLeft, Loader2, Save, UploadCloud, Trash2, AlertCircle, Image as ImageIcon } from 'lucide-react';
 import CategorySpecsTemplateEditor from '../../CategorySpecsTemplateEditor';
+import CategoryBrandDefaultsEditor from './CategoryBrandDefaultsEditor';
+import SharedLocalImageUpload from '../../SharedLocalImageUpload';
 
 export default function CategoryEditForm({
   editingCategory,
@@ -203,51 +205,26 @@ export default function CategoryEditForm({
             />
           </div>
 
+          {/* Card 3.5: Brand-specific Specs Defaults Editor (Only for existing categories) */}
+          {editingCategory && (
+            <CategoryBrandDefaultsEditor
+              categoryId={editingCategory.id}
+              specsTemplate={formData.specsTemplate}
+            />
+          )}
+
         </div>
 
         {/* Right Column: Avatar Upload */}
         <div className="xl:col-span-1 flex flex-col gap-6">
           <div className="bg-white p-6 rounded-md border border-admin-border shadow-sm space-y-4">
             <h3 className="text-base font-bold text-admin-text-main border-b border-gray-100 pb-3 font-sans">Ảnh đại diện danh mục</h3>
-            
-            <div className="flex flex-col items-center p-6 bg-slate-50/50 rounded-md border border-dashed border-admin-border">
-              <div className="w-32 h-32 bg-white rounded-md border border-admin-border flex items-center justify-center overflow-hidden mb-4 shadow-inner">
-                {uploading ? (
-                  <Loader2 className="animate-spin text-primary" size={32} />
-                ) : formData.iconUrl ? (
-                  <img src={formData.iconUrl} alt="Preview" className="w-full h-full object-contain p-2" />
-                ) : (
-                  <ImageIcon className="text-admin-text-muted" size={40} />
-                )}
-              </div>
-              <div className="text-center space-y-1 mb-4 select-none">
-                <p className="text-xs font-bold text-admin-text-main">Hỗ trợ JPG, PNG, WEBP, SVG</p>
-                <p className="text-[10px] text-admin-text-muted">Kích thước file tối đa 2MB</p>
-              </div>
-              <div className="flex flex-wrap items-center gap-2 justify-center">
-                <label className="inline-flex items-center gap-2 px-4 py-2.5 bg-white border border-admin-border text-admin-text-main text-sm font-bold rounded-md cursor-pointer hover:bg-slate-50 transition-colors shadow-sm">
-                  <UploadCloud size={16} />
-                  Tải ảnh lên
-                  <input 
-                    type="file" 
-                    accept=".jpg,.jpeg,.png,.webp,.svg" 
-                    onChange={handleImageUpload} 
-                    className="hidden" 
-                    disabled={uploading}
-                  />
-                </label>
-                {formData.iconUrl && (
-                  <button
-                    type="button"
-                    onClick={() => setFormData(prev => ({ ...prev, iconUrl: '' }))}
-                    className="inline-flex items-center gap-2 px-4 py-2.5 bg-red-50 border border-red-200 text-red-600 text-sm font-bold rounded-md cursor-pointer hover:bg-red-100 transition-colors shadow-sm border-0"
-                  >
-                    <Trash2 size={16} />
-                    Xóa hình
-                  </button>
-                )}
-              </div>
-            </div>
+            <SharedLocalImageUpload
+              multiple={false}
+              value={formData.iconUrl}
+              onChange={(url) => setFormData(prev => ({ ...prev, iconUrl: url }))}
+              folder="categories"
+            />
           </div>
         </div>
       </form>

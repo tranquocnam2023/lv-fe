@@ -1,6 +1,7 @@
 import React from 'react';
 import { Edit, Plus, X, AlertCircle, Loader2, UploadCloud, Trash2, Image as ImageIcon } from 'lucide-react';
 import { generateSlug } from '../../../utils/codeGenerator';
+import SharedLocalImageUpload from '../../SharedLocalImageUpload';
 
 export default function BrandModal({
   isModalOpen,
@@ -61,43 +62,14 @@ export default function BrandModal({
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* Image Upload Area */}
-            <div className="md:col-span-2 flex flex-col items-center sm:flex-row gap-6 p-4 bg-admin-bg rounded-md border border-admin-border border-dashed">
-              <div className="w-24 h-24 bg-white rounded-md border border-admin-border flex items-center justify-center overflow-hidden flex-shrink-0">
-                {uploading ? (
-                  <Loader2 className="animate-spin text-primary" size={24} />
-                ) : formData.imageUrl ? (
-                  <img src={formData.imageUrl} alt="Preview Logo" className="w-full h-full object-contain p-2" />
-                ) : (
-                  <ImageIcon className="text-admin-text-muted" size={32} />
-                )}
-              </div>
-              <div className="flex-1 text-center sm:text-left">
-                <h4 className="font-bold text-admin-text-main mb-1">Logo thương hiệu *</h4>
-                <p className="text-xs text-admin-text-muted mb-3">Chỉ hỗ trợ định dạng WebP, SVG, PNG, JPG/JPEG. Tối đa 2MB.</p>
-                <div className="flex flex-wrap items-center gap-2 justify-center sm:justify-start">
-                  <label className="inline-flex items-center gap-2 px-4 py-2 bg-white border border-admin-border text-admin-text-main text-sm font-bold rounded-md cursor-pointer hover:bg-slate-50 transition-colors">
-                    <UploadCloud size={16} />
-                    Tải ảnh lên
-                    <input 
-                      type="file" 
-                      accept=".svg,.webp,.png,.jpg,.jpeg" 
-                      onChange={handleImageUpload} 
-                      className="hidden" 
-                      disabled={uploading}
-                    />
-                  </label>
-                  {formData.imageUrl && (
-                    <button
-                      type="button"
-                      onClick={() => setFormData(prev => ({ ...prev, imageUrl: '' }))}
-                      className="inline-flex items-center gap-2 px-4 py-2 bg-red-50 border border-red-200 text-red-600 text-sm font-bold rounded-md cursor-pointer hover:bg-red-100 transition-colors border-0"
-                    >
-                      <Trash2 size={16} />
-                      Xóa hình
-                    </button>
-                  )}
-                </div>
-              </div>
+            <div className="md:col-span-2">
+              <SharedLocalImageUpload
+                multiple={false}
+                value={formData.imageUrl}
+                onChange={(url) => setFormData(prev => ({ ...prev, imageUrl: url }))}
+                folder="brands"
+                label="Logo thương hiệu *"
+              />
             </div>
 
             {/* Form Fields */}

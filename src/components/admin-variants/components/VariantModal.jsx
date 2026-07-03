@@ -1,5 +1,6 @@
 import React from 'react';
 import { X, PlusCircle, MinusCircle, Trash2 } from 'lucide-react';
+import SharedLocalImageUpload from '../../SharedLocalImageUpload';
 
 export default function VariantModal({
   setShowModal,
@@ -224,64 +225,13 @@ export default function VariantModal({
 
             {/* Image Upload/URL Input */}
             <div className="md:col-span-2">
-              <label className="block text-xs font-bold text-admin-text-muted uppercase mb-2">Hình ảnh biến thể</label>
-              <div className="flex border-b border-admin-border mb-3 select-none">
-                <button
-                  type="button"
-                  onClick={() => setImageInputMethod('upload')}
-                  className={`py-2 px-4 font-bold text-sm border-b-2 transition-colors border-0 bg-transparent cursor-pointer ${imageInputMethod === 'upload' ? 'border-primary text-primary' : 'border-transparent text-admin-text-muted'}`}
-                >
-                  Tải lên từ máy
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setImageInputMethod('url')}
-                  className={`py-2 px-4 font-bold text-sm border-b-2 transition-colors border-0 bg-transparent cursor-pointer ${imageInputMethod === 'url' ? 'border-primary text-primary' : 'border-transparent text-admin-text-muted'}`}
-                >
-                  Nhập liên kết URL
-                </button>
-              </div>
-
-              {imageInputMethod === 'upload' ? (
-                <div className="relative border-2 border-dashed border-admin-border rounded-md p-6 flex flex-col items-center justify-center bg-admin-bg/10 h-28 cursor-pointer hover:border-primary transition-colors select-none">
-                  <input
-                    type="file"
-                    accept=".jpg,.jpeg,.png,.webp,.svg"
-                    onChange={handleFileChange}
-                    disabled={uploading}
-                    className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                  />
-                  {uploading ? (
-                    <span className="text-xs font-bold text-primary animate-pulse">Đang tải ảnh...</span>
-                  ) : (
-                    <span className="text-xs font-bold text-admin-text-muted">Nhấp để tải lên ảnh biến thể</span>
-                  )}
-                </div>
-              ) : (
-                <input
-                  type="text"
-                  className="w-full px-4 py-3 border border-admin-border rounded-md focus:border-primary outline-none text-admin-text-main font-semibold shadow-sm"
-                  placeholder="Dán link ảnh biến thể (https://...)"
-                  value={variantImage}
-                  onChange={(e) => setVariantImage(e.target.value)}
-                />
-              )}
-              {variantImage && (
-                <div className="flex items-center gap-3 mt-3 p-2 border border-admin-border rounded-md w-fit bg-gray-50/50 shadow-inner">
-                  <img src={variantImage} alt="Preview" className="w-12 h-12 object-contain rounded bg-white border" />
-                  <div className="flex flex-col gap-1">
-                    <span className="text-xs text-admin-text-muted font-bold font-mono">Hình ảnh xem trước</span>
-                    <button
-                      type="button"
-                      onClick={() => setVariantImage('')}
-                      className="px-2 py-0.5 border border-red-200 bg-red-50 hover:bg-red-100 text-red-600 rounded text-[10px] font-bold w-fit transition-colors cursor-pointer flex items-center gap-1 shadow-sm"
-                    >
-                      <Trash2 size={11} />
-                      Xóa hình ảnh
-                    </button>
-                  </div>
-                </div>
-              )}
+              <SharedLocalImageUpload
+                multiple={false}
+                value={variantImage}
+                onChange={(url) => setVariantImage(url)}
+                folder="variants"
+                label="Hình ảnh biến thể"
+              />
             </div>
           </div>
 

@@ -4,10 +4,17 @@ import { categoryService } from '../../../services/categoryService';
 import { productService } from '../../../services/productService';
 
 export default function CategoryRow({ category, level = 1, onEdit, onAddSubCategory, onDelete, allCategories = [], onRefresh }) {
-  const [expanded, setExpanded] = useState(false);
-  const [details, setDetails] = useState(null);
+  const [expanded, setExpanded] = useState(true);
+  const [details, setDetails] = useState([]);
   const [loadingDetails, setLoadingDetails] = useState(false);
   const [inlineUploading, setInlineUploading] = useState(false);
+
+  React.useEffect(() => {
+    if (allCategories && allCategories.length > 0) {
+      const subCats = allCategories.filter(c => c.parentId === category.id);
+      setDetails(subCats);
+    }
+  }, [allCategories, category.id]);
 
   const handleDeleteIconInline = async (e) => {
     e.stopPropagation();
@@ -76,18 +83,7 @@ export default function CategoryRow({ category, level = 1, onEdit, onAddSubCateg
     }
   };
 
-  const handleToggle = async () => {
-    if (!expanded && !details) {
-      setLoadingDetails(true);
-      try {
-        const res = await categoryService.getDetails(category.id, true);
-        setDetails(res.subCategories || []);
-      } catch (err) {
-        console.error(err);
-      } finally {
-        setLoadingDetails(false);
-      }
-    }
+  const handleToggle = () => {
     setExpanded(!expanded);
   };
 
@@ -261,7 +257,7 @@ export default function CategoryRow({ category, level = 1, onEdit, onAddSubCateg
       </tr>
       
       {/* Expanded Row containing child CategoryRows */}
-      {expanded && (
+      {expanded && details && details.length > 0 && (
         <tr className="bg-slate-50/40">
           <td colSpan="5" className="p-0 border-b border-admin-border">
             <div className="pl-12 pr-6 py-1 border-l-2 border-dashed border-primary/20 ml-12">
@@ -272,26 +268,18 @@ export default function CategoryRow({ category, level = 1, onEdit, onAddSubCateg
               ) : (
                 <table className="w-full text-left border-collapse">
                   <tbody>
-                    {details && details.length > 0 ? (
-                      details.map(sub => (
-                        <CategoryRow 
-                          key={sub.id} 
-                          category={sub} 
-                          level={currentLevel + 1}
-                          onEdit={onEdit}
-                          onAddSubCategory={onAddSubCategory}
-                          onDelete={onDelete}
-                          allCategories={allCategories}
-                          onRefresh={onRefresh}
-                        />
-                      ))
-                    ) : (
-                      <tr>
-                        <td colSpan="5" className="px-6 py-4 text-center text-admin-text-muted text-sm">
-                          Chưa có danh mục con nào.
-                        </td>
-                      </tr>
-                    )}
+                    {details.map(sub => (
+                      <CategoryRow 
+                        key={sub.id} 
+                        category={sub} 
+                        level={currentLevel + 1}
+                        onEdit={onEdit}
+                        onAddSubCategory={onAddSubCategory}
+                        onDelete={onDelete}
+                        allCategories={allCategories}
+                        onRefresh={onRefresh}
+                      />
+                    ))}
                   </tbody>
                 </table>
               )}
