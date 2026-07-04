@@ -1,9 +1,22 @@
 // Footer.jsx
+import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 
 import { THEME } from '../utils/theme';
 
 export default function Footer() {
+  const [isExpanded, setIsExpanded] = useState(false);
+
+  // Check login status dynamically
+  const userJson = localStorage.getItem('user');
+  let isLoggedIn = false;
+  if (userJson && userJson !== 'undefined' && userJson !== 'null') {
+    try {
+      const u = JSON.parse(userJson);
+      isLoggedIn = !!(u && (u.id || u.Id));
+    } catch (e) {}
+  }
+
   return (
     <footer
       className="w-full mt-auto text-sm border-t pt-6"
@@ -21,22 +34,46 @@ export default function Footer() {
 
         {/* Col 2 */}
         <div className="flex flex-col space-y-3">
-          <h3 className="font-bold text-gray-800 uppercase mb-2">Thông tin công ty</h3>
-          <a href="https://mwg.vn" target="_blank" rel="noopener noreferrer" className="hover:text-primary transition">Giới thiệu công ty (MWG)</a>
+          <h3 className="font-bold text-gray-800 uppercase mb-2">Về công ty</h3>
+          <a href="https://mwg.vn" target="_blank" rel="noopener noreferrer" className="hover:text-primary transition">Giới thiệu công ty (MWG.vn)</a>
           <a href="https://vieclam.thegioididong.com" target="_blank" rel="noopener noreferrer" className="hover:text-primary transition">Tuyển dụng</a>
           <a href="https://www.thegioididong.com/lien-he" target="_blank" rel="noopener noreferrer" className="hover:text-primary transition">Gửi góp ý, khiếu nại</a>
-          <a href="https://www.thegioididong.com/he-thong-sieu-thi-the-gioi-di-dong" target="_blank" rel="noopener noreferrer" className="hover:text-primary transition">Tìm siêu thị (3.300+ shop)</a>
-          <Link to="/donate" className="hover:text-primary text-xs transition">Donate cho thằng thiết kế Frontend</Link>
+          <a href="https://www.thegioididong.com/he-thong-sieu-thi-the-gioi-di-dong" target="_blank" rel="noopener noreferrer" className="hover:text-primary transition">Tìm siêu thị (2.948 shop)</a>
         </div>
 
         {/* Col 3 */}
-        <div className="flex flex-col space-y-3">
-          <h3 className="font-bold text-gray-800 uppercase mb-2">Chính sách chung</h3>
+        <div className="flex flex-col space-y-3 text-gray-700">
+          <h3 className="font-bold text-gray-800 uppercase mb-2">Thông tin khác</h3>
+          <Link to="#" className="hover:text-primary transition">Tích điểm Quà tặng VIP</Link>
+          <Link to={isLoggedIn ? "/profile?tab=history" : "/track"} className="hover:text-primary transition">Lịch sử mua hàng</Link>
+          <Link to="#" className="hover:text-primary transition">Đăng ký bán hàng CTV chiết khấu cao</Link>
+          <Link to="/chinh-sach/tra-gop" className="hover:text-primary transition">Tìm hiểu về mua trả chậm</Link>
           <Link to="/chinh-sach/bao-hanh" className="hover:text-primary transition">Chính sách bảo hành</Link>
-          <Link to="/chinh-sach/doi-tra" className="hover:text-primary transition">Chính sách đổi trả</Link>
-          <Link to="/chinh-sach/tra-gop" className="hover:text-primary transition">Chính sách trả góp</Link>
-          <Link to="/chinh-sach/giao-hang" className="hover:text-primary transition">Giao hàng & Thanh toán</Link>
-          <Link to="/chinh-sach/mua-online" className="hover:text-primary transition">Hướng dẫn mua online</Link>
+
+          {!isExpanded ? (
+            <button
+              onClick={() => setIsExpanded(true)}
+              className="text-left hover:text-primary font-bold transition flex items-center gap-1 cursor-pointer border-0 bg-transparent p-0 text-sm mt-1"
+              style={{ color: THEME.primary }}
+            >
+              Xem thêm ▾
+            </button>
+          ) : (
+            <div className="flex flex-col space-y-3 animate-in fade-in slide-in-from-top-1 duration-200">
+              <Link to="/chinh-sach/doi-tra" className="hover:text-primary transition">Chính sách đổi trả</Link>
+              <Link to="/chinh-sach/giao-hang" className="hover:text-primary transition">Giao hàng & Thanh toán</Link>
+              <Link to="/chinh-sach/mua-online" className="hover:text-primary transition">Hướng dẫn mua online</Link>
+              <Link to="/donate" className="hover:text-primary transition">Donate cho thằng thiết kế Frontend</Link>
+
+              <button
+                onClick={() => setIsExpanded(false)}
+                className="text-left hover:text-primary font-bold transition flex items-center gap-1 cursor-pointer border-0 bg-transparent p-0 text-sm mt-2"
+                style={{ color: THEME.primary }}
+              >
+                Thu gọn ▴
+              </button>
+            </div>
+          )}
         </div>
 
         {/* Col 4 */}
@@ -60,8 +97,8 @@ export default function Footer() {
         className="mt-4 py-4 text-xs border-t text-center"
         style={{ backgroundColor: 'rgba(0,0,0,0.03)', borderColor: THEME.border, color: '#666' }}
       >
-        <p>© 2026. Công ty điện thoại PhoneShop (Scampuchia-Scambodia). Địa chỉ: LuanVan, TP.HCM.</p>
-        <p className="mt-1 opacity-60">Giao diện này được xây dựng bởi thằng Nam.</p>
+        <p>© 2026. Công ty điện thoại PhoneShop(Scambodia). Địa chỉ: 180 Cao Lỗ, Phường Chánh Hưng, TP.HCM.</p>
+        <p className="mt-1 opacity-60"> Chịu trách nhiệm nội dung: Trần Quốc Nam, Email: dh52100514@student.stu.edu.vn. Đại diện giải quyết các vấn đề : Võ Trí Nhân, Email: dh52104533@student.stu.edu.vn.</p>
       </div>
     </footer>
   );

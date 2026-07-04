@@ -7,6 +7,7 @@ import { Sun, Moon } from 'lucide-react';
 import { THEME } from '../utils/theme';
 import { locationService } from '../services/locationService';
 import { productService } from '../services/productService';
+import { categoryService } from '../services/categoryService';
 import Sidebar from './Sidebar';
 
 // Subcomponents
@@ -168,7 +169,8 @@ export default function Header({ selectedLocation, setSelectedLocation, isSideba
 
         {/* Logo */}
         <div className="flex items-center space-x-2 shrink-0">
-          <Link to="/">
+          <Link to="/" className="flex items-center gap-2">
+            <img src="/logo.png" alt="Logo" className="w-8 h-8 object-contain rounded-md" />
             <h1 className="text-2xl font-bold italic tracking-wider hover:opacity-90 transition-opacity">PhoneShop</h1>
           </Link>
         </div>
@@ -202,15 +204,6 @@ export default function Header({ selectedLocation, setSelectedLocation, isSideba
             <Sidebar isFocused={isSidebarFocused} setIsFocused={setIsSidebarFocused} />
           </div>
         )}
-
-        {/* Location Dropdown */}
-        <HeaderLocationSelector
-          selectedLocation={selectedLocation}
-          setSelectedLocation={setSelectedLocation}
-          isDropdownOpen={isDropdownOpen}
-          setIsDropdownOpen={setIsDropdownOpen}
-          displayLocations={displayLocations}
-        />
 
         {/* DESKTOP: Search Bar */}
         <div className="hidden lg:block flex-1 max-w-xl mx-4 min-w-[200px] relative" ref={searchContainerRef}>
@@ -463,7 +456,10 @@ export default function Header({ selectedLocation, setSelectedLocation, isSideba
           >
             {/* Drawer Header */}
             <div className="h-16 flex items-center justify-between px-6 border-b border-gray-100 shrink-0" style={{ backgroundColor: THEME.primary, color: '#ffffff' }}>
-              <span className="font-bold text-lg italic tracking-wider">PhoneShop</span>
+              <div className="flex items-center gap-2">
+                <img src="/logo.png" alt="Logo" className="w-7 h-7 object-contain rounded-md" />
+                <span className="font-bold text-lg italic tracking-wider">PhoneShop</span>
+              </div>
               <button 
                 onClick={() => setIsOpenMobileMenu(false)}
                 className="p-1 rounded hover:bg-white/10 transition cursor-pointer"
@@ -476,37 +472,6 @@ export default function Header({ selectedLocation, setSelectedLocation, isSideba
 
             {/* Drawer Body */}
             <div className="flex-1 overflow-y-auto p-5 space-y-6 no-scrollbar">
-              
-              {/* Location Select (Mobile Drawer) */}
-              <div className="space-y-2">
-                <span className="text-xs font-bold text-gray-400 uppercase tracking-widest block">Khu vực hiển thị giá</span>
-                <div 
-                  onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-                  className="flex items-center justify-between px-3 py-2.5 rounded border border-gray-200 cursor-pointer bg-gray-50 hover:bg-gray-100 transition text-sm font-semibold select-none text-gray-700"
-                >
-                  <span>📍 {selectedLocation || 'Chọn Tỉnh/Thành phố'}</span>
-                  <span>▾</span>
-                </div>
-                {isDropdownOpen && (
-                  <div className="border border-gray-150 rounded-md bg-white mt-1 max-h-40 overflow-y-auto no-scrollbar shadow-inner py-1">
-                    {displayLocations.map((loc) => (
-                      <button
-                        key={loc}
-                        onClick={() => {
-                          setSelectedLocation(loc);
-                          localStorage.setItem('selectedLocation', loc);
-                          setIsDropdownOpen(false);
-                        }}
-                        className={`w-full text-left px-4 py-2 text-xs font-semibold hover:bg-gray-50 transition-colors cursor-pointer block ${
-                          selectedLocation === loc ? 'text-primary bg-primary/5' : 'text-gray-600'
-                        }`}
-                      >
-                        {loc}
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </div>
 
               {/* Tra cứu đơn hàng (Mobile Drawer) */}
               <div>

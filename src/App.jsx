@@ -24,7 +24,7 @@ function App() {
   const location = useLocation();
   const isAdminPath = location.pathname.startsWith('/admin');
 
-  const [selectedLocation, setSelectedLocation] = useState(() => localStorage.getItem('selectedLocation') || '');
+  const [selectedLocation, setSelectedLocation] = useState(() => localStorage.getItem('selectedLocation') || 'Toàn quốc');
   const [provinces, setProvinces] = useState([]);
   const [isSidebarFocused, setIsSidebarFocused] = useState(false);
 
@@ -54,7 +54,7 @@ function App() {
     ? provinces.map(p => p.fullName || p.name) 
     : ['Thành phố Hồ Chí Minh', 'Thành phố Hà Nội', 'Thành phố Đà Nẵng', 'Thành phố Cần Thơ', 'Tỉnh Đồng Nai'];
 
-  if (!selectedLocation && !isAdminPath) {
+  if (false && !selectedLocation && !isAdminPath) {
     return (
       <div className="fixed inset-0 bg-indigo-950/80 backdrop-blur-md z-[9999] flex items-center justify-center p-4">
         <div className="bg-white rounded-2xl p-8 max-w-md w-full border border-gray-100 flex flex-col items-center text-center animate-in zoom-in-95 duration-200">

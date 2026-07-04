@@ -78,11 +78,6 @@ const DonatePage = () => {
               <p className="font-bold text-gray-700">TRẦN QUỐC NAM</p>
             </div>
           </div>
-
-          <div className="mt-8 pt-6 border-t border-gray-100 flex items-center justify-center text-gray-400 text-sm">
-            <Coffee className="w-4 h-4 mr-2" />
-            <span>Cảm ơn sự đóng góp của bạn!</span>
-          </div>
         </div>
       </div>
 

@@ -10,7 +10,7 @@ const STATUS_TABS = [
   { id: 'pending', name: 'Chờ xác nhận', count: 0, icon: Clock, color: 'text-warning', bgColor: 'bg-warning/10' },
   { id: 'confirmed', name: 'Đã xác nhận', count: 0, icon: CheckCircle, color: 'text-info', bgColor: 'bg-info/10' },
   { id: 'shipping', name: 'Đang giao', count: 0, icon: Truck, color: 'text-primary', bgColor: 'bg-primary/10' },
-  { id: 'delivered', name: 'Đã giao', count: 0, icon: CheckCircle, color: 'text-success', bgColor: 'bg-success/10' },
+  { id: 'delivered', name: 'Đã hoàn thành', count: 0, icon: CheckCircle, color: 'text-success', bgColor: 'bg-success/10' },
   { id: 'cancelled', name: 'Đã hủy', count: 0, icon: XCircle, color: 'text-admin-danger', bgColor: 'bg-admin-danger/10' },
 ];
 
@@ -148,7 +148,7 @@ export default function AdminOrders() {
       case 'confirmed': return 'confirmed';
       case 'preparing': return 'confirmed'; // Ánh xạ về confirmed nếu có
       case 'shipping': return 'confirmed'; // Giữ nguyên trạng thái shop
-      case 'delivered': return 'confirmed'; // Giữ nguyên trạng thái shop
+      case 'delivered': return 'delivered'; 
       case 'shipping_failed': return 'confirmed'; // Đơn hàng vẫn Đã xác nhận khi giao thất bại
       case 'cancelled': return 'cancelled';
       default: return 'pending';
@@ -158,7 +158,7 @@ export default function AdminOrders() {
   const getShippingStatus = (status) => {
     switch (status) {
       case 'pending':
-        return { label: 'Chưa tạo vận đơn', style: 'bg-gray-100 text-gray-400 font-medium' };
+        return { label: '-', style: 'text-gray-400 font-bold text-center w-full block' };
       case 'confirmed':
       case 'preparing':
         return { label: 'Chờ lấy hàng', style: 'bg-blue-50 text-blue-600' };
@@ -171,7 +171,7 @@ export default function AdminOrders() {
       case 'cancelled':
         return { label: 'Đã hủy', style: 'bg-red-100 text-red-700' };
       default:
-        return { label: 'Chưa tạo vận đơn', style: 'bg-gray-100 text-gray-400 font-medium' };
+        return { label: '-', style: 'text-gray-400 font-bold text-center w-full block' };
     }
   };
 
@@ -404,6 +404,7 @@ export default function AdminOrders() {
                         >
                           <option value="pending" disabled={order.status !== 'pending'}>Chờ xác nhận</option>
                           <option value="confirmed" disabled={!isTransitionAllowed(order.status, 'confirmed', order.failedDeliveryCount)}>Đã xác nhận</option>
+                          <option value="delivered" disabled={!isTransitionAllowed(order.status, 'delivered', order.failedDeliveryCount)}>Đã hoàn thành</option>
                           <option value="cancelled" disabled={!isTransitionAllowed(order.status, 'cancelled', order.failedDeliveryCount)}>Đã hủy</option>
                         </select>
                       </div>
@@ -523,8 +524,8 @@ export default function AdminOrders() {
             <h3 className="text-lg font-bold text-admin-text-main mb-2 flex items-center gap-2">
               ⚠️ Xác nhận hủy đơn hàng
             </h3>
-            <p className="text-sm text-admin-text-muted font-medium mb-6">
-              Bạn có chắc chắn muốn hủy đơn hàng này không? Hành động này sẽ cập nhật lại trạng thái và thực hiện hoàn lại hàng vào kho.
+            <p className="text-sm text-admin-text-muted font-semibold mb-6">
+              Xác nhận hủy và hoàn lại số lượng (+{orders.find(o => o.id === cancelModal.orderId)?.items?.reduce((sum, item) => sum + (item.quantity || 0), 0) || 1}) vào kho?
             </p>
             <div className="flex justify-end gap-3">
               <button

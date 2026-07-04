@@ -42,7 +42,7 @@ export default function AdminPromotions() {
       // Format dates to YYYY-MM-DDThh:mm for datetime-local input
       const startIso = promo.startDate ? new Date(promo.startDate).toISOString().slice(0, 16) : '';
       const endIso = promo.endDate ? new Date(promo.endDate).toISOString().slice(0, 16) : '';
-      
+
       setFormData({
         code: promo.code,
         discountType: promo.discountType || 'PERCENTAGE',
@@ -58,7 +58,7 @@ export default function AdminPromotions() {
       const now = new Date();
       const nextMonth = new Date();
       nextMonth.setDate(now.getDate() + 30);
-      
+
       setFormData({
         code: '',
         discountType: 'PERCENTAGE',
@@ -121,13 +121,13 @@ export default function AdminPromotions() {
     const now = new Date();
     const start = new Date(promo.startDate);
     const end = new Date(promo.endDate);
-    
+
     if (now < start) return { text: 'Sắp diễn ra', color: 'bg-blue-50 text-blue-600 border border-blue-100' };
     if (now > end) return { text: 'Hết hạn', color: 'bg-gray-150 text-gray-500 border border-gray-200' };
     if (promo.usageLimit > 0 && promo.usedCount >= promo.usageLimit) {
-      return { text: 'Hết lượt', color: 'bg-orange-50 text-orange-600 border border-orange-100' };
+      return { text: 'Hết lượt', color: 'bg-orange-50 text-orange-400 border border-orange-100' };
     }
-    return { text: 'Đang chạy', color: 'bg-green-50 text-green-600 border border-green-100' };
+    return { text: 'Đang hoạt động', color: 'bg-green-50 text-green-400 border border-green-100' };
   };
 
   const filteredPromotions = promotions.filter(promo =>
@@ -200,8 +200,8 @@ export default function AdminPromotions() {
                         {promo.discountType === 'PERCENTAGE' ? 'Giảm phần trăm' : 'Giảm số tiền'}
                       </td>
                       <td className="px-6 py-4 text-red-600 font-extrabold text-base">
-                        {promo.discountType === 'PERCENTAGE' 
-                          ? `${promo.discountValue}%` 
+                        {promo.discountType === 'PERCENTAGE'
+                          ? `${promo.discountValue}%`
                           : `${promo.discountValue.toLocaleString('vi-VN')} ₫`}
                       </td>
                       <td className="px-6 py-4">
@@ -272,7 +272,7 @@ export default function AdminPromotions() {
                 <X size={24} />
               </button>
             </div>
-            
+
             <form onSubmit={handleSave} className="p-6 space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div className="col-span-2">

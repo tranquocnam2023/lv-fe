@@ -55,9 +55,7 @@ export default function HomePage({ selectedLocation }) {
   const [categories, setCategories] = useState([]);
 
   const isAvailableInLocation = (product, locationName) => {
-    if (!locationName) return true;
-    const hash = locationName.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
-    return ((product.id + hash) % 4) !== 0; 
+    return true; 
   };
 
   useEffect(() => {

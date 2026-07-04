@@ -210,22 +210,6 @@ export default function ProductSummaryInfo({
             </button>
           </div>
         </div>
-
-        {/* Cửa hàng gần bạn */}
-        <div className="bg-gray-50 rounded-md p-6">
-          <div className="flex items-center gap-4">
-            <div className="w-12 h-12 rounded-md bg-white flex items-center justify-center text-blue-600 shadow-sm border border-gray-100">
-              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M15 10.5a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
-                <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1 1 15 0Z" />
-              </svg>
-            </div>
-            <div>
-              <p className="text-xs font-black text-gray-400 uppercase tracking-widest">Hỗ trợ nhanh</p>
-              <p className="text-base font-black text-gray-800">Tìm cửa hàng gần bạn</p>
-            </div>
-          </div>
-        </div>
       </div>
     </div>
   );

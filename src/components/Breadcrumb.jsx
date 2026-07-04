@@ -1,13 +1,20 @@
 import { Link } from 'react-router-dom';
 
 export default function Breadcrumb({ items }) {
+  // Filter out any duplicate root 'Trang chủ' link if it's passed in the items array
+  const cleanItems = items ? items.filter(item => {
+    const isRootLabel = item.label && (item.label.toLowerCase() === 'trang chủ' || item.label.toLowerCase() === 'trang chu');
+    const isRootLink = item.path === '/' || item.link === '/';
+    return !(isRootLabel || isRootLink);
+  }) : [];
+
   return (
     <nav className="flex items-center text-sm mb-4 text-gray-600">
       <Link to="/" className="text-blue-600 hover:text-blue-800 hover:underline transition-colors font-medium">
         Trang chủ
       </Link>
       
-      {items && items.length > 0 && items.map((item, index) => (
+      {cleanItems.length > 0 && cleanItems.map((item, index) => (
         <div key={index} className="flex items-center">
           <span className="mx-2 text-gray-400">›</span>
           {(item.path || item.link) ? (
