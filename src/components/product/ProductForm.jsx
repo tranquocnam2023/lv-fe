@@ -1,8 +1,8 @@
 import React from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { ArrowLeft, Save, Loader2 } from 'lucide-react';
-import { ProductFormProvider } from './context/ProductFormContext';
-import { useProductForm } from './hooks/useProductForm';
+import { ArrowLeft, Save, Loader2, Plus } from 'lucide-react';
+import { ProductFormProvider } from '../../context/ProductFormContext';
+import { useProductForm } from '../../hooks/useProductForm';
 import PriceInput from '../PriceInput';
 import ProductBasicInfo from './subcomponents/ProductBasicInfo';
 import ProductImageUpload from './subcomponents/ProductImageUpload';
@@ -10,7 +10,7 @@ import ProductSpecsBuilder from './subcomponents/ProductSpecsBuilder';
 import ProductOptionsBuilder from './subcomponents/ProductOptionsBuilder';
 import ProductVariantsMatrix from './subcomponents/ProductVariantsMatrix';
 
-export default function ProductForm({ productId, onBack, onSaveSuccess }) {
+export default function ProductForm({ productId, onBack, onSaveSuccess, onCreateNew }) {
   const [searchParams, setSearchParams] = useSearchParams();
   const formState = useProductForm({ productId, onBack, onSaveSuccess, searchParams, setSearchParams });
 
@@ -34,8 +34,8 @@ export default function ProductForm({ productId, onBack, onSaveSuccess }) {
   return (
     <ProductFormProvider value={formState}>
       <div className="flex flex-col gap-6 font-sans">
-        {/* Top Header (Sticky with Glassmorphism) */}
-        <div className="sticky top-0 z-40 bg-admin-bg/90 backdrop-blur-sm -mt-4 pt-4 pb-4 -mx-8 px-8 border-b border-admin-border/40 flex items-center justify-between mb-4">
+        {/* Top Header (Sticky — dính sát header admin khi cuộn) */}
+        <div className="sticky top-0 z-40 bg-admin-bg -mt-4 pt-4 pb-4 -mx-8 px-8 border-b border-admin-border flex items-center justify-between mb-4">
           <div className="flex items-center gap-4">
             <button onClick={onBack} className="p-2 bg-white rounded-full text-admin-text-muted hover:text-admin-text-main border border-admin-border transition-colors cursor-pointer">
               <ArrowLeft size={20} />
@@ -50,6 +50,18 @@ export default function ProductForm({ productId, onBack, onSaveSuccess }) {
             </div>
           </div>
           <div className="flex gap-3">
+            {/* Nút Tạo sản phẩm mới — chỉ hiển thị khi đang ở chế độ cập nhật */}
+            {productId && onCreateNew && (
+              <button
+                type="button"
+                onClick={onCreateNew}
+                className="flex items-center gap-2 px-5 py-2.5 border border-admin-border text-admin-text-muted rounded-md font-bold hover:bg-admin-bg hover:text-admin-text-main transition-colors text-sm cursor-pointer"
+                title="Chuyển sang trang thêm sản phẩm mới"
+              >
+                <Plus size={16} />
+                Thêm sản phẩm mới
+              </button>
+            )}
             <button
               type="button"
               onClick={onBack}

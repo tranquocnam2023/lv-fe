@@ -7,6 +7,7 @@ import { Sun, Moon } from 'lucide-react';
 import { THEME } from '../utils/theme';
 import { locationService } from '../services/locationService';
 import { productService } from '../services/productService';
+import { categoryService } from '../services/categoryService';
 import Sidebar from './Sidebar';
 
 // Subcomponents

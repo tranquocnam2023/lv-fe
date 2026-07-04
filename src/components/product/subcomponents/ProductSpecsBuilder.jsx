@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Plus, Trash2, FolderPlus, PlusCircle, LayoutGrid, Layers } from 'lucide-react';
-import { useProductFormContext } from '../context/ProductFormContext';
+import { useProductFormContext } from '../../../context/ProductFormContext';
 
 export default function ProductSpecsBuilder() {
   const { formData, setFormData } = useProductFormContext();

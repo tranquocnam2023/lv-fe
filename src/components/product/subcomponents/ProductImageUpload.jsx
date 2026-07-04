@@ -1,5 +1,5 @@
 import React from 'react';
-import { useProductFormContext } from '../context/ProductFormContext';
+import { useProductFormContext } from '../../../context/ProductFormContext';
 import SharedLocalImageUpload from '../../SharedLocalImageUpload';
 
 export default function ProductImageUpload() {

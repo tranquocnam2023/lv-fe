@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { ChevronDown, Trash2, Check, UploadCloud, Loader2 } from 'lucide-react';
-import { useProductFormContext } from '../context/ProductFormContext';
+import { useProductFormContext } from '../../../context/ProductFormContext';
 import PriceInput from '../../PriceInput';
 import { productService } from '../../../services/productService';
 
@@ -328,7 +328,7 @@ export default function BulkActionsPanel() {
                   onClick={() => {
                     if (window.confirm(`Bạn có chắc chắn muốn gỡ bỏ hình ảnh của ${selectedVariantKeys.length} biến thể đang chọn?`)) {
                       selectedVariantKeys.forEach(key => {
-                        updateVariantField(key, 'imageId', '');
+                        updateVariantField(key, 'imageId', '/no_image.png');
                       });
                       showToast("success", `Đã gỡ ảnh của ${selectedVariantKeys.length} biến thể.`);
                     }

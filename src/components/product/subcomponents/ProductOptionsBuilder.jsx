@@ -1,6 +1,6 @@
 import React from 'react';
 import { Plus, Trash2 } from 'lucide-react';
-import { useProductFormContext } from '../context/ProductFormContext';
+import { useProductFormContext } from '../../../context/ProductFormContext';
 
 export default function ProductOptionsBuilder() {
   const {

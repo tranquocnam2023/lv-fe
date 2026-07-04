@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import { Image as ImageIcon, Trash2, X } from 'lucide-react';
-import { useProductFormContext } from '../context/ProductFormContext';
+import { useProductFormContext } from '../../../context/ProductFormContext';
 import PriceInput from '../../PriceInput';
 import { productService } from '../../../services/productService';
 import { generateProductCode } from '../../../utils/codeGenerator';

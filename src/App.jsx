@@ -12,7 +12,7 @@ import Footer from './components/Footer';
 import HomePage from './page/HomePage';
 import AuthPage from './page/AuthPage';
 import CartPage from './page/CartPage';
-import AdminPage from './page/AdminPage';
+import AdminPage from './page/admin/AdminPage';
 import DonatePage from './page/DonatePage';
 import ProductDetailPage from './page/ProductDetailPage';
 import PolicyPage from './page/PolicyPage';
