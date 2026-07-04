@@ -1,75 +1,67 @@
 @import "tailwindcss";
 
 :root {
-  /* HSL bases for Light Theme */
-  --primary-hue: 251;
-  --primary-saturation: 100%;
-  --primary-lightness: 55%;
-
-  --primary: hsl(var(--primary-hue) var(--primary-saturation) var(--primary-lightness));
-  --secondary: hsl(209 85% 43%);
-  --success: hsl(160 100% 43%);
-  --warning: hsl(25 100% 61%);
-  --danger: hsl(353 100% 62%);
-  --info: hsl(198 98% 57%);
-  --yellow: hsl(48 97% 60%);
-  --bg: hsl(220 14% 96%);
-  --text: hsl(210 20% 15%);
-  --textmuted: hsl(216 19% 67%);
-  --textmain: hsl(214 21% 26%);
-  --bgcard: hsl(0 0% 100%);
-  --bordercustom: hsl(214 41% 95%);
-  --headerbg: hsl(var(--primary-hue) var(--primary-saturation) var(--primary-lightness));
-  --footerbg: hsl(0 0% 100%);
-  --sidebarbg: hsl(0 0% 100%);
+  /* RGB bases for Light Theme */
+  --primary: rgb(21, 36, 208);
+  --secondary: rgb(16, 38, 203);
+  --success: rgb(0, 219, 146);
+  --warning: rgb(255, 139, 56);
+  --danger: rgb(255, 61, 84);
+  --info: rgb(38, 188, 253);
+  --yellow: rgb(252, 212, 54);
+  --bg: rgb(243, 244, 246);
+  --text: rgb(31, 38, 46);
+  --textmuted: rgb(155, 168, 187);
+  --textmain: rgb(52, 64, 80);
+  --bgcard: rgb(255, 255, 255);
+  --bordercustom: rgb(237, 242, 247);
+  --headerbg: rgb(68, 26, 255);
+  --footerbg: rgb(255, 255, 255);
+  --sidebarbg: rgb(255, 255, 255);
 
   /* Admin colors in light mode */
-  --admin-sidebar-bg: hsl(227 60% 17%);
-  --admin-sidebar-border: hsl(228 47% 20%);
-  --admin-sidebar-hover: hsl(228 47% 20%);
-  --admin-sidebar-text: hsl(225 33% 73%);
-  --admin-bg: hsl(223 77% 98%);
-  --admin-border: hsl(223 36% 92%);
-  --admin-text-main: hsl(231 46% 31%);
-  --admin-text-muted: hsl(225 33% 73%);
-  --admin-danger: hsl(5 83% 62%);
-  --admin-primary-hover: hsl(252 85% 45%);
+  --admin-sidebar-bg: rgb(17, 29, 69);
+  --admin-sidebar-border: rgb(27, 37, 75);
+  --admin-sidebar-hover: rgb(27, 37, 75);
+  --admin-sidebar-text: rgb(163, 175, 209);
+  --admin-bg: rgb(246, 248, 254);
+  --admin-border: rgb(227, 231, 242);
+  --admin-text-main: rgb(43, 54, 115);
+  --admin-text-muted: rgb(163, 175, 209);
+  --admin-danger: rgb(239, 91, 78);
+  --admin-primary-hover: rgb(17, 33, 212);
 }
 
 .dark {
-  /* HSL bases for Dark Mode */
-  --primary-hue: 251;
-  --primary-saturation: 100%;
-  --primary-lightness: 65%;
-
-  --primary: hsl(var(--primary-hue) var(--primary-saturation) var(--primary-lightness));
-  --secondary: hsl(209 90% 55%);
-  --success: hsl(160 100% 45%);
-  --warning: hsl(25 100% 65%);
-  --danger: hsl(353 100% 65%);
-  --info: hsl(198 98% 65%);
-  --yellow: hsl(48 97% 65%);
-  --bg: hsl(222 47% 10%); /* Deep sleek slate */
-  --text: hsl(210 40% 98%); /* Crisp off-white */
-  --textmuted: hsl(215 20% 65%);
-  --textmain: hsl(210 40% 90%);
-  --bgcard: hsl(222 47% 15%); /* Sleek navy-slate card */
-  --bordercustom: hsl(222 30% 22%);
-  --headerbg: hsl(222 47% 14%); /* Premium dark header */
-  --footerbg: hsl(222 47% 14%);
-  --sidebarbg: hsl(222 47% 15%);
+  /* RGB bases for Dark Mode */
+  --primary: rgb(109, 77, 255);
+  --secondary: rgb(37, 144, 244);
+  --success: rgb(0, 230, 153);
+  --warning: rgb(255, 151, 77);
+  --danger: rgb(255, 77, 97);
+  --info: rgb(78, 201, 253);
+  --yellow: rgb(252, 218, 79);
+  --bg: rgb(14, 21, 37);
+  --text: rgb(248, 250, 252);
+  --textmuted: rgb(148, 163, 184);
+  --textmain: rgb(219, 230, 240);
+  --bgcard: rgb(20, 31, 56);
+  --bordercustom: rgb(39, 49, 73);
+  --headerbg: rgb(19, 29, 52);
+  --footerbg: rgb(19, 29, 52);
+  --sidebarbg: rgb(20, 31, 56);
 
   /* Admin colors in dark mode */
-  --admin-sidebar-bg: hsl(222 47% 12%);
-  --admin-sidebar-border: hsl(222 30% 20%);
-  --admin-sidebar-hover: hsl(222 30% 18%);
-  --admin-sidebar-text: hsl(225 33% 73%);
-  --admin-bg: hsl(222 47% 8%);
-  --admin-border: hsl(222 30% 20%);
-  --admin-text-main: hsl(210 40% 95%);
-  --admin-text-muted: hsl(215 20% 65%);
-  --admin-danger: hsl(5 83% 62%);
-  --admin-primary-hover: hsl(252 85% 55%);
+  --admin-sidebar-bg: rgb(16, 25, 45);
+  --admin-sidebar-border: rgb(36, 45, 66);
+  --admin-sidebar-hover: rgb(32, 40, 60);
+  --admin-sidebar-text: rgb(163, 175, 209);
+  --admin-bg: rgb(11, 17, 30);
+  --admin-border: rgb(36, 45, 66);
+  --admin-text-main: rgb(237, 242, 247);
+  --admin-text-muted: rgb(148, 163, 184);
+  --admin-danger: rgb(239, 91, 78);
+  --admin-primary-hover: rgb(82, 43, 238);
 }
 
 @theme {
@@ -103,6 +95,7 @@
 
 /* Dark mode utility overrides for standard Tailwind color classes */
 .dark {
+
   /* Override backgrounds to deep card style */
   .bg-white,
   div.bg-white,
@@ -115,37 +108,68 @@
   nav.bg-white {
     background-color: var(--bgcard) !important;
   }
-  
-  .bg-gray-50, .bg-slate-50, .bg-zinc-50, .bg-gray-100, .bg-slate-100, .bg-zinc-100, .bg-slate-50\/40, .bg-gray-50\/40 {
+
+  .bg-gray-50,
+  .bg-slate-50,
+  .bg-zinc-50,
+  .bg-gray-100,
+  .bg-slate-100,
+  .bg-zinc-100,
+  .bg-slate-50\/40,
+  .bg-gray-50\/40 {
     background-color: var(--bg) !important;
   }
 
   /* Override text colors to light mode counterparts */
-  .text-gray-900, .text-gray-800, .text-slate-900, .text-slate-800, .text-zinc-900, .text-zinc-800, .text-admin-text-main {
+  .text-gray-900,
+  .text-gray-800,
+  .text-slate-900,
+  .text-slate-800,
+  .text-zinc-900,
+  .text-zinc-800,
+  .text-admin-text-main {
     color: var(--text) !important;
   }
-  
-  .text-gray-700, .text-gray-600, .text-slate-700, .text-slate-600, .text-zinc-700, .text-zinc-600 {
+
+  .text-gray-700,
+  .text-gray-600,
+  .text-slate-700,
+  .text-slate-600,
+  .text-zinc-700,
+  .text-zinc-600 {
     color: var(--textmain) !important;
   }
-  
-  .text-gray-500, .text-slate-500, .text-zinc-500, .text-admin-text-muted {
+
+  .text-gray-500,
+  .text-slate-500,
+  .text-zinc-500,
+  .text-admin-text-muted {
     color: var(--textmuted) !important;
   }
 
   /* Override borders to subtle dark border */
-  .border-gray-200, .border-gray-150, .border-gray-100, .border-slate-200, .border-slate-100, .border-zinc-200, .border-zinc-100, .border-admin-border {
+  .border-gray-200,
+  .border-gray-150,
+  .border-gray-100,
+  .border-slate-200,
+  .border-slate-100,
+  .border-zinc-200,
+  .border-zinc-100,
+  .border-admin-border {
     border-color: var(--bordercustom) !important;
   }
 
   /* Form inputs, selections and textareas inside dark mode */
-  input, select, textarea {
+  input,
+  select,
+  textarea {
     background-color: var(--bgcard) !important;
     color: var(--text) !important;
     border-color: var(--bordercustom) !important;
   }
-  
-  input::placeholder, textarea::placeholder {
+
+  input::placeholder,
+  textarea::placeholder {
     color: var(--textmuted) !important;
   }
 
@@ -155,7 +179,12 @@
   }
 
   /* Shadows override to look more premium in dark environment */
-  .shadow, .shadow-sm, .shadow-md, .shadow-lg, .shadow-xl, .shadow-2xl {
+  .shadow,
+  .shadow-sm,
+  .shadow-md,
+  .shadow-lg,
+  .shadow-xl,
+  .shadow-2xl {
     box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.4), 0 2px 4px -1px rgba(0, 0, 0, 0.2) !important;
   }
 }
@@ -164,9 +193,11 @@
 .theme-toggle-btn {
   transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
+
 .theme-toggle-btn:hover {
   transform: scale(1.12) rotate(12deg);
 }
+
 .theme-toggle-btn:active {
   transform: scale(0.92) rotate(-6deg);
 }
@@ -203,6 +234,7 @@ input::-webkit-inner-spin-button {
   -webkit-appearance: none;
   margin: 0;
 }
+
 input[type=number] {
   -moz-appearance: textfield;
 }
@@ -211,7 +243,10 @@ input[type=number] {
 .no-scrollbar::-webkit-scrollbar {
   display: none !important;
 }
+
 .no-scrollbar {
-  -ms-overflow-style: none !important;  /* IE and Edge */
-  scrollbar-width: none !important;  /* Firefox */
+  -ms-overflow-style: none !important;
+  /* IE and Edge */
+  scrollbar-width: none !important;
+  /* Firefox */
 }

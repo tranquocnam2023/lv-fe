@@ -15,6 +15,10 @@ export default function SharedLocalImageUpload({
   const [uploading, setUploading] = useState(false);
   const [draggedIndex, setDraggedIndex] = useState(null);
 
+  // Placeholder hiển thị khi không có ảnh hoặc sau khi xóa
+  const NO_IMAGE_URL = '/no_image.png';
+  const isNoImage = (url) => !url || url === NO_IMAGE_URL;
+
   // Helper to ensure VITE_API_URL is appended if the URL is relative
   const getAbsoluteUrl = (url) => {
     if (!url) return '';
@@ -68,7 +72,7 @@ export default function SharedLocalImageUpload({
   };
 
   const handleRemoveSingle = () => {
-    onChange('');
+    onChange(NO_IMAGE_URL);
   };
 
   const handleRemoveMultiple = (index) => {
@@ -128,37 +132,44 @@ export default function SharedLocalImageUpload({
 
   // Render Compact Single Image Mode (e.g. for grid cells)
   if (compact && !multiple) {
-    const previewUrl = value || '';
+    const previewUrl = getAbsoluteUrl(value) || NO_IMAGE_URL;
+    const showDelete = !isNoImage(value);
     return (
       <div className="relative w-8 h-8 rounded border border-admin-border bg-gray-50 flex items-center justify-center overflow-hidden cursor-pointer group shadow-sm">
         {uploading ? (
           <Loader2 className="animate-spin text-primary" size={14} />
-        ) : previewUrl ? (
-          <>
-            <img src={previewUrl} alt="Preview" className="w-full h-full object-cover" />
-            <button
-              type="button"
-              onClick={(e) => {
-                e.stopPropagation();
-                e.preventDefault();
-                handleRemoveSingle();
-              }}
-              className="absolute inset-0 bg-red-500/80 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity border-0 cursor-pointer"
-              title="Xóa hình"
-            >
-              <Trash2 size={12} />
-            </button>
-          </>
         ) : (
           <>
-            <ImageIcon className="text-admin-text-muted w-4 h-4" />
-            <input
-              type="file"
-              accept=".jpg,.jpeg,.png,.webp,.svg"
-              onChange={handleImageUpload}
-              className="absolute inset-0 opacity-0 cursor-pointer w-full h-full z-10"
-              disabled={uploading || disabled}
+            <img
+              src={previewUrl}
+              alt="Preview"
+              className="w-full h-full object-cover"
+              onError={(e) => { e.currentTarget.src = NO_IMAGE_URL; }}
             />
+            {showDelete && (
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  e.preventDefault();
+                  handleRemoveSingle();
+                }}
+                className="absolute inset-0 bg-red-500/80 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity border-0 cursor-pointer"
+                title="Xóa hình"
+              >
+                <Trash2 size={12} />
+              </button>
+            )}
+            {/* Cho phép upload ảnh mới khi đang hiển thị no_image */}
+            {!showDelete && (
+              <input
+                type="file"
+                accept=".jpg,.jpeg,.png,.webp,.svg"
+                onChange={handleImageUpload}
+                className="absolute inset-0 opacity-0 cursor-pointer w-full h-full z-10"
+                disabled={uploading || disabled}
+              />
+            )}
           </>
         )}
       </div>
@@ -167,17 +178,21 @@ export default function SharedLocalImageUpload({
 
   // Render Single Image Mode
   if (!multiple) {
-    const previewUrl = value || '';
+    const previewUrl = getAbsoluteUrl(value) || NO_IMAGE_URL;
+    const showDelete = !isNoImage(value);
 
     return (
       <div className="flex flex-col items-center sm:flex-row gap-6 p-4 bg-admin-bg rounded-md border border-admin-border border-dashed w-full">
         <div className="w-24 h-24 bg-white rounded-md border border-admin-border flex items-center justify-center overflow-hidden flex-shrink-0 relative">
           {uploading ? (
             <Loader2 className="animate-spin text-primary" size={24} />
-          ) : previewUrl ? (
-            <img src={previewUrl} alt="Preview Logo" className="w-full h-full object-contain p-2" />
           ) : (
-            <ImageIcon className="text-admin-text-muted" size={32} />
+            <img
+              src={previewUrl}
+              alt="Preview Logo"
+              className="w-full h-full object-contain p-2"
+              onError={(e) => { e.currentTarget.src = NO_IMAGE_URL; }}
+            />
           )}
         </div>
         <div className="flex-1 text-center sm:text-left">
@@ -195,7 +210,7 @@ export default function SharedLocalImageUpload({
                 disabled={uploading || disabled}
               />
             </label>
-            {previewUrl && (
+            {showDelete && (
               <button
                 type="button"
                 onClick={handleRemoveSingle}

@@ -1,6 +1,6 @@
 import React from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { useProductFormContext } from '../context/ProductFormContext';
+import { useProductFormContext } from '../../../context/ProductFormContext';
 import RichTextEditor from '../../RichTextEditor';
 
 export default function ProductBasicInfo({ productId }) {

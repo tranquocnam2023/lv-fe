@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
 import { Image as ImageIcon, Trash2, PlusCircle, MinusCircle } from 'lucide-react';
-import { useProductFormContext } from '../context/ProductFormContext';
+import { useProductFormContext } from '../../../context/ProductFormContext';
 import PriceInput from '../../PriceInput';
 import { productService } from '../../../services/productService';
 import SharedLocalImageUpload from '../../SharedLocalImageUpload';
