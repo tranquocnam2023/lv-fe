@@ -24,6 +24,7 @@ export default function CategoryRow({ category, level = 1, onEdit, onAddSubCateg
     try {
       const payload = {
         name: category.name,
+        slug: category.slug || '',
         categoryCode: category.categoryCode,
         description: category.description || '',
         iconUrl: '',
@@ -65,6 +66,7 @@ export default function CategoryRow({ category, level = 1, onEdit, onAddSubCateg
         
         const payload = {
           name: category.name,
+          slug: category.slug || '',
           categoryCode: category.categoryCode,
           description: category.description || '',
           iconUrl: finalUrl,

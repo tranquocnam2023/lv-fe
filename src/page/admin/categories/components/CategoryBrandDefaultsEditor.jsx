@@ -4,6 +4,9 @@ import { brandService } from '../../../../services/brandService';
 import { categoryBrandDefaultService } from '../../../../services/categoryBrandDefaultService';
 
 export default function CategoryBrandDefaultsEditor({ categoryId, specsTemplate }) {
+  // Normalize categoryId to a clean integer to prevent malformed URLs (e.g. "1:1" composite keys)
+  const normalizedCategoryId = categoryId ? parseInt(categoryId, 10) : null;
+
   const [brands, setBrands] = useState([]);
   const [configuredDefaults, setConfiguredDefaults] = useState([]);
   const [selectedBrandId, setSelectedBrandId] = useState('');
@@ -67,13 +70,13 @@ export default function CategoryBrandDefaultsEditor({ categoryId, specsTemplate 
 
   // Load brands and existing overrides
   useEffect(() => {
-    if (!categoryId) return;
+    if (!normalizedCategoryId || isNaN(normalizedCategoryId)) return;
     const loadData = async () => {
       setLoading(true);
       try {
         const [allBrands, existingOverrides] = await Promise.all([
           brandService.getAll(),
-          categoryBrandDefaultService.getByCategory(categoryId)
+          categoryBrandDefaultService.getByCategory(normalizedCategoryId)
         ]);
 
         setBrands(allBrands || []);
@@ -98,7 +101,7 @@ export default function CategoryBrandDefaultsEditor({ categoryId, specsTemplate 
       }
     };
     loadData();
-  }, [categoryId]);
+  }, [normalizedCategoryId]);
 
   const showStatus = (type, text) => {
     setStatusMsg({ type, text });
@@ -108,7 +111,7 @@ export default function CategoryBrandDefaultsEditor({ categoryId, specsTemplate 
   const handleAddBrandConfig = () => {
     if (!selectedBrandId) return;
     
-    const brandIdInt = parseInt(selectedBrandId);
+    const brandIdInt = parseInt(selectedBrandId, 10);
     // Check if already configured
     if (configuredDefaults.some(d => d.brandId === brandIdInt)) {
       showStatus('error', 'Hãng này đã được cấu hình từ trước!');
@@ -120,7 +123,7 @@ export default function CategoryBrandDefaultsEditor({ categoryId, specsTemplate 
 
     const newConfigItem = {
       id: 0, // Temporary ID for unsaved items
-      categoryId: parseInt(categoryId),
+      categoryId: normalizedCategoryId,
       brandId: brand.id,
       brandName: brand.name,
       defaultSpecs: '{}'
@@ -160,15 +163,15 @@ export default function CategoryBrandDefaultsEditor({ categoryId, specsTemplate 
 
     try {
       const res = await categoryBrandDefaultService.upsert({
-        categoryId: parseInt(categoryId),
-        brandId: parseInt(brandId),
+        categoryId: normalizedCategoryId,
+        brandId: parseInt(brandId, 10),
         defaultSpecs: JSON.stringify(cleanedSpecs)
       });
       
       showStatus('success', res.message || 'Lưu cấu hình mặc định thành công!');
       
       // Reload overrides to get real database IDs
-      const updatedOverrides = await categoryBrandDefaultService.getByCategory(categoryId);
+      const updatedOverrides = await categoryBrandDefaultService.getByCategory(normalizedCategoryId);
       setConfiguredDefaults(updatedOverrides || []);
     } catch (e) {
       console.error("Lỗi khi lưu cấu hình thương hiệu:", e);
@@ -204,7 +207,7 @@ export default function CategoryBrandDefaultsEditor({ categoryId, specsTemplate 
     !configuredDefaults.some(d => d.brandId === b.id)
   );
 
-  if (!categoryId) {
+  if (!normalizedCategoryId || isNaN(normalizedCategoryId)) {
     return (
       <div className="bg-slate-50 border border-admin-border rounded-md p-4 flex items-center gap-3">
         <AlertCircle size={18} className="text-admin-text-muted" />
