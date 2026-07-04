@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { 
+import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend,
   ComposedChart, Line, AreaChart, Area, PieChart, Pie, Cell
 } from 'recharts';
-import { 
-  ShoppingCart, Gift, Package, TrendingUp, ShoppingBag, 
+import {
+  ShoppingCart, Gift, Package, TrendingUp, ShoppingBag,
   Users, HardDrive, ShieldAlert, Award, FileText, BarChart3,
   Calendar, Layers, CheckCircle2, ChevronRight, Activity, ArrowUpRight, ArrowDownRight
 } from 'lucide-react';
@@ -23,7 +23,7 @@ export default function AdminDashboard() {
   const [stats, setStats] = useState({ totalRevenue: 0, totalOrders: 0, totalProducts: 0, totalUsers: 0 });
   const [weeklySales, setWeeklySales] = useState(0);
   const [usersList, setUsersList] = useState([]);
-  const [shippingStats, setShippingStats] = useState({ delivered: 0, shipping: 0, pending: 0, total: 0 });
+  const [shippingStats, setShippingStats] = useState({ pending: 0, confirmed: 0, shipping: 0, delivered: 0, canceled: 0, total: 0 });
 
   useEffect(() => {
     // 1. Fetch Revenue Data
@@ -68,13 +68,17 @@ export default function AdminDashboard() {
       setWeeklySales(weeklyTotal);
 
       // B. Shipping statistics
-      const delivered = orderList.filter(o => o.statusId === 4).length;
+      const pending = orderList.filter(o => o.statusId === 1).length;
+      const confirmed = orderList.filter(o => o.statusId === 2).length;
       const shipping = orderList.filter(o => o.statusId === 3).length;
-      const pending = orderList.filter(o => o.statusId === 1 || o.statusId === 2).length;
+      const delivered = orderList.filter(o => o.statusId === 4).length;
+      const canceled = orderList.filter(o => o.statusId === 5).length;
       setShippingStats({
-        delivered,
-        shipping,
         pending,
+        confirmed,
+        shipping,
+        delivered,
+        canceled,
         total: orderList.length
       });
 
@@ -137,8 +141,8 @@ export default function AdminDashboard() {
   }, []);
 
   // Format các số liệu hiển thị
-  const formattedWeeklySales = weeklySales > 0 
-    ? `${weeklySales.toLocaleString('vi-VN')}đ` 
+  const formattedWeeklySales = weeklySales > 0
+    ? `${weeklySales.toLocaleString('vi-VN')}đ`
     : '0đ';
 
   const formattedTotalRevenue = stats.totalRevenue > 0
@@ -162,10 +166,7 @@ export default function AdminDashboard() {
     percentage: Math.round((b.value / totalBrandStock) * 100)
   }));
 
-  // Phần trăm của từng trạng thái vận chuyển
-  const deliveredPct = shippingStats.total > 0 ? (shippingStats.delivered / shippingStats.total) * 100 : 0;
-  const shippingPct = shippingStats.total > 0 ? (shippingStats.shipping / shippingStats.total) * 100 : 0;
-  const pendingPct = shippingStats.total > 0 ? (shippingStats.pending / shippingStats.total) * 100 : 0;
+  // Phần trăm của từng trạng thái vận chuyển (đã bỏ thanh đo)
 
   // Chuẩn bị dữ liệu cho biểu đồ (tự động chia tỷ lệ x10 cho doanh thu ngày để đồng bộ trục Y với lũy kế)
   const formattedChartData = revenueData.map(item => ({
@@ -175,10 +176,10 @@ export default function AdminDashboard() {
 
   return (
     <div className="space-y-6 pb-10 font-sans text-textmain animate-in fade-in duration-300">
-      
+
       {/* SECTION 1: TOP STATS CARDS */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        
+
         {/* Card 1: Weekly Sales */}
         <div className="bg-bgcard p-5 rounded-lg border border-bordercustom shadow-sm flex flex-col justify-between h-[150px] relative overflow-hidden group hover:shadow-md transition-shadow">
           <div>
@@ -219,8 +220,8 @@ export default function AdminDashboard() {
               <AreaChart data={orderTrendData}>
                 <defs>
                   <linearGradient id="orderGrad" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="var(--color-primary)" stopOpacity={0.4}/>
-                    <stop offset="95%" stopColor="var(--color-primary)" stopOpacity={0}/>
+                    <stop offset="5%" stopColor="var(--color-primary)" stopOpacity={0.4} />
+                    <stop offset="95%" stopColor="var(--color-primary)" stopOpacity={0} />
                   </linearGradient>
                 </defs>
                 <Area type="monotone" dataKey="orders" stroke="var(--color-primary)" strokeWidth={2} fillOpacity={1} fill="url(#orderGrad)" />
@@ -274,7 +275,7 @@ export default function AdminDashboard() {
 
       {/* SECTION 2: CHARTS & PROJECTS ROW */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        
+
         {/* Left: Total Sales Line Chart (8 Columns) */}
         <div className="lg:col-span-8 bg-bgcard p-6 rounded-lg border border-bordercustom shadow-sm flex flex-col h-[400px]">
           <div className="flex justify-between items-center mb-6">
@@ -290,7 +291,7 @@ export default function AdminDashboard() {
               <div className="text-xs font-bold text-primary bg-blue-50 px-3 py-1.5 rounded-md">
                 {chartType === 'cumulative' ? `Tổng lũy kế: ${formattedTotalRevenue}` : `Doanh thu tuần: ${formattedWeeklySales}`}
               </div>
-              <button 
+              <button
                 onClick={() => setChartType(prev => prev === 'cumulative' ? 'daily' : 'cumulative')}
                 className="p-1.5 text-textmuted hover:text-primary hover:bg-gray-50 border border-bordercustom rounded-md transition-all duration-200 flex items-center gap-1 font-semibold text-xs cursor-pointer"
                 title={chartType === 'cumulative' ? 'Click để chuyển sang Doanh thu theo Ngày' : 'Click để chuyển sang Lũy kế doanh số'}
@@ -306,23 +307,23 @@ export default function AdminDashboard() {
               <AreaChart data={formattedChartData}>
                 <defs>
                   <linearGradient id="colorSales" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="var(--color-primary)" stopOpacity={0.3}/>
-                    <stop offset="95%" stopColor="var(--color-primary)" stopOpacity={0}/>
+                    <stop offset="5%" stopColor="var(--color-primary)" stopOpacity={0.3} />
+                    <stop offset="95%" stopColor="var(--color-primary)" stopOpacity={0} />
                   </linearGradient>
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--color-bordercustom)" />
-                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fill: 'var(--color-textmuted)', fontSize: 11, fontWeight: 600}} />
-                <YAxis axisLine={false} tickLine={false} tick={{fill: 'var(--color-textmuted)', fontSize: 11, fontWeight: 600}} />
+                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: 'var(--color-textmuted)', fontSize: 11, fontWeight: 600 }} />
+                <YAxis axisLine={false} tickLine={false} tick={{ fill: 'var(--color-textmuted)', fontSize: 11, fontWeight: 600 }} />
                 <Tooltip cursor={{ stroke: 'var(--color-primary)', strokeWidth: 1 }} />
-                <Area 
-                  type="monotone" 
-                  dataKey={chartType === 'cumulative' ? "monthly" : "dailyScaled"} 
-                  name={chartType === 'cumulative' ? "Doanh số lũy kế (x10)" : "Doanh thu ngày (x10)"} 
-                  stroke="var(--color-primary)" 
-                  strokeWidth={3} 
-                  fillOpacity={1} 
-                  fill="url(#colorSales)" 
-                  dot={{ r: 4, stroke: 'var(--color-primary)', strokeWidth: 2, fill: 'var(--color-bgcard)' }} 
+                <Area
+                  type="monotone"
+                  dataKey={chartType === 'cumulative' ? "monthly" : "dailyScaled"}
+                  name={chartType === 'cumulative' ? "Doanh số lũy kế (x10)" : "Doanh thu ngày (x10)"}
+                  stroke="var(--color-primary)"
+                  strokeWidth={3}
+                  fillOpacity={1}
+                  fill="url(#colorSales)"
+                  dot={{ r: 4, stroke: 'var(--color-primary)', strokeWidth: 2, fill: 'var(--color-bgcard)' }}
                 />
               </AreaChart>
             </ResponsiveContainer>
@@ -331,7 +332,7 @@ export default function AdminDashboard() {
 
         {/* Right: Storage Status & Promotion Widget (4 Columns) */}
         <div className="lg:col-span-4 flex flex-col justify-between gap-6">
-          
+
           {/* Shipping/Storage Performance Meter */}
           <div className="bg-bgcard p-6 rounded-lg border border-bordercustom shadow-sm flex flex-col justify-between flex-1">
             <div>
@@ -341,37 +342,56 @@ export default function AdminDashboard() {
               </div>
               <div className="flex items-baseline gap-1.5">
                 <h3 className="text-2xl font-extrabold text-admin-text-main">{shippingStats.total} Đơn hàng</h3>
-                <span className="text-xs text-textmuted font-semibold">trong hệ thống</span>
-              </div>
-              
-              <div className="w-full h-3 bg-gray-100 rounded-full mt-4 overflow-hidden flex">
-                <div className="h-full bg-success" style={{ width: `${deliveredPct}%` }} title="Đã giao"></div>
-                <div className="h-full bg-secondary" style={{ width: `${shippingPct}%` }} title="Đang giao"></div>
-                <div className="h-full bg-warning" style={{ width: `${pendingPct}%` }} title="Chờ xử lý/Xác nhận"></div>
+                {/*Muốn ghi gì thì ghi*/}
               </div>
             </div>
 
-            <div className="grid grid-cols-3 gap-2 mt-4 text-[10px] font-bold text-admin-text-muted">
-              <div className="flex flex-col items-start gap-1">
-                <div className="flex items-center gap-1.5">
-                  <div className="w-2.5 h-2.5 rounded-full bg-success"></div>
-                  <span>Đã giao</span>
+            <div className="grid grid-cols-3 gap-4 mt-6 text-[10px] font-bold text-admin-text-muted">
+              {/* Cột 1 */}
+              <div className="space-y-4">
+                <div className="flex flex-col items-start gap-1">
+                  <div className="flex items-center gap-1.5">
+                    <div className="w-2.5 h-2.5 rounded-full bg-warning"></div>
+                    <span>Chờ duyệt</span>
+                  </div>
+                  <span className="text-textmain font-black text-xs ml-4">{shippingStats.pending}</span>
                 </div>
-                <span className="text-textmain font-black text-xs ml-4">{shippingStats.delivered}</span>
+                <div className="flex flex-col items-start gap-1">
+                  <div className="flex items-center gap-1.5">
+                    <div className="w-2.5 h-2.5 rounded-full bg-info"></div>
+                    <span>Đã xác nhận</span>
+                  </div>
+                  <span className="text-textmain font-black text-xs ml-4">{shippingStats.confirmed}</span>
+                </div>
               </div>
-              <div className="flex flex-col items-start gap-1">
-                <div className="flex items-center gap-1.5">
-                  <div className="w-2.5 h-2.5 rounded-full bg-secondary"></div>
-                  <span>Đang giao</span>
+
+              {/* Cột 2 */}
+              <div className="space-y-4">
+                <div className="flex flex-col items-start gap-1">
+                  <div className="flex items-center gap-1.5">
+                    <div className="w-2.5 h-2.5 rounded-full bg-secondary"></div>
+                    <span>Đang giao</span>
+                  </div>
+                  <span className="text-textmain font-black text-xs ml-4">{shippingStats.shipping}</span>
                 </div>
-                <span className="text-textmain font-black text-xs ml-4">{shippingStats.shipping}</span>
+                <div className="flex flex-col items-start gap-1">
+                  <div className="flex items-center gap-1.5">
+                    <div className="w-2.5 h-2.5 rounded-full bg-success"></div>
+                    <span>Đã giao</span>
+                  </div>
+                  <span className="text-textmain font-black text-xs ml-4">{shippingStats.delivered}</span>
+                </div>
               </div>
-              <div className="flex flex-col items-start gap-1">
-                <div className="flex items-center gap-1.5">
-                  <div className="w-2.5 h-2.5 rounded-full bg-warning"></div>
-                  <span>Chờ duyệt</span>
+
+              {/* Cột 3 */}
+              <div className="space-y-4">
+                <div className="flex flex-col items-start gap-1">
+                  <div className="flex items-center gap-1.5">
+                    <div className="w-2.5 h-2.5 rounded-full bg-danger"></div>
+                    <span>Đã hủy</span>
+                  </div>
+                  <span className="text-textmain font-black text-xs ml-4">{shippingStats.canceled}</span>
                 </div>
-                <span className="text-textmain font-black text-xs ml-4">{shippingStats.pending}</span>
               </div>
             </div>
           </div>
@@ -396,7 +416,7 @@ export default function AdminDashboard() {
 
       {/* SECTION 3: TABLES ROW */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        
+
         {/* Left: Best Selling Products (8 Columns) */}
         <div className="lg:col-span-8 bg-bgcard p-6 rounded-lg border border-bordercustom shadow-sm flex flex-col">
           <div className="flex justify-between items-center mb-6">
@@ -464,7 +484,7 @@ export default function AdminDashboard() {
                   const roleName = 'Khách hàng';
                   const colorPalette = ['bg-blue-500', 'bg-teal-500', 'bg-indigo-500', 'bg-orange-500', 'bg-purple-500'];
                   const avatarBg = colorPalette[idx % colorPalette.length];
-                  
+
                   return (
                     <div key={user.id || idx} className="flex items-center justify-between p-2 rounded-md hover:bg-gray-50 transition-colors cursor-pointer group">
                       <div className="flex items-center gap-3">
@@ -476,7 +496,6 @@ export default function AdminDashboard() {
                           <p className="text-[10px] text-textmuted font-semibold">{roleName}</p>
                         </div>
                       </div>
-                      <div className={`w-2 h-2 rounded-full ${user.isActive ? 'bg-success' : 'bg-gray-300'}`}></div>
                     </div>
                   );
                 })
@@ -504,13 +523,13 @@ export default function AdminDashboard() {
             <span className="flex items-center gap-1.5"><div className="w-3 h-3 bg-secondary rounded-sm"></div> Đã bán</span>
           </div>
         </div>
-        
+
         <div className="flex-1">
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={brandPerformance}>
               <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--color-bordercustom)" />
-              <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fill: 'var(--color-textmuted)', fontSize: 11, fontWeight: 600}} />
-              <YAxis axisLine={false} tickLine={false} tick={{fill: 'var(--color-textmuted)', fontSize: 11, fontWeight: 600}} />
+              <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: 'var(--color-textmuted)', fontSize: 11, fontWeight: 600 }} />
+              <YAxis axisLine={false} tickLine={false} tick={{ fill: 'var(--color-textmuted)', fontSize: 11, fontWeight: 600 }} />
               <Tooltip />
               <Bar dataKey="stock" name="Tồn kho" fill="var(--color-primary)" radius={[3, 3, 0, 0]} barSize={25} />
               <Bar dataKey="sold" name="Đã bán" fill="var(--color-secondary)" radius={[3, 3, 0, 0]} barSize={25} />

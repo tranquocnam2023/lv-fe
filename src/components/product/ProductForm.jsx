@@ -35,7 +35,7 @@ export default function ProductForm({ productId, onBack, onSaveSuccess, onCreate
     <ProductFormProvider value={formState}>
       <div className="flex flex-col gap-6 font-sans">
         {/* Top Header (Sticky — dính sát header admin khi cuộn) */}
-        <div className="sticky top-0 z-40 bg-admin-bg -mt-4 pt-4 pb-4 -mx-8 px-8 border-b border-admin-border flex items-center justify-between mb-4">
+        <div className="sticky z-40 bg-[var(--admin-bg)] -mt-4 pt-4 pb-4 -mx-8 px-8 border-b border-admin-border flex items-center justify-between mb-4" style={{ top: '-16px' }}>
           <div className="flex items-center gap-4">
             <button onClick={onBack} className="p-2 bg-white rounded-full text-admin-text-muted hover:text-admin-text-main border border-admin-border transition-colors cursor-pointer">
               <ArrowLeft size={20} />

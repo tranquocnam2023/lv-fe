@@ -11,37 +11,37 @@ import {
 } from 'lucide-react';
 import { useTheme } from '../../context/ThemeContext';
 
-// ─── Danh sách tab chức năng (dùng cho global search) ────────────────────────
+// ─── Danh sách gõ tìm kiếm nhanh trên thanh công cụ  ────────────────────────
 const ADMIN_FUNCTIONS = [
-  { label: 'Bảng thống kê',      tab: 'dashboard',      keywords: ['thong ke', 'dashboard', 'bao cao'] },
-  { label: 'Quản lý danh mục',   tab: 'categories',     keywords: ['danh muc', 'loai', 'categories'] },
-  { label: 'Quản lý thương hiệu',tab: 'brands',         keywords: ['thuong hieu', 'hang', 'brands'] },
-  { label: 'Quản lý sản phẩm',   tab: 'products',       keywords: ['san pham', 'dien thoai', 'products'] },
-  { label: 'Thêm sản phẩm mới',  tab: 'create_product', keywords: ['them san pham', 'tao san pham', 'them moi', 'create'] },
-  { label: 'Quản lý kho hàng',   tab: 'inventory',      keywords: ['kho', 'ton kho', 'inventory'] },
-  { label: 'Quản lý đơn hàng',   tab: 'orders',         keywords: ['don hang', 'orders', 'hoa don'] },
-  { label: 'Quản lý khách hàng', tab: 'customers',      keywords: ['khach hang', 'nguoi dung', 'users', 'customers', 'tai khoan'] },
-  { label: 'Quản lý khuyến mãi', tab: 'promotions',     keywords: ['khuyen mai', 'ma giam gia', 'voucher', 'promotions'] },
-  { label: 'Quản lý đánh giá',   tab: 'reviews',        keywords: ['danh gia', 'binh luan', 'reviews'] },
-  { label: 'Cài đặt hệ thống',   tab: 'settings',       keywords: ['cai dat', 'settings', 'cau hinh'] },
-  { label: 'Nhật ký hoạt động',  tab: 'audit_logs',     keywords: ['nhat ky', 'kiem toan', 'audit', 'logs', 'hoat dong'] },
+  { label: 'Bảng thống kê', tab: 'dashboard', keywords: ['thong ke', 'dashboard', 'bao cao'] },
+  { label: 'Quản lý danh mục', tab: 'categories', keywords: ['danh muc', 'loai', 'categories'] },
+  { label: 'Quản lý thương hiệu', tab: 'brands', keywords: ['thuong hieu', 'hang', 'brands'] },
+  { label: 'Quản lý sản phẩm', tab: 'products', keywords: ['san pham', 'dien thoai', 'products'] },
+  { label: 'Thêm sản phẩm mới', tab: 'create_product', keywords: ['them san pham', 'tao san pham', 'them moi', 'create'] },
+  { label: 'Quản lý kho hàng', tab: 'inventory', keywords: ['kho', 'ton kho', 'inventory'] },
+  { label: 'Quản lý đơn hàng', tab: 'orders', keywords: ['don hang', 'orders', 'hoa don'] },
+  { label: 'Quản lý khách hàng', tab: 'customers', keywords: ['khach hang', 'nguoi dung', 'users', 'customers', 'tai khoan'] },
+  { label: 'Quản lý khuyến mãi', tab: 'promotions', keywords: ['khuyen mai', 'ma giam gia', 'voucher', 'promotions'] },
+  { label: 'Quản lý đánh giá', tab: 'reviews', keywords: ['danh gia', 'binh luan', 'reviews'] },
+  { label: 'Cài đặt hệ thống', tab: 'settings', keywords: ['cai dat', 'settings', 'cau hinh'] },
+  { label: 'Nhật ký hoạt động', tab: 'audit_logs', keywords: ['nhat ky', 'kiem toan', 'audit', 'logs', 'hoat dong'] },
 ];
 
 // ─── Map tab → tiêu đề breadcrumb ────────────────────────────────────────────
 const TAB_TITLES = {
-  products:       'Quản lý sản phẩm',
-  inventory:      'Quản lý kho hàng',
-  categories:     'Quản lý danh mục',
-  brands:         'Quản lý thương hiệu',
-  orders:         'Quản lý đơn hàng',
-  customers:      'Quản lý khách hàng',
-  promotions:     'Quản lý mã khuyến mãi',
-  reviews:        'Quản lý đánh giá',
-  dashboard:      'Bảng thống kê số liệu',
+  products: 'Quản lý sản phẩm',
+  inventory: 'Quản lý kho hàng',
+  categories: 'Quản lý danh mục',
+  brands: 'Quản lý thương hiệu',
+  orders: 'Quản lý đơn hàng',
+  customers: 'Quản lý khách hàng',
+  promotions: 'Quản lý mã khuyến mãi',
+  reviews: 'Quản lý đánh giá',
+  dashboard: 'Bảng thống kê số liệu',
   create_product: 'Thêm sản phẩm mới',
   update_product: 'Cập nhật sản phẩm',
-  audit_logs:     'Nhật ký hoạt động',
-  settings:       'Cài đặt hệ thống',
+  audit_logs: 'Nhật ký hoạt động',
+  settings: 'Cài đặt hệ thống',
 };
 
 // ─── AdminLayout ──────────────────────────────────────────────────────────────
@@ -62,10 +62,10 @@ export default function AdminLayout({ activeAdminTab, onTabChange, setSearchPara
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   // ── Global cross-module search ──────────────────────────────────────────────
-  const [searchQuery, setSearchQuery]           = useState('');
-  const [allProducts, setAllProducts]           = useState([]);
-  const [allOrders, setAllOrders]               = useState([]);
-  const [allCustomers, setAllCustomers]         = useState([]);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [allProducts, setAllProducts] = useState([]);
+  const [allOrders, setAllOrders] = useState([]);
+  const [allCustomers, setAllCustomers] = useState([]);
   const [showSearchDropdown, setShowSearchDropdown] = useState(false);
   const searchRef = useRef(null);
 
@@ -84,7 +84,7 @@ export default function AdminLayout({ activeAdminTab, onTabChange, setSearchPara
         if (Array.isArray(ordersData)) {
           const statusMap = {
             1: 'Chờ xác nhận', 2: 'Đã xác nhận', 3: 'Đang giao',
-            4: 'Đã giao',      5: 'Đã hủy',      6: 'Giao thất bại',
+            4: 'Đã giao', 5: 'Đã hủy', 6: 'Giao thất bại',
             7: 'Đã hoàn tiền',
           };
           setAllOrders(ordersData.map(o => ({ ...o, statusStr: statusMap[o.statusId] || 'Chờ xác nhận' })));
@@ -113,34 +113,34 @@ export default function AdminLayout({ activeAdminTab, onTabChange, setSearchPara
   const q = searchQuery.trim().toLowerCase();
   const filteredFunctions = q
     ? ADMIN_FUNCTIONS.filter(f =>
-        f.label.toLowerCase().includes(q) ||
-        f.keywords.some(k => k.toLowerCase().includes(q))
-      )
+      f.label.toLowerCase().includes(q) ||
+      f.keywords.some(k => k.toLowerCase().includes(q))
+    )
     : [];
   const filteredProducts = q
     ? allProducts.filter(p =>
-        p.name.toLowerCase().includes(q) ||
-        (p.brandName && p.brandName.toLowerCase().includes(q))
-      )
+      p.name.toLowerCase().includes(q) ||
+      (p.brandName && p.brandName.toLowerCase().includes(q))
+    )
     : [];
   const filteredCustomers = q
     ? allCustomers.filter(c =>
-        (c.username && c.username.toLowerCase().includes(q)) ||
-        (c.email    && c.email.toLowerCase().includes(q))
-      )
+      (c.username && c.username.toLowerCase().includes(q)) ||
+      (c.email && c.email.toLowerCase().includes(q))
+    )
     : [];
   const filteredOrders = q
     ? allOrders.filter(o =>
-        String(o.id).includes(searchQuery.trim()) ||
-        (o.receiverPhone && o.receiverPhone.includes(searchQuery.trim())) ||
-        (o.phone         && o.phone.includes(searchQuery.trim()))
-      )
+      String(o.id).includes(searchQuery.trim()) ||
+      (o.receiverPhone && o.receiverPhone.includes(searchQuery.trim())) ||
+      (o.phone && o.phone.includes(searchQuery.trim()))
+    )
     : [];
   const noResults =
     filteredFunctions.length === 0 &&
-    filteredProducts.length  === 0 &&
+    filteredProducts.length === 0 &&
     filteredCustomers.length === 0 &&
-    filteredOrders.length    === 0;
+    filteredOrders.length === 0;
 
   // ── Auth helpers ────────────────────────────────────────────────────────────
   const user = (() => {
@@ -158,11 +158,10 @@ export default function AdminLayout({ activeAdminTab, onTabChange, setSearchPara
   const SidebarItem = ({ id, Icon, label }) => (
     <button
       onClick={() => { onTabChange(id); setIsSidebarOpen(false); }}
-      className={`w-full flex items-center px-4 py-3 rounded-md transition-all duration-200 font-bold cursor-pointer ${
-        activeAdminTab === id
+      className={`w-full flex items-center px-4 py-3 rounded-md transition-all duration-200 font-bold cursor-pointer ${activeAdminTab === id
           ? 'bg-admin-sidebar-hover text-primary border-l-4 border-primary'
           : 'text-admin-sidebar-text hover:bg-admin-sidebar-hover hover:text-white'
-      }`}
+        }`}
     >
       <Icon className={`w-5 h-5 mr-3 ${activeAdminTab === id ? 'text-primary' : 'text-admin-sidebar-text'}`} />
       <span className="text-sm">{label}</span>
@@ -182,34 +181,32 @@ export default function AdminLayout({ activeAdminTab, onTabChange, setSearchPara
       )}
 
       {/* ── Sidebar ── */}
-      <aside className={`fixed inset-y-0 left-0 z-50 w-64 bg-admin-sidebar-bg flex flex-col shrink-0 border-r border-admin-sidebar-border transition-transform duration-300 md:relative md:translate-x-0 md:flex ${
-        isSidebarOpen ? 'translate-x-0' : '-translate-x-full'
-      }`}>
+      <aside className={`fixed inset-y-0 left-0 z-50 w-64 bg-admin-sidebar-bg flex flex-col shrink-0 border-r border-admin-sidebar-border transition-transform duration-300 md:relative md:translate-x-0 md:flex ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'
+        }`}>
         {/* Logo */}
-        <div className="h-20 flex items-center px-8 border-b border-admin-sidebar-border">
-          <div className="w-8 h-8 bg-primary rounded-md flex items-center justify-center mr-3">
-            <span className="font-bold text-lg text-white">AD</span>
-          </div>
-          <h1 className="text-2xl font-bold tracking-tight text-white uppercase">PhoneShop</h1>
+        <div className="h-20 flex items-center justify-center border-b border-admin-sidebar-border">
+          <Link to="/" className="flex items-center hover:opacity-90 transition-opacity">
+            <img src="/logo2.jpg" alt="Logo" className="h-12 object-contain rounded-md" />
+          </Link>
         </div>
 
         {/* Nav items */}
         <nav className="flex-1 px-4 py-6 space-y-1 overflow-y-auto no-scrollbar">
           <p className="px-4 text-[12px] font-bold text-admin-sidebar-text/60 uppercase tracking-widest mb-4">Chính</p>
-          <SidebarItem id="dashboard"  Icon={Layout}       label="Bảng thống kê" />
-          <SidebarItem id="categories" Icon={FolderTree}   label="Danh mục" />
-          <SidebarItem id="brands"     Icon={Star}         label="Thương hiệu" />
-          <SidebarItem id="products"   Icon={Package}      label="Sản phẩm" />
-          <SidebarItem id="inventory"  Icon={Boxes}        label="Quản lý kho" />
-          <SidebarItem id="orders"     Icon={ShoppingCart} label="Đơn hàng" />
-          <SidebarItem id="customers"  Icon={Users}        label="Khách hàng" />
-          <SidebarItem id="promotions" Icon={Ticket}       label="Khuyến mãi" />
-          <SidebarItem id="reviews"    Icon={MessageSquare}label="Đánh giá" />
+          <SidebarItem id="dashboard" Icon={Layout} label="Bảng thống kê" />
+          <SidebarItem id="categories" Icon={FolderTree} label="Danh mục" />
+          <SidebarItem id="brands" Icon={Star} label="Thương hiệu" />
+          <SidebarItem id="products" Icon={Package} label="Sản phẩm" />
+          <SidebarItem id="inventory" Icon={Boxes} label="Quản lý kho" />
+          <SidebarItem id="orders" Icon={ShoppingCart} label="Đơn hàng" />
+          <SidebarItem id="customers" Icon={Users} label="Khách hàng" />
+          <SidebarItem id="promotions" Icon={Ticket} label="Khuyến mãi" />
+          <SidebarItem id="reviews" Icon={MessageSquare} label="Đánh giá" />
 
           <div className="pt-6">
             <p className="px-4 text-[12px] font-bold text-admin-sidebar-text/60 uppercase tracking-widest mb-4">Hệ thống</p>
-            <SidebarItem id="settings"   Icon={Settings} label="Cài đặt" />
-            <SidebarItem id="audit_logs" Icon={History}  label="Nhật ký hoạt động" />
+            <SidebarItem id="settings" Icon={Settings} label="Cài đặt" />
+            <SidebarItem id="audit_logs" Icon={History} label="Nhật ký hoạt động" />
           </div>
         </nav>
 
@@ -294,9 +291,9 @@ export default function AdminLayout({ activeAdminTab, onTabChange, setSearchPara
                     <div className="px-4 py-1.5 bg-gray-50 text-[10px] font-bold text-admin-text-muted uppercase border-b border-admin-border">Sản phẩm</div>
                     {filteredProducts.slice(0, 5).map(p => (
                       <button key={p.id} onClick={() => {
-                          setSearchParams(prev => { prev.set('tab', 'update_product'); prev.set('productId', p.id); return prev; });
-                          setSearchQuery(''); setShowSearchDropdown(false);
-                        }}
+                        setSearchParams(prev => { prev.set('tab', 'update_product'); prev.set('productId', p.id); return prev; });
+                        setSearchQuery(''); setShowSearchDropdown(false);
+                      }}
                         className="w-full text-left px-4 py-2 hover:bg-admin-bg text-xs font-medium transition-colors truncate block cursor-pointer border-b border-gray-50">
                         <span className="text-orange-500 font-bold mr-1.5">[Sản phẩm]</span> {p.name}
                       </button>

@@ -39,7 +39,7 @@ export default function CategoryEditForm({
   return (
     <div className="animate-in fade-in duration-500 space-y-6 font-sans">
       {/* Top Header Sticky with Glassmorphism */}
-      <div className="sticky top-0 z-40 bg-admin-bg/90 backdrop-blur-sm -mt-4 pt-4 pb-4 -mx-8 px-8 border-b border-admin-border/40 flex items-center justify-between mb-4">
+      <div className="sticky z-40 bg-[var(--admin-bg)] -mt-4 pt-4 pb-4 -mx-8 px-8 border-b border-admin-border/40 flex items-center justify-between mb-4" style={{ top: '-16px' }}>
         <div className="flex items-center gap-4">
           <button 
             type="button"

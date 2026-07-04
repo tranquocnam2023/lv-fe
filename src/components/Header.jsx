@@ -170,8 +170,7 @@ export default function Header({ selectedLocation, setSelectedLocation, isSideba
         {/* Logo */}
         <div className="flex items-center space-x-2 shrink-0">
           <Link to="/" className="flex items-center gap-2">
-            <img src="/logo.png" alt="Logo" className="w-8 h-8 object-contain rounded-md" />
-            <h1 className="text-2xl font-bold italic tracking-wider hover:opacity-90 transition-opacity">PhoneShop</h1>
+            <img src="/logo2.jpg" alt="Logo" className="h-10 object-contain rounded-md" />
           </Link>
         </div>
 
@@ -457,8 +456,7 @@ export default function Header({ selectedLocation, setSelectedLocation, isSideba
             {/* Drawer Header */}
             <div className="h-16 flex items-center justify-between px-6 border-b border-gray-100 shrink-0" style={{ backgroundColor: THEME.primary, color: '#ffffff' }}>
               <div className="flex items-center gap-2">
-                <img src="/logo.png" alt="Logo" className="w-7 h-7 object-contain rounded-md" />
-                <span className="font-bold text-lg italic tracking-wider">PhoneShop</span>
+                <img src="/logo2.jpg" alt="Logo" className="h-8 object-contain rounded-md" />
               </div>
               <button 
                 onClick={() => setIsOpenMobileMenu(false)}
