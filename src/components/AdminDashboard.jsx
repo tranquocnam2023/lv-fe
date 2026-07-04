@@ -16,6 +16,7 @@ import api from '../services/api';
 import { THEME, PIE_COLORS } from '../utils/theme';
 
 export default function AdminDashboard() {
+  const [chartType, setChartType] = useState('cumulative'); // 'cumulative' or 'daily'
   const [revenueData, setRevenueData] = useState([]);
   const [productStats, setProductStats] = useState([]);
   const [brandPerformance, setBrandPerformance] = useState([]);
@@ -166,6 +167,12 @@ export default function AdminDashboard() {
   const shippingPct = shippingStats.total > 0 ? (shippingStats.shipping / shippingStats.total) * 100 : 0;
   const pendingPct = shippingStats.total > 0 ? (shippingStats.pending / shippingStats.total) * 100 : 0;
 
+  // Chuẩn bị dữ liệu cho biểu đồ (tự động chia tỷ lệ x10 cho doanh thu ngày để đồng bộ trục Y với lũy kế)
+  const formattedChartData = revenueData.map(item => ({
+    ...item,
+    dailyScaled: (item.daily || 0) / 10
+  }));
+
   return (
     <div className="space-y-6 pb-10 font-sans text-textmain animate-in fade-in duration-300">
       
@@ -272,14 +279,23 @@ export default function AdminDashboard() {
         <div className="lg:col-span-8 bg-bgcard p-6 rounded-lg border border-bordercustom shadow-sm flex flex-col h-[400px]">
           <div className="flex justify-between items-center mb-6">
             <div>
-              <h3 className="font-extrabold text-primary text-base">Tổng Doanh Số & Biểu đồ</h3>
-              <p className="text-xs text-textmuted">Số liệu tăng trưởng doanh số lũy kế thực tế</p>
+              <h3 className="font-extrabold text-primary text-base">
+                {chartType === 'cumulative' ? 'Tổng Doanh Số (Lũy kế)' : 'Doanh Thu Thực Tế (Theo Ngày)'}
+              </h3>
+              <p className="text-xs text-textmuted">
+                {chartType === 'cumulative' ? 'Số liệu tăng trưởng doanh số lũy kế thực tế' : 'Số liệu doanh thu thực tế phát sinh theo từng ngày'}
+              </p>
             </div>
             <div className="flex items-center gap-3">
               <div className="text-xs font-bold text-primary bg-blue-50 px-3 py-1.5 rounded-md">
-                Tổng cộng: {formattedTotalRevenue}
+                {chartType === 'cumulative' ? `Tổng lũy kế: ${formattedTotalRevenue}` : `Doanh thu tuần: ${formattedWeeklySales}`}
               </div>
-              <button className="p-1 text-textmuted hover:text-textmain transition-colors">
+              <button 
+                onClick={() => setChartType(prev => prev === 'cumulative' ? 'daily' : 'cumulative')}
+                className="p-1.5 text-textmuted hover:text-primary hover:bg-gray-50 border border-bordercustom rounded-md transition-all duration-200 flex items-center gap-1 font-semibold text-xs cursor-pointer"
+                title={chartType === 'cumulative' ? 'Click để chuyển sang Doanh thu theo Ngày' : 'Click để chuyển sang Lũy kế doanh số'}
+              >
+                <span>{chartType === 'cumulative' ? 'Xem Doanh thu Ngày' : 'Xem Lũy kế'}</span>
                 <span className="text-lg">•••</span>
               </button>
             </div>
@@ -287,7 +303,7 @@ export default function AdminDashboard() {
 
           <div className="flex-1">
             <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={revenueData}>
+              <AreaChart data={formattedChartData}>
                 <defs>
                   <linearGradient id="colorSales" x1="0" y1="0" x2="0" y2="1">
                     <stop offset="5%" stopColor="var(--color-primary)" stopOpacity={0.3}/>
@@ -298,7 +314,16 @@ export default function AdminDashboard() {
                 <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fill: 'var(--color-textmuted)', fontSize: 11, fontWeight: 600}} />
                 <YAxis axisLine={false} tickLine={false} tick={{fill: 'var(--color-textmuted)', fontSize: 11, fontWeight: 600}} />
                 <Tooltip cursor={{ stroke: 'var(--color-primary)', strokeWidth: 1 }} />
-                <Area type="monotone" dataKey="monthly" name="Doanh số lũy kế (x10)" stroke="var(--color-primary)" strokeWidth={3} fillOpacity={1} fill="url(#colorSales)" dot={{ r: 4, stroke: 'var(--color-primary)', strokeWidth: 2, fill: 'var(--color-bgcard)' }} />
+                <Area 
+                  type="monotone" 
+                  dataKey={chartType === 'cumulative' ? "monthly" : "dailyScaled"} 
+                  name={chartType === 'cumulative' ? "Doanh số lũy kế (x10)" : "Doanh thu ngày (x10)"} 
+                  stroke="var(--color-primary)" 
+                  strokeWidth={3} 
+                  fillOpacity={1} 
+                  fill="url(#colorSales)" 
+                  dot={{ r: 4, stroke: 'var(--color-primary)', strokeWidth: 2, fill: 'var(--color-bgcard)' }} 
+                />
               </AreaChart>
             </ResponsiveContainer>
           </div>
