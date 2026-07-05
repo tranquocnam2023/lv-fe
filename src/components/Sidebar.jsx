@@ -4,7 +4,6 @@ import {
   ChevronRight, 
   Smartphone, 
   Tablet, 
-  Laptop, 
   Cpu, 
   Watch, 
   Headphones, 
@@ -34,8 +33,6 @@ const getCategoryIcon = (name, iconUrl) => {
     IconComponent = Smartphone;
   } else if (normalized.includes('bảng') || normalized.includes('tablet') || normalized.includes('ipad')) {
     IconComponent = Tablet;
-  } else if (normalized.includes('laptop') || normalized.includes('máy tính') || normalized.includes('computer')) {
-    IconComponent = Laptop;
   } else if (normalized.includes('đeo') || normalized.includes('đồng hồ') || normalized.includes('watch') || normalized.includes('vòng đeo')) {
     IconComponent = Watch;
   } else if (normalized.includes('âm thanh') || normalized.includes('tai nghe') || normalized.includes('loa') || normalized.includes('headphones') || normalized.includes('mic')) {
@@ -178,7 +175,6 @@ export default function Sidebar({ isFocused, setIsFocused }) {
                                    activeRoot.name.toLowerCase().includes('phone') || 
                                    activeRoot.name.toLowerCase().includes('tablet') || 
                                    activeRoot.name.toLowerCase().includes('bảng') || 
-                                   activeRoot.name.toLowerCase().includes('laptop') || 
                                    activeRoot.name.toLowerCase().includes('máy tính');
 
           // Default active sub2 selection

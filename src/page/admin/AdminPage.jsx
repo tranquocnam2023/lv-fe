@@ -1,7 +1,7 @@
 import React from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { Settings } from 'lucide-react';
-import { useTheme } from '../../context/ThemeContext';
+
 import AdminLayout from './AdminLayout';
 
 // ─── Lazy-loaded sub-pages ────────────────────────────────────────────────────
@@ -28,7 +28,7 @@ const TabSpinner = () => (
 // ─── AdminPage ────────────────────────────────────────────────────────────────
 export default function AdminPage() {
   const [searchParams, setSearchParams] = useSearchParams();
-  const { isDark, setTheme } = useTheme();
+
 
   const activeAdminTab = searchParams.get('tab') || 'dashboard';
   const editProductId  = searchParams.get('productId');
@@ -113,41 +113,13 @@ export default function AdminPage() {
             </h2>
 
             <div className="space-y-6">
-              <div className="p-5 border border-admin-border rounded-xl bg-gray-50/50">
-                <h3 className="text-base font-bold text-admin-text-main mb-2">Giao diện &amp; Trực quan</h3>
-                <p className="text-xs text-admin-text-muted mb-4">
-                  Thay đổi cấu hình hiển thị giao diện của ứng dụng để tối ưu hóa trải nghiệm sử dụng.
+              <div className="p-5 border border-admin-border rounded-xl bg-gray-50/50 text-center py-12">
+                <p className="text-sm font-medium text-admin-text-muted mb-2">
+                  Các cài đặt hệ thống khác đang được phát triển.
                 </p>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <button
-                    type="button"
-                    onClick={() => setTheme('light')}
-                    className={`flex flex-col items-start p-4 rounded-xl border-2 text-left cursor-pointer transition-all ${
-                      !isDark ? 'border-primary bg-primary/5 shadow-sm' : 'border-admin-border bg-white hover:bg-gray-50'
-                    }`}
-                  >
-                    <div className="flex items-center gap-2 mb-2">
-                      <span className="w-3.5 h-3.5 rounded-full bg-yellow-400 block" />
-                      <span className="text-sm font-bold text-admin-text-main">Giao diện Sáng</span>
-                    </div>
-                    <span className="text-[11px] text-admin-text-muted">Giao diện truyền thống sắc nét, độ sáng tốt cho ban ngày.</span>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => setTheme('dark')}
-                    className={`flex flex-col items-start p-4 rounded-xl border-2 text-left cursor-pointer transition-all ${
-                      isDark ? 'border-primary bg-primary/5 shadow-sm' : 'border-admin-border bg-white hover:bg-gray-50'
-                    }`}
-                  >
-                    <div className="flex items-center gap-2 mb-2">
-                      <span className="w-3.5 h-3.5 rounded-full bg-indigo-600 block" />
-                      <span className="text-sm font-bold text-admin-text-main">Giao diện Tối</span>
-                    </div>
-                    <span className="text-[11px] text-admin-text-muted">Giao diện tối huyền bí, bảo vệ mắt và tiết kiệm điện năng.</span>
-                  </button>
-                </div>
+                <p className="text-xs text-admin-text-muted/60">
+                  Giao diện sáng/tối hiện đã được chuyển lên thanh công cụ (Header) để thao tác nhanh hơn.
+                </p>
               </div>
             </div>
           </div>

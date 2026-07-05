@@ -7,7 +7,7 @@ import { userService } from '../../services/userService';
 import {
   Layout, Package, Users, ShoppingCart, Settings, LogOut,
   Bell, FolderTree, Star, LayoutGrid, Ticket, Boxes,
-  MessageSquare, History
+  MessageSquare, History, Sun, Moon
 } from 'lucide-react';
 import { useTheme } from '../../context/ThemeContext';
 
@@ -56,7 +56,7 @@ const TAB_TITLES = {
  *   children        – nội dung trang con (tab content)
  */
 export default function AdminLayout({ activeAdminTab, onTabChange, setSearchParams, children }) {
-  const { setTheme } = useTheme();
+  const { toggleTheme, isDark } = useTheme();
 
   // ── Sidebar mobile ──────────────────────────────────────────────────────────
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -68,6 +68,104 @@ export default function AdminLayout({ activeAdminTab, onTabChange, setSearchPara
   const [allCustomers, setAllCustomers] = useState([]);
   const [showSearchDropdown, setShowSearchDropdown] = useState(false);
   const searchRef = useRef(null);
+
+  // ── Notifications state ─────────────────────────────────────────────────────
+  const [showNotifications, setShowNotifications] = useState(false);
+  const [notificationFilter, setNotificationFilter] = useState('all');
+  const notificationRef = useRef(null);
+
+  const user = React.useMemo(() => {
+    try { return JSON.parse(localStorage.getItem('user')); } catch { return null; }
+  }, []);
+
+  const [readNotificationIds, setReadNotificationIds] = useState(() => {
+    try {
+      const key = user?.id ? `admin_read_notifications_${user.id}` : 'admin_read_notifications';
+      const saved = localStorage.getItem(key);
+      return saved ? JSON.parse(saved) : [];
+    } catch {
+      return [];
+    }
+  });
+
+  // Sync to localStorage
+  useEffect(() => {
+    try {
+      const key = user?.id ? `admin_read_notifications_${user.id}` : 'admin_read_notifications';
+      localStorage.setItem(key, JSON.stringify(readNotificationIds));
+    } catch (err) {
+      console.error('Lỗi lưu trạng thái đã đọc thông báo:', err);
+    }
+  }, [readNotificationIds, user?.id]);
+
+  const notifications = React.useMemo(() => {
+    const list = [];
+    
+    // 1. Pending orders (statusId === 1)
+    allOrders.forEach(o => {
+      if (o.statusId === 1) {
+        list.push({
+          id: `order-${o.id}`,
+          type: 'order',
+          title: 'Đơn hàng mới',
+          message: `Đơn hàng #${o.id} đang chờ xác nhận từ ${o.receiverName || o.customerName || 'Khách hàng'}`,
+          time: o.createdAt,
+          targetTab: 'orders',
+          data: o
+        });
+      }
+    });
+
+    // 2. Low stock products (< 5)
+    allProducts.forEach(p => {
+      const stock = p.totalStock ?? p.stock ?? p.stockQuantity ?? 0;
+      if (stock < 5) {
+        list.push({
+          id: `stock-${p.id}`,
+          type: 'stock',
+          title: 'Sản phẩm sắp hết hàng',
+          message: `Sản phẩm "${p.name}" sắp hết hàng (chỉ còn ${stock} cái)`,
+          time: null,
+          targetTab: 'products',
+          data: p
+        });
+      }
+    });
+
+    const orders = list.filter(n => n.type === 'order').sort((a, b) => new Date(b.time) - new Date(a.time));
+    const stocks = list.filter(n => n.type === 'stock');
+    return [...orders, ...stocks];
+  }, [allOrders, allProducts]);
+
+  const filteredNotifications = React.useMemo(() => {
+    return notifications.filter(n => {
+      const isRead = readNotificationIds.includes(n.id);
+      if (notificationFilter === 'unread') return !isRead;
+      if (notificationFilter === 'order') return n.type === 'order';
+      if (notificationFilter === 'stock') return n.type === 'stock';
+      return true;
+    });
+  }, [notifications, notificationFilter, readNotificationIds]);
+
+  const unreadCount = React.useMemo(() => {
+    return notifications.filter(n => !readNotificationIds.includes(n.id)).length;
+  }, [notifications, readNotificationIds]);
+
+  const handleMarkAllAsRead = () => {
+    const allIds = notifications.map(n => n.id);
+    setReadNotificationIds(prev => {
+      const combined = [...new Set([...prev, ...allIds])];
+      return combined;
+    });
+  };
+
+  const handleNotificationClick = (n) => {
+    if (!readNotificationIds.includes(n.id)) {
+      setReadNotificationIds(prev => [...prev, n.id]);
+    }
+    onTabChange(n.targetTab);
+    setShowNotifications(false);
+  };
 
   // Tải dữ liệu cho cross-module search
   useEffect(() => {
@@ -103,6 +201,9 @@ export default function AdminLayout({ activeAdminTab, onTabChange, setSearchPara
     const handleClickOutside = (e) => {
       if (searchRef.current && !searchRef.current.contains(e.target)) {
         setShowSearchDropdown(false);
+      }
+      if (notificationRef.current && !notificationRef.current.contains(e.target)) {
+        setShowNotifications(false);
       }
     };
     document.addEventListener('mousedown', handleClickOutside);
@@ -143,9 +244,7 @@ export default function AdminLayout({ activeAdminTab, onTabChange, setSearchPara
     filteredOrders.length === 0;
 
   // ── Auth helpers ────────────────────────────────────────────────────────────
-  const user = (() => {
-    try { return JSON.parse(localStorage.getItem('user')); } catch { return null; }
-  })();
+  // user is defined at the top using React.useMemo
 
   const handleLogout = () => {
     if (window.confirm('Bạn có chắc muốn đăng xuất?')) {
@@ -155,7 +254,7 @@ export default function AdminLayout({ activeAdminTab, onTabChange, setSearchPara
   };
 
   // ── Sidebar item renderer ───────────────────────────────────────────────────
-  const SidebarItem = ({ id, Icon, label }) => (
+  const SidebarItem = ({ id, Icon: IconComponent, label }) => (
     <button
       onClick={() => { onTabChange(id); setIsSidebarOpen(false); }}
       className={`w-full flex items-center px-4 py-3 rounded-md transition-all duration-200 font-bold cursor-pointer ${activeAdminTab === id
@@ -163,7 +262,7 @@ export default function AdminLayout({ activeAdminTab, onTabChange, setSearchPara
           : 'text-admin-sidebar-text hover:bg-admin-sidebar-hover hover:text-white'
         }`}
     >
-      <Icon className={`w-5 h-5 mr-3 ${activeAdminTab === id ? 'text-primary' : 'text-admin-sidebar-text'}`} />
+      <IconComponent className={`w-5 h-5 mr-3 ${activeAdminTab === id ? 'text-primary' : 'text-admin-sidebar-text'}`} />
       <span className="text-sm">{label}</span>
     </button>
   );
@@ -336,11 +435,121 @@ export default function AdminLayout({ activeAdminTab, onTabChange, setSearchPara
               </div>
             )}
 
-            {/* Bell */}
-            <button className="relative p-2 text-admin-text-muted hover:text-primary transition-colors mr-2">
-              <Bell size={20} />
-              <span className="absolute top-2 right-2 w-2 h-2 bg-admin-danger rounded-full border-2 border-white" />
+            {/* Theme Toggle */}
+            <button
+              onClick={toggleTheme}
+              className="p-2 text-admin-text-muted hover:text-primary hover:bg-gray-100 dark:hover:bg-gray-800/40 transition-colors mr-2 cursor-pointer rounded-full flex items-center justify-center"
+              title={isDark ? "Chuyển sang Giao diện Sáng" : "Chuyển sang Giao diện Tối"}
+            >
+              {isDark ? <Sun size={20} className="text-yellow-400" /> : <Moon size={20} className="text-indigo-600" />}
             </button>
+
+            {/* Bell & Notifications */}
+            <div ref={notificationRef} className="relative">
+              <button
+                onClick={() => setShowNotifications(!showNotifications)}
+                className="relative p-2 text-admin-text-muted hover:text-primary hover:bg-gray-100 dark:hover:bg-gray-800/40 transition-colors mr-2 cursor-pointer flex items-center justify-center rounded-full"
+                title="Thông báo"
+              >
+                <Bell size={20} />
+                {unreadCount > 0 && (
+                  <span className="absolute top-1.5 right-1.5 min-w-[16px] h-4 bg-admin-danger text-white text-[9px] font-bold rounded-full flex items-center justify-center border border-white px-1">
+                    {unreadCount}
+                  </span>
+                )}
+              </button>
+
+              {/* Notification Dropdown */}
+              {showNotifications && (
+                <div className="absolute right-0 top-full mt-3 w-80 md:w-96 bg-white border border-admin-border rounded-xl shadow-2xl z-50 overflow-hidden text-admin-text-main animate-in fade-in slide-in-from-top-2 duration-150">
+                  {/* Header */}
+                  <div className="px-4 py-3 border-b border-admin-border flex items-center justify-between bg-gray-50/50 dark:bg-gray-800/20">
+                    <span className="font-bold text-sm">Thông báo ({notifications.length})</span>
+                    {unreadCount > 0 && (
+                      <button
+                        onClick={handleMarkAllAsRead}
+                        className="text-[11px] text-primary hover:underline font-bold cursor-pointer"
+                      >
+                        Đánh dấu đã đọc tất cả
+                      </button>
+                    )}
+                  </div>
+
+                  {/* Tabs */}
+                  <div className="flex border-b border-admin-border px-2 py-1 bg-gray-50/50 dark:bg-admin-bg/30">
+                    {['all', 'unread', 'order', 'stock'].map(tab => {
+                      const labels = {
+                        all: 'Tất cả',
+                        unread: 'Chưa đọc',
+                        order: 'Đơn hàng',
+                        stock: 'Hết hàng'
+                      };
+                      return (
+                        <button
+                          key={tab}
+                          onClick={() => setNotificationFilter(tab)}
+                          className={`flex-1 text-center py-1.5 text-xs font-bold rounded-md transition-colors cursor-pointer ${
+                            notificationFilter === tab
+                              ? 'bg-primary/10 text-primary dark:bg-primary/20'
+                              : 'text-admin-text-muted hover:text-admin-text-main hover:bg-gray-100 dark:hover:bg-gray-800'
+                          }`}
+                        >
+                          {labels[tab]}
+                        </button>
+                      );
+                    })}
+                  </div>
+
+                  {/* Notification List */}
+                  <div className="max-h-[300px] overflow-y-auto no-scrollbar">
+                    {filteredNotifications.length === 0 ? (
+                      <div className="px-4 py-8 text-center text-xs text-admin-text-muted font-bold">
+                        Không có thông báo nào
+                      </div>
+                    ) : (
+                      filteredNotifications.map(n => {
+                        const isRead = readNotificationIds.includes(n.id);
+                        return (
+                          <div
+                            key={n.id}
+                            onClick={() => handleNotificationClick(n)}
+                            className={`px-4 py-3 border-b border-gray-100 dark:border-admin-border/30 flex gap-3 hover:bg-gray-50 dark:hover:bg-gray-800/30 transition-colors cursor-pointer ${
+                              !isRead ? 'bg-primary/5 dark:bg-primary/5 font-semibold' : ''
+                            }`}
+                          >
+                            {/* Icon */}
+                            <div className="mt-0.5 shrink-0">
+                              {n.type === 'order' ? (
+                                <div className="w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 flex items-center justify-center">
+                                  <ShoppingCart size={16} />
+                                </div>
+                              ) : (
+                                <div className="w-8 h-8 rounded-full bg-orange-100 dark:bg-orange-900/30 text-orange-600 dark:text-orange-400 flex items-center justify-center">
+                                  <Package size={16} />
+                                </div>
+                              )}
+                            </div>
+
+                            {/* Content */}
+                            <div className="flex-1 min-w-0">
+                              <p className="text-xs text-admin-text-main line-clamp-2 leading-relaxed">{n.message}</p>
+                              <span className="text-[10px] text-admin-text-muted mt-1 block">
+                                {n.time ? new Date(n.time).toLocaleString('vi-VN') : 'Cần xử lý ngay'}
+                              </span>
+                            </div>
+
+                            {/* Unread dot */}
+                            {!isRead && (
+                              <div className="mt-2 shrink-0 w-2 h-2 rounded-full bg-primary" />
+                            )}
+                          </div>
+                        );
+                      })
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
 
             {/* Avatar */}
             <div className="flex items-center gap-3 ml-2 cursor-pointer">

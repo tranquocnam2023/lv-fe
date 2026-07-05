@@ -4,6 +4,7 @@ import { useParams, useSearchParams } from 'react-router-dom';
 import ProductCard from '../components/product/ProductCard';
 import Breadcrumb from '../components/Breadcrumb';
 import FilterBar from '../components/FilterBar';
+import BannerSection from '../components/BannerSection';
 import { productService } from '../services/productService';
 import { categoryService } from '../services/categoryService';
 import { THEME } from '../utils/theme';
@@ -166,11 +167,14 @@ export default function HomePage({ selectedLocation }) {
           : (selectedBrand || advancedFilters ? `Sản phẩm ${selectedBrand || 'đã lọc'}` : 'Chào mừng đến với hệ thống PhoneShop!')}
       </h2>
       {!selectedBrand && !searchQuery && !advancedFilters && (
-        <div 
-          className="p-4 rounded mb-6 border bg-primary/5 text-secondary border-primary/20"
-        >
-          Khám phá các sản phẩm điện thoại, phụ kiện và nhiều ưu đãi Mùa hè hấp dẫn.
-        </div>
+        <>
+          <div 
+            className="p-4 rounded mb-6 border bg-primary/5 text-secondary border-primary/20"
+          >
+            Khám phá các sản phẩm điện thoại, phụ kiện và nhiều ưu đãi Mùa hè hấp dẫn.
+          </div>
+          <BannerSection />
+        </>
       )}
 
       {/* SECTION SẢN PHẨM NỔI BẬT (Điện Máy Xanh Style) */}
