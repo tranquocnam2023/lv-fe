@@ -4,6 +4,7 @@ import { useParams, useSearchParams } from 'react-router-dom';
 import ProductCard from '../components/product/ProductCard';
 import Breadcrumb from '../components/Breadcrumb';
 import FilterBar from '../components/FilterBar';
+import BannerSection from '../components/BannerSection';
 import { productService } from '../services/productService';
 import { categoryService } from '../services/categoryService';
 import { THEME } from '../utils/theme';
@@ -156,7 +157,12 @@ export default function HomePage({ selectedLocation }) {
 
   return (
     <>
-      <Breadcrumb items={[{ label: selectedBrand || searchQuery || advancedFilters ? 'Kết quả tìm kiếm' : 'Tất cả sản phẩm điện thoại' }]} />
+      {(selectedBrand || searchQuery || advancedFilters) ? (
+        <Breadcrumb items={[{ label: 'Kết quả tìm kiếm' }]} />
+      ) : (
+        <Breadcrumb items={[{ label: 'Tất cả sản phẩm điện thoại' }]} />
+      )}
+
       <h2 
         className="text-2xl font-bold mb-4 pb-2 border-b"
         style={{ color: THEME.primary, borderColor: THEME.border }}
@@ -165,12 +171,18 @@ export default function HomePage({ selectedLocation }) {
           ? `Kết quả tìm kiếm cho: "${searchQuery}"` 
           : (selectedBrand || advancedFilters ? `Sản phẩm ${selectedBrand || 'đã lọc'}` : 'Chào mừng đến với hệ thống PhoneShop!')}
       </h2>
+
       {!selectedBrand && !searchQuery && !advancedFilters && (
-        <div 
-          className="p-4 rounded mb-6 border bg-primary/5 text-secondary border-primary/20"
-        >
-          Khám phá các sản phẩm điện thoại, phụ kiện và nhiều ưu đãi Mùa hè hấp dẫn.
-        </div>
+        <>
+          <div 
+            className="p-4 rounded mb-6 border bg-primary/5 text-secondary border-primary/20"
+          >
+            Khám phá các sản phẩm điện thoại, phụ kiện và nhiều ưu đãi Mùa hè hấp dẫn.
+          </div>
+          <div className="mb-6">
+            <BannerSection showSlider={false} />
+          </div>
+        </>
       )}
 
       {/* SECTION SẢN PHẨM NỔI BẬT (Điện Máy Xanh Style) */}
@@ -199,6 +211,13 @@ export default function HomePage({ selectedLocation }) {
               />
             ))}
           </div>
+        </div>
+      )}
+
+      {/* Banner Quảng cáo chạy (Nằm trên bộ lọc, dưới mục sản phẩm nổi bật) */}
+      {!selectedBrand && !searchQuery && !advancedFilters && (
+        <div className="mb-6">
+          <BannerSection showTopBanner={false} showSideBanners={false} />
         </div>
       )}
       
