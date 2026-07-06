@@ -157,7 +157,12 @@ export default function HomePage({ selectedLocation }) {
 
   return (
     <>
-      <Breadcrumb items={[{ label: selectedBrand || searchQuery || advancedFilters ? 'Kết quả tìm kiếm' : 'Tất cả sản phẩm điện thoại' }]} />
+      {(selectedBrand || searchQuery || advancedFilters) ? (
+        <Breadcrumb items={[{ label: 'Kết quả tìm kiếm' }]} />
+      ) : (
+        <Breadcrumb items={[{ label: 'Tất cả sản phẩm điện thoại' }]} />
+      )}
+
       <h2 
         className="text-2xl font-bold mb-4 pb-2 border-b"
         style={{ color: THEME.primary, borderColor: THEME.border }}
@@ -166,6 +171,7 @@ export default function HomePage({ selectedLocation }) {
           ? `Kết quả tìm kiếm cho: "${searchQuery}"` 
           : (selectedBrand || advancedFilters ? `Sản phẩm ${selectedBrand || 'đã lọc'}` : 'Chào mừng đến với hệ thống PhoneShop!')}
       </h2>
+
       {!selectedBrand && !searchQuery && !advancedFilters && (
         <>
           <div 
@@ -173,7 +179,9 @@ export default function HomePage({ selectedLocation }) {
           >
             Khám phá các sản phẩm điện thoại, phụ kiện và nhiều ưu đãi Mùa hè hấp dẫn.
           </div>
-          <BannerSection />
+          <div className="mb-6">
+            <BannerSection showSlider={false} />
+          </div>
         </>
       )}
 
@@ -203,6 +211,13 @@ export default function HomePage({ selectedLocation }) {
               />
             ))}
           </div>
+        </div>
+      )}
+
+      {/* Banner Quảng cáo chạy (Nằm trên bộ lọc, dưới mục sản phẩm nổi bật) */}
+      {!selectedBrand && !searchQuery && !advancedFilters && (
+        <div className="mb-6">
+          <BannerSection showTopBanner={false} showSideBanners={false} />
         </div>
       )}
       

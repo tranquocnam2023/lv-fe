@@ -1,31 +1,69 @@
 import { useState, useEffect, useRef } from 'react';
-import { Link, useNavigate, useLocation } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
 import { useTheme } from '../context/ThemeContext';
-import { Sun, Moon } from 'lucide-react';
+import {
+  Sun,
+  Moon,
+  Smartphone,
+  Tablet,
+  Cpu,
+  Watch,
+  Headphones,
+  Cable,
+  Shield,
+  HardDrive,
+  ShoppingBag,
+  ChevronDown
+} from 'lucide-react';
 
 import { THEME } from '../utils/theme';
-import { locationService } from '../services/locationService';
 import { productService } from '../services/productService';
 import { categoryService } from '../services/categoryService';
-import Sidebar from './Sidebar';
+
+const getCategoryIcon = (name, iconUrl) => {
+  if (iconUrl) {
+    return (
+      <img src={iconUrl} alt={name} className="w-3.5 h-3.5 object-contain shrink-0" />
+    );
+  }
+
+  const normalized = name.toLowerCase();
+  let IconComponent = ShoppingBag;
+
+  if (normalized.includes('thoại') || normalized.includes('phone') || normalized.includes('mobile')) {
+    IconComponent = Smartphone;
+  } else if (normalized.includes('bảng') || normalized.includes('tablet') || normalized.includes('ipad')) {
+    IconComponent = Tablet;
+  } else if (normalized.includes('đeo') || normalized.includes('đồng hồ') || normalized.includes('watch') || normalized.includes('vòng đeo')) {
+    IconComponent = Watch;
+  } else if (normalized.includes('âm thanh') || normalized.includes('tai nghe') || normalized.includes('loa') || normalized.includes('headphones') || normalized.includes('mic')) {
+    IconComponent = Headphones;
+  } else if (normalized.includes('cáp') || normalized.includes('sạc') || normalized.includes('cable') || normalized.includes('củ')) {
+    IconComponent = Cable;
+  } else if (normalized.includes('ốp') || normalized.includes('cường lực') || normalized.includes('bao da') || normalized.includes('kính') || normalized.includes('shield')) {
+    IconComponent = Shield;
+  } else if (normalized.includes('lưu trữ') || normalized.includes('thẻ nhớ') || normalized.includes('ổ cứng') || normalized.includes('usb') || normalized.includes('sd')) {
+    IconComponent = HardDrive;
+  } else if (normalized.includes('phụ kiện') || normalized.includes('công nghệ') || normalized.includes('thiết bị')) {
+    IconComponent = Cpu;
+  }
+
+  return <IconComponent className="w-3.5 h-3.5 shrink-0 opacity-80" />;
+};
 
 // Subcomponents
-import HeaderLocationSelector from './header/HeaderLocationSelector';
 import HeaderSearchBar from './header/HeaderSearchBar';
 import HeaderAccountMenu from './header/HeaderAccountMenu';
 
-export default function Header({ selectedLocation, setSelectedLocation, isSidebarFocused, setIsSidebarFocused }) {
+export default function Header() {
   const { cartCount } = useCart();
   const navigate = useNavigate();
-  const location = useLocation();
   const { toggleTheme, isDark } = useTheme();
-  
-  const [provinces, setProvinces] = useState([]);
-  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+
   const [categories, setCategories] = useState([]);
   const [isOpenMobileMenu, setIsOpenMobileMenu] = useState(false);
-  const [isCategoryHovered, setIsCategoryHovered] = useState(false);
+  const [hoveredCatId, setHoveredCatId] = useState(null);
 
   // States cho tìm kiếm
   const [searchQuery, setSearchQuery] = useState('');
@@ -43,19 +81,7 @@ export default function Header({ selectedLocation, setSelectedLocation, isSideba
       .catch(err => console.error("Lỗi tải danh mục trong mobile menu:", err));
   }, []);
 
-  useEffect(() => {
-    const fetchProvinces = async () => {
-      try {
-        const data = await locationService.getProvinces();
-        setProvinces(data);
-      } catch (err) {
-        console.error("Lỗi lấy danh sách tỉnh thành:", err);
-      }
-    };
-    fetchProvinces();
-  }, []);
-
-  // Lấy dữ liệu sản phẩm từ DATABASE
+  // Lấy dữ liệu sản phẩm từ DB
   useEffect(() => {
     const fetchProducts = async () => {
       try {
@@ -109,24 +135,20 @@ export default function Header({ selectedLocation, setSelectedLocation, isSideba
 
   const shouldShowDropdown = showDropdown && searchQuery.trim().length > 0;
 
-  const displayLocations = provinces.length > 0 
-    ? provinces.map(p => p.fullName || p.name) 
-    : ['Thành phố Hồ Chí Minh', 'Thành phố Hà Nội', 'Thành phố Đà Nẵng', 'Thành phố Cần Thơ', 'Tỉnh Đồng Nai'];
-  
   // Lấy thông tin user từ localStorage an toàn hơn
   let user = null;
   try {
     const userJson = localStorage.getItem('user');
     if (userJson && userJson !== 'undefined' && userJson !== 'null') {
       user = JSON.parse(userJson);
-      
+
       // Thử lấy username từ token nếu chưa có trong user object
       const token = localStorage.getItem('token');
       if (!user.username && token) {
         try {
           const payloadBase64 = token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/');
-          const payloadJson = decodeURIComponent(atob(payloadBase64).split('').map(function(c) {
-              return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+          const payloadJson = decodeURIComponent(atob(payloadBase64).split('').map(function (c) {
+            return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
           }).join(''));
           const payload = JSON.parse(payloadJson);
           user.username = payload['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name'] || payload.unique_name || payload.name || payload.sub;
@@ -139,9 +161,9 @@ export default function Header({ selectedLocation, setSelectedLocation, isSideba
     console.error("Lỗi parse user từ localStorage:", err);
     localStorage.removeItem('user'); // Xóa nếu hỏng
   }
-  
+
   // Kiểm tra đăng nhập cực kỳ nghiêm ngặt
-  const isLoggedIn = !!(user && (user.id || user.Id)); 
+  const isLoggedIn = !!(user && (user.id || user.Id));
   const userRole = user?.role || user?.Role || '';
 
   const handleLogout = () => {
@@ -155,9 +177,9 @@ export default function Header({ selectedLocation, setSelectedLocation, isSideba
     <header className="w-full text-white sticky top-0 z-50 shadow-md" style={{ backgroundColor: THEME.primary, color: THEME.textLight }}>
       {/* Top Bar */}
       <div className="container-box flex items-center justify-between py-3 h-16 px-4 md:px-6 lg:px-8 relative">
-        
+
         {/* MOBILE & TABLET: Hamburger Menu Button */}
-        <button 
+        <button
           onClick={() => setIsOpenMobileMenu(true)}
           className="lg:hidden p-2 rounded hover:bg-white/10 transition cursor-pointer"
           aria-label="Menu"
@@ -174,35 +196,7 @@ export default function Header({ selectedLocation, setSelectedLocation, isSideba
           </Link>
         </div>
 
-        {/* Danh mục Button */}
-        <div className="shrink-0 ml-4 hidden md:block">
-          <button
-            type="button"
-            onClick={(e) => {
-              e.preventDefault();
-              setIsSidebarFocused(prev => !prev);
-            }}
-            className="flex items-center gap-1.5 px-3 py-2 rounded font-black text-xs transition-all duration-200 select-none cursor-pointer text-white hover:bg-white/20 border-0"
-            style={{ 
-              backgroundColor: isSidebarFocused ? 'rgba(255,255,255,0.25)' : 'rgba(255,255,255,0.15)',
-              boxShadow: isSidebarFocused ? '0 0 0 2px rgba(255,255,255,0.4)' : 'none'
-            }}
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.2} stroke="currentColor" className="w-4 h-4">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6A2.25 2.25 0 0 1 6 3.75h2.25A2.25 2.25 0 0 1 10.5 6v2.25a2.25 2.25 0 0 1-2.25 2.25H6a2.25 2.25 0 0 1-2.25-2.25V6ZM3.75 15.75A2.25 2.25 0 0 1 6 13.5h2.25a2.25 2.25 0 0 1 2.25 2.25V18a2.25 2.25 0 0 1-2.25 2.25H6A2.25 2.25 0 0 1 3.75 18v-2.25ZM13.5 6a2.25 2.25 0 0 1 2.25-2.25H18A2.25 2.25 0 0 1 20.25 6v2.25A2.25 2.25 0 0 1 18 10.5h-2.25a2.25 2.25 0 0 1-2.25-2.25V6ZM13.5 15.75a2.25 2.25 0 0 1 2.25-2.25H18a2.25 2.25 0 0 1 2.25 2.25V18A2.25 2.25 0 0 1 18 20.25h-2.25A2.25 2.25 0 0 1 13.5 18v-2.25ZM13.5 15.75a2.25 2.25 0 0 1 2.25-2.25H18a2.25 2.25 0 0 1 2.25 2.25V18A2.25 2.25 0 0 1 18 20.25h-2.25A2.25 2.25 0 0 1 13.5 18v-2.25Z" />
-            </svg>
-            <span>Danh mục</span>
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className={`w-3 h-3 ml-0.5 opacity-80 transition-transform duration-200 ${isSidebarFocused ? 'rotate-180' : ''}`}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
-            </svg>
-          </button>
-        </div>
 
-        {isSidebarFocused && (
-          <div className="absolute top-[calc(100%+12px)] left-4 z-[95] w-64">
-            <Sidebar isFocused={isSidebarFocused} setIsFocused={setIsSidebarFocused} />
-          </div>
-        )}
 
         {/* DESKTOP: Search Bar */}
         <div className="hidden lg:block flex-1 max-w-xl mx-4 min-w-[200px] relative" ref={searchContainerRef}>
@@ -220,33 +214,36 @@ export default function Header({ selectedLocation, setSelectedLocation, isSideba
 
         {/* DESKTOP: Right Icons: Orders, Cart, Account */}
         <div className="hidden lg:flex items-center space-x-3 text-xs shrink-0 select-none">
-          <Link 
-            to="/track" 
-            className="flex items-center px-3 py-2 rounded transition text-center hover:bg-white/20 font-bold"
+          <Link
+            to="/track"
+            className="flex items-center justify-center px-3 py-1.5 bg-white/10 hover:bg-white/20 rounded transition-all shadow-sm text-center cursor-pointer"
             style={{ color: THEME.textLight }}
           >
-            Tra cứu<br/>đơn hàng
+            <div className="flex flex-col items-center justify-center leading-tight text-xs font-bold">
+              <span>Tra cứu</span>
+              <span>đơn hàng</span>
+            </div>
           </Link>
 
-          <Link 
-            to="/cart" 
-            className="flex items-center px-3 py-2 border rounded transition space-x-2 relative group"
-            style={{ borderColor: 'rgba(255,255,255,0.3)' }}
-            onMouseOver={(e) => { e.currentTarget.style.backgroundColor = '#ffffff'; e.currentTarget.style.color = THEME.primary; }}
-            onMouseOut={(e) => { e.currentTarget.style.backgroundColor = 'transparent'; e.currentTarget.style.color = THEME.textLight; }}
-          >
-            <div className="relative">
-              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5 transition-transform group-hover:scale-110">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 3h1.386c.51 0 .955.343 1.087.835l.383 1.437M7.5 14.25a3 3 0 0 0-3 3h15.75m-12.75-3h11.218c1.121-2.3 2.1-4.684 2.924-7.138a60.114 60.114 0 0 0-16.536-1.84M7.5 14.25 5.106 5.272M6 20.25a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0Zm12.75 0a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0Z" />
-              </svg>
-              {cartCount > 0 && (
-                <span className="absolute -top-2 -right-2 bg-red-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full border border-white">
-                  {cartCount}
-                </span>
-              )}
-            </div>
-            <span className="font-semibold text-sm">Giỏ hàng</span>
-          </Link>
+            <Link
+              to="/cart"
+              className="flex items-center px-3 py-2 border rounded transition space-x-2 relative group"
+              style={{ borderColor: 'rgba(255,255,255,0.3)' }}
+              onMouseOver={(e) => { e.currentTarget.style.backgroundColor = '#ffffff'; e.currentTarget.style.color = THEME.primary; }}
+              onMouseOut={(e) => { e.currentTarget.style.backgroundColor = 'transparent'; e.currentTarget.style.color = THEME.textLight; }}
+            >
+              <div className="relative">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5 transition-transform group-hover:scale-110">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 3h1.386c.51 0 .955.343 1.087.835l.383 1.437M7.5 14.25a3 3 0 0 0-3 3h15.75m-12.75-3h11.218c1.121-2.3 2.1-4.684 2.924-7.138a60.114 60.114 0 0 0-16.536-1.84M7.5 14.25 5.106 5.272M6 20.25a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0Zm12.75 0a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0Z" />
+                </svg>
+                {cartCount > 0 && (
+                  <span className="absolute -top-2 -right-2 bg-red-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full border border-white">
+                    {cartCount}
+                  </span>
+                )}
+              </div>
+              <span className="font-semibold text-sm">Giỏ hàng</span>
+            </Link>
 
             {/* Theme Toggle Button */}
             <button
@@ -275,8 +272,8 @@ export default function Header({ selectedLocation, setSelectedLocation, isSideba
         {/* MOBILE & TABLET: Simple Action Icons */}
         <div className="flex lg:hidden items-center space-x-2">
           {/* Cart Icon */}
-          <Link 
-            to="/cart" 
+          <Link
+            to="/cart"
             className="flex items-center p-2 rounded hover:bg-white/10 transition relative"
           >
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6">
@@ -306,15 +303,15 @@ export default function Header({ selectedLocation, setSelectedLocation, isSideba
 
           {/* User Profile / Auth link */}
           {isLoggedIn ? (
-            <Link 
-              to="/profile?tab=info" 
+            <Link
+              to="/profile?tab=info"
               className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center font-bold text-xs hover:bg-white/30 transition-all select-none"
             >
               {(user.username || 'U')[0].toUpperCase()}
             </Link>
           ) : (
-            <Link 
-              to="/auth" 
+            <Link
+              to="/auth"
               className="p-2 rounded hover:bg-white/10 transition"
             >
               <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6">
@@ -326,13 +323,67 @@ export default function Header({ selectedLocation, setSelectedLocation, isSideba
 
       </div>
 
+      {/* Row 2: Menu danh mục ngang (Thế giới di động style) */}
+      <div className="border-t border-white/10 bg-white/5 py-1.5 hidden md:block select-none">
+        <div className="container-box flex items-center justify-start gap-3 px-4 md:px-6 lg:px-8 text-[11px] font-bold tracking-wide">
+          {categories.filter(cat => cat.parentId === null || cat.level === 1).map((cat) => {
+            const subcategories = categories.filter(c => c.parentId === cat.id);
+            const hasSub = subcategories.length > 0;
+            const isHovered = hoveredCatId === cat.id;
+
+            return (
+              <div
+                key={cat.id}
+                className="relative"
+                onMouseEnter={() => setHoveredCatId(cat.id)}
+                onMouseLeave={() => setHoveredCatId(null)}
+              >
+                <Link
+                  to={`/danh-muc/${encodeURIComponent(cat.name.toLowerCase())}`}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded transition-all duration-200 text-white hover:bg-white/15 ${isHovered ? 'bg-white/20' : ''}`}
+                >
+                  {getCategoryIcon(cat.name, cat.iconUrl)}
+                  <span>{cat.name}</span>
+                  {hasSub && (
+                    <ChevronDown className="w-3 h-3 opacity-80" />
+                  )}
+                </Link>
+
+                {/* Dropdown menu nổi (Absolute Dropdown) đè lên nội dung */}
+                {isHovered && hasSub && (
+                  <div
+                    className="absolute top-full left-0 z-[100] w-72 pt-2"
+                    onMouseEnter={() => setHoveredCatId(cat.id)}
+                    onMouseLeave={() => setHoveredCatId(null)}
+                  >
+                    <div className="bg-white text-gray-800 border border-gray-200/80 rounded-xl shadow-2xl p-4 animate-in fade-in slide-in-from-top-2 duration-150">
+                      <div className={`grid ${subcategories.length > 4 ? 'grid-cols-2' : 'grid-cols-1'} gap-2`}>
+                        {subcategories.map(sub => (
+                          <Link
+                            key={sub.id}
+                            to={`/danh-muc/${encodeURIComponent(sub.name.toLowerCase())}`}
+                            className="flex items-center px-3 py-2 rounded-lg hover:bg-primary/5 hover:text-primary text-xs font-semibold border border-transparent hover:border-primary/10 transition-all duration-150"
+                          >
+                            <span>{sub.name}</span>
+                          </Link>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
       {/* MOBILE: Search Bar Row */}
       <div className="block lg:hidden px-4 pb-3">
         <div ref={searchContainerRef} className="relative w-full">
           <div className="flex items-center w-full h-10 rounded bg-white overflow-hidden shadow-inner">
-            <input 
-              type="text" 
-              placeholder="Bạn tìm gì..." 
+            <input
+              type="text"
+              placeholder="Bạn tìm gì..."
               className="w-full h-full text-gray-800 px-3 outline-none text-sm"
               value={searchQuery}
               onChange={(e) => {
@@ -342,7 +393,7 @@ export default function Header({ selectedLocation, setSelectedLocation, isSideba
               onFocus={() => setShowDropdown(true)}
               onKeyDown={handleKeyDown}
             />
-            <button 
+            <button
               onClick={handleSearchSubmit}
               className="h-full px-4 text-gray-600 bg-white hover:bg-gray-100 transition cursor-pointer"
             >
@@ -366,7 +417,7 @@ export default function Header({ selectedLocation, setSelectedLocation, isSideba
                       if (!finalDiscount && product.originalPrice && product.originalPrice > product.price) {
                         finalDiscount = Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100);
                       }
-                      
+
                       return (
                         <Link
                           key={product.id}
@@ -379,9 +430,9 @@ export default function Header({ selectedLocation, setSelectedLocation, isSideba
                         >
                           <div className="w-10 h-10 shrink-0 overflow-hidden flex items-center justify-center bg-white rounded border border-gray-100 p-1">
                             {product.image ? (
-                              <img 
-                                src={product.image} 
-                                alt={product.name} 
+                              <img
+                                src={product.image}
+                                alt={product.name}
                                 className="object-contain w-full h-full group-hover:scale-105 transition-transform"
                               />
                             ) : (
@@ -392,7 +443,7 @@ export default function Header({ selectedLocation, setSelectedLocation, isSideba
                               </div>
                             )}
                           </div>
-                          
+
                           <div className="flex-1 min-w-0">
                             <h4 className="text-xs font-bold text-gray-800 group-hover:text-primary transition-colors truncate">
                               {product.name}
@@ -444,12 +495,12 @@ export default function Header({ selectedLocation, setSelectedLocation, isSideba
       {isOpenMobileMenu && (
         <>
           {/* Backdrop overlay */}
-          <div 
+          <div
             className="fixed inset-0 bg-black/50 z-[99999] transition-opacity duration-300 lg:hidden"
             onClick={() => setIsOpenMobileMenu(false)}
           />
           {/* Drawer content */}
-          <div 
+          <div
             className="fixed top-0 left-0 bottom-0 w-80 max-w-[85vw] bg-white text-gray-850 z-[100000] shadow-2xl flex flex-col transition-transform duration-300 ease-out transform lg:hidden animate-in slide-in-from-left duration-250"
             style={{ color: '#1f2937' }}
           >
@@ -458,7 +509,7 @@ export default function Header({ selectedLocation, setSelectedLocation, isSideba
               <div className="flex items-center gap-2">
                 <img src="/logo2.jpg" alt="Logo" className="h-8 object-contain rounded-md" />
               </div>
-              <button 
+              <button
                 onClick={() => setIsOpenMobileMenu(false)}
                 className="p-1 rounded hover:bg-white/10 transition cursor-pointer"
               >
@@ -473,8 +524,8 @@ export default function Header({ selectedLocation, setSelectedLocation, isSideba
 
               {/* Tra cứu đơn hàng (Mobile Drawer) */}
               <div>
-                <Link 
-                  to="/track" 
+                <Link
+                  to="/track"
                   onClick={() => setIsOpenMobileMenu(false)}
                   className="flex items-center justify-between px-4 py-3 rounded-lg bg-gray-50 hover:bg-gray-100 border border-gray-200 text-sm font-bold text-gray-700 transition"
                 >
@@ -556,16 +607,16 @@ export default function Header({ selectedLocation, setSelectedLocation, isSideba
                       }}
                       className="w-full text-left px-4 py-3 text-sm font-bold text-red-500 hover:bg-red-50 transition cursor-pointer"
                     >
-                      🚪 Đăng xuất
+                      Đăng xuất
                     </button>
                   </div>
                 ) : (
-                  <Link 
-                    to="/auth" 
+                  <Link
+                    to="/auth"
                     onClick={() => setIsOpenMobileMenu(false)}
                     className="flex items-center justify-center w-full py-3 rounded-lg bg-primary text-white font-bold text-sm hover:opacity-90 transition"
                   >
-                    🔐 Đăng nhập tài khoản
+                    Đăng nhập tài khoản
                   </Link>
                 )}
               </div>
