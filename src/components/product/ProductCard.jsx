@@ -37,28 +37,34 @@ const parseSpecs = (specsInput, priorityKeys = []) => {
     }
   });
 
-  // Default priority keys if none provided:
-  const searchKeys = priorityKeys.length > 0 
-    ? priorityKeys.map(k => k.toLowerCase()) 
+  // Default priority keys if none provided (all lowercase to match normalized allItems):
+  const rawKeys = priorityKeys.length > 0
+    ? priorityKeys
     : [
-        'kích thước màn hình', 
-        'ram',  
-        'rom', 
-        'màn hình',
-        'chipset', 
-        'cpu', 
-        'camera sau',
-        'camera trước',
-        'dung lượng pin',
-        'pin',
-        'hệ điều hành'
+        'Kích thước màn hình',
+        'RAM',
+        'ROM',
+        'Màn hình',
+        'Chipset',
+        'CPU',
+        'Camera sau',
+        'Camera trước',
+        'Dung lượng pin',
+        'Pin',
+        'Hệ điều hành'
       ];
+  const searchKeys = rawKeys.map(k => k.toLowerCase());
 
   const tags = [];
   
   // 1. Try to find values matching priority keys in order
+  // searchKey includes item.key: e.g. searchKey='kích thước màn hình', item.key='kích thước màn hình'
+  // Dùng exact match trước, fallback sang partial (searchKey chứa item.key)
   searchKeys.forEach(searchKey => {
-    const match = allItems.find(item => item.key.includes(searchKey));
+    if (tags.length >= 3) return;
+    const match =
+      allItems.find(item => item.key === searchKey) ||
+      allItems.find(item => searchKey.includes(item.key) && item.key.length > 2);
     if (match && !tags.includes(match.value)) {
       tags.push(match.value);
     }
