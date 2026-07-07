@@ -37,6 +37,15 @@ export default function ProductSpecsBuilder() {
     const nextSpecs = [
       ...specsGroups,
       { groupName: '', items: [{ key: '', value: '' }] }
+      // ràng buộc thông só kĩ thuật
+      // {
+      //  groupName: 'Cấu hình chi tiết', 
+      //   items: [
+      //     { key: 'CPU', value: '' },
+      //     { key: 'RAM', value: '' },
+      //     { key: 'Màn hình', value: '' }
+      //   ] 
+      // }
     ];
     updateSpecs(nextSpecs);
     setActiveTabIdx(nextSpecs.length - 1); // Tự chuyển sang tab mới
