@@ -1,13 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { Package, Layout, Bell, ShoppingCart, Settings2, Plus, Edit, Trash2, X, FolderTree, UploadCloud, Loader2, Link2, ChevronDown, ChevronUp, Image as ImageIcon, Search, Eye } from 'lucide-react';
 // import { TRANSACTIONS_MOCK } from '../utils/constants'; // Removed invalid import
-import AdminProductVariants from './components/AdminProductVariants';
 import { categoryService } from '../../../services/categoryService';
 import { brandService } from '../../../services/brandService';
 import { productService } from '../../../services/productService';
 import { usePagination } from '../../../hooks/usePagination';
 import { useFormat } from '../../../hooks/useFormat';
-import PriceInput from '../../../components/PriceInput';
+
 
 export default function AdminProducts({ onCreate, onEdit, defaultBrandFilter, clearBrandFilter }) {
   const [categories, setCategories] = useState([]); // Sidebar brands

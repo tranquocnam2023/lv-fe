@@ -36,7 +36,16 @@ export default function ProductSpecsBuilder() {
   const addGroup = () => {
     const nextSpecs = [
       ...specsGroups,
-      { groupName: '', items: [{ key: '', value: '' }] }
+      //{ groupName: '', items: [{ key: '', value: '' }] }
+      // ràng buộc thông só kĩ thuật
+      //{
+      // groupName: 'Cấu hình chi tiết', 
+      //  items: [
+      //    { key: 'CPU', value: '' },
+      //    { key: 'RAM', value: '' },
+      //    { key: 'Màn hình', value: '' }
+      //  ] 
+      //}
     ];
     updateSpecs(nextSpecs);
     setActiveTabIdx(nextSpecs.length - 1); // Tự chuyển sang tab mới
@@ -196,8 +205,7 @@ export default function ProductSpecsBuilder() {
             <div 
               key={safeActiveTabIdx} // Sử dụng key để React remount kích hoạt lại CSS Animation
               className="bg-white rounded-md border border-admin-border overflow-hidden shadow-sm transition-all duration-300 animate-in fade-in slide-in-from-bottom-2"
-            >
-              
+            >             
               {/* Header Nhóm */}
               <div className="flex items-center gap-4 bg-slate-50 px-5 py-3 border-b border-admin-border justify-between">
                 <div className="flex-1 flex items-center gap-3">

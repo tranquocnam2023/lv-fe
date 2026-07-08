@@ -1,8 +1,8 @@
 import React, { useMemo } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { Image as ImageIcon, Trash2, PlusCircle, MinusCircle } from 'lucide-react';
 import { useProductFormContext } from '../../../context/ProductFormContext';
 import PriceInput from '../../PriceInput';
-import { productService } from '../../../services/productService';
 import SharedLocalImageUpload from '../../SharedLocalImageUpload';
 
 export default function VariantDetailAccordion({
@@ -21,6 +21,9 @@ export default function VariantDetailAccordion({
     setExpandedVariantKey,
     showToast
   } = useProductFormContext();
+
+  const [searchParams] = useSearchParams();
+  const isEditMode = !!searchParams.get('productId');
 
   const vData = variantsData[variantKey] || {};
 
@@ -140,8 +143,9 @@ export default function VariantDetailAccordion({
                   <input
                     type="number"
                     value={stockVal}
+                    disabled={isEditMode}
                     onChange={(e) => updateVariantField(variantKey, 'totalStock', parseInt(e.target.value) || 0)}
-                    className="w-full px-3 py-2 border border-admin-border rounded outline-none text-xs text-admin-text-main font-semibold bg-white focus:border-primary focus:ring-1 focus:ring-primary/20"
+                    className={`w-full px-3 py-2 border border-admin-border rounded outline-none text-xs font-semibold bg-white focus:border-primary focus:ring-1 focus:ring-primary/20 ${isEditMode ? 'bg-gray-100 text-gray-400 cursor-not-allowed' : 'text-admin-text-main'}`}
                   />
                 </div>
               </div>

@@ -20,6 +20,7 @@ import {
 import { THEME } from '../utils/theme';
 import { productService } from '../services/productService';
 import { categoryService } from '../services/categoryService';
+import { brandService } from '../services/brandService';
 
 const getCategoryIcon = (name, iconUrl) => {
   if (iconUrl) {
@@ -56,6 +57,109 @@ const getCategoryIcon = (name, iconUrl) => {
 import HeaderSearchBar from './header/HeaderSearchBar';
 import HeaderAccountMenu from './header/HeaderAccountMenu';
 
+const getMegaMenuData = (cat, subcategories, allProducts, dbBrands) => {
+  const normName = cat.name.toLowerCase();
+  const catId = cat.id || cat.Id;
+  const subIds = subcategories.map(s => s.id || s.Id);
+  const targetCategoryIds = [catId, ...subIds];
+
+  // 1. Lọc sản phẩm thực tế thuộc danh mục này và các danh mục con
+  const catProducts = allProducts.filter(p => {
+    const pCatId = p.categoryId || p.CategoryId;
+    if (pCatId && targetCategoryIds.includes(pCatId)) return true;
+
+    // Tìm theo tên khớp
+    const pCatName = (p.categoryName || p.CategoryName || p.category || '').toLowerCase();
+    return pCatName === normName || subcategories.some(sub => pCatName === sub.name.toLowerCase());
+  });
+
+  // 2. Lấy danh sách thương hiệu thực tế từ các sản phẩm thuộc danh mục
+  const productBrands = Array.from(new Set(
+    catProducts
+      .map(p => (p.brand || p.brandName || p.BrandName || '').trim())
+      .filter(Boolean)
+  ));
+
+  // Lọc dbBrands khớp với các thương hiệu thực tế trong sản phẩm
+  let categoryBrands = dbBrands.filter(b => 
+    productBrands.some(pb => pb.toLowerCase() === b.name.toLowerCase())
+  );
+
+  // Nếu không tìm thấy thương hiệu khớp nào từ sản phẩm (ví dụ DB chưa có sản phẩm),
+  // hiển thị các thương hiệu lấy từ DB
+  if (categoryBrands.length === 0) {
+    categoryBrands = dbBrands.length > 0 ? dbBrands : [
+      { id: 1, name: 'Apple' },
+      { id: 2, name: 'Samsung' },
+      { id: 3, name: 'OPPO' },
+      { id: 4, name: 'Xiaomi' },
+      { id: 5, name: 'Realme' },
+      { id: 6, name: 'Nokia' }
+    ];
+  }
+
+  // Chuyển đổi định dạng
+  const brands = categoryBrands.map(b => ({
+    name: b.name,
+    logoText: b.name.toUpperCase(),
+    imageUrl: b.imageUrl || b.ImageUrl
+  }));
+
+  // 3. Lấy danh sách sản phẩm HOT thực tế từ SQL Server
+  let hotProds = catProducts.filter(p => p.isFeatured || p.IsFeatured);
+  if (hotProds.length < 8) {
+    const regularProds = catProducts.filter(p => !(p.isFeatured || p.IsFeatured));
+    hotProds = [...hotProds, ...regularProds];
+  }
+
+  // Fallback
+  if (hotProds.length === 0) {
+    hotProds = allProducts.filter(p => p.isFeatured || p.IsFeatured);
+  }
+  if (hotProds.length === 0) {
+    hotProds = allProducts;
+  }
+
+  const hotProducts = hotProds.slice(0, 8).map((p, idx) => ({
+    id: p.id || p.Id,
+    name: p.name,
+    tag: p.isFeatured || p.IsFeatured || idx === 0 ? 'Hot' : p.originalPrice > p.price ? 'Giảm Giá' : ''
+  }));
+
+  // 4. Tạo mức giá
+  let priceRanges = [];
+  if (normName.includes('thoại') || normName.includes('phone') || normName.includes('mobile')) {
+    priceRanges = [
+      { label: 'Dưới 2 triệu', query: 'price_max=2000000' },
+      { label: '2 - 4 triệu', query: 'price_min=2000000&price_max=4000000' },
+      { label: '4 - 7 triệu', query: 'price_min=4000000&price_max=7000000' },
+      { label: '7 - 13 triệu', query: 'price_min=7000000&price_max=13000000' },
+      { label: '13 - 20 triệu', query: 'price_min=13000000&price_max=20000000' },
+      { label: 'Trên 20 triệu', query: 'price_min=20000000' }
+    ];
+  } else if (normName.includes('bảng') || normName.includes('tablet') || normName.includes('ipad')) {
+    priceRanges = [
+      { label: 'Dưới 5 triệu', query: 'price_max=5000000' },
+      { label: '5 - 10 triệu', query: 'price_min=5000000&price_max=10000000' },
+      { label: '10 - 15 triệu', query: 'price_min=10000000&price_max=15000000' },
+      { label: 'Trên 15 triệu', query: 'price_min=15000000' }
+    ];
+  } else {
+    priceRanges = [
+      { label: 'Dưới 200k', query: 'price_max=200000' },
+      { label: '200k - 500k', query: 'price_min=200000&price_max=500000' },
+      { label: '500k - 1 triệu', query: 'price_min=500000&price_max=1000000' },
+      { label: 'Trên 1 triệu', query: 'price_min=1000000' }
+    ];
+  }
+
+  return {
+    brands,
+    hotProducts,
+    priceRanges
+  };
+};
+
 export default function Header() {
   const { cartCount } = useCart();
   const navigate = useNavigate();
@@ -64,6 +168,7 @@ export default function Header() {
   const [categories, setCategories] = useState([]);
   const [isOpenMobileMenu, setIsOpenMobileMenu] = useState(false);
   const [hoveredCatId, setHoveredCatId] = useState(null);
+  const [dbBrands, setDbBrands] = useState([]);
 
   // States cho tìm kiếm
   const [searchQuery, setSearchQuery] = useState('');
@@ -80,6 +185,29 @@ export default function Header() {
       })
       .catch(err => console.error("Lỗi tải danh mục trong mobile menu:", err));
   }, []);
+
+  // Lấy dữ liệu thương hiệu từ DB
+  useEffect(() => {
+    brandService.getAll()
+      .then(data => {
+        if (Array.isArray(data)) {
+          setDbBrands(data);
+        }
+      })
+      .catch(err => console.error("Lỗi tải thương hiệu từ DB:", err));
+  }, []);
+
+  // Quản lý class body để che/ẩn quảng cáo khi mở mega menu
+  useEffect(() => {
+    if (hoveredCatId) {
+      document.body.classList.add('mega-menu-active');
+    } else {
+      document.body.classList.remove('mega-menu-active');
+    }
+    return () => {
+      document.body.classList.remove('mega-menu-active');
+    };
+  }, [hoveredCatId]);
 
   // Lấy dữ liệu sản phẩm từ DB
   useEffect(() => {
@@ -325,7 +453,7 @@ export default function Header() {
 
       {/* Row 2: Menu danh mục ngang (Thế giới di động style) */}
       <div className="border-t border-white/10 bg-white/5 py-1.5 hidden md:block select-none">
-        <div className="container-box flex items-center justify-start gap-3 px-4 md:px-6 lg:px-8 text-[11px] font-bold tracking-wide">
+        <div className="container-box flex items-center justify-start gap-3 px-4 md:px-6 lg:px-8 text-[11px] font-bold tracking-wide relative">
           {categories.filter(cat => cat.parentId === null || cat.level === 1).map((cat) => {
             const subcategories = categories.filter(c => c.parentId === cat.id);
             const hasSub = subcategories.length > 0;
@@ -334,7 +462,7 @@ export default function Header() {
             return (
               <div
                 key={cat.id}
-                className="relative"
+                className=""
                 onMouseEnter={() => setHoveredCatId(cat.id)}
                 onMouseLeave={() => setHoveredCatId(null)}
               >
@@ -349,28 +477,104 @@ export default function Header() {
                   )}
                 </Link>
 
-                {/* Dropdown menu nổi (Absolute Dropdown) đè lên nội dung */}
-                {isHovered && hasSub && (
-                  <div
-                    className="absolute top-full left-0 z-[100] w-72 pt-2"
-                    onMouseEnter={() => setHoveredCatId(cat.id)}
-                    onMouseLeave={() => setHoveredCatId(null)}
-                  >
-                    <div className="bg-white text-gray-800 border border-gray-200/80 rounded-xl shadow-2xl p-4 animate-in fade-in slide-in-from-top-2 duration-150">
-                      <div className={`grid ${subcategories.length > 4 ? 'grid-cols-2' : 'grid-cols-1'} gap-2`}>
-                        {subcategories.map(sub => (
-                          <Link
-                            key={sub.id}
-                            to={`/danh-muc/${encodeURIComponent(sub.name.toLowerCase())}`}
-                            className="flex items-center px-3 py-2 rounded-lg hover:bg-primary/5 hover:text-primary text-xs font-semibold border border-transparent hover:border-primary/10 transition-all duration-150"
-                          >
-                            <span>{sub.name}</span>
-                          </Link>
-                        ))}
+                {/* Mega menu giống CellphoneS đè lên nội dung */}
+                {isHovered && hasSub && (() => {
+                  const megaData = getMegaMenuData(cat, subcategories, allProducts, dbBrands);
+                  return (
+                    <div
+                      className="absolute top-full left-0 right-0 w-full z-[100] pt-2"
+                      onMouseEnter={() => setHoveredCatId(cat.id)}
+                      onMouseLeave={() => setHoveredCatId(null)}
+                    >
+                      <div className={`${isDark ? 'bg-slate-900 text-slate-100 border-slate-850' : 'bg-white text-gray-800 border-gray-200/80'} rounded-2xl shadow-2xl p-6 border grid grid-cols-3 gap-6 animate-in fade-in slide-in-from-top-2 duration-150 w-full`}>
+                        
+                        {/* Cột 1: Hãng sản xuất */}
+                        <div className="space-y-3">
+                          <h4 className={`text-xs font-extrabold uppercase tracking-wider ${isDark ? 'text-slate-400' : 'text-gray-400'}`}>
+                            Hãng sản xuất
+                          </h4>
+                          <div className="grid grid-cols-2 gap-2">
+                            {megaData.brands.map((brand, bIdx) => (
+                              <Link
+                                key={bIdx}
+                                to={`/danh-muc/${encodeURIComponent(brand.name.toLowerCase())}`}
+                                className={`flex items-center justify-center p-2.5 rounded-lg border text-center font-bold text-[11px] transition-all hover:-translate-y-0.5 hover:shadow-sm ${
+                                  isDark 
+                                    ? 'bg-slate-850 border-slate-800 hover:border-slate-700 hover:bg-slate-800 text-slate-200' 
+                                    : 'bg-gray-50 border-gray-150 hover:border-gray-250 hover:bg-gray-100/50 text-gray-700'
+                                }`}
+                              >
+                                {brand.imageUrl ? (
+                                  <img 
+                                    src={brand.imageUrl} 
+                                    alt={brand.name} 
+                                    className="h-5 max-w-full object-contain filter dark:brightness-110 dark:contrast-110 transition-all duration-200" 
+                                  />
+                                ) : (
+                                  brand.logoText
+                                )}
+                              </Link>
+                            ))}
+                          </div>
+                        </div>
+
+                        {/* Cột 2: Phân khúc sản phẩm */}
+                        <div className="space-y-3">
+                          <h4 className={`text-xs font-extrabold uppercase tracking-wider ${isDark ? 'text-slate-400' : 'text-gray-400'}`}>
+                            Phân khúc sản phẩm
+                          </h4>
+                          <div className="flex flex-col gap-1.5">
+                            {subcategories.map((sub) => (
+                              <Link
+                                key={sub.id}
+                                to={`/danh-muc/${encodeURIComponent(sub.name.toLowerCase())}`}
+                                className={`flex items-center px-3 py-2 rounded-lg text-xs font-semibold border border-transparent transition-all ${
+                                  isDark 
+                                    ? 'hover:bg-slate-800 hover:text-white text-slate-300' 
+                                    : 'hover:bg-primary/5 hover:text-primary text-gray-700'
+                                }`}
+                              >
+                                {sub.name}
+                              </Link>
+                            ))}
+                          </div>
+                        </div>
+
+                        {/* Cột 3: Sản phẩm HOT */}
+                        <div className="space-y-3">
+                          <h4 className={`text-xs font-extrabold uppercase tracking-wider ${isDark ? 'text-slate-400' : 'text-gray-400'}`}>
+                            Sản phẩm HOT
+                          </h4>
+                          <div className="flex flex-col gap-1.5">
+                            {megaData.hotProducts.map((prod, pIdx) => (
+                              <Link
+                                key={pIdx}
+                                to={prod.id ? `/product/${prod.id}` : `/?search=${encodeURIComponent(prod.name)}`}
+                                className={`flex items-center justify-between px-3 py-2 rounded-lg text-left text-xs font-semibold border border-transparent transition-all ${
+                                  isDark ? 'hover:bg-slate-800 hover:text-white text-slate-300' : 'hover:bg-primary/5 hover:text-primary text-gray-700'
+                                }`}
+                              >
+                                <span className="truncate text-[11px]">{prod.name}</span>
+                                {prod.tag && (
+                                  <span className={`text-[8px] font-extrabold px-1.5 py-0.5 rounded uppercase tracking-wider shrink-0 ${
+                                    prod.tag === 'Hot' 
+                                      ? 'bg-red-500 text-white animate-pulse' 
+                                      : prod.tag === 'Mới' 
+                                        ? 'bg-blue-500 text-white' 
+                                        : 'bg-orange-500 text-white'
+                                  }`}>
+                                    {prod.tag}
+                                  </span>
+                                )}
+                              </Link>
+                            ))}
+                          </div>
+                        </div>
+
                       </div>
                     </div>
-                  </div>
-                )}
+                  );
+                })()}
               </div>
             );
           })}
@@ -624,6 +828,13 @@ export default function Header() {
             </div>
           </div>
         </>
+      )}
+      
+      {/* Background backdrop overlay to hide/dim static ads and main page */}
+      {hoveredCatId && (
+        <div 
+          className="fixed top-full left-0 right-0 bottom-0 bg-black/40 backdrop-blur-[1.5px] z-[45] pointer-events-none animate-in fade-in duration-200"
+        />
       )}
     </header>
   );

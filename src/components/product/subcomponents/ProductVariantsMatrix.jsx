@@ -1,8 +1,8 @@
 import React, { useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { Image as ImageIcon, Trash2, X } from 'lucide-react';
 import { useProductFormContext } from '../../../context/ProductFormContext';
 import PriceInput from '../../PriceInput';
-import { productService } from '../../../services/productService';
 import { generateProductCode } from '../../../utils/codeGenerator';
 import BulkActionsPanel from './BulkActionsPanel';
 import VariantDetailAccordion from './VariantDetailAccordion';
@@ -25,6 +25,9 @@ export default function ProductVariantsMatrix() {
     excludedKeys,
     setExcludedKeys
   } = useProductFormContext();
+
+  const [searchParams] = useSearchParams();
+  const isEditMode = !!searchParams.get('productId');
 
   // Tự động đóng mục xem chi tiết biến thể đang mở khi admin chọn hàng loạt biến thể
   useEffect(() => {
@@ -164,8 +167,9 @@ export default function ProductVariantsMatrix() {
                           <input
                             type="number"
                             value={stockVal}
+                            disabled={isEditMode}
                             onChange={(e) => updateVariantField(key, 'totalStock', parseInt(e.target.value) || 0)}
-                            className="w-full px-2 py-1 border border-admin-border rounded outline-none text-xs text-admin-text-main font-semibold"
+                            className={`w-full px-2 py-1 border border-admin-border rounded outline-none text-xs font-semibold ${isEditMode ? 'bg-gray-100 text-gray-400 cursor-not-allowed' : 'text-admin-text-main'}`}
                           />
                         </td>
 

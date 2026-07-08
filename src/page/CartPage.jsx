@@ -164,6 +164,7 @@ export default function CartPage() {
   // Order Success screen state
   const [isFinished, setIsFinished] = useState(false);
   const [orderCode, setOrderCode] = useState('');
+  const [orderSuccessTotal, setOrderSuccessTotal] = useState(0);
 
   // Validation errors
   const [validationErrors, setValidationErrors] = useState({});
@@ -538,12 +539,48 @@ export default function CartPage() {
           let matchedVariant = null;
 
           if (Array.isArray(variants) && variants.length > 0) {
-            matchedVariant = variants.find(v =>
-              v.name && (
-                (item.selectedStorage && v.name.toLowerCase().includes(item.selectedStorage.toLowerCase())) ||
-                (item.selectedColor && v.name.toLowerCase().includes(item.selectedColor.toLowerCase()))
-              )
-            );
+            matchedVariant = variants.find(v => {
+              if (!v.name) return false;
+              let parsedAttrs = {};
+              if (v.attributes) {
+                try {
+                  parsedAttrs = JSON.parse(v.attributes);
+                } catch (e) {
+                  console.error("Lỗi parse attributes:", e);
+                }
+              }
+              
+              if (Object.keys(parsedAttrs).length === 0 && v.name.includes(' - ')) {
+                const parts = v.name.split(' - ');
+                if (parts.length > 1) {
+                  parsedAttrs["Dung lượng RAM - ROM"] = parts[1].trim();
+                }
+                if (parts.length > 2) {
+                  parsedAttrs["Màu sắc"] = parts[2].trim();
+                }
+              }
+
+              const cleanString = (str) => {
+                if (!str) return '';
+                return String(str).toLowerCase().replace(/[\s-]/g, '');
+              };
+
+              const colorMatch = !item.selectedColor || 
+                Object.entries(parsedAttrs).some(([k, val]) => 
+                  (k.toLowerCase().includes('màu') || k.toLowerCase().includes('color')) && 
+                  cleanString(val) === cleanString(item.selectedColor)
+                ) || 
+                cleanString(v.name).includes(cleanString(item.selectedColor));
+
+              const storageMatch = !item.selectedStorage || 
+                Object.entries(parsedAttrs).some(([k, val]) => 
+                  (k.toLowerCase().includes('dung lượng') || k.toLowerCase().includes('bộ nhớ') || k.toLowerCase().includes('ram') || k.toLowerCase().includes('rom') || k.toLowerCase().includes('storage')) && 
+                  cleanString(val) === cleanString(item.selectedStorage)
+                ) || 
+                cleanString(v.name).includes(cleanString(item.selectedStorage));
+
+              return colorMatch && storageMatch;
+            });
             if (!matchedVariant) matchedVariant = variants[0];
           }
 
@@ -575,6 +612,7 @@ export default function CartPage() {
 
       const newOrderId = checkoutRes?.orderId || checkoutRes?.OrderId || `PS${Math.floor(100000 + Math.random() * 900000)}`;
       setOrderCode(newOrderId);
+      setOrderSuccessTotal(finalTotalPay);
       setIsFinished(true);
       clearCart();
     } catch (err) {
@@ -601,7 +639,7 @@ export default function CartPage() {
       <CartSuccessScreen
         orderCode={orderCode}
         paymentMethod={paymentMethod}
-        finalTotalPay={finalTotalPay}
+        finalTotalPay={orderSuccessTotal}
         navigate={navigate}
       />
     );

@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { Search, Plus, RotateCcw, ArrowDownLeft, ArrowUpRight, ShoppingCart, Activity, FileText, ChevronDown, CheckCircle, Package, Clock, X, AlertCircle } from 'lucide-react';
 import { inventoryService } from '../../../services/inventoryService';
 import { productService } from '../../../services/productService';
@@ -6,6 +7,7 @@ import { brandService } from '../../../services/brandService';
 import { useFormat } from '../../../hooks/useFormat';
 import { usePagination } from '../../../hooks/usePagination';
 import PriceInput from '../../../components/PriceInput';
+import api from '../../../services/api';
 
 const TRANSACTIONS = [
   { id: 'IMPORT_SUPPLIER', name: 'Nhập từ nhà cung cấp', type: 'IN', bgColor: '#E0E7FF', textColor: 'var(--color-primary)', borderColor: 'var(--color-primary)' },
@@ -21,6 +23,10 @@ export default function AdminInventory() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
+  const [searchParams, setSearchParams] = useSearchParams();
+  const urlProductId = searchParams.get('productId');
+  const urlAction = searchParams.get('action');
+
   // Form states for transaction
   const [activeTxTab, setActiveTxTab] = useState(null);
   const [isTxDropdownOpen, setIsTxDropdownOpen] = useState(false);
@@ -29,6 +35,115 @@ export default function AdminInventory() {
   const [txQuantity, setTxQuantity] = useState(1);
   const [txPrice, setTxPrice] = useState('');
   const [txNote, setTxNote] = useState('');
+  const [txVariants, setTxVariants] = useState([]);
+  const [variantsLoading, setVariantsLoading] = useState(false);
+  const txDropdownRef = useRef(null);
+  const [isTxAttrOpen, setIsTxAttrOpen] = useState(false);
+
+  // Close attribute dropdown on click outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (txDropdownRef.current && !txDropdownRef.current.contains(event.target)) {
+        setIsTxAttrOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
+
+  // Parse attributes for currently selected product variants
+  const txAttributesConfig = useMemo(() => {
+    const config = {
+      "Dung lượng RAM - ROM": new Set(),
+      "Màu sắc": new Set()
+    };
+
+    txVariants.forEach(v => {
+      if (v.name && v.name.includes(' - ')) {
+        const parts = v.name.split(' - ');
+        if (parts.length > 1) {
+          config["Dung lượng RAM - ROM"].add(parts[1].trim());
+        }
+        if (parts.length > 2) {
+          config["Màu sắc"].add(parts[2].trim());
+        }
+      }
+    });
+
+    const result = {};
+    Object.entries(config).forEach(([key, set]) => {
+      if (set.size > 0) {
+        result[key] = Array.from(set);
+      }
+    });
+    return result;
+  }, [txVariants]);
+
+  // Handle redirection action from Product Edit Page
+  useEffect(() => {
+    if (urlProductId && urlAction) {
+      setActiveTxTab(urlAction);
+      setTxProductId(urlProductId);
+      setTxNote(urlAction === 'IMPORT_SUPPLIER' ? 'Nhập hàng từ nhà cung cấp' :
+        urlAction === 'IMPORT_RETURN' ? 'Khách trả hàng' :
+          urlAction === 'EXPORT_SELL' ? 'Xuất bán lẻ trực tiếp tại quầy' :
+            urlAction === 'EXPORT_DEFECT' ? 'Trả hàng lỗi cho nhà cung cấp' : '');
+
+      setSearchParams(prev => {
+        prev.delete('productId');
+        prev.delete('action');
+        return prev;
+      }, { replace: true });
+    }
+  }, [urlProductId, urlAction, setSearchParams]);
+
+  // Load product variants when product is selected in modal
+  useEffect(() => {
+    if (txProductId) {
+      const selectedProd = products.find(p => p.id === parseInt(txProductId));
+      if (!selectedProd) return;
+
+      setVariantsLoading(true);
+      api.get(`/ProductVariant?productId=${txProductId}`)
+        .then(res => {
+          if (Array.isArray(res) && res.length > 0) {
+            setTxVariants(res.map(v => ({
+              id: v.id,
+              name: v.name,
+              price: v.price || selectedProd.basePrice || selectedProd.price || '',
+              quantity: '',
+              selected: false
+            })));
+          } else {
+            // Product has no variants, treat product itself as a single item
+            setTxVariants([{
+              id: null,
+              name: selectedProd.name,
+              price: selectedProd.basePrice || selectedProd.price || '',
+              quantity: '',
+              selected: true
+            }]);
+          }
+        })
+        .catch(err => {
+          console.error("Lỗi tải biến thể:", err);
+          setTxVariants([{
+            id: null,
+            name: selectedProd.name,
+            price: selectedProd.basePrice || selectedProd.price || '',
+            quantity: '',
+            selected: true
+          }]);
+        })
+        .finally(() => {
+          setVariantsLoading(false);
+        });
+    } else {
+      setTxVariants([]);
+    }
+  }, [txProductId, products]);
 
   // Filter states
   const [searchQuery, setSearchQuery] = useState('');
@@ -98,6 +213,70 @@ export default function AdminInventory() {
     totalItems
   } = usePagination(filteredHistory, 10);
 
+  const handleQuantityChange = (idx, value) => {
+    setTxVariants(prev => {
+      const target = prev[idx];
+      const isSelected = target.selected;
+      return prev.map((item, i) => {
+        if (i === idx) {
+          return { ...item, quantity: value };
+        }
+        if (isSelected && item.selected) {
+          return { ...item, quantity: value };
+        }
+        return item;
+      });
+    });
+  };
+
+  const handlePriceChange = (idx, value) => {
+    setTxVariants(prev => {
+      const target = prev[idx];
+      const isSelected = target.selected;
+      return prev.map((item, i) => {
+        if (i === idx) {
+          return { ...item, price: value };
+        }
+        if (isSelected && item.selected) {
+          return { ...item, price: value };
+        }
+        return item;
+      });
+    });
+  };
+
+  const handleSelectByTxAttribute = (attrKey, value) => {
+    const keyLower = attrKey.toLowerCase();
+    const valLower = value.toLowerCase().trim();
+
+    const matchedIndices = [];
+    txVariants.forEach((v, idx) => {
+      if (v.name && v.name.includes(' - ')) {
+        const parts = v.name.split(' - ');
+        if (keyLower.includes('dung lượng') || keyLower.includes('ram')) {
+          if (parts[1] && parts[1].toLowerCase().trim() === valLower) {
+            matchedIndices.push(idx);
+          }
+        } else if (keyLower.includes('màu') || keyLower.includes('color')) {
+          if (parts[2] && parts[2].toLowerCase().trim() === valLower) {
+            matchedIndices.push(idx);
+          }
+        }
+      }
+    });
+
+    if (matchedIndices.length === 0) return;
+
+    const allSelected = matchedIndices.every(idx => txVariants[idx].selected);
+
+    setTxVariants(prev => prev.map((v, idx) => {
+      if (matchedIndices.includes(idx)) {
+        return { ...v, selected: !allSelected };
+      }
+      return v;
+    }));
+  };
+
   // Execute Tx
   const handleExecuteTransaction = async () => {
     if (!txProductId) {
@@ -110,26 +289,39 @@ export default function AdminInventory() {
       return;
     }
 
-    const txConf = TRANSACTIONS.find(t => t.id === activeTxTab);
-    const quantity = parseInt(txQuantity);
-    if (isNaN(quantity) || quantity <= 0) {
-      alert('Số lượng phải lớn hơn 0!');
+    const itemsToSubmit = txVariants.filter(v => {
+      const qty = parseInt(v.quantity);
+      return v.selected && !isNaN(qty) && qty > 0;
+    });
+
+    if (itemsToSubmit.length === 0) {
+      alert('Vui lòng chọn và nhập số lượng lớn hơn 0 cho ít nhất một biến thể!');
       return;
     }
 
-    if (txPrice && (txPrice < 1000 || txPrice > 500000000)) {
-      alert('Giá trị giao dịch phải từ 1.000 đến 500.000.000 VNĐ!');
-      return;
+    // Validate prices
+    for (const item of itemsToSubmit) {
+      const price = parseFloat(item.price);
+      if (isNaN(price) || price < 1000 || price > 500000000) {
+        alert(`Giá trị của biến thể "${item.name}" phải từ 1.000 đến 500.000.000 VNĐ!`);
+        return;
+      }
     }
 
     try {
-      await inventoryService.create({
-        productId: product.id,
-        quantityChanged: quantity,
-        transactionType: activeTxTab,
-        price: parseFloat(txPrice) || 0,
-        note: txNote || ''
-      });
+      const txConf = TRANSACTIONS.find(t => t.id === activeTxTab);
+
+      // Execute all transactions in parallel
+      await Promise.all(itemsToSubmit.map(item =>
+        inventoryService.create({
+          productId: product.id,
+          variantId: item.id,
+          quantityChanged: parseInt(item.quantity),
+          transactionType: activeTxTab,
+          price: parseFloat(item.price) || 0,
+          note: txNote || ''
+        })
+      ));
 
       alert(`${txConf.name} thành công!`);
       setActiveTxTab(null);
@@ -138,6 +330,7 @@ export default function AdminInventory() {
       setTxQuantity(1);
       setTxPrice('');
       setTxNote('');
+      setTxVariants([]);
       fetchData();
     } catch (err) {
       console.error("Lỗi thực hiện giao dịch kho:", err);
@@ -283,7 +476,7 @@ export default function AdminInventory() {
                 <th className="pb-3 px-4">Sản phẩm & Biến thể</th>
                 <th className="pb-3 px-4">Loại GD</th>
                 <th className="pb-3 px-4 text-center">Số lượng</th>
-                <th className="pb-3 px-4 text-right">Đơn giá trị</th>
+                <th className="pb-3 px-4 text-right">Tổng giá trị</th>
                 <th className="pb-3 px-4">Người thực hiện</th>
                 <th className="pb-3 px-4">Ghi chú</th>
                 <th className="pb-3 px-4 text-center">Hành động</th>
@@ -424,6 +617,9 @@ export default function AdminInventory() {
                     setTxPrice('');
                     setTxNote('');
                     setSelectedBrandId('');
+                    setTxVariants([]);
+                    setQuickQty('');
+                    setQuickPrice('');
                   }}
                   className="p-1 hover:bg-admin-bg text-admin-text-muted hover:text-admin-text-main rounded-full transition-all"
                 >
@@ -440,8 +636,9 @@ export default function AdminInventory() {
                       setSelectedBrandId(e.target.value);
                       setTxProductId('');
                       setTxPrice('');
+                      setTxVariants([]);
                     }}
-                    className="w-full border border-admin-border text-admin-text-main rounded-md px-4 py-3 focus:border-primary focus:ring-1 focus:ring-primary outline-none bg-white"
+                    className="w-full border border-admin-border text-admin-text-main rounded-md px-4 py-3 focus:border-primary focus:ring-1 focus:ring-primary outline-none bg-white text-sm"
                   >
                     <option value="">-- Tất cả thương hiệu --</option>
                     {brands.map(b => <option key={b.id} value={b.id}>{b.name}</option>)}
@@ -456,7 +653,6 @@ export default function AdminInventory() {
                       setTxProductId(prodId);
                       const selectedProd = products.find(p => p.id === parseInt(prodId));
                       if (selectedProd) {
-                        setTxPrice((selectedProd.basePrice || selectedProd.price || 0).toString());
                         setTxNote(activeTxTab === 'IMPORT_SUPPLIER' ? 'Nhập hàng từ nhà cung cấp' :
                           activeTxTab === 'IMPORT_RETURN' ? 'Khách trả hàng' :
                             activeTxTab === 'EXPORT_SELL' ? 'Xuất bán lẻ trực tiếp tại quầy' :
@@ -464,9 +660,10 @@ export default function AdminInventory() {
                       } else {
                         setTxPrice('');
                         setTxNote('');
+                        setTxVariants([]);
                       }
                     }}
-                    className="w-full border border-admin-border text-admin-text-main rounded-md px-4 py-3 focus:border-primary focus:ring-1 focus:ring-primary outline-none bg-white"
+                    className="w-full border border-admin-border text-admin-text-main rounded-md px-4 py-3 focus:border-primary focus:ring-1 focus:ring-primary outline-none bg-white text-sm"
                   >
                     <option value="">-- Chọn sản phẩm --</option>
                     {products
@@ -474,37 +671,149 @@ export default function AdminInventory() {
                       .map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
                   </select>
                 </div>
-                <div>
-                  <label className="block text-sm font-bold text-admin-text-main mb-2">Số lượng</label>
-                  <input
-                    type="number"
-                    min="1"
-                    value={txQuantity}
-                    onChange={(e) => setTxQuantity(e.target.value)}
-                    className="w-full border border-admin-border text-admin-text-main rounded-md px-4 py-3 focus:border-primary focus:ring-1 focus:ring-primary outline-none bg-white"
-                  />
-                </div>
 
-                <div>
-                  <label className="block text-sm font-bold text-admin-text-main mb-2">
-                    {txConf.type === 'IN' ? 'Giá nhập (VNĐ)' : 'Giá xuất/Bán (VNĐ)'}
-                  </label>
-                  <PriceInput
-                    placeholder="VD: 25.000.000"
-                    value={txPrice}
-                    onChange={(val) => setTxPrice(val)}
-                    className="w-full border border-admin-border text-admin-text-main rounded-md px-4 py-3 focus:border-primary focus:ring-1 focus:ring-primary outline-none bg-white"
-                  />
-                </div>
+                {txProductId && (
+                  <div className="col-span-full">
+                    <div className="flex justify-between items-center mb-2">
+                      <label className="block text-sm font-bold text-admin-text-main">
+                        Danh sách biến thể ({txConf.type === 'IN' ? 'Nhập kho' : 'Xuất kho'})
+                      </label>
 
-                <div>
+                      {/* Dropdown Chọn theo thuộc tính */}
+                      {Object.keys(txAttributesConfig).length > 0 && (
+                        <div className="relative inline-block text-left" ref={txDropdownRef}>
+                          <button
+                            type="button"
+                            onClick={() => setIsTxAttrOpen(!isTxAttrOpen)}
+                            className="flex items-center gap-1.5 px-3 py-1 border border-admin-border rounded bg-white text-admin-text-main hover:bg-admin-bg text-[11px] font-bold transition-all cursor-pointer shadow-sm"
+                          >
+                            <span>Chọn theo thuộc tính</span>
+                            <ChevronDown size={12} className="text-admin-text-muted" />
+                          </button>
+
+                          {isTxAttrOpen && (
+                            <div className="absolute right-0 mt-1 w-56 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 divide-y divide-gray-100 focus:outline-none z-50 border border-admin-border animate-in fade-in duration-150">
+                              <div className="py-1 max-h-60 overflow-y-auto">
+                                {Object.entries(txAttributesConfig).map(([attrKey, values]) => (
+                                  <div key={attrKey} className="py-1 border-b border-gray-50 last:border-b-0">
+                                    <div className="px-3 py-1 text-[10px] font-extrabold text-admin-text-muted uppercase tracking-wider bg-slate-50/50">
+                                      {attrKey}
+                                    </div>
+                                    <div className="px-1 py-1 space-y-0.5">
+                                      {values.map(val => {
+                                        const keyLower = attrKey.toLowerCase();
+                                        const valLower = val.toLowerCase().trim();
+                                        const matches = txVariants.filter(v => {
+                                          if (!v.name || !v.name.includes(' - ')) return false;
+                                          const parts = v.name.split(' - ');
+                                          if (keyLower.includes('dung lượng') || keyLower.includes('ram')) {
+                                            return parts[1] && parts[1].toLowerCase().trim() === valLower;
+                                          } else if (keyLower.includes('màu') || keyLower.includes('color')) {
+                                            return parts[2] && parts[2].toLowerCase().trim() === valLower;
+                                          }
+                                          return false;
+                                        });
+                                        const isAllSelected = matches.length > 0 && matches.every(v => v.selected);
+
+                                        return (
+                                          <button
+                                            key={val}
+                                            type="button"
+                                            onClick={() => handleSelectByTxAttribute(attrKey, val)}
+                                            className={`flex w-full items-center justify-between px-3 py-1.5 text-xs rounded transition-colors text-left cursor-pointer ${isAllSelected
+                                                ? 'text-primary bg-primary/10 hover:bg-primary/20 font-bold'
+                                                : 'text-admin-text-main hover:bg-primary/10 hover:text-primary font-semibold'
+                                              }`}
+                                          >
+                                            <span>{val}</span>
+                                            {isAllSelected && <CheckCircle size={12} className="text-primary font-extrabold" />}
+                                          </button>
+                                        );
+                                      })}
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                    {variantsLoading ? (
+                      <div className="text-center py-6 text-xs font-semibold text-gray-500 bg-gray-50 rounded-md border border-dashed border-admin-border">
+                        Đang tải danh sách biến thể...
+                      </div>
+                    ) : (
+                      <div className="border border-admin-border rounded-md overflow-hidden bg-white max-h-64 overflow-y-auto">
+                        <table className="w-full text-left border-collapse text-xs">
+                          <thead>
+                            <tr className="bg-slate-50 border-b border-admin-border text-admin-text-muted font-bold sticky top-0 z-10">
+                              <th className="py-2.5 px-3 w-10 text-center">
+                                <input
+                                  type="checkbox"
+                                  checked={txVariants.length > 0 && txVariants.every(v => v.selected)}
+                                  onChange={(e) => {
+                                    const isChecked = e.target.checked;
+                                    setTxVariants(prev => prev.map(v => ({ ...v, selected: isChecked })));
+                                  }}
+                                  className="rounded border-gray-300 text-primary focus:ring-primary w-4 h-4 cursor-pointer"
+                                />
+                              </th>
+                              <th className="py-2.5 px-3">Tên biến thể</th>
+                              <th className="py-2.5 px-3 w-32">Số lượng {txConf.type === 'IN' ? 'nhập' : 'xuất'}</th>
+                              <th className="py-2.5 px-3 w-40">{txConf.type === 'IN' ? 'Giá nhập (VNĐ)' : 'Giá xuất (VNĐ)'}</th>
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y divide-admin-border">
+                            {txVariants.map((v, idx) => (
+                              <tr key={idx} className={`hover:bg-slate-50/50 ${v.selected ? 'bg-blue-50/20' : ''}`}>
+                                <td className="py-3 px-3 text-center">
+                                  <input
+                                    type="checkbox"
+                                    checked={!!v.selected}
+                                    onChange={(e) => {
+                                      const isChecked = e.target.checked;
+                                      setTxVariants(prev => prev.map((item, i) => i === idx ? { ...item, selected: isChecked } : item));
+                                    }}
+                                    className="rounded border-gray-300 text-primary focus:ring-primary w-4 h-4 cursor-pointer"
+                                  />
+                                </td>
+                                <td className={`py-3 px-3 font-bold ${v.selected ? 'text-admin-text-main' : 'text-gray-400'}`}>{v.name}</td>
+                                <td className="py-2 px-3">
+                                  <input
+                                    type="number"
+                                    min="0"
+                                    placeholder="0"
+                                    value={v.quantity}
+                                    onChange={(e) => handleQuantityChange(idx, e.target.value)}
+                                    className="w-full border border-admin-border rounded px-2.5 py-1.5 outline-none font-semibold text-xs text-admin-text-main bg-white focus:border-primary"
+                                  />
+                                </td>
+                                <td className="py-2 px-3">
+                                  <PriceInput
+                                    placeholder="VD: 25.000.000"
+                                    value={v.price}
+                                    onChange={(val) => handlePriceChange(idx, val)}
+                                    className="w-full border border-admin-border rounded px-2.5 py-1.5 outline-none font-semibold text-xs text-admin-text-main bg-white focus:border-primary"
+                                  />
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                <div className="col-span-full">
                   <label className="block text-sm font-bold text-admin-text-main mb-2">Ghi chú</label>
                   <input
                     type="text"
                     placeholder="Lý do, mã phiếu..."
                     value={txNote}
                     onChange={(e) => setTxNote(e.target.value)}
-                    className="w-full border border-admin-border text-admin-text-main rounded-md px-4 py-3 focus:border-primary focus:ring-1 focus:ring-primary outline-none bg-white"
+                    className="w-full border border-admin-border text-admin-text-main rounded-md px-4 py-3 focus:border-primary focus:ring-1 focus:ring-primary outline-none bg-white text-sm"
                   />
                 </div>
               </div>
@@ -518,6 +827,7 @@ export default function AdminInventory() {
                     setTxPrice('');
                     setTxNote('');
                     setSelectedBrandId('');
+                    setTxVariants([]);
                   }}
                   className="px-5 py-2.5 rounded-md font-bold text-admin-text-muted hover:text-admin-text-main hover:bg-admin-bg transition-colors"
                 >
