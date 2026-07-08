@@ -38,14 +38,14 @@ const BannerSection = ({ showSideBanners = true, showTopBanner = true, showSlide
       {showSideBanners && (
         <>
           {/* Trái */}
-          <div className="fixed top-28 right-[calc(50%+620px)] w-[120px] hidden min-[1440px]:block z-40 pointer-events-auto">
+          <div className="fixed top-28 right-[calc(50%+620px)] w-[120px] hidden min-[1440px]:block z-40 pointer-events-auto side-banner">
             <Link to="/khuyen-mai-trai">
               <img src={bannerLeft} alt="Quảng cáo trái" className="w-full h-auto rounded-lg shadow-md hover:scale-105 transition-transform" />
             </Link>
           </div>
 
           {/* Phải */}
-          <div className="fixed top-28 left-[calc(50%+620px)] w-[120px] hidden min-[1440px]:block z-40 pointer-events-auto">
+          <div className="fixed top-28 left-[calc(50%+620px)] w-[120px] hidden min-[1440px]:block z-40 pointer-events-auto side-banner">
             <Link to="/khuyen-mai-phai">
               <img src={bannerRight} alt="Quảng cáo phải" className="w-full h-auto rounded-lg shadow-md hover:scale-105 transition-transform" />
             </Link>

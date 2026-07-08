@@ -283,3 +283,15 @@ input[type=number] {
 .theme-toggle-btn:active {
   transform: scale(0.92) rotate(-6deg);
 }
+
+/* Side banner fade-out when mega menu is active */
+.side-banner {
+  transition: opacity 0.25s ease-in-out, visibility 0.25s ease-in-out, transform 0.25s ease-in-out !important;
+}
+
+body.mega-menu-active .side-banner {
+  opacity: 0 !important;
+  visibility: hidden !important;
+  transform: translateY(10px) !important;
+  pointer-events: none !important;
+}

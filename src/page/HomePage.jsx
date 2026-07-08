@@ -45,6 +45,8 @@ export default function HomePage({ selectedLocation }) {
   const [selectedBrand, setSelectedBrand] = useState(brand || null);
   const [searchParams] = useSearchParams();
   const searchQuery = searchParams.get('search') || '';
+  const priceMinParam = searchParams.get('price_min');
+  const priceMaxParam = searchParams.get('price_max');
 
   if (brand !== prevBrand) {
     setPrevBrand(brand);
@@ -97,11 +99,30 @@ export default function HomePage({ selectedLocation }) {
     // Lọc theo từ khóa tìm kiếm trên URL (?search=...)
     if (searchQuery) {
       const query = searchQuery.toLowerCase().trim();
+      
+      // Resolve category name from categories list using categoryId (type-safe)
+      const pCatId = product.categoryId || product.CategoryId;
+      const catObj = categories.find(c => String(c.id || c.Id || '') === String(pCatId || ''));
+      const resolvedCatName = catObj ? catObj.name.toLowerCase() : '';
+
       const matchesSearch = 
         product.name.toLowerCase().includes(query) ||
         (product.brandName && product.brandName.toLowerCase().includes(query)) ||
-        (product.description && product.description.toLowerCase().includes(query));
+        (product.BrandName && product.BrandName.toLowerCase().includes(query)) ||
+        (product.brand && product.brand.toLowerCase().includes(query)) ||
+        (product.description && product.description.toLowerCase().includes(query)) ||
+        resolvedCatName.includes(query);
       if (!matchesSearch) return false;
+    }
+
+    // Lọc theo khoảng giá từ URL (?price_min=...&price_max=...)
+    if (priceMinParam !== null) {
+      const minPrice = parseFloat(priceMinParam);
+      if (!isNaN(minPrice) && product.price < minPrice) return false;
+    }
+    if (priceMaxParam !== null) {
+      const maxPrice = parseFloat(priceMaxParam);
+      if (!isNaN(maxPrice) && product.price > maxPrice) return false;
     }
 
     // Quick brand / category filter
@@ -111,7 +132,7 @@ export default function HomePage({ selectedLocation }) {
       // Check if selectedBrand is a Category name in database
       const matchingCat = categories.find(c => c.name.toLowerCase() === brandLower);
       if (matchingCat) {
-        return product.categoryId === matchingCat.id || product.CategoryId === matchingCat.id;
+        return String(product.categoryId || product.CategoryId || '') === String(matchingCat.id || matchingCat.Id || '');
       }
       
       const matches = (product.brand && product.brand.toLowerCase() === brandLower) ||
