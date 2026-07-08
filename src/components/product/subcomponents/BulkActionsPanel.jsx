@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react';
-import { ChevronDown, Trash2, Check, UploadCloud, Loader2 } from 'lucide-react';
+import { useSearchParams } from 'react-router-dom';
+import { ChevronDown, Trash2, Check, UploadCloud, Loader2, ArrowUpDown } from 'lucide-react';
 import { useProductFormContext } from '../../../context/ProductFormContext';
 import PriceInput from '../../PriceInput';
 import { productService } from '../../../services/productService';
@@ -33,8 +34,24 @@ export default function BulkActionsPanel() {
     variantsData,
     formData,
     updateVariantField,
-    showToast
+    showToast,
+    productId
   } = useProductFormContext();
+
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  const handleRedirectToInventory = (actionType) => {
+    if (!productId) {
+      showToast("warning", "Vui lòng lưu thông tin cơ bản sản phẩm trước khi thao tác kho.");
+      return;
+    }
+    setSearchParams(prev => {
+      prev.set('tab', 'inventory');
+      prev.set('productId', productId);
+      prev.set('action', actionType);
+      return prev;
+    });
+  };
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -217,65 +234,8 @@ export default function BulkActionsPanel() {
             </button>
           </div>
 
-          {/* 3-Column Grid */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-5 text-xs">
-            {/* Column 1: Pricing & Stock */}
-            <div className="bg-white p-3.5 rounded-lg border border-slate-100 shadow-sm space-y-3">
-              <h5 className="text-[11px] font-extrabold text-admin-text-muted uppercase tracking-wider flex items-center gap-1.5">
-                <span className="w-1.5 h-3 bg-blue-500 rounded-sm"></span> Giá & Tồn kho
-              </h5>
-              <div className="space-y-2.5">
-                <div className="flex items-center gap-2 justify-between">
-                  <label className="text-[11px] font-bold text-admin-text-main">Giá bán riêng:</label>
-                  <div className="w-32">
-                    <PriceInput
-                      value={bulkPrice}
-                      onChange={(val) => setBulkPrice(val)}
-                      className="w-full px-2.5 py-1.5 border border-admin-border rounded outline-none text-xs text-admin-text-main font-semibold bg-white focus:border-primary focus:ring-1 focus:ring-primary/20"
-                      placeholder="Nhập giá..."
-                      errorAbsolute={true}
-                    />
-                  </div>
-                </div>
-                <div className="flex items-center gap-2 justify-between">
-                  <label className="text-[11px] font-bold text-admin-text-main">Tồn kho:</label>
-                  <input
-                    type="number"
-                    value={bulkStock}
-                    onChange={(e) => setBulkStock(e.target.value)}
-                    className="w-32 px-2.5 py-1.5 border border-admin-border rounded outline-none text-xs text-admin-text-main font-semibold bg-white focus:border-primary focus:ring-1 focus:ring-primary/20"
-                    placeholder="Tồn..."
-                  />
-                </div>
-                <button
-                  type="button"
-                  onClick={() => {
-                    if (bulkPrice === '' && bulkStock === '') {
-                      return showToast("warning", "Vui lòng nhập giá hoặc số lượng tồn kho để áp dụng.");
-                    }
-                    if (bulkPrice !== '') {
-                      const p = Number(bulkPrice);
-                      if (p < 1000 || p > 500000000) {
-                        return showToast("warning", "Giá bán không hợp lệ (phải từ 1.000 đến 500.000.000 VNĐ).");
-                      }
-                    }
-                    let stockNum = undefined;
-                    if (bulkStock !== '') {
-                      stockNum = parseInt(bulkStock);
-                      if (isNaN(stockNum) || stockNum < 0) {
-                        return showToast("warning", "Số lượng tồn kho không được âm.");
-                      }
-                    }
-                    handleApplyBulkEdit(bulkPrice !== '' ? Number(bulkPrice) : undefined, stockNum);
-                    setBulkPrice('');
-                    setBulkStock('');
-                  }}
-                  className="w-full py-1.5 bg-primary hover:bg-admin-primary-hover text-white text-xs font-bold rounded cursor-pointer transition-all active:scale-[0.97] shadow-sm flex items-center justify-center gap-1"
-                >
-                  <span>Áp dụng số liệu</span>
-                </button>
-              </div>
-            </div>
+          {/* 2-Column Grid */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 text-xs">
 
             {/* Column 2: Image & Status */}
             <div className="bg-white p-3.5 rounded-lg border border-slate-100 shadow-sm space-y-3">

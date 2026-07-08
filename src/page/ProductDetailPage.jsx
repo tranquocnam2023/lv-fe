@@ -314,10 +314,10 @@ export default function ProductDetailPage() {
       if (Object.keys(parsed).length === 0 && v.name && v.name.includes(' - ')) {
         const parts = v.name.split(' - ');
         if (parts.length > 1) {
-          parsed["Màu sắc"] = parts[1].trim();
+          parsed["Dung lượng RAM - ROM"] = parts[1].trim();
         }
         if (parts.length > 2) {
-          parsed["Dung lượng RAM - ROM"] = parts[2].trim();
+          parsed["Màu sắc"] = parts[2].trim();
         }
       }
 
@@ -448,10 +448,10 @@ export default function ProductDetailPage() {
       if (Object.keys(parsedAttrs).length === 0 && v.name && v.name.includes(' - ')) {
         const parts = v.name.split(' - ');
         if (parts.length > 1) {
-          parsedAttrs["màu sắc"] = parts[1].toLowerCase().trim();
+          parsedAttrs["dung lượng ram - rom"] = parts[1].toLowerCase().trim();
         }
         if (parts.length > 2) {
-          parsedAttrs["dung lượng ram - rom"] = parts[2].toLowerCase().trim();
+          parsedAttrs["màu sắc"] = parts[2].toLowerCase().trim();
         }
       }
 
@@ -524,8 +524,8 @@ export default function ProductDetailPage() {
               let vColor = getAttributeValue(v.attributes, key) || '';
               if (!vColor && v.name && v.name.includes(' - ')) {
                 const parts = v.name.split(' - ');
-                if (parts.length > 1) {
-                  vColor = parts[1];
+                if (parts.length > 2) {
+                  vColor = parts[2];
                 }
               }
               return vColor.toLowerCase().trim() === value.toLowerCase().trim();
