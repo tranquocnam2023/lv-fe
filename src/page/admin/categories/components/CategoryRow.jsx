@@ -130,9 +130,7 @@ export default function CategoryRow({ category, level = 1, onEdit, onAddSubCateg
         <td className="px-6 py-4">
           <div className="flex items-center gap-3">
             {currentLevel > 1 && (
-              <span className="text-admin-text-muted font-mono select-none flex-shrink-0 mr-1 text-sm tracking-widest">
-                {currentLevel === 2 ? '├──' : '└──'}
-              </span>
+              <span className="w-1.5 h-1.5 rounded-full bg-gray-300 mr-2.5 flex-shrink-0" />
             )}
             <div className="relative w-10 h-10 rounded-md bg-white border border-admin-border flex items-center justify-center overflow-hidden flex-shrink-0 group/icon cursor-pointer hover:border-primary transition-colors">
               {inlineUploading ? (
@@ -260,7 +258,7 @@ export default function CategoryRow({ category, level = 1, onEdit, onAddSubCateg
       {expanded && details && details.length > 0 && (
         <tr className="bg-slate-50/40">
           <td colSpan="5" className="p-0 border-b border-admin-border">
-            <div className="pl-12 pr-6 py-1 border-l-2 border-dashed border-primary/20 ml-12">
+            <div className="pl-8 pr-6 py-1">
               {loadingDetails ? (
                 <div className="flex justify-center items-center py-6">
                   <Loader2 size={24} className="animate-spin text-primary" />
