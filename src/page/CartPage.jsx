@@ -158,7 +158,7 @@ export default function CartPage() {
   }, [formData.wardId, deliveryMethod]);
 
   // Form submission state
-  const [paymentMethod, setPaymentMethod] = useState('transfer'); // default 'transfer' for guest
+  const [paymentMethod, setPaymentMethod] = useState('stripe'); // default 'stripe'
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Order Success screen state
@@ -213,7 +213,6 @@ export default function CartPage() {
   // Sync logged in address details automatically
   useEffect(() => {
     if (isLoggedIn) {
-      setPaymentMethod('cod'); // Default COD for members
       shippingInfoService.getAll()
         .then(res => {
           if (Array.isArray(res) && res.length > 0) {
@@ -246,8 +245,6 @@ export default function CartPage() {
         .catch(err => {
           console.error("Lỗi lấy danh sách địa chỉ nhận hàng:", err);
         });
-    } else {
-      setPaymentMethod('transfer');
     }
   }, [isLoggedIn, provinces]);
 
@@ -612,9 +609,26 @@ export default function CartPage() {
 
       const newOrderId = checkoutRes?.orderId || checkoutRes?.OrderId || `PS${Math.floor(100000 + Math.random() * 900000)}`;
       setOrderCode(newOrderId);
-      setOrderSuccessTotal(finalTotalPay);
-      setIsFinished(true);
       clearCart();
+
+      // Xử lý chuyển hướng cổng thanh toán online
+      if (paymentMethod === 'stripe' || paymentMethod === 'momo') {
+        try {
+          const paymentRes = await api.post(`/Payment/create-checkout-session/${newOrderId}?provider=${paymentMethod}`);
+          const paymentUrl = paymentRes?.url || paymentRes?.Url;
+          if (paymentUrl) {
+            window.location.href = paymentUrl;
+            return;
+          } else {
+            throw new Error("Không nhận được đường dẫn thanh toán từ Server.");
+          }
+        } catch (payErr) {
+          console.error("Lỗi khởi tạo cổng thanh toán online:", payErr);
+          alert("Đơn hàng đã được tạo thành công! Tuy nhiên, không thể kết nối tới cổng thanh toán trực tuyến. Quý khách vui lòng thực hiện chuyển khoản hoặc liên hệ CSKH.");
+        }
+      }
+
+      setIsFinished(true);
     } catch (err) {
       console.error('Lỗi đặt hàng:', err);
       let errorMsg = 'Lỗi hệ thống, vui lòng thử lại sau.';
@@ -717,41 +731,214 @@ export default function CartPage() {
             />
 
             {/* Card 4: Support Request Checklist */}
-            <CartSpecialRequests
-              specialRequests={specialRequests}
-              setSpecialRequests={setSpecialRequests}
-              companyInvoiceDetails={companyInvoiceDetails}
-              setCompanyInvoiceDetails={setCompanyInvoiceDetails}
-              otherRequestText={otherRequestText}
-              setOtherRequestText={setOtherRequestText}
-            />
+            <div className="bg-white rounded-md border border-gray-100 p-4 space-y-3">
+              <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider">Yêu cầu hỗ trợ đặc biệt</h3>
+              <div className="flex flex-col gap-2.5">
+                <label className="flex items-center gap-2 text-xs font-semibold text-gray-700 cursor-pointer hover:text-gray-900 select-none">
+                  <input
+                    type="checkbox"
+                    checked={specialRequests.transferData}
+                    onChange={(e) => setSpecialRequests({ ...specialRequests, transferData: e.target.checked })}
+                    className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-0 cursor-pointer"
+                  />
+                  <span>Chuyển danh bạ, sao lưu dữ liệu sang máy mới (Miễn phí)</span>
+                </label>
 
-            {/* Cards 5-8: Payment & Checkout Summary */}
-            <CartSummaryPayment
-              isLoggedIn={isLoggedIn}
-              currentUser={currentUser}
-              usePoints={usePoints}
-              setUsePoints={setUsePoints}
-              pointsDiscount={pointsDiscount}
-              cartItems={cartItems}
-              cartTotal={cartTotal}
-              appliedPromo={appliedPromo}
-              onApplyPromotion={(code, discount) => {
-                setAppliedPromo(code);
-                setDiscountAmount(discount);
-              }}
-              discountAmount={discountAmount}
-              shippingCarrier={shippingCarrier}
-              shippingLoading={shippingLoading}
-              deliveryMethod={deliveryMethod}
-              shippingFee={shippingFee}
-              shippingEstimatedDays={shippingEstimatedDays}
-              finalTotalPay={finalTotalPay}
-              paymentMethod={paymentMethod}
-              setPaymentMethod={setPaymentMethod}
-              isSubmitting={isSubmitting}
-              handleCheckoutSubmit={handleCheckoutSubmit}
-            />
+                <label className="flex items-center gap-2 text-xs font-semibold text-gray-700 cursor-pointer hover:text-gray-900 select-none">
+                  <input
+                    type="checkbox"
+                    checked={specialRequests.companyInvoice}
+                    onChange={(e) => setSpecialRequests({ ...specialRequests, companyInvoice: e.target.checked })}
+                    className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-0 cursor-pointer"
+                  />
+                  <span>Yêu cầu xuất hóa đơn công ty</span>
+                </label>
+
+                {specialRequests.companyInvoice && (
+                  <div className="ml-6 space-y-2 animate-in slide-in-from-top-2 duration-150">
+                    <input
+                      type="text"
+                      placeholder="Tên công ty"
+                      value={companyInvoiceDetails.companyName}
+                      onChange={(e) => setCompanyInvoiceDetails({ ...companyInvoiceDetails, companyName: e.target.value })}
+                      className="w-full bg-gray-50 border border-gray-200 rounded-md p-2.5 text-xs font-semibold focus:outline-none focus:border-blue-500 text-gray-800"
+                    />
+                    <input
+                      type="text"
+                      placeholder="Mã số thuế"
+                      value={companyInvoiceDetails.taxCode}
+                      onChange={(e) => setCompanyInvoiceDetails({ ...companyInvoiceDetails, taxCode: e.target.value })}
+                      className="w-full bg-gray-50 border border-gray-200 rounded-md p-2.5 text-xs font-semibold focus:outline-none focus:border-blue-500 text-gray-800"
+                    />
+                    <input
+                      type="text"
+                      placeholder="Địa chỉ công ty"
+                      value={companyInvoiceDetails.companyAddress}
+                      onChange={(e) => setCompanyInvoiceDetails({ ...companyInvoiceDetails, companyAddress: e.target.value })}
+                      className="w-full bg-gray-50 border border-gray-200 rounded-md p-2.5 text-xs font-semibold focus:outline-none focus:border-blue-500 text-gray-800"
+                    />
+                  </div>
+                )}
+
+                <label className="flex items-center gap-2 text-xs font-semibold text-gray-700 cursor-pointer hover:text-gray-900 select-none">
+                  <input
+                    type="checkbox"
+                    checked={specialRequests.otherRequest}
+                    onChange={(e) => setSpecialRequests({ ...specialRequests, otherRequest: e.target.checked })}
+                    className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-0 cursor-pointer"
+                  />
+                  <span>Yêu cầu giao nhận hàng đặc biệt khác</span>
+                </label>
+
+                {specialRequests.otherRequest && (
+                  <div className="ml-6 animate-in slide-in-from-top-2 duration-150">
+                    <textarea
+                      placeholder="Ví dụ: Giao ngoài giờ hành chính, gọi trước khi đến..."
+                      value={otherRequestText}
+                      onChange={(e) => setOtherRequestText(e.target.value)}
+                      rows="2"
+                      className="w-full bg-gray-50 border border-gray-200 rounded-md p-2.5 text-xs font-semibold focus:outline-none focus:border-blue-500 resize-none text-gray-800"
+                    ></textarea>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Card 5: Voucher discount selector */}
+            <div className="bg-white rounded-md border border-gray-100 p-4">
+              <PromotionSelector
+                subTotal={cartTotal}
+                onApplyPromotion={(code, discount) => {
+                  setAppliedPromo(code);
+                  setDiscountAmount(discount);
+                }}
+              />
+            </div>
+
+
+
+            {/* Card 7: Payment Methods */}
+            <div className="bg-white rounded-md border border-gray-100 p-4 space-y-3">
+              <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider">Hình thức thanh toán</h3>
+              <div className="space-y-2">
+
+                {/* Stripe */}
+                <label className="flex items-center gap-3 p-3 border rounded-md transition cursor-pointer select-none border-blue-500 bg-blue-50/20">
+                  <input
+                    type="radio"
+                    name="paymentMethod"
+                    value="stripe"
+                    checked={true}
+                    readOnly
+                    className="w-4 h-4 text-blue-600 border-gray-300 focus:ring-0 cursor-pointer"
+                  />
+                  <div className="text-xs flex-1">
+                    <p className="font-bold text-gray-800">Thanh toán qua cổng Stripe</p>
+                    <p className="text-[10px] text-gray-400">Hỗ trợ thẻ quốc tế Visa, Mastercard, JCB</p>
+                  </div>
+                  <CreditCard size={16} className="text-gray-400" />
+                </label>
+
+              </div>
+            </div>
+
+            {/* Card 8: Total summary and checkout button */}
+            <div className="bg-white rounded-md border border-gray-100 p-4 md:p-6 space-y-4">
+              {isLoggedIn && currentUser && (
+                <div className="flex items-center justify-between p-3.5 bg-yellow-50/50 border border-yellow-100/70 rounded-md">
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-7 h-7 bg-yellow-400 rounded-full flex items-center justify-center text-white select-none shrink-0">
+                      <Gift size={15} className="fill-current" />
+                    </div>
+                    <div className="text-xs">
+                      <p className="font-extrabold text-gray-800">Dùng điểm Quà Tặng VIP</p>
+                      <p className="text-[10px] text-gray-400 font-bold">Điểm khả dụng: <span className="text-yellow-600 font-extrabold">{currentUser.rewardPoints?.toLocaleString('vi-VN')}</span></p>
+                    </div>
+                  </div>
+                  <label className="relative inline-flex items-center cursor-pointer select-none">
+                    <input
+                      type="checkbox"
+                      checked={usePoints}
+                      onChange={(e) => setUsePoints(e.target.checked)}
+                      className="sr-only peer"
+                    />
+                    <div className="w-9 h-5 bg-gray-250 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-yellow-500"></div>
+                  </label>
+                </div>
+              )}
+
+              <div className="space-y-2 text-xs font-semibold text-gray-500 uppercase tracking-tighter">
+                <div className="flex justify-between">
+                  <span>Tạm tính ({cartItems.length} sản phẩm)</span>
+                  <span className="text-gray-900 font-bold">{cartTotal.toLocaleString('vi-VN')}₫</span>
+                </div>
+                {discountAmount > 0 && (
+                  <div className="flex justify-between text-green-600">
+                    <span>Mã giảm giá ({appliedPromo})</span>
+                    <span>-{discountAmount.toLocaleString('vi-VN')}₫</span>
+                  </div>
+                )}
+                {usePoints && pointsDiscount > 0 && (
+                  <div className="flex justify-between text-green-600">
+                    <span>Quy đổi điểm VIP</span>
+                    <span>-{pointsDiscount.toLocaleString('vi-VN')}₫</span>
+                  </div>
+                )}
+                <div className="flex justify-between text-gray-700">
+                  <span>Phí vận chuyển {shippingCarrier && `(${shippingCarrier})`}</span>
+                  <span>
+                    {shippingLoading ? (
+                      <span className="text-gray-400 italic">Đang tính...</span>
+                    ) : deliveryMethod === 'store' ? (
+                      <span className="text-green-600 font-bold">Miễn phí</span>
+                    ) : shippingFee > 0 ? (
+                      <span className="text-gray-900 font-bold">{shippingFee.toLocaleString('vi-VN')}₫</span>
+                    ) : (
+                      <span className="text-green-600 font-bold">Miễn phí</span>
+                    )}
+                  </span>
+                </div>
+                {deliveryMethod === 'ship' && shippingEstimatedDays && (
+                  <div className="flex justify-between text-[11px] text-gray-400 font-medium normal-case">
+                    <span>Thời gian giao hàng dự kiến</span>
+                    <span>{shippingEstimatedDays}</span>
+                  </div>
+                )}
+
+                <div className="flex justify-between pt-3 border-t border-dashed border-gray-100 items-center">
+                  <span className="text-xs font-black text-gray-900">Tổng tiền</span>
+                  <span className="text-lg font-black text-red-600 tracking-tight">{finalTotalPay.toLocaleString('vi-VN')}₫</span>
+                </div>
+                <div className="flex justify-between items-center text-xs text-gray-500 pt-1">
+                  <span>Điểm tích lũy Quà Tặng VIP</span>
+                  <span className="font-bold text-gray-700">{(Math.floor(finalTotalPay * 0.002)).toLocaleString('vi-VN')} điểm</span>
+                </div>
+              </div>
+
+              {/* Submit Button */}
+              <button
+                type="button"
+                onClick={handleCheckoutSubmit}
+                disabled={isSubmitting}
+                className="w-full py-4 bg-orange-500 hover:bg-orange-600 disabled:bg-orange-400 text-white rounded-md font-black transition active:scale-95 uppercase tracking-wider text-xs flex items-center justify-center gap-1.5 group cursor-pointer"
+              >
+                {isSubmitting ? (
+                  <>
+                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                    <span>ĐANG XỬ LÝ...</span>
+                  </>
+                ) : (
+                  <>
+                    <span>Đặt hàng ngay</span>
+                    <ChevronRight size={14} className="group-hover:translate-x-0.5 transition-transform" />
+                  </>
+                )}
+              </button>
+
+              <p className="text-[9px] text-center text-gray-400 font-medium">
+                Bằng cách đặt hàng, quý khách đồng ý với các Điều khoản & Chính sách giao nhận của PhoneShop.
+              </p>
+            </div>
 
           </div>
         )}

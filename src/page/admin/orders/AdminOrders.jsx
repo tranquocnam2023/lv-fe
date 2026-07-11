@@ -85,7 +85,7 @@ export default function AdminOrders() {
                   : (order.statusId === 2 || order.statusId === 3 || order.statusId === 4 ? 'Đã thanh toán' : 'Chờ thanh toán'),
                 amount: order.totalPrice,
                 status: statusStr,
-                paymentMethod: order.paymentMethod || 'cod',
+                paymentMethod: order.paymentMethod || order.PaymentMethod || 'cod',
                 failedDeliveryCount: order.failedDeliveryCount || 0,
                 items: order.items || []
               };

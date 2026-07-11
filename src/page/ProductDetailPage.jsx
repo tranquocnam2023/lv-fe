@@ -7,6 +7,7 @@ import { productService } from '../services/productService';
 import { reviewService } from '../services/reviewService';
 import { categoryService } from '../services/categoryService';
 import api from '../services/api';
+import { GitCompare, ChevronLeft, ChevronRight, X, Maximize2, Check } from 'lucide-react';
 
 // Subcomponents
 import ProductGallery from './product-detail/components/ProductGallery';

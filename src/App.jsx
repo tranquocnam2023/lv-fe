@@ -17,6 +17,7 @@ import ProductDetailPage from './page/ProductDetailPage';
 import PolicyPage from './page/PolicyPage';
 import CheckoutPage from './page/CheckoutPage';
 import OrderTrackingPage from './page/OrderTrackingPage';
+import PaymentCallbackPage from './page/PaymentCallbackPage';
 import ProductComparison from './components/ProductComparison';
 
 function App() {
@@ -88,7 +89,7 @@ function App() {
     );
   }
 
-  const isCartOrCheckout = location.pathname === '/cart' || location.pathname === '/checkout';
+  const isCartOrCheckout = location.pathname === '/cart' || location.pathname === '/checkout' || location.pathname === '/payment-callback';
 
   return (
     <div
@@ -107,6 +108,7 @@ function App() {
             <Routes>
               <Route path="/cart" element={<CartPage />} />
               <Route path="/checkout" element={<CheckoutPage />} />
+              <Route path="/payment-callback" element={<PaymentCallbackPage />} />
             </Routes>
           </main>
         ) : (
