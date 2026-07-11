@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { useCart } from '../context/CartContext';
 import { productService } from '../services/productService';
 import api from '../services/api';
-import { GitCompare } from 'lucide-react';
+import { GitCompare, ChevronLeft, ChevronRight, X, Maximize2, Check } from 'lucide-react';
 
 // Unused theme removed
 
