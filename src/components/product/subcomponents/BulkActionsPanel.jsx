@@ -288,7 +288,7 @@ export default function BulkActionsPanel() {
                   onClick={() => {
                     if (window.confirm(`Bạn có chắc chắn muốn gỡ bỏ hình ảnh của ${selectedVariantKeys.length} biến thể đang chọn?`)) {
                       selectedVariantKeys.forEach(key => {
-                        updateVariantField(key, 'imageId', '/no_image.png');
+                        updateVariantField(key, 'imageId', '');
                       });
                       showToast("success", `Đã gỡ ảnh của ${selectedVariantKeys.length} biến thể.`);
                     }

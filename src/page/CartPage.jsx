@@ -7,7 +7,7 @@ import { orderService } from '../services/orderService';
 import api from '../services/api';
 import { authService } from '../services/authService';
 import { userService } from '../services/userService';
-import { ArrowLeft, ShoppingBag } from 'lucide-react';
+import { ArrowLeft, ShoppingBag, CreditCard, Gift, ChevronRight } from 'lucide-react';
 
 // Subcomponents
 import CartItemsList from './cart/components/CartItemsList';
@@ -17,6 +17,7 @@ import CartAddressModal from './cart/components/CartAddressModal';
 import CartSpecialRequests from './cart/components/CartSpecialRequests';
 import CartSummaryPayment from './cart/components/CartSummaryPayment';
 import CartSuccessScreen from './cart/components/CartSuccessScreen';
+import PromotionSelector from '../components/PromotionSelector';
 
 export default function CartPage() {
   const { cartItems, updateQuantity, removeFromCart, cartTotal, clearCart } = useCart();
@@ -158,7 +159,7 @@ export default function CartPage() {
   }, [formData.wardId, deliveryMethod]);
 
   // Form submission state
-  const [paymentMethod, setPaymentMethod] = useState('transfer'); // default 'transfer' for guest
+  const [paymentMethod, setPaymentMethod] = useState('stripe'); // default 'stripe'
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Order Success screen state
@@ -213,7 +214,6 @@ export default function CartPage() {
   // Sync logged in address details automatically
   useEffect(() => {
     if (isLoggedIn) {
-      setPaymentMethod('cod'); // Default COD for members
       shippingInfoService.getAll()
         .then(res => {
           if (Array.isArray(res) && res.length > 0) {
@@ -246,8 +246,6 @@ export default function CartPage() {
         .catch(err => {
           console.error("Lỗi lấy danh sách địa chỉ nhận hàng:", err);
         });
-    } else {
-      setPaymentMethod('transfer');
     }
   }, [isLoggedIn, provinces]);
 
@@ -612,9 +610,26 @@ export default function CartPage() {
 
       const newOrderId = checkoutRes?.orderId || checkoutRes?.OrderId || `PS${Math.floor(100000 + Math.random() * 900000)}`;
       setOrderCode(newOrderId);
-      setOrderSuccessTotal(finalTotalPay);
-      setIsFinished(true);
       clearCart();
+
+      // Xử lý chuyển hướng cổng thanh toán online
+      if (paymentMethod === 'stripe' || paymentMethod === 'momo') {
+        try {
+          const paymentRes = await api.post(`/Payment/create-checkout-session/${newOrderId}?provider=${paymentMethod}`);
+          const paymentUrl = paymentRes?.url || paymentRes?.Url;
+          if (paymentUrl) {
+            window.location.href = paymentUrl;
+            return;
+          } else {
+            throw new Error("Không nhận được đường dẫn thanh toán từ Server.");
+          }
+        } catch (payErr) {
+          console.error("Lỗi khởi tạo cổng thanh toán online:", payErr);
+          alert("Đơn hàng đã được tạo thành công! Tuy nhiên, không thể kết nối tới cổng thanh toán trực tuyến. Quý khách vui lòng thực hiện chuyển khoản hoặc liên hệ CSKH.");
+        }
+      }
+
+      setIsFinished(true);
     } catch (err) {
       console.error('Lỗi đặt hàng:', err);
       let errorMsg = 'Lỗi hệ thống, vui lòng thử lại sau.';
@@ -717,14 +732,78 @@ export default function CartPage() {
             />
 
             {/* Card 4: Support Request Checklist */}
-            <CartSpecialRequests
-              specialRequests={specialRequests}
-              setSpecialRequests={setSpecialRequests}
-              companyInvoiceDetails={companyInvoiceDetails}
-              setCompanyInvoiceDetails={setCompanyInvoiceDetails}
-              otherRequestText={otherRequestText}
-              setOtherRequestText={setOtherRequestText}
-            />
+            <div className="bg-white rounded-md border border-gray-100 p-4 space-y-3">
+              <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider">Yêu cầu hỗ trợ đặc biệt</h3>
+              <div className="flex flex-col gap-2.5">
+                <label className="flex items-center gap-2 text-xs font-semibold text-gray-700 cursor-pointer hover:text-gray-900 select-none">
+                  <input
+                    type="checkbox"
+                    checked={specialRequests.transferData}
+                    onChange={(e) => setSpecialRequests({ ...specialRequests, transferData: e.target.checked })}
+                    className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-0 cursor-pointer"
+                  />
+                  <span>Chuyển danh bạ, sao lưu dữ liệu sang máy mới (Miễn phí)</span>
+                </label>
+
+                <label className="flex items-center gap-2 text-xs font-semibold text-gray-700 cursor-pointer hover:text-gray-900 select-none">
+                  <input
+                    type="checkbox"
+                    checked={specialRequests.companyInvoice}
+                    onChange={(e) => setSpecialRequests({ ...specialRequests, companyInvoice: e.target.checked })}
+                    className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-0 cursor-pointer"
+                  />
+                  <span>Yêu cầu xuất hóa đơn công ty</span>
+                </label>
+
+                {specialRequests.companyInvoice && (
+                  <div className="ml-6 space-y-2 animate-in slide-in-from-top-2 duration-150">
+                    <input
+                      type="text"
+                      placeholder="Tên công ty"
+                      value={companyInvoiceDetails.companyName}
+                      onChange={(e) => setCompanyInvoiceDetails({ ...companyInvoiceDetails, companyName: e.target.value })}
+                      className="w-full bg-gray-50 border border-gray-200 rounded-md p-2.5 text-xs font-semibold focus:outline-none focus:border-blue-500 text-gray-800"
+                    />
+                    <input
+                      type="text"
+                      placeholder="Mã số thuế"
+                      value={companyInvoiceDetails.taxCode}
+                      onChange={(e) => setCompanyInvoiceDetails({ ...companyInvoiceDetails, taxCode: e.target.value })}
+                      className="w-full bg-gray-50 border border-gray-200 rounded-md p-2.5 text-xs font-semibold focus:outline-none focus:border-blue-500 text-gray-800"
+                    />
+                    <input
+                      type="text"
+                      placeholder="Địa chỉ công ty"
+                      value={companyInvoiceDetails.companyAddress}
+                      onChange={(e) => setCompanyInvoiceDetails({ ...companyInvoiceDetails, companyAddress: e.target.value })}
+                      className="w-full bg-gray-50 border border-gray-200 rounded-md p-2.5 text-xs font-semibold focus:outline-none focus:border-blue-500 text-gray-800"
+                    />
+                  </div>
+                )}
+
+                <label className="flex items-center gap-2 text-xs font-semibold text-gray-700 cursor-pointer hover:text-gray-900 select-none">
+                  <input
+                    type="checkbox"
+                    checked={specialRequests.otherRequest}
+                    onChange={(e) => setSpecialRequests({ ...specialRequests, otherRequest: e.target.checked })}
+                    className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-0 cursor-pointer"
+                  />
+                  <span>Yêu cầu giao nhận hàng đặc biệt khác</span>
+                </label>
+
+                {specialRequests.otherRequest && (
+                  <div className="ml-6 animate-in slide-in-from-top-2 duration-150">
+                    <textarea
+                      placeholder="Ví dụ: Giao ngoài giờ hành chính, gọi trước khi đến..."
+                      value={otherRequestText}
+                      onChange={(e) => setOtherRequestText(e.target.value)}
+                      rows="2"
+                      className="w-full bg-gray-50 border border-gray-200 rounded-md p-2.5 text-xs font-semibold focus:outline-none focus:border-blue-500 resize-none text-gray-800"
+                    ></textarea>
+                  </div>
+                )}
+              </div>
+            </div>
 
             {/* Cards 5-8: Payment & Checkout Summary */}
             <CartSummaryPayment

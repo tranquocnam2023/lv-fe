@@ -1,5 +1,5 @@
 import React from 'react';
-import { Check, X, GitCompare } from 'lucide-react';
+import { Check, X } from 'lucide-react';
 
 const getHexForColor = (colorName) => {
   const c = colorName.toLowerCase();
@@ -183,31 +183,6 @@ export default function ProductSummaryInfo({
               {product.isAvailable === false ? 'SẢN PHẨM TẠM NGƯNG KINH DOANH' : 'THÊM VÀO GIỎ HÀNG'}
             </button>
 
-            <button
-              type="button"
-              onClick={() => {
-                const event = new CustomEvent('add-to-compare', {
-                  detail: {
-                    id: product.id,
-                    name: product.name,
-                    thumbnailImage: product.image,
-                    basePrice: product.price,
-                    originalPrice: product.originalPrice,
-                    discount: product.discount,
-                    stockQuantity: product.stockQuantity,
-                    brand: { name: product.brand },
-                    category: { name: product.category },
-                    description: product.description,
-                    productCode: product.productCode
-                  }
-                });
-                window.dispatchEvent(event);
-              }}
-              className="w-full bg-gray-50 hover:bg-gray-100 text-gray-700 font-black py-3 rounded-md text-sm uppercase transition-all flex items-center justify-center gap-2"
-            >
-              <GitCompare size={16} />
-              SO SÁNH SẢN PHẨM NÀY
-            </button>
           </div>
         </div>
       </div>

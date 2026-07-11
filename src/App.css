@@ -122,6 +122,15 @@
   /* Khai báo Gradient cho Tailwind */
   --background-image-gradient-safe: linear-gradient(to bottom right, #7C3AED, #8B5CF6, #C084FC);
   --background-image-gradient-pop: linear-gradient(to bottom right, #6D28D9, #9333EA, #EC4899);
+
+  /* Định nghĩa lại Bo Góc nhỏ nhất có thể (Flat Style) */
+  --radius-xs: 1px;
+  --radius-sm: 2px;
+  --radius-md: 2px;
+  --radius-lg: 2px;
+  --radius-xl: 2px;
+  --radius-2xl: 2px;
+  --radius-3xl: 2px;
 }
 
 /* Dark mode utility overrides for standard Tailwind color classes */
@@ -294,4 +303,24 @@ body.mega-menu-active .side-banner {
   visibility: hidden !important;
   transform: translateY(10px) !important;
   pointer-events: none !important;
+}
+
+/* Admin Banner Preview Override Rules */
+.admin-preview-mode .side-banner {
+  position: absolute !important;
+  top: 10px !important;
+  display: block !important; /* Luôn hiển thị để xem trước, không phụ thuộc min-width 1440px */
+  z-index: 10 !important;
+}
+
+/* Banner Trái trong khung Preview */
+.admin-preview-mode .side-banner-left {
+  left: 10px !important;
+  right: auto !important;
+}
+
+/* Banner Phải trong khung Preview */
+.admin-preview-mode .side-banner-right {
+  right: 10px !important;
+  left: auto !important;
 }
