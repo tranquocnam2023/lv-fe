@@ -80,7 +80,9 @@ export default function AdminOrders() {
                 customer: order.receiverName || 'Khách hàng',
                 phone: order.receiverPhone || 'N/A',
                 date: order.createdAt,
-                payment: order.statusId === 2 || order.statusId === 3 || order.statusId === 4 ? 'Đã thanh toán' : 'Chờ thanh toán',
+                payment: (order.paymentMethod || 'cod').toLowerCase() === 'cod'
+                  ? (order.statusId === 4 ? 'Đã thanh toán' : 'Chờ thanh toán')
+                  : (order.statusId === 2 || order.statusId === 3 || order.statusId === 4 ? 'Đã thanh toán' : 'Chờ thanh toán'),
                 amount: order.totalPrice,
                 status: statusStr,
                 paymentMethod: order.paymentMethod || 'cod',
@@ -148,7 +150,7 @@ export default function AdminOrders() {
       case 'confirmed': return 'confirmed';
       case 'preparing': return 'confirmed'; // Ánh xạ về confirmed nếu có
       case 'shipping': return 'confirmed'; // Giữ nguyên trạng thái shop
-      case 'delivered': return 'delivered'; 
+      case 'delivered': return 'delivered';
       case 'shipping_failed': return 'confirmed'; // Đơn hàng vẫn Đã xác nhận khi giao thất bại
       case 'cancelled': return 'cancelled';
       default: return 'pending';
@@ -242,11 +244,21 @@ export default function AdminOrders() {
             ? (orders.find(o => o.id === orderId)?.failedDeliveryCount || 0) + 1
             : (orders.find(o => o.id === orderId)?.failedDeliveryCount || 0));
 
-        setOrders(prev => prev.map(o => o.id === orderId ? {
-          ...o,
-          status: newStatus,
-          failedDeliveryCount: nextFailedCount
-        } : o));
+        setOrders(prev => prev.map(o => {
+          if (o.id === orderId) {
+            const isCod = (o.paymentMethod || 'cod').toLowerCase() === 'cod';
+            const paymentStatusText = isCod
+              ? (newStatus === 'delivered' ? 'Đã thanh toán' : 'Chờ thanh toán')
+              : (newStatus === 'confirmed' || newStatus === 'preparing' || newStatus === 'shipping' || newStatus === 'delivered' ? 'Đã thanh toán' : 'Chờ thanh toán');
+            return {
+              ...o,
+              status: newStatus,
+              payment: paymentStatusText,
+              failedDeliveryCount: nextFailedCount
+            };
+          }
+          return o;
+        }));
       })
       .catch(err => {
         console.error("Lỗi cập nhật trạng thái đơn hàng:", err);
@@ -277,7 +289,7 @@ export default function AdminOrders() {
     <div className="animate-in fade-in duration-500 space-y-6">
       {error && (
         <div className="p-5 bg-admin-danger/10 border border-admin-danger/20 text-admin-danger rounded-md font-bold text-sm">
-           Có lỗi xảy ra khi tải dữ liệu đơn hàng: {error}
+          Có lỗi xảy ra khi tải dữ liệu đơn hàng: {error}
         </div>
       )}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
@@ -335,8 +347,8 @@ export default function AdminOrders() {
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
               className={`flex items-center px-6 py-3 rounded-md text-sm font-bold transition-all whitespace-nowrap border ${isActive
-                  ? 'bg-primary text-white border-primary shadow-md scale-[1.02]'
-                  : 'bg-white text-admin-text-muted border-admin-border hover:border-primary hover:text-primary'
+                ? 'bg-primary text-white border-primary shadow-md scale-[1.02]'
+                : 'bg-white text-admin-text-muted border-admin-border hover:border-primary hover:text-primary'
                 }`}
             >
               {Icon && <Icon className={`w-4 h-4 mr-3 ${isActive ? 'text-white' : tab.color}`} />}
@@ -358,7 +370,7 @@ export default function AdminOrders() {
                 <th className="px-6 py-4 text-[12px] font-bold text-admin-text-muted">Đơn hàng</th>
                 <th className="px-6 py-4 text-[12px] font-bold text-admin-text-muted">Khách hàng</th>
                 <th className="px-6 py-4 text-[12px] font-bold text-admin-text-muted">Ngày đặt</th>
-                <th className="px-6 py-4 text-[12px] font-bold text-admin-text-muted">Trạng thái</th>
+                <th className="px-6 py-4 text-[12px] font-bold text-admin-text-muted">Trạng thái TT</th>
                 <th className="px-6 py-4 text-[12px] font-bold text-admin-text-muted">Hình thức TT</th>
                 <th className="px-6 py-4 text-[12px] font-bold text-admin-text-muted">Tổng cộng</th>
                 <th className="px-6 py-4 text-[12px] font-bold text-admin-text-muted">Tình trạng đơn hàng</th>
