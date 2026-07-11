@@ -17,6 +17,7 @@ const AdminReviews       = React.lazy(() => import('./reviews/AdminReviews'));
 const AdminCreateProduct = React.lazy(() => import('./products/AdminCreateProduct'));
 const AdminUpdateProduct = React.lazy(() => import('./products/AdminUpdateProduct'));
 const AdminAuditLogs     = React.lazy(() => import('./audit-logs/AdminAuditLogs'));
+const BannerManager      = React.lazy(() => import('./settings/BannerManager'));
 
 // ─── Loading fallback ─────────────────────────────────────────────────────────
 const TabSpinner = () => (
@@ -106,23 +107,7 @@ export default function AdminPage() {
 
       case 'settings':
         return (
-          <div className="bg-white p-6 rounded-lg border border-admin-border shadow-sm animate-in fade-in duration-350">
-            <h2 className="text-2xl font-bold text-admin-text-main mb-6 flex items-center gap-2">
-              <Settings className="w-6 h-6 text-primary" />
-              Cài đặt hệ thống
-            </h2>
-
-            <div className="space-y-6">
-              <div className="p-5 border border-admin-border rounded-xl bg-gray-50/50 text-center py-12">
-                <p className="text-sm font-medium text-admin-text-muted mb-2">
-                  Các cài đặt hệ thống khác đang được phát triển.
-                </p>
-                <p className="text-xs text-admin-text-muted/60">
-                  Giao diện sáng/tối hiện đã được chuyển lên thanh công cụ (Header) để thao tác nhanh hơn.
-                </p>
-              </div>
-            </div>
-          </div>
+          <BannerManager />
         );
 
       default:

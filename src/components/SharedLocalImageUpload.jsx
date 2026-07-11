@@ -16,13 +16,13 @@ export default function SharedLocalImageUpload({
   const [draggedIndex, setDraggedIndex] = useState(null);
 
   // Placeholder hiển thị khi không có ảnh hoặc sau khi xóa
-  const NO_IMAGE_URL = '/no_image.png';
-  const isNoImage = (url) => !url || url === NO_IMAGE_URL;
+  const NO_IMAGE_URL = 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 100 100"><rect width="100" height="100" fill="%23f8fafc" stroke="%23e2e8f0" stroke-width="2"/><path d="M30 35 h40 a 5 5 0 0 1 5 5 v25 a 5 5 0 0 1 -5 5 h-40 a 5 5 0 0 1 -5 -5 v-25 a 5 5 0 0 1 5 -5 z" fill="none" stroke="%23cbd5e1" stroke-width="2"/><circle cx="42" cy="47" r="4" fill="%23cbd5e1"/><path d="M30 62 l12 -12 l10 10 l14 -14 l8 8" fill="none" stroke="%23cbd5e1" stroke-width="2"/></svg>';
+  const isNoImage = (url) => !url || url === NO_IMAGE_URL || url === '/no_image.png' || url.includes('no_image.png');
 
   // Helper to ensure VITE_API_URL is appended if the URL is relative
   const getAbsoluteUrl = (url) => {
-    if (!url) return '';
-    if (url.startsWith('http://') || url.startsWith('https://')) return url;
+    if (!url || isNoImage(url)) return NO_IMAGE_URL;
+    if (url.startsWith('http://') || url.startsWith('https://') || url.startsWith('data:')) return url;
     const apiBase = import.meta.env.VITE_API_URL || 'https://localhost:7279/api';
     const hostBase = apiBase.replace('/api', '');
     return `${hostBase}${url.startsWith('/') ? '' : '/'}${url}`;
@@ -72,7 +72,7 @@ export default function SharedLocalImageUpload({
   };
 
   const handleRemoveSingle = () => {
-    onChange(NO_IMAGE_URL);
+    onChange('');
   };
 
   const handleRemoveMultiple = (index) => {
@@ -140,12 +140,16 @@ export default function SharedLocalImageUpload({
           <Loader2 className="animate-spin text-primary" size={14} />
         ) : (
           <>
-            <img
-              src={previewUrl}
-              alt="Preview"
-              className="w-full h-full object-cover"
-              onError={(e) => { e.currentTarget.src = NO_IMAGE_URL; }}
-            />
+            {showDelete ? (
+              <img
+                src={previewUrl}
+                alt="Preview"
+                className="w-full h-full object-cover"
+                onError={(e) => { e.currentTarget.src = NO_IMAGE_URL; }}
+              />
+            ) : (
+              <ImageIcon className="text-gray-300 w-4 h-4 animate-in fade-in" />
+            )}
             {showDelete && (
               <button
                 type="button"
@@ -187,12 +191,16 @@ export default function SharedLocalImageUpload({
           {uploading ? (
             <Loader2 className="animate-spin text-primary" size={24} />
           ) : (
-            <img
-              src={previewUrl}
-              alt="Preview Logo"
-              className="w-full h-full object-contain p-2"
-              onError={(e) => { e.currentTarget.src = NO_IMAGE_URL; }}
-            />
+            showDelete ? (
+              <img
+                src={previewUrl}
+                alt="Preview Logo"
+                className="w-full h-full object-contain p-2"
+                onError={(e) => { e.currentTarget.src = NO_IMAGE_URL; }}
+              />
+            ) : (
+              <ImageIcon className="text-gray-300 w-10 h-10 animate-in fade-in" />
+            )
           )}
         </div>
         <div className="flex-1 text-center sm:text-left">
