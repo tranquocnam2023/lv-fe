@@ -46,8 +46,6 @@ const parseSpecs = (specsInput, priorityKeys = []) => {
         'Màn hình',
         'Chipset',
         'CPU',
-        'Camera sau',
-        'Camera trước',
         'Dung lượng pin',
         'Pin',
         'Hệ điều hành'

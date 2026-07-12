@@ -172,7 +172,7 @@ export default function ProfileAddressTab({
                   </button>
                   <button
                     onClick={() => handleDeleteAddress(item.id)}
-                    disabled={item.isDefault && shippingInfos.length > 1} // Can't delete default unless it's the last one
+                    disabled={loading}
                     className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-md transition-colors disabled:opacity-30 cursor-pointer bg-transparent border-0"
                     title="Xóa địa chỉ"
                   >

@@ -4,6 +4,7 @@ import { Search, Eye, Edit, CheckCircle, Truck, XCircle, Clock, ShoppingCart } f
 import { orderService } from '../../../services/orderService';
 import { usePagination } from '../../../hooks/usePagination';
 import { useFormat } from '../../../hooks/useFormat';
+import OrderDetailsModal from './OrderDetailsModal';
 
 const STATUS_TABS = [
   { id: 'all', name: 'Tất cả', count: 0 },
@@ -50,6 +51,7 @@ export default function AdminOrders() {
   const [searchTerm, setSearchTerm] = useState('');
   const [error, setError] = useState(null);
   const [cancelModal, setCancelModal] = useState({ isOpen: false, orderId: null, newStatus: null });
+  const [selectedOrderDetails, setSelectedOrderDetails] = useState(null);
 
   // Khởi tạo các hook
   const { formatCurrency, formatDate } = useFormat();
@@ -87,7 +89,13 @@ export default function AdminOrders() {
                 status: statusStr,
                 paymentMethod: order.paymentMethod || order.PaymentMethod || 'cod',
                 failedDeliveryCount: order.failedDeliveryCount || 0,
-                items: order.items || []
+                items: order.items || [],
+                shippingAddress: order.shippingAddress || 'N/A',
+                promotionCode: order.promotionCode || null,
+                pointsEarned: order.pointsEarned || 0,
+                pointsRedeemed: order.pointsRedeemed || 0,
+                discountFromPoints: order.discountFromPoints || 0,
+                note: order.note || ''
               };
             });
             console.log("AdminOrders: Mapped orders:", mappedOrders);
@@ -382,7 +390,21 @@ export default function AdminOrders() {
                 paginatedOrders.map((order) => (
                   <tr key={order.id} className="hover:bg-admin-bg transition-colors group">
                     <td className="px-6 py-4">
-                      <span className="text-primary font-bold group-hover:underline cursor-pointer">{order.id}</span>
+                      <div className="flex items-center gap-2">
+                        <button
+                          onClick={() => setSelectedOrderDetails(order)}
+                          className="text-primary font-bold hover:underline flex items-center gap-1 cursor-pointer"
+                        >
+                          <span>#{order.id}</span>
+                        </button>
+                        <button
+                          onClick={() => setSelectedOrderDetails(order)}
+                          className="p-1 text-admin-text-muted hover:text-primary transition-colors cursor-pointer"
+                          title="Xem chi tiết đơn hàng"
+                        >
+                          <Eye size={16} />
+                        </button>
+                      </div>
                     </td>
                     <td className="px-6 py-4">
                       <div className="flex flex-col">
@@ -556,6 +578,12 @@ export default function AdminOrders() {
           </div>
         </div>
       )}
+
+      {/* Order Details Modal */}
+      <OrderDetailsModal
+        order={selectedOrderDetails}
+        onClose={() => setSelectedOrderDetails(null)}
+      />
     </div>
   );
 }

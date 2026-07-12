@@ -27,11 +27,27 @@ export default function AdminProducts({ onCreate, onEdit, defaultBrandFilter, cl
 
 
 
+  // Đệ quy lấy tất cả ID của danh mục con
+  const getAllCategoryIds = (parentId, categoriesList) => {
+    let ids = [String(parentId)];
+    const children = categoriesList.filter(c => String(c.parentId) === String(parentId));
+    for (const child of children) {
+      ids = ids.concat(getAllCategoryIds(child.id, categoriesList));
+    }
+    return ids;
+  };
+
   // Khởi tạo các hook
   const filteredProducts = products.filter(p => {
     let match = true;
     if (selectedBrand !== 'ALL' && String(p.brandId) !== String(selectedBrand)) match = false;
-    if (selectedCategory !== 'ALL' && String(p.categoryId) !== String(selectedCategory)) match = false;
+    
+    if (selectedCategory !== 'ALL') {
+      const allowedCatIds = getAllCategoryIds(selectedCategory, dbCategories);
+      if (!allowedCatIds.includes(String(p.categoryId))) {
+        match = false;
+      }
+    }
     if (isActiveFilter !== 'ALL') {
       const activeValue = isActiveFilter === 'TRUE';
       if (p.isActive !== activeValue) match = false;

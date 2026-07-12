@@ -17,9 +17,20 @@ export default function PaymentCallbackPage() {
 
   useEffect(() => {
     if (isCancel) {
-      setLoading(false);
-      setStatus('failed');
-      setMessage('Giao dịch thanh toán trực tuyến đã bị hủy bởi người dùng.');
+      const reportCancel = async () => {
+        try {
+          if (sessionId) {
+            await api.post(`/Payment/cancel-session?session_id=${sessionId}&provider=${provider}`);
+          }
+        } catch (err) {
+          console.error("Lỗi khi báo hủy thanh toán:", err);
+        } finally {
+          setLoading(false);
+          setStatus('failed');
+          setMessage('Giao dịch thanh toán trực tuyến đã bị hủy bởi người dùng.');
+        }
+      };
+      reportCancel();
       return;
     }
 

@@ -47,6 +47,7 @@ export default function HomePage({ selectedLocation }) {
   const searchQuery = searchParams.get('search') || '';
   const priceMinParam = searchParams.get('price_min');
   const priceMaxParam = searchParams.get('price_max');
+  const filterBrandParam = searchParams.get('filterBrand');
 
   if (brand !== prevBrand) {
     setPrevBrand(brand);
@@ -129,10 +130,36 @@ export default function HomePage({ selectedLocation }) {
     if (selectedBrand) {
       const brandLower = selectedBrand.toLowerCase();
       
-      // Check if selectedBrand is a Category name in database
-      const matchingCat = categories.find(c => c.name.toLowerCase() === brandLower);
+      // Check if selectedBrand is a Category name or slug in database
+      const matchingCat = categories.find(c => 
+        c.name.toLowerCase() === brandLower || 
+        (c.slug && c.slug.toLowerCase() === brandLower)
+      );
+
       if (matchingCat) {
-        return String(product.categoryId || product.CategoryId || '') === String(matchingCat.id || matchingCat.Id || '');
+        // Hàm lấy đệ quy tất cả các ID của danh mục con
+        const getAllCategoryIds = (parentId, categoriesList) => {
+          let ids = [String(parentId)];
+          const children = categoriesList.filter(c => String(c.parentId) === String(parentId));
+          for (const child of children) {
+            ids = ids.concat(getAllCategoryIds(child.id, categoriesList));
+          }
+          return ids;
+        };
+
+        const allowedCatIds = getAllCategoryIds(matchingCat.id || matchingCat.Id, categories);
+        if (!allowedCatIds.includes(String(product.categoryId || product.CategoryId || ''))) return false;
+
+        // Nếu có param filterBrand trên URL, lọc thêm theo thương hiệu
+        if (filterBrandParam) {
+          const fbLower = filterBrandParam.toLowerCase();
+          const matchesBrand = (product.brand && product.brand.toLowerCase() === fbLower) ||
+                               (product.brandName && product.brandName.toLowerCase() === fbLower) ||
+                               (product.BrandName && product.BrandName.toLowerCase() === fbLower);
+          if (!matchesBrand) return false;
+        }
+        
+        return true;
       }
       
       const matches = (product.brand && product.brand.toLowerCase() === brandLower) ||
@@ -140,7 +167,8 @@ export default function HomePage({ selectedLocation }) {
                       (product.BrandName && product.BrandName.toLowerCase() === brandLower) ||
                       product.name.toLowerCase().includes(brandLower) || 
                       (product.category && product.category.toLowerCase().includes(brandLower)) ||
-                      (product.categoryName && product.categoryName.toLowerCase().includes(brandLower));
+                      (product.categoryName && product.categoryName.toLowerCase().includes(brandLower)) ||
+                      (product.categorySlug && product.categorySlug.toLowerCase() === brandLower);
       
       if (!matches) return false;
     }
@@ -176,6 +204,17 @@ export default function HomePage({ selectedLocation }) {
 
   const featuredProducts = localProducts.filter(p => p.isFeatured || p.IsFeatured);
 
+  const displaySelectedBrand = () => {
+    if (!selectedBrand) return '';
+    const brandLower = selectedBrand.toLowerCase();
+    const matchingCat = categories.find(c => 
+      c.name.toLowerCase() === brandLower || 
+      (c.slug && c.slug.toLowerCase() === brandLower)
+    );
+    if (matchingCat) return matchingCat.name;
+    return selectedBrand;
+  };
+
   return (
     <>
       {(selectedBrand || searchQuery || advancedFilters) ? (
@@ -190,7 +229,7 @@ export default function HomePage({ selectedLocation }) {
       >
         {searchQuery 
           ? `Kết quả tìm kiếm cho: "${searchQuery}"` 
-          : (selectedBrand || advancedFilters ? `Sản phẩm ${selectedBrand || 'đã lọc'}` : 'Chào mừng đến với hệ thống PhoneShop!')}
+          : (selectedBrand || advancedFilters ? `Sản phẩm ${displaySelectedBrand() || 'đã lọc'}` : 'Chào mừng đến với hệ thống PhoneShop!')}
       </h2>
 
       {!selectedBrand && !searchQuery && !advancedFilters && (

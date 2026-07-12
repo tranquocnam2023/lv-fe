@@ -123,7 +123,7 @@ export default function Sidebar({ isFocused, setIsFocused }) {
     >
       <nav className="flex flex-col">
         {rootCategories.map((cat) => {
-          const path = `/danh-muc/${encodeURIComponent(cat.name.toLowerCase())}`;
+          const path = `/danh-muc/${cat.slug || encodeURIComponent(cat.name.toLowerCase())}`;
           const isHovered = hoveredRootId === cat.id;
           const subcategories = categories.filter(c => c.parentId === cat.id);
           const hasSub = subcategories.length > 0;
@@ -235,7 +235,7 @@ export default function Sidebar({ isFocused, setIsFocused }) {
                         return (
                           <Link
                             key={sub2.id}
-                            to={`/danh-muc/${encodeURIComponent(sub2.name.toLowerCase())}`}
+                            to={`/danh-muc/${sub2.slug || encodeURIComponent(sub2.name.toLowerCase())}`}
                             onMouseEnter={() => setHoveredSub2Id(sub2.id)}
                             onClick={() => {
                               setHoveredRootId(null);
@@ -262,7 +262,7 @@ export default function Sidebar({ isFocused, setIsFocused }) {
                         return (
                           <Link
                             key={sub2.id}
-                            to={`/danh-muc/${encodeURIComponent(sub2.name.toLowerCase())}`}
+                            to={`/danh-muc/${sub2.slug || encodeURIComponent(sub2.name.toLowerCase())}`}
                             onMouseEnter={() => setHoveredSub2Id(sub2.id)}
                             onClick={() => {
                               setHoveredRootId(null);
@@ -295,7 +295,7 @@ export default function Sidebar({ isFocused, setIsFocused }) {
                       {sub3List.map((sub3) => (
                         <Link
                           key={sub3.id}
-                          to={`/danh-muc/${encodeURIComponent(sub3.name.toLowerCase())}`}
+                          to={`/danh-muc/${sub3.slug || encodeURIComponent(sub3.name.toLowerCase())}`}
                           onClick={() => {
                             setHoveredRootId(null);
                             setHoveredSub2Id(null);
@@ -313,7 +313,7 @@ export default function Sidebar({ isFocused, setIsFocused }) {
                       {filteredBrands.slice(0, 9).map((brand) => (
                         <Link
                           key={brand.id}
-                          to={`/danh-muc/${encodeURIComponent(brand.name.toLowerCase())}`}
+                          to={`/danh-muc/${brand.slug || encodeURIComponent(brand.name.toLowerCase())}`}
                           onClick={() => {
                             setHoveredRootId(null);
                             setHoveredSub2Id(null);

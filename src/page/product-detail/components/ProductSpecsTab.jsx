@@ -12,57 +12,30 @@ const getSummarySpecs = (specsInput) => {
     }
     if (!Array.isArray(parsed)) return [];
 
-    const targetKeys = [
-      "Công nghệ màn hình",
-      "Kích thước màn hình",
-      "Độ phân giải",
-      "Hệ điều hành",
-      "Camera sau",
-      "Quay phim",
-      "ROM",
-      "RAM",
-      "Dung lượng pin"
-    ];
-
     const result = [];
 
-    targetKeys.forEach(targetKey => {
-      let foundValue = "";
-      const targetKeyLower = targetKey.toLowerCase();
+    for (const group of parsed) {
+      if (!group.items || !Array.isArray(group.items)) continue;
+      
+      for (const item of group.items) {
+        if (!item.key || !item.value) continue;
+        
+        let displayKey = item.key;
+        if (displayKey.toUpperCase() === "ROM") displayKey = "Bộ nhớ trong (ROM)";
+        if (displayKey.toUpperCase() === "RAM") displayKey = "Bộ nhớ đệm (RAM)";
 
-      for (const group of parsed) {
-        if (!group.items || !Array.isArray(group.items)) continue;
-        for (const item of group.items) {
-          if (!item.key || !item.value) continue;
-          const itemKey = item.key.trim().toLowerCase();
-
-          let isMatch = false;
-          if (targetKeyLower === "rom") {
-            isMatch = itemKey === "rom" || itemKey.includes("bộ nhớ trong") || itemKey === "internal storage";
-          } else if (targetKeyLower === "ram") {
-            isMatch = itemKey === "ram" || itemKey === "bộ nhớ ram";
-          } else {
-            isMatch = itemKey.includes(targetKeyLower) || targetKeyLower.includes(itemKey);
-          }
-
-          if (isMatch) {
-            foundValue = item.value;
-            break;
-          }
+        // Tránh trùng lặp key
+        if (!result.some(r => r.key === displayKey)) {
+          result.push({
+            key: displayKey,
+            value: item.value
+          });
         }
-        if (foundValue) break;
+
+        // Lấy tối đa 8 thông số làm tóm tắt
+        if (result.length >= 8) return result;
       }
-
-      // Đổi nhãn hiển thị cho đẹp
-      let displayKey = targetKey;
-      if (targetKey === "ROM") displayKey = "Bộ nhớ trong (ROM)";
-      if (targetKey === "RAM") displayKey = "Bộ nhớ đệm (RAM)";
-
-      result.push({
-        key: displayKey,
-        value: foundValue || "Đang cập nhật"
-      });
-    });
+    }
 
     return result;
   } catch (e) {

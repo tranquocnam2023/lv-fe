@@ -611,7 +611,7 @@ export default function ProductDetailPage() {
         if (cat) {
           items.unshift({
             label: cat.name,
-            path: `/danh-muc/${encodeURIComponent(cat.name.toLowerCase())}`
+            path: `/danh-muc/${cat.slug || encodeURIComponent(cat.name.toLowerCase())}`
           });
           currentCategoryId = cat.parentId;
         } else {

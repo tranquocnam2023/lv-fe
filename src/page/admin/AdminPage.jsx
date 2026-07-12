@@ -18,6 +18,7 @@ const AdminCreateProduct = React.lazy(() => import('./products/AdminCreateProduc
 const AdminUpdateProduct = React.lazy(() => import('./products/AdminUpdateProduct'));
 const AdminAuditLogs     = React.lazy(() => import('./audit-logs/AdminAuditLogs'));
 const BannerManager      = React.lazy(() => import('./settings/BannerManager'));
+const AdminPayments      = React.lazy(() => import('./payments/AdminPayments'));
 
 // ─── Loading fallback ─────────────────────────────────────────────────────────
 const TabSpinner = () => (
@@ -99,6 +100,7 @@ export default function AdminPage() {
 
       case 'inventory':   return <AdminInventory />;
       case 'orders':      return <AdminOrders />;
+      case 'payments':    return <AdminPayments />;
       case 'customers':   return <AdminCustomers />;
       case 'promotions':  return <AdminPromotions />;
       case 'reviews':     return <AdminReviews />;
