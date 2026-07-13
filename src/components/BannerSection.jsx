@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import { bannerService } from '../services/bannerService';
+//quảng cáo tĩnh phòng trường hợp lỗi
 // Banner dọc 2 bên mép
 import bannerLeft from '../assets/banner-left.png';
 import bannerRight from '../assets/banner-right.png';
@@ -45,45 +47,43 @@ const LinkWrapper = ({ to, children }) => {
 };
 
 const BannerSection = ({ showSideBanners = true, showTopBanner = true, showSlider = true, bannersData = null }) => {
-  const [banners, setBanners] = useState(() => {
-    if (bannersData) return bannersData;
-    try {
-      const saved = localStorage.getItem('publishedBanners');
-      if (saved) {
-        return JSON.parse(saved);
-      }
-    } catch (e) {
-      console.error('Error loading published banners:', e);
-    }
-    return DEFAULT_BANNERS;
-  });
-
+  const [banners, setBanners] = useState(bannersData || []);
   const [currentIndex, setCurrentIndex] = useState(0);
 
-  // Đồng bộ banners khi bannersData thay đổi hoặc khi có sự kiện cập nhật
+  // Đồng bộ banners khi bannersData thay đổi hoặc khi có sự kiện cập nhật từ API hoặc localStorage
   useEffect(() => {
     if (bannersData) {
       setBanners(bannersData);
     } else {
-      const loadBanners = () => {
+      const fetchBanners = async () => {
         try {
-          const saved = localStorage.getItem('publishedBanners');
-          if (saved) {
-            setBanners(JSON.parse(saved));
+          const data = await bannerService.getBanners();
+          if (data && data.length > 0) {
+            setBanners(data);
           } else {
             setBanners(DEFAULT_BANNERS);
           }
-        } catch (e) {
-          console.error(e);
+        } catch (error) {
+          console.error('Error loading published banners from backend:', error);
+          try {
+            const saved = localStorage.getItem('publishedBanners');
+            if (saved) {
+              setBanners(JSON.parse(saved));
+            } else {
+              setBanners(DEFAULT_BANNERS);
+            }
+          } catch (e) {
+            setBanners(DEFAULT_BANNERS);
+          }
         }
       };
 
-      loadBanners();
-      window.addEventListener('storage', loadBanners);
-      window.addEventListener('banners-updated', loadBanners);
+      fetchBanners();
+      window.addEventListener('storage', fetchBanners);
+      window.addEventListener('banners-updated', fetchBanners);
       return () => {
-        window.removeEventListener('storage', loadBanners);
-        window.removeEventListener('banners-updated', loadBanners);
+        window.removeEventListener('storage', fetchBanners);
+        window.removeEventListener('banners-updated', fetchBanners);
       };
     }
   }, [bannersData]);

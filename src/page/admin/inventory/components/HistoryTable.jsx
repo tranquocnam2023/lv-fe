@@ -58,8 +58,8 @@ export default function HistoryTable({
                   <td className="py-3.5 px-4 text-xs text-admin-text-muted">{formattedDate}</td>
                   <td className="py-3.5 px-4">
                     <div className="font-bold text-admin-text-main flex items-center gap-2">
-                      Giao dịch gồm {group.items.length} mặt hàng
-                      <button 
+                      Gồm {group.items.length} mặt hàng
+                      <button
                         onClick={() => setSelectedTxGroup(group)}
                         className="text-[10px] text-primary hover:underline px-2 py-0.5 bg-primary/10 rounded-full"
                       >
@@ -84,9 +84,9 @@ export default function HistoryTable({
                   <td className="py-3.5 px-4 text-xs text-admin-text-muted font-semibold max-w-[150px] truncate" title={group.note}>{group.note}</td>
                   <td className="py-3.5 px-4 text-center">
                     {group.isReverted ? (
-                       <span className="text-xs text-red-400 italic font-semibold">Đã hủy</span>
+                      <span className="text-xs text-red-400 italic font-semibold">Đã hủy</span>
                     ) : group.orderId ? (
-                       <span className="text-xs text-gray-400 italic font-semibold">Theo đơn hàng</span>
+                      <span className="text-xs text-gray-400 italic font-semibold">Theo đơn hàng</span>
                     ) : (
                       <button
                         onClick={() => setSelectedTxGroup(group)}

@@ -9,6 +9,7 @@ import DraggableSliderList from './components/DraggableSliderList';
 import FixedBannerCard from './components/FixedBannerCard';
 import BannerLivePreview from './components/BannerLivePreview';
 import { productService } from '../../../services/productService';
+import { bannerService } from '../../../services/bannerService';
 
 
 // Banner dọc 2 bên mép
@@ -45,50 +46,99 @@ export default function BannerManager() {
   const [alertMsg, setAlertMsg] = useState(null); // { type: 'success' | 'info', text: '' }
   const addSliderInputRef = useRef(null);
 
-  // Khởi tạo dữ liệu từ localStorage
+  // Khởi tạo dữ liệu từ backend API với fallback localStorage
+  const loadBannersFromBackend = async () => {
+    try {
+      const drafts = await bannerService.getDraftBanners();
+      const published = await bannerService.getPublishedBanners();
+      setDraftBanners(drafts || []);
+      setPublishedBanners(published || []);
+    } catch (error) {
+      console.error("Lỗi khi tải cấu hình banner từ API:", error);
+      let published = localStorage.getItem('publishedBanners');
+      let draft = localStorage.getItem('draftBanners');
+
+      if (!published) {
+        localStorage.setItem('publishedBanners', JSON.stringify(DEFAULT_BANNERS));
+        published = JSON.stringify(DEFAULT_BANNERS);
+      }
+      if (!draft) {
+        localStorage.setItem('draftBanners', published);
+        draft = published;
+      }
+
+      setPublishedBanners(JSON.parse(published));
+      setDraftBanners(JSON.parse(draft));
+    }
+  };
+
   useEffect(() => {
-    let published = localStorage.getItem('publishedBanners');
-    let draft = localStorage.getItem('draftBanners');
-
-    if (!published) {
-      localStorage.setItem('publishedBanners', JSON.stringify(DEFAULT_BANNERS));
-      published = JSON.stringify(DEFAULT_BANNERS);
-    }
-    if (!draft) {
-      localStorage.setItem('draftBanners', published);
-      draft = published;
-    }
-
-    setPublishedBanners(JSON.parse(published));
-    setDraftBanners(JSON.parse(draft));
+    loadBannersFromBackend();
   }, []);
 
   // So sánh dữ liệu nháp và chính thức
   const hasChanges = JSON.stringify(draftBanners) !== JSON.stringify(publishedBanners);
 
-  // Lưu nháp (Mỗi lần thay đổi tự động lưu nháp)
-  const saveDraft = (newDraft) => {
+  // Lưu nháp (Cập nhật giao diện lập tức, lưu API bất đồng bộ)
+  const saveDraft = async (newDraft) => {
     setDraftBanners(newDraft);
     localStorage.setItem('draftBanners', JSON.stringify(newDraft));
+    try {
+      const payload = newDraft.map((item, idx) => ({
+        imageUrl: item.imageUrl,
+        linkUrl: item.linkUrl || '',
+        type: item.type,
+        isActive: item.isActive,
+        position: item.position !== undefined ? item.position : idx
+      }));
+      await bannerService.updateDraftBanners(payload);
+    } catch (error) {
+      console.error("Lỗi lưu bản nháp lên backend:", error);
+    }
   };
 
-  // Publish - Đồng bộ từ Draft sang Published
-  const handlePublish = () => {
-    localStorage.setItem('publishedBanners', JSON.stringify(draftBanners));
-    setPublishedBanners(draftBanners);
+  // Publish - Xuất bản các thay đổi nháp lên chính thức ở DB
+  const handlePublish = async () => {
+    try {
+      showAlert('info', 'Đang xuất bản các thay đổi...');
+      const res = await bannerService.publishBanners();
+      if (res && res.banners) {
+        setPublishedBanners(res.banners);
+        setDraftBanners(res.banners);
+        localStorage.setItem('publishedBanners', JSON.stringify(res.banners));
+        localStorage.setItem('draftBanners', JSON.stringify(res.banners));
+      } else {
+        setPublishedBanners(draftBanners);
+        localStorage.setItem('publishedBanners', JSON.stringify(draftBanners));
+      }
 
-    // Bắn sự kiện cập nhật để BannerSection cập nhật trực tiếp cùng cửa sổ trình duyệt
-    window.dispatchEvent(new Event('banners-updated'));
-
-    showAlert('success', 'Đã xuất bản tất cả thay đổi ra ngoài trang chủ thành công!');
+      // Bắn sự kiện để BannerSection cập nhật trực tiếp cùng cửa sổ trình duyệt
+      window.dispatchEvent(new Event('banners-updated'));
+      showAlert('success', 'Đã xuất bản tất cả thay đổi ra ngoài trang chủ thành công!');
+    } catch (error) {
+      console.error("Lỗi xuất bản banner:", error);
+      showAlert('info', 'Lỗi xuất bản: ' + error);
+    }
   };
 
-  // Discard - Reset từ Published về Draft
-  const handleDiscard = () => {
+  // Discard - Reset các thay đổi nháp quay lại bản chính thức ở DB
+  const handleDiscard = async () => {
     if (window.confirm("Bạn có chắc chắn muốn hủy bỏ toàn bộ các thay đổi nháp hiện tại và quay về dữ liệu đang hiển thị ngoài website?")) {
-      localStorage.setItem('draftBanners', JSON.stringify(publishedBanners));
-      setDraftBanners(publishedBanners);
-      showAlert('info', 'Đã hủy bỏ thay đổi nháp và khôi phục về cấu hình đang chạy.');
+      try {
+        showAlert('info', 'Đang hủy bỏ các thay đổi nháp...');
+        const res = await bannerService.discardBanners();
+        if (res && res.banners) {
+          setDraftBanners(res.banners);
+          localStorage.setItem('draftBanners', JSON.stringify(res.banners));
+        } else {
+          setDraftBanners(publishedBanners);
+          localStorage.setItem('draftBanners', JSON.stringify(publishedBanners));
+        }
+        showAlert('info', 'Đã hủy bỏ thay đổi nháp và khôi phục về cấu hình đang chạy.');
+      } catch (error) {
+        console.error("Lỗi hủy bỏ bản nháp:", error);
+        showAlert('info', 'Lỗi khôi phục: ' + error);
+      }
     }
   };
 
