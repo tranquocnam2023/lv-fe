@@ -21,7 +21,10 @@ export default function ProductSummaryInfo({
   selectedAttributes,
   onAttributeClick,
   onAddToCart,
-  onBuyNow
+  onBuyNow,
+  accessorySuggestions = [],
+  selectedAccessories = [],
+  onToggleAccessory
 }) {
   const promotions = [
     "Thu cũ Đổi mới: Trợ giá lên đến 2.000.000₫",
@@ -182,7 +185,6 @@ export default function ProductSummaryInfo({
               </svg>
               {product.isAvailable === false ? 'SẢN PHẨM TẠM NGƯNG KINH DOANH' : 'THÊM VÀO GIỎ HÀNG'}
             </button>
-
           </div>
         </div>
       </div>

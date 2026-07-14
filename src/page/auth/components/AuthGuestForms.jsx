@@ -294,13 +294,14 @@ export default function AuthGuestForms({
               {loading ? 'ĐĂNG XỬ LÝ...' : (isLogin ? 'ĐĂNG NHẬP' : 'ĐĂNG KÝ')}
             </button>
 
-            <div className="relative flex py-2 items-center">
+            {/* Tạm thời ẩn nút đăng nhập bằng Google do vấn đề bảo mật */}
+            {/* <div className="relative flex py-2 items-center">
               <div className="flex-grow border-t border-gray-200"></div>
               <span className="flex-shrink mx-4 text-gray-400 text-xs font-bold uppercase">Hoặc</span>
               <div className="flex-grow border-t border-gray-200"></div>
             </div>
 
-            <div id="google-signin-btn" className="w-full flex justify-center"></div>
+            <div id="google-signin-btn" className="w-full flex justify-center"></div> */}
           </form>
 
           <div className="mt-6 text-center text-sm">

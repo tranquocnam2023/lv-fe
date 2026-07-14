@@ -52,7 +52,7 @@ export const excelService = {
         }
       });
       
-      const csvContent = "\uFEFF" + [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
+      const csvContent = "\uFEFF" + [headers.join(';'), ...rows.map(r => r.join(';'))].join('\n');
       const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
       const url = URL.createObjectURL(blob);
       const link = document.createElement("a");
@@ -76,9 +76,9 @@ export const excelService = {
         "Mã biến thể (Variant ID)", 
         "Tên sản phẩm", 
         "Tên biến thể", 
-        "Số lượng thay đổi (Quantity - Nhập dương, Xuất âm)", 
+        "Số lượng nhập", 
         "Giá giao dịch (Price)", 
-        "Loại giao dịch (IMPORT_SUPPLIER/IMPORT_RETURN/EXPORT_SELL/EXPORT_DEFECT)", 
+        "Loại giao dịch (Nhập vào)", 
         "Ghi chú (Note)"
       ];
       
@@ -93,7 +93,7 @@ export const excelService = {
           `"${v.name.replace(/"/g, '""')}"`,
           "", 
           "", 
-          "IMPORT_SUPPLIER", 
+          "Nhập vào", 
           "Nhập hàng từ Excel" 
         ]);
       });
@@ -108,13 +108,13 @@ export const excelService = {
             "Mặc định",
             "",
             "",
-            "IMPORT_SUPPLIER",
+            "Nhập vào",
             "Nhập hàng từ Excel"
           ]);
         }
       });
       
-      const csvContent = "\uFEFF" + [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
+      const csvContent = "\uFEFF" + [headers.join(';'), ...rows.map(r => r.join(';'))].join('\n');
       const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
       const url = URL.createObjectURL(blob);
       const link = document.createElement("a");

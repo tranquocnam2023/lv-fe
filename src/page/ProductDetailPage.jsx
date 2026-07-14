@@ -171,15 +171,20 @@ export default function ProductDetailPage() {
     return '';
   };
 
+  // States gợi ý mua kèm phụ kiện
+  const [accessorySuggestions, setAccessorySuggestions] = useState([]);
+  const [selectedAccessories, setSelectedAccessories] = useState([]);
+
   // Tải dữ liệu Product, danh sách Variants & Categories
   useEffect(() => {
     setLoading(true);
     Promise.all([
       productService.getById(id),
       api.get(`/ProductVariant?productId=${id}`).catch(() => []),
-      categoryService.getAll().catch(() => [])
+      categoryService.getAll().catch(() => []),
+      productService.getAll().catch(() => [])
     ])
-      .then(([productData, variantData, categoryData]) => {
+      .then(([productData, variantData, categoryData, allProducts]) => {
         if (productData) {
           const normalized = {
             ...productData,
@@ -197,6 +202,40 @@ export default function ProductDetailPage() {
           }
           if (Array.isArray(categoryData)) {
             setCategories(categoryData);
+          }
+
+          // Cấu hình thủ công danh sách phụ kiện đi kèm theo ý muốn của Admin (Key: ProductID chính, Value: Danh sách ProductID phụ kiện)
+          const MANUAL_BUNDLE_CONFIG = {
+            "2": [50, 49, 43], // Xiaomi 17T -> Gợi ý Sạc dự phòng Xiaomi, Sạc dự phòng Anker, Tai nghe Sony
+            // Admin có thể dễ dàng cấu hình thêm các sản phẩm khác ở đây
+          };
+
+          // Lọc danh sách phụ kiện mua kèm gợi ý (ưu tiên cấu hình của Admin, nếu không có sẽ tự động gợi ý cùng hãng)
+          if (Array.isArray(allProducts)) {
+            let suggestions = [];
+            const manualIds = MANUAL_BUNDLE_CONFIG[String(id)];
+            
+            if (manualIds && manualIds.length > 0) {
+              // Lấy chính xác các phụ kiện theo cấu hình thủ công của Admin
+              suggestions = allProducts.filter(p => manualIds.includes(p.id) && p.isAvailable !== false);
+            } else {
+              // Tự động gợi ý phụ kiện cùng hãng như cũ
+              const keywords = ["sạc", "tai nghe", "loa", "dự phòng", "cáp", "ốp", "kính cường lực", "airpods", "jbl", "anker", "sony"];
+              const validAccessories = allProducts.filter(p => {
+                if (p.id === parseInt(id)) return false;
+                if (p.isAvailable === false) return false;
+                const nameLower = p.name.toLowerCase();
+                return keywords.some(kw => nameLower.includes(kw));
+              });
+
+              const sameBrandAccs = validAccessories.filter(p => p.brandId === normalized.brandId);
+              const otherBrandAccs = validAccessories.filter(p => p.brandId !== normalized.brandId);
+              suggestions = [...sameBrandAccs, ...otherBrandAccs];
+            }
+
+            suggestions = suggestions.slice(0, 3);
+            setAccessorySuggestions(suggestions);
+            setSelectedAccessories([]); // Reset selected khi chuyển sản phẩm
           }
         } else {
           setProduct(null);
@@ -559,6 +598,18 @@ export default function ProductDetailPage() {
     });
   };
 
+  // Toggle phụ kiện mua kèm
+  const handleToggleAccessory = (acc) => {
+    setSelectedAccessories(prev => {
+      const exists = prev.some(item => item.id === acc.id);
+      if (exists) {
+        return prev.filter(item => item.id !== acc.id);
+      } else {
+        return [...prev, acc];
+      }
+    });
+  };
+
   // Thêm vào giỏ hàng
   const handleAddToCart = () => {
     for (const attrKey of Object.keys(attributesConfig)) {
@@ -568,6 +619,7 @@ export default function ProductDetailPage() {
       }
     }
     if (product) {
+      // Thêm sản phẩm chính
       addToCart({
         ...product,
         price: displayDetails.price,
@@ -575,7 +627,22 @@ export default function ProductDetailPage() {
         selectedColor: selectedAttributes["Màu sắc"] || Object.entries(selectedAttributes).find(([k]) => k.toLowerCase().includes('màu'))?.[1] || null,
         selectedStorage: selectedAttributes["Dung lượng RAM - ROM"] || selectedAttributes["Dung Lượng RAM - ROM"] || Object.entries(selectedAttributes).find(([k]) => k.toLowerCase().includes('dung lượng') || k.toLowerCase().includes('bộ nhớ') || k.toLowerCase().includes('ram') || k.toLowerCase().includes('rom'))?.[1] || null
       });
-      alert('Đã thêm sản phẩm vào giỏ hàng thành công!');
+
+      // Thêm các phụ kiện được chọn mua kèm (0.9 tương đương với 90% số tiền của hàng.)
+      selectedAccessories.forEach(acc => {
+        const originalPrice = acc.price || acc.basePrice || 0;
+        const discountPrice = originalPrice * 0.9;
+        addToCart({
+          ...acc,
+          price: discountPrice,
+          selectedAttributes: {},
+          selectedColor: null,
+          selectedStorage: null
+        });
+      });
+
+      alert('Đã thêm sản phẩm chính' + (selectedAccessories.length > 0 ? ` và ${selectedAccessories.length} phụ kiện mua kèm` : '') + ' vào giỏ hàng thành công!');
+      setSelectedAccessories([]); // Reset selected sau khi thêm thành công
     }
   };
 
@@ -588,6 +655,7 @@ export default function ProductDetailPage() {
       }
     }
     if (product) {
+      // Thêm sản phẩm chính
       addToCart({
         ...product,
         price: displayDetails.price,
@@ -595,6 +663,21 @@ export default function ProductDetailPage() {
         selectedColor: selectedAttributes["Màu sắc"] || Object.entries(selectedAttributes).find(([k]) => k.toLowerCase().includes('màu'))?.[1] || null,
         selectedStorage: selectedAttributes["Dung lượng RAM - ROM"] || selectedAttributes["Dung Lượng RAM - ROM"] || Object.entries(selectedAttributes).find(([k]) => k.toLowerCase().includes('dung lượng') || k.toLowerCase().includes('bộ nhớ') || k.toLowerCase().includes('ram') || k.toLowerCase().includes('rom'))?.[1] || null
       });
+
+      // Thêm các phụ kiện được chọn mua kèm (0.9 tương đương với 90% số tiền của hàng.)
+      selectedAccessories.forEach(acc => {
+        const originalPrice = acc.price || acc.basePrice || 0;
+        const discountPrice = originalPrice * 0.9; // Giảm 10%
+        addToCart({
+          ...acc,
+          price: discountPrice,
+          selectedAttributes: {},
+          selectedColor: null,
+          selectedStorage: null
+        });
+      });
+
+      setSelectedAccessories([]);
       navigate('/cart');
     }
   };
@@ -681,26 +764,89 @@ export default function ProductDetailPage() {
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-start">
-          {/* CỘT TRÁI: THƯ VIỆN ẢNH ĐỘNG */}
-          <ProductGallery 
-            product={product}
-            selectedColor={selectedColor}
-            galleryImages={galleryImages}
-            activeImage={activeImage}
-            setActiveImage={setActiveImage}
-          />
+          {/* CỘT TRÁI: THƯ VIỆN ẢNH ĐỘNG & GỢI Ý MUA KÈM */}
+          <div className="lg:col-span-7 space-y-6">
+            <ProductGallery 
+              product={product}
+              selectedColor={selectedColor}
+              galleryImages={galleryImages}
+              activeImage={activeImage}
+              setActiveImage={setActiveImage}
+            />
+
+            {/* Box mua kèm giá sốc lấp khoảng trống phía dưới */}
+            {accessorySuggestions && accessorySuggestions.length > 0 && (
+              <div className="bg-white rounded-md p-6 border border-gray-100 mt-6 shadow-sm">
+                <h4 className="text-xs font-black text-gray-800 uppercase tracking-widest flex items-center gap-2 mb-4">
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5 text-orange-500">
+                    <path fillRule="evenodd" d="M12 2.25c-5.385 0-9.75 4.365-9.75 9.75s4.365 9.75 9.75 9.75 9.75-4.365 9.75-9.75S17.385 2.25 12 2.25ZM12.75 9a.75.75 0 0 0-1.5 0v2.25H9a.75.75 0 0 0 0 1.5h2.25V15a.75.75 0 0 0 1.5 0v-2.25H15a.75.75 0 0 0 0-1.5h-2.25V9Z" clipRule="evenodd" />
+                  </svg>
+                  Mua kèm giá sốc (Gợi ý phụ kiện đi kèm)
+                </h4>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  {accessorySuggestions.map(acc => {
+                    const isSelected = selectedAccessories.some(a => a.id === acc.id);
+                    return (
+                      <div 
+                        key={acc.id} 
+                        onClick={() => handleToggleAccessory(acc)}
+                        className={`border rounded-lg p-3.5 flex flex-col justify-between items-center text-center cursor-pointer transition-all hover:shadow-md ${
+                          isSelected ? 'border-orange-500 bg-orange-50/10 shadow-sm ring-1 ring-orange-500' : 'border-gray-200 hover:border-gray-300 bg-white'
+                        }`}
+                      >
+                        <div className="flex flex-col items-center">
+                          {/* Image */}
+                          <div className="w-16 h-16 rounded overflow-hidden bg-slate-50 flex items-center justify-center p-1.5 mb-2.5">
+                            <img src={acc.image || acc.thumbnailImage} alt={acc.name} className="max-w-full max-h-full object-contain" />
+                          </div>
+                          <p className="text-xs font-bold text-gray-800 line-clamp-2 min-h-[32px] leading-tight" title={acc.name}>{acc.name}</p>
+                        </div>
+                        <div className="w-full mt-3 pt-2 border-t border-gray-100 flex items-center justify-between">
+                          <div className="flex flex-col items-start">
+                            <span className="text-xs text-red-600 font-black">
+                              {((acc.price || acc.basePrice || 0) * 0.9).toLocaleString('vi-VN')}₫
+                            </span>
+                            <span className="text-[9px] text-gray-400 line-through">
+                              {(acc.price || acc.basePrice || 0).toLocaleString('vi-VN')}₫
+                            </span>
+                          </div>
+                          <div className={`w-4 h-4 rounded border flex items-center justify-center transition-all ${
+                            isSelected ? 'bg-orange-500 border-orange-500 text-white' : 'border-gray-300 bg-white'
+                          }`}>
+                            {isSelected && <Check size={10} className="stroke-[3.5]" />}
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+                {selectedAccessories.length > 0 && (
+                  <div className="mt-4 pt-3 border-t border-gray-100 flex justify-between items-center bg-orange-50/5 p-3 rounded-md">
+                    <span className="text-xs text-gray-600 font-bold">
+                      Đã chọn mua kèm: <span className="text-orange-600 font-black">{selectedAccessories.length}</span> phụ kiện
+                    </span>
+                    <span className="text-xs font-black text-red-600">
+                      Tổng cộng thêm: +{selectedAccessories.reduce((sum, item) => sum + ((item.price || item.basePrice || 0) * 0.9), 0).toLocaleString('vi-VN')}₫
+                    </span>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
 
           {/* CỘT PHẢI: KHU VỰC CHỌN BIẾN THỂ & ĐẶT MUA */}
-          <ProductSummaryInfo 
-            product={product}
-            displayProductName={displayProductName}
-            displayDetails={displayDetails}
-            attributesConfig={attributesConfig}
-            selectedAttributes={selectedAttributes}
-            onAttributeClick={handleAttributeClick}
-            onAddToCart={handleAddToCart}
-            onBuyNow={handleBuyNow}
-          />
+          <div className="lg:col-span-5 w-full">
+            <ProductSummaryInfo 
+              product={product}
+              displayProductName={displayProductName}
+              displayDetails={displayDetails}
+              attributesConfig={attributesConfig}
+              selectedAttributes={selectedAttributes}
+              onAttributeClick={handleAttributeClick}
+              onAddToCart={handleAddToCart}
+              onBuyNow={handleBuyNow}
+            />
+          </div>
         </div>
 
         {/* Khu vực Tabs chi tiết mô tả / Thông số / Reviews */}

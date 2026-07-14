@@ -31,11 +31,21 @@ export default function ImportCsvModal({ isOpen, onClose, onSuccess, products })
     reader.onload = (event) => {
       try {
         const text = event.target.result;
-        const lines = text.split(/\r?\n/);
+        let lines = text.split(/\r?\n/);
+        
+        // Bỏ qua dòng chỉ thị phân tách cột (sep=...) nếu có ở đầu file
+        if (lines.length > 0 && lines[0].trim().startsWith('sep=')) {
+          lines.shift();
+        }
+
         if (lines.length <= 1) {
           setImportError("Tệp tin trống hoặc không hợp lệ!");
           return;
         }
+
+        // Tự động nhận diện dấu phân cách cột là dấu chấm phẩy (;) hay dấu phẩy (,)
+        const headerLine = lines[0] || '';
+        const separator = (headerLine.split(';').length > headerLine.split(',').length) ? ';' : ',';
 
         const parseLine = (line) => {
           const result = [];
@@ -50,7 +60,7 @@ export default function ImportCsvModal({ isOpen, onClose, onSuccess, products })
               } else {
                 inQuotes = !inQuotes;
               }
-            } else if (char === ',' && !inQuotes) {
+            } else if (char === separator && !inQuotes) {
               result.push(current.trim());
               current = '';
             } else {
@@ -81,7 +91,20 @@ export default function ImportCsvModal({ isOpen, onClose, onSuccess, products })
           const variantName = values[3];
           const quantity = parseInt(values[4]);
           const price = parseFloat(values[5]);
-          const transactionType = values[6]?.toUpperCase();
+          let transactionTypeRaw = values[6]?.toUpperCase().trim() || '';
+          let transactionType = transactionTypeRaw;
+
+          // Hỗ trợ dịch tự động các từ khóa tiếng Việt thân thiện về mã tiếng Anh tương thích với hệ thống
+          if (transactionTypeRaw === 'NHẬP VÀO' || transactionTypeRaw === 'NHAP VAO' || transactionTypeRaw === 'IMPORT_SUPPLIER') {
+            transactionType = 'IMPORT_SUPPLIER';
+          } else if (transactionTypeRaw === 'KHÁCH TRẢ' || transactionTypeRaw === 'KHACH TRA' || transactionTypeRaw === 'IMPORT_RETURN') {
+            transactionType = 'IMPORT_RETURN';
+          } else if (transactionTypeRaw === 'XUẤT BÁN' || transactionTypeRaw === 'XUAT BAN' || transactionTypeRaw === 'EXPORT_SELL') {
+            transactionType = 'EXPORT_SELL';
+          } else if (transactionTypeRaw === 'XUẤT LỖI' || transactionTypeRaw === 'XUAT LOI' || transactionTypeRaw === 'EXPORT_DEFECT') {
+            transactionType = 'EXPORT_DEFECT';
+          }
+
           const note = values[7] || '';
 
           if (isNaN(productId) || isNaN(quantity) || quantity === 0 || isNaN(price)) {
