@@ -27,6 +27,8 @@ const getShippingStatus = (status) => {
       return { label: 'Đã giao thành công', style: 'bg-success/10 text-success' };
     case 'shipping_failed':
       return { label: 'Giao thất bại', style: 'bg-red-50 text-red-500 font-bold' };
+    case 'refunded':
+      return { label: 'Đổi trả / Hoàn tiền', style: 'bg-purple-100 text-purple-700 font-bold border border-purple-200' };
     case 'cancelled':
       return { label: 'Đã hủy', style: 'bg-red-100 text-red-700' };
     default:
@@ -34,7 +36,7 @@ const getShippingStatus = (status) => {
   }
 };
 
-export default function OrderDetailsModal({ order, onClose }) {
+export default function OrderDetailsModal({ order, onClose, onShipWithAhamove }) {
   const { formatCurrency, formatDate } = useFormat();
 
   if (!order) return null;
@@ -78,6 +80,11 @@ export default function OrderDetailsModal({ order, onClose }) {
               <p className="text-admin-text-muted font-bold text-xs">
                 Địa chỉ giao: <span className="text-admin-text-main font-medium block mt-1 leading-relaxed">{order.shippingAddress}</span>
               </p>
+              {order.deliveryLatitude && order.deliveryLongitude && (
+                <p className="text-admin-text-muted font-bold text-xs">
+                  Tọa độ giao hàng: <span className="text-admin-text-main font-semibold ml-1">{order.deliveryLatitude.toFixed(6)}, {order.deliveryLongitude.toFixed(6)}</span>
+                </p>
+              )}
               {order.note && (
                 <p className="text-admin-text-muted font-bold text-xs">
                   Ghi chú từ khách: <span className="text-admin-text-main font-medium block mt-1 italic leading-relaxed bg-white p-2.5 rounded border border-admin-border/50">{order.note}</span>
@@ -112,6 +119,39 @@ export default function OrderDetailsModal({ order, onClose }) {
               </p>
             </div>
           </div>
+
+          {/* Section: Ahamove Shipping Info */}
+          {order.ahamoveOrderId && (
+            <div className="bg-primary/5 p-4 rounded-md border border-primary/20 space-y-2">
+              <h4 className="font-bold text-primary text-xs uppercase tracking-wider mb-2">Thông tin vận chuyển Ahamove</h4>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
+                <p className="text-admin-text-muted font-bold">
+                  Mã vận đơn: <span className="text-admin-text-main font-semibold ml-1">{order.ahamoveOrderId}</span>
+                </p>
+                <p className="text-admin-text-muted font-bold">
+                  Trạng thái Ahamove: <span className="text-primary font-extrabold ml-1">{order.ahamoveStatus || 'Đang xử lý'}</span>
+                </p>
+                {order.actualShippingFee > 0 && (
+                  <p className="text-admin-text-muted font-bold">
+                    Cước phí thực tế: <span className="text-admin-text-main font-semibold ml-1">{formatCurrency(order.actualShippingFee)}</span>
+                  </p>
+                )}
+                {order.ahamoveSharedLink && (
+                  <p className="text-admin-text-muted font-bold col-span-1 sm:col-span-2">
+                    Theo dõi thời gian thực: 
+                    <a 
+                      href={order.ahamoveSharedLink} 
+                      target="_blank" 
+                      rel="noopener noreferrer" 
+                      className="text-primary font-extrabold ml-1 hover:underline inline-flex items-center gap-0.5"
+                    >
+                      Bấm vào đây để theo dõi hành trình tài xế ↗
+                    </a>
+                  </p>
+                )}
+              </div>
+            </div>
+          )}
 
           {/* Section: Points & Discounts */}
           {(order.pointsEarned > 0 || order.pointsRedeemed > 0 || order.promotionCode) && (
@@ -210,6 +250,14 @@ export default function OrderDetailsModal({ order, onClose }) {
 
         {/* Footer */}
         <div className="flex justify-end gap-3 px-6 py-4 bg-admin-bg border-t border-admin-border flex-shrink-0">
+          {(order.status === 'confirmed' || order.status === 'preparing') && order.deliveryLatitude && order.deliveryLongitude && !order.ahamoveOrderId && (
+            <button
+              onClick={() => onShipWithAhamove(order.id)}
+              className="px-5 py-2.5 bg-primary text-white rounded-md font-bold hover:bg-primary/90 transition-colors text-xs cursor-pointer shadow-sm animate-pulse"
+            >
+              Gửi giao hàng qua Ahamove
+            </button>
+          )}
           <button
             onClick={onClose}
             className="px-5 py-2.5 bg-white border border-admin-border text-admin-text-main rounded-md font-bold hover:bg-admin-bg transition-colors text-xs cursor-pointer"

@@ -1,6 +1,6 @@
 // QUẢN LÝ ĐƠN HÀNG
 import React, { useState, useEffect } from 'react';
-import { Search, Eye, Edit, CheckCircle, Truck, XCircle, Clock, ShoppingCart } from 'lucide-react';
+import { Search, Eye, Edit, CheckCircle, Truck, XCircle, Clock, ShoppingCart, RotateCcw } from 'lucide-react';
 // import { MOCK_ORDERS } from '../utils/mockData'; // Removed mock data
 import { orderService } from '../../../services/orderService';
 import { usePagination } from '../../../hooks/usePagination';
@@ -13,6 +13,7 @@ const STATUS_TABS = [
   { id: 'confirmed', name: 'Đã xác nhận', count: 0, icon: CheckCircle, color: 'text-info', bgColor: 'bg-info/10' },
   { id: 'shipping', name: 'Đang giao', count: 0, icon: Truck, color: 'text-primary', bgColor: 'bg-primary/10' },
   { id: 'delivered', name: 'Đã hoàn thành', count: 0, icon: CheckCircle, color: 'text-success', bgColor: 'bg-success/10' },
+  { id: 'refunded', name: 'Hoàn tiền', count: 0, icon: RotateCcw, color: 'text-purple-600', bgColor: 'bg-purple-50 border-purple-100' },
   { id: 'cancelled', name: 'Đã hủy', count: 0, icon: XCircle, color: 'text-admin-danger', bgColor: 'bg-admin-danger/10' },
 ];
 
@@ -96,7 +97,13 @@ export default function AdminOrders() {
                 pointsEarned: order.pointsEarned || 0,
                 pointsRedeemed: order.pointsRedeemed || 0,
                 discountFromPoints: order.discountFromPoints || 0,
-                note: order.note || ''
+                note: order.note || '',
+                deliveryLatitude: order.deliveryLatitude || null,
+                deliveryLongitude: order.deliveryLongitude || null,
+                ahamoveOrderId: order.ahamoveOrderId || null,
+                ahamoveStatus: order.ahamoveStatus || null,
+                ahamoveSharedLink: order.ahamoveSharedLink || null,
+                actualShippingFee: order.actualShippingFee || 0
               };
             });
             console.log("AdminOrders: Mapped orders:", mappedOrders);
@@ -161,6 +168,7 @@ export default function AdminOrders() {
       case 'shipping': return 'confirmed'; // Giữ nguyên trạng thái shop
       case 'delivered': return 'delivered';
       case 'shipping_failed': return 'confirmed'; // Đơn hàng vẫn Đã xác nhận khi giao thất bại
+      case 'refunded': return 'refunded';
       case 'cancelled': return 'cancelled';
       default: return 'pending';
     }
@@ -179,6 +187,8 @@ export default function AdminOrders() {
         return { label: 'Đã giao thành công', style: 'bg-success/10 text-success' };
       case 'shipping_failed':
         return { label: 'Giao thất bại', style: 'bg-red-50 text-red-500 font-bold' };
+      case 'refunded':
+        return { label: 'Đổi trả / Hoàn tiền', style: 'bg-purple-100 text-purple-700 font-bold border border-purple-200' };
       case 'cancelled':
         return { label: 'Đã hủy', style: 'bg-red-100 text-red-700' };
       default:
@@ -188,22 +198,26 @@ export default function AdminOrders() {
 
   const isTransitionAllowed = (currentStatus, newStatus) => {
     if (currentStatus === newStatus) return true;
-    if (currentStatus === 'cancelled' || currentStatus === 'delivered') return false;
+    if (currentStatus === 'cancelled' || currentStatus === 'refunded') return false;
 
     if (currentStatus === 'pending') {
       return newStatus === 'confirmed' || newStatus === 'cancelled';
     }
     if (currentStatus === 'confirmed' || currentStatus === 'preparing') {
-      // Đã xác nhận có thể bàn giao vận chuyển (shipping) hoặc hủy
-      return newStatus === 'shipping' || newStatus === 'cancelled';
+      // Đã xác nhận có thể bàn giao vận chuyển (shipping), hoàn tiền hoặc hủy
+      return newStatus === 'shipping' || newStatus === 'cancelled' || newStatus === 'refunded';
     }
     if (currentStatus === 'shipping') {
-      // Đang giao có thể giao thành công hoặc báo giao thất bại
-      return newStatus === 'delivered' || newStatus === 'shipping_failed';
+      // Đang giao có thể giao thành công, báo giao thất bại hoặc hoàn tiền trực tiếp
+      return newStatus === 'delivered' || newStatus === 'shipping_failed' || newStatus === 'refunded';
     }
     if (currentStatus === 'shipping_failed') {
-      // Giao thất bại có thể hủy đơn trực tiếp hoặc giao lại (shipping)
-      return newStatus === 'shipping' || newStatus === 'cancelled';
+      // Giao thất bại có thể hủy đơn trực tiếp, giao lại (shipping) hoặc hoàn tiền
+      return newStatus === 'shipping' || newStatus === 'cancelled' || newStatus === 'refunded';
+    }
+    if (currentStatus === 'delivered') {
+      // Đã hoàn thành thì chỉ được đổi trả / hoàn tiền
+      return newStatus === 'refunded';
     }
     return false;
   };
@@ -283,6 +297,47 @@ export default function AdminOrders() {
 
     setCancelModal({ isOpen: false, orderId: null, newStatus: null });
     executeStatusChange(orderId, newStatus, currentStatus);
+  };
+
+  const handleShipWithAhamove = (orderId) => {
+    if (!window.confirm("Bạn có chắc muốn gửi đơn hàng này sang Ahamove để giao hàng không?")) {
+      return;
+    }
+    orderService.shipAhamove(orderId)
+      .then((res) => {
+        alert("Đã gửi đơn hàng sang Ahamove thành công!");
+        const updatedOrder = res.data || res;
+        setOrders(prev => prev.map(o => {
+          if (o.id === orderId) {
+            return {
+              ...o,
+              status: 'shipping',
+              ahamoveOrderId: updatedOrder.ahamoveOrderId,
+              ahamoveStatus: updatedOrder.ahamoveStatus,
+              ahamoveSharedLink: updatedOrder.ahamoveSharedLink,
+              actualShippingFee: updatedOrder.actualShippingFee
+            };
+          }
+          return o;
+        }));
+        
+        // Cập nhật selectedOrderDetails nếu modal đang mở
+        if (selectedOrderDetails && selectedOrderDetails.id === orderId) {
+          setSelectedOrderDetails(prev => ({
+            ...prev,
+            status: 'shipping',
+            ahamoveOrderId: updatedOrder.ahamoveOrderId,
+            ahamoveStatus: updatedOrder.ahamoveStatus,
+            ahamoveSharedLink: updatedOrder.ahamoveSharedLink,
+            actualShippingFee: updatedOrder.actualShippingFee
+          }));
+        }
+      })
+      .catch(err => {
+        console.error("Lỗi gửi đơn hàng sang Ahamove:", err);
+        const errorMsg = err.response?.data?.message || err.response?.data || err.message;
+        alert(`Gửi đơn hàng sang Ahamove thất bại: ${errorMsg}`);
+      });
   };
 
   const counts = {
@@ -434,12 +489,13 @@ export default function AdminOrders() {
                         <select
                           className="text-xs font-bold bg-admin-bg text-admin-text-main rounded-md px-3 py-2 border-none focus:outline-none focus:ring-1 focus:ring-primary cursor-pointer hover:bg-admin-border transition-all disabled:opacity-75 disabled:cursor-not-allowed"
                           value={getOrderStatus(order.status)}
-                          disabled={order.status === 'shipping' || order.status === 'shipping_failed' || order.status === 'delivered' || order.status === 'cancelled'}
+                          disabled={order.status === 'shipping' || order.status === 'shipping_failed' || order.status === 'refunded' || order.status === 'cancelled'}
                           onChange={(e) => handleStatusChange(order.id, e.target.value)}
                         >
                           <option value="pending" disabled={order.status !== 'pending'}>Chờ xác nhận</option>
                           <option value="confirmed" disabled={!isTransitionAllowed(order.status, 'confirmed', order.failedDeliveryCount)}>Đã xác nhận</option>
                           <option value="delivered" disabled={!isTransitionAllowed(order.status, 'delivered', order.failedDeliveryCount)}>Đã hoàn thành</option>
+                          <option value="refunded" disabled={!isTransitionAllowed(order.status, 'refunded', order.failedDeliveryCount)}>Đã hoàn tiền</option>
                           <option value="cancelled" disabled={!isTransitionAllowed(order.status, 'cancelled', order.failedDeliveryCount)}>Đã hủy</option>
                         </select>
                       </div>
@@ -454,15 +510,26 @@ export default function AdminOrders() {
                             : getShippingStatus(order.status).label}
                         </span>
 
-                        {/* Nút giả lập hành động vận chuyển */}
+                        {/* Nút hành động vận chuyển */}
                         {(order.status === 'confirmed' || order.status === 'preparing') && (
-                          <button
-                            onClick={() => handleStatusChange(order.id, 'shipping')}
-                            className="text-[10px] font-extrabold text-primary hover:underline px-2 py-1 bg-primary/5 rounded-md border border-primary/10 transition-all hover:bg-primary/10 active:scale-95 whitespace-nowrap"
-                            title="Mô phỏng: Bên vận chuyển đến lấy hàng và bắt đầu giao"
-                          >
-                            Giao hàng
-                          </button>
+                          <div className="flex gap-1.5 items-center">
+                            {order.deliveryLatitude && order.deliveryLongitude ? (
+                              <button
+                                onClick={() => handleShipWithAhamove(order.id)}
+                                className="text-[10px] font-extrabold text-white bg-primary hover:bg-primary/90 px-2 py-1 rounded-md transition-all active:scale-95 whitespace-nowrap shadow-sm"
+                                title="Gửi đơn hàng sang hệ thống Ahamove"
+                              >
+                                Giao Ahamove
+                              </button>
+                            ) : null}
+                            <button
+                              onClick={() => handleStatusChange(order.id, 'shipping')}
+                              className="text-[10px] font-extrabold text-primary hover:underline px-2 py-1 bg-primary/5 rounded-md border border-primary/10 transition-all hover:bg-primary/10 active:scale-95 whitespace-nowrap"
+                              title="Mô phỏng: Bên vận chuyển đến lấy hàng và bắt đầu giao"
+                            >
+                              Giao hàng (Manual)
+                            </button>
+                          </div>
                         )}
                         {order.status === 'shipping' && (
                           <>
@@ -584,6 +651,7 @@ export default function AdminOrders() {
       <OrderDetailsModal
         order={selectedOrderDetails}
         onClose={() => setSelectedOrderDetails(null)}
+        onShipWithAhamove={handleShipWithAhamove}
       />
     </div>
   );

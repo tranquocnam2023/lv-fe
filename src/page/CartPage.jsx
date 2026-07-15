@@ -95,7 +95,9 @@ export default function CartPage() {
     someoneElseName: '',
     someoneElsePhone: '',
     note: '',
-    wardId: ''
+    wardId: '',
+    deliveryLatitude: null,
+    deliveryLongitude: null
   });
 
   // Modal temporary inputs
@@ -109,6 +111,9 @@ export default function CartPage() {
   const [modalSomeoneElse, setModalSomeoneElse] = useState(false);
   const [modalSomeoneElseName, setModalSomeoneElseName] = useState('');
   const [modalSomeoneElsePhone, setModalSomeoneElsePhone] = useState('');
+  const [modalLatitude, setModalLatitude] = useState(null);
+  const [modalLongitude, setModalLongitude] = useState(null);
+  const [pendingWardName, setPendingWardName] = useState('');
 
   // Location list states from SQL Server
   const [provinces, setProvinces] = useState([]);
@@ -149,7 +154,10 @@ export default function CartPage() {
       setShippingLoading(true);
       api.post('/Shipping/calculate-fee', {
         wardId: formData.wardId,
-        totalWeightKg: 1.0
+        totalWeightKg: 1.0,
+        latitude: formData.deliveryLatitude,
+        longitude: formData.deliveryLongitude,
+        addressLine: formData.streetAddress
       })
       .then(res => {
         if (res) {
@@ -172,7 +180,7 @@ export default function CartPage() {
       setShippingCarrier('');
       setShippingEstimatedDays('');
     }
-  }, [formData.wardId, deliveryMethod]);
+  }, [formData.wardId, deliveryMethod, formData.deliveryLatitude, formData.deliveryLongitude, formData.streetAddress]);
 
   // Form submission state
   const [paymentMethod, setPaymentMethod] = useState('stripe'); // default 'stripe'
@@ -182,6 +190,10 @@ export default function CartPage() {
   const [isFinished, setIsFinished] = useState(false);
   const [orderCode, setOrderCode] = useState('');
   const [orderSuccessTotal, setOrderSuccessTotal] = useState(0);
+
+  // Address Book states
+  const [userAddresses, setUserAddresses] = useState([]);
+  const [saveToAddressBook, setSaveToAddressBook] = useState(false);
 
   // Validation errors
   const [validationErrors, setValidationErrors] = useState({});
@@ -217,6 +229,99 @@ export default function CartPage() {
     }
   }, [selectedProvinceId]);
 
+  // Tự động tìm phường/xã khớp từ Goong Maps sau khi danh sách wards tải xong
+  useEffect(() => {
+    if (wards.length > 0 && pendingWardName) {
+      const cleanNameStr = (str) => String(str).toLowerCase().replace(/^(phường|xã|thị trấn|p\.?)\s+/i, '').trim();
+      const targetName = cleanNameStr(pendingWardName);
+      
+      const matchedWard = wards.find(w => {
+        const wName = cleanNameStr(w.fullName || w.name);
+        return wName === targetName || wName.includes(targetName) || targetName.includes(wName);
+      });
+      
+      if (matchedWard) {
+        setModalWardId(matchedWard.id);
+        setModalWard(matchedWard.fullName || matchedWard.name);
+      }
+      setPendingWardName('');
+    }
+  }, [wards, pendingWardName]);
+
+  const handleSelectGoongAddress = (locationData) => {
+    const { formattedAddress, lat, lng, compound } = locationData;
+    
+    setModalLatitude(lat);
+    setModalLongitude(lng);
+
+    if (compound) {
+      // 1. Khớp Tỉnh / Thành phố
+      if (compound.province && provinces.length > 0) {
+        const cleanProvinceStr = (str) => String(str).toLowerCase().replace(/^(tỉnh|thành phố|tp\.?)\s+/i, '').trim();
+        const goongProvName = cleanProvinceStr(compound.province);
+        const matchedProv = provinces.find(p => {
+          const pName = cleanProvinceStr(p.fullName || p.name);
+          return pName.includes(goongProvName) || goongProvName.includes(pName);
+        });
+        
+        if (matchedProv) {
+          handleProvinceChange(matchedProv.id);
+          
+          // 2. Lưu lại tên phường/xã để so khớp khi API tải xong wards của tỉnh này
+          if (compound.commune) {
+            setPendingWardName(compound.commune);
+          }
+        }
+      }
+    }
+
+    if (formattedAddress) {
+      const parts = formattedAddress.split(',');
+      if (parts.length > 0) {
+        setModalStreetAddress(parts[0].trim());
+      } else {
+        setModalStreetAddress(formattedAddress);
+      }
+    }
+  };
+
+  const handleSelectSavedAddress = (addr) => {
+    setModalFullName(addr.recipientName || '');
+    setModalPhone(addr.phoneNumber || '');
+    setModalStreetAddress(addr.addressLine || '');
+    setModalLatitude(addr.latitude || null);
+    setModalLongitude(addr.longitude || null);
+
+    if (provinces && provinces.length > 0) {
+      const cleanProvinceStr = (str) => String(str).toLowerCase().replace(/^(tỉnh|thành phố|tp\.?)\s+/i, '').trim();
+      const addrProvName = cleanProvinceStr(addr.provinceName || addr.province || '');
+      const match = provinces.find(p => {
+        const pName = cleanProvinceStr(p.fullName || p.name);
+        return pName.includes(addrProvName) || addrProvName.includes(pName);
+      });
+      if (match) {
+        handleProvinceChange(match.id);
+        
+        if (addr.wardName || addr.ward) {
+          setPendingWardName(addr.wardName || addr.ward);
+        }
+      }
+    }
+  };
+
+  const handleAddNewAddressClick = () => {
+    setModalFullName('');
+    setModalPhone('');
+    setModalStreetAddress('');
+    setModalCity('');
+    setModalWard('');
+    setModalWardId('');
+    setModalLatitude(null);
+    setModalLongitude(null);
+    setSelectedProvinceId('');
+    setWards([]);
+  };
+
   // Sync selectedProvinceId when modalCity is set from default address
   useEffect(() => {
     if (provinces.length > 0 && modalCity) {
@@ -232,31 +337,38 @@ export default function CartPage() {
     if (isLoggedIn) {
       shippingInfoService.getAll()
         .then(res => {
-          if (Array.isArray(res) && res.length > 0) {
-            const defaultAddr = res.find(addr => addr.isDefault) || res[0];
-            const recipient = defaultAddr.recipientName || '';
-            const phoneNum = defaultAddr.phoneNumber || '';
-            const fullAddress = `${defaultAddr.addressLine}, ${defaultAddr.wardName || defaultAddr.ward || ''}, ${defaultAddr.provinceName || defaultAddr.province || ''}`;
+          if (Array.isArray(res)) {
+            setUserAddresses(res);
+            if (res.length > 0) {
+              const defaultAddr = res.find(addr => addr.isDefault) || res[0];
+              const recipient = defaultAddr.recipientName || '';
+              const phoneNum = defaultAddr.phoneNumber || '';
+              const fullAddress = `${defaultAddr.addressLine}, ${defaultAddr.wardName || defaultAddr.ward || ''}, ${defaultAddr.provinceName || defaultAddr.province || ''}`;
 
-            setFormData(prev => ({
-              ...prev,
-              fullName: recipient,
-              phone: phoneNum,
-              address: fullAddress,
-              city: defaultAddr.provinceName || defaultAddr.province || 'Hồ Chí Minh',
-              ward: defaultAddr.wardName || defaultAddr.ward || '',
-              streetAddress: defaultAddr.addressLine || '',
-              wardId: defaultAddr.wardId || ''
-            }));
+              setFormData(prev => ({
+                ...prev,
+                fullName: recipient,
+                phone: phoneNum,
+                address: fullAddress,
+                city: defaultAddr.provinceName || defaultAddr.province || 'Hồ Chí Minh',
+                ward: defaultAddr.wardName || defaultAddr.ward || '',
+                streetAddress: defaultAddr.addressLine || '',
+                wardId: defaultAddr.wardId || '',
+                deliveryLatitude: defaultAddr.latitude || null,
+                deliveryLongitude: defaultAddr.longitude || null
+              }));
 
-            // Sync modal temporary states as well
-            setModalFullName(recipient);
-            setModalPhone(phoneNum);
-            setModalStreetAddress(defaultAddr.addressLine || '');
-            setModalCity(defaultAddr.provinceName || defaultAddr.province || 'Hồ Chí Minh');
-            setModalWard(defaultAddr.wardName || defaultAddr.ward || '');
-            setModalWardId(defaultAddr.wardId || '');
-            setAddressProvided(true);
+              // Sync modal temporary states as well
+              setModalFullName(recipient);
+              setModalPhone(phoneNum);
+              setModalStreetAddress(defaultAddr.addressLine || '');
+              setModalCity(defaultAddr.provinceName || defaultAddr.province || 'Hồ Chí Minh');
+              setModalWard(defaultAddr.wardName || defaultAddr.ward || '');
+              setModalWardId(defaultAddr.wardId || '');
+              setModalLatitude(defaultAddr.latitude || null);
+              setModalLongitude(defaultAddr.longitude || null);
+              setAddressProvided(true);
+            }
           }
         })
         .catch(err => {
@@ -278,6 +390,8 @@ export default function CartPage() {
     setModalSomeoneElseName(formData.someoneElseName);
     setModalSomeoneElsePhone(formData.someoneElsePhone);
     setModalWardId(formData.wardId || '');
+    setModalLatitude(formData.deliveryLatitude || null);
+    setModalLongitude(formData.deliveryLongitude || null);
     setValidationErrors({});
     setShowAddressModal(true);
   };
@@ -348,11 +462,39 @@ export default function CartPage() {
       someoneElse: modalSomeoneElse,
       someoneElseName: modalSomeoneElseName,
       someoneElsePhone: modalSomeoneElsePhone,
-      wardId: modalWardId
+      wardId: modalWardId,
+      deliveryLatitude: modalLatitude,
+      deliveryLongitude: modalLongitude
     }));
+
+    // Lưu vào sổ địa chỉ nếu được tick chọn
+    if (isLoggedIn && saveToAddressBook && deliveryMethod === 'ship') {
+      const newAddrPayload = {
+        recipientName: modalFullName.trim(),
+        phoneNumber: modalPhone.trim(),
+        addressLine: modalStreetAddress.trim(),
+        wardId: modalWardId,
+        latitude: modalLatitude,
+        longitude: modalLongitude,
+        isDefault: userAddresses.length === 0
+      };
+      
+      shippingInfoService.create(newAddrPayload)
+        .then(() => {
+          shippingInfoService.getAll().then(res => {
+            if (Array.isArray(res)) {
+              setUserAddresses(res);
+            }
+          });
+        })
+        .catch(err => {
+          console.error("Lỗi khi thêm địa chỉ mới vào sổ địa chỉ:", err);
+        });
+    }
 
     setAddressProvided(true);
     setShowAddressModal(false);
+    setSaveToAddressBook(false); // Reset checkbox
   };
 
   // Inline Registration Submit Action
@@ -534,6 +676,8 @@ export default function CartPage() {
         pointsToRedeem: usePoints ? pointsDiscount : 0,
         note: finalNote,
         paymentMethod: paymentMethod,
+        deliveryLatitude: deliveryMethod === 'ship' ? formData.deliveryLatitude : null,
+        deliveryLongitude: deliveryMethod === 'ship' ? formData.deliveryLongitude : null,
         items: cartItems.map(item => ({
           productId: item.id || item.Id,
           storage: item.selectedStorage || '',
@@ -601,7 +745,8 @@ export default function CartPage() {
           if (matchedVariant) {
             syncItems.push({
               variantId: matchedVariant.id,
-              quantity: item.quantity
+              quantity: item.quantity,
+              appliedComboId: item.appliedComboId
             });
           }
         } catch (err) {
@@ -882,6 +1027,15 @@ export default function CartPage() {
         setModalSomeoneElsePhone={setModalSomeoneElsePhone}
         validationErrors={validationErrors}
         confirmAddress={confirmAddress}
+        modalLatitude={modalLatitude}
+        modalLongitude={modalLongitude}
+        onSelectGoongAddress={handleSelectGoongAddress}
+        isLoggedIn={isLoggedIn}
+        userAddresses={userAddresses}
+        saveToAddressBook={saveToAddressBook}
+        setSaveToAddressBook={setSaveToAddressBook}
+        onSelectSavedAddress={handleSelectSavedAddress}
+        onAddNewAddress={handleAddNewAddressClick}
       />
 
     </div>

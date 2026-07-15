@@ -14,6 +14,7 @@ const AdminCustomers     = React.lazy(() => import('./customers/AdminCustomers')
 const AdminCategories    = React.lazy(() => import('./categories/AdminCategories'));
 const AdminBrands        = React.lazy(() => import('./brands/AdminBrands'));
 const AdminPromotions    = React.lazy(() => import('./promotions/AdminPromotions'));
+const AdminCombos        = React.lazy(() => import('./combos/AdminCombos'));
 const AdminReviews       = React.lazy(() => import('./reviews/AdminReviews'));
 const AdminCreateProduct = React.lazy(() => import('./products/AdminCreateProduct'));
 const AdminUpdateProduct = React.lazy(() => import('./products/AdminUpdateProduct'));
@@ -104,6 +105,7 @@ export default function AdminPage() {
       case 'payments':    return <AdminPayments />;
       case 'customers':   return <AdminCustomers />;
       case 'promotions':  return <AdminPromotions />;
+      case 'combos':      return <AdminCombos />;
       case 'reviews':     return <AdminReviews />;
       case 'dashboard':   return <AdminDashboard />;
       case 'audit_logs':  return <AdminAuditLogs />;

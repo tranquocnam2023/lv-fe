@@ -8,7 +8,7 @@ import { userService } from '../../services/userService';
 import {
   Layout, Package, Users, ShoppingCart, Settings, LogOut,
   Bell, FolderTree, Star, LayoutGrid, Ticket, Boxes,
-  MessageSquare, History, Sun, Moon, CreditCard
+  MessageSquare, History, Sun, Moon, CreditCard, PackagePlus
 } from 'lucide-react';
 import { useTheme } from '../../context/ThemeContext';
 
@@ -24,6 +24,7 @@ const ADMIN_FUNCTIONS = [
   { label: 'Quản lý giao dịch', tab: 'payments', keywords: ['thanh toan', 'giao dich', 'momo', 'stripe', 'payments'] },
   { label: 'Quản lý khách hàng', tab: 'customers', keywords: ['khach hang', 'nguoi dung', 'users', 'customers', 'tai khoan'] },
   { label: 'Quản lý khuyến mãi', tab: 'promotions', keywords: ['khuyen mai', 'ma giam gia', 'voucher', 'promotions'] },
+  { label: 'Quản lý Combo', tab: 'combos', keywords: ['combo', 'mua kem', 'ban cheo', 'combos'] },
   { label: 'Quản lý đánh giá', tab: 'reviews', keywords: ['danh gia', 'binh luan', 'reviews'] },
   { label: 'Cài đặt hệ thống', tab: 'settings', keywords: ['cai dat', 'settings', 'cau hinh'] },
   { label: 'Nhật ký hoạt động', tab: 'audit_logs', keywords: ['nhat ky', 'kiem toan', 'audit', 'logs', 'hoat dong'] },
@@ -39,6 +40,7 @@ const TAB_TITLES = {
   payments: 'Quản lý giao dịch thanh toán',
   customers: 'Quản lý khách hàng',
   promotions: 'Quản lý mã khuyến mãi',
+  combos: 'Quản lý Combo / Bán chéo',
   reviews: 'Quản lý đánh giá',
   dashboard: 'Bảng thống kê số liệu',
   create_product: 'Thêm sản phẩm mới',
@@ -304,6 +306,7 @@ export default function AdminLayout({ activeAdminTab, onTabChange, setSearchPara
           <SidebarItem id="payments" Icon={CreditCard} label="Giao dịch" />
           <SidebarItem id="customers" Icon={Users} label="Khách hàng" />
           <SidebarItem id="promotions" Icon={Ticket} label="Khuyến mãi" />
+          <SidebarItem id="combos" Icon={PackagePlus} label="Quản lý Combo" />
           <SidebarItem id="reviews" Icon={MessageSquare} label="Đánh giá" />
 
           <div className="pt-6">
