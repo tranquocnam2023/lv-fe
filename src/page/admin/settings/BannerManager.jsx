@@ -78,7 +78,32 @@ export default function BannerManager() {
   }, []);
 
   // So sánh dữ liệu nháp và chính thức
-  const hasChanges = JSON.stringify(draftBanners) !== JSON.stringify(publishedBanners);
+  // So sánh dữ liệu nháp và chính thức dựa trên các thuộc tính cấu hình thực tế (tránh so sánh id db hay thời gian khác nhau)
+  const hasChanges = (() => {
+    if (draftBanners.length !== publishedBanners.length) return true;
+
+    const sortedDrafts = [...draftBanners].sort((a, b) => 
+      a.type.localeCompare(b.type) || (a.position || 0) - (b.position || 0)
+    );
+    const sortedPublished = [...publishedBanners].sort((a, b) => 
+      a.type.localeCompare(b.type) || (a.position || 0) - (b.position || 0)
+    );
+
+    for (let i = 0; i < sortedDrafts.length; i++) {
+      const d = sortedDrafts[i];
+      const p = sortedPublished[i];
+      if (
+        d.imageUrl !== p.imageUrl ||
+        (d.linkUrl || '') !== (p.linkUrl || '') ||
+        d.type !== p.type ||
+        d.isActive !== p.isActive ||
+        d.position !== p.position
+      ) {
+        return true;
+      }
+    }
+    return false;
+  })();
 
   // Lưu nháp (Cập nhật giao diện lập tức, lưu API bất đồng bộ)
   const saveDraft = async (newDraft) => {
