@@ -1,5 +1,7 @@
+import React, { useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import Breadcrumb from '../components/Breadcrumb';
+import { useLoading } from '../context/LoadingContext';
 
 const POLICY_DATA = {
   'bao-hanh': {
@@ -67,8 +69,13 @@ const POLICY_DATA = {
 };
 
 export default function PolicyPage() {
+  const { stopLoading } = useLoading();
   const { type } = useParams();
   const policy = POLICY_DATA[type] || POLICY_DATA['bao-hanh'];
+
+  useEffect(() => {
+    stopLoading();
+  }, [type, stopLoading]);
 
   const breadcrumbItems = [
     { label: 'Trang chủ', link: '/' },

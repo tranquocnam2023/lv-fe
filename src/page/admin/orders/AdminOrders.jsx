@@ -1,3 +1,4 @@
+// QUẢN LÝ ĐƠN HÀNG
 import React, { useState, useEffect } from 'react';
 import { Search, Eye, Edit, CheckCircle, Truck, XCircle, Clock, ShoppingCart } from 'lucide-react';
 // import { MOCK_ORDERS } from '../utils/mockData'; // Removed mock data

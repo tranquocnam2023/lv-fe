@@ -1,15 +1,21 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import api from '../services/api';
 import OrderDetailsTracker from '../components/OrderDetailsTracker';
 import Breadcrumb from '../components/Breadcrumb';
 import { Search, FileSearch, ArrowLeft, AlertCircle } from 'lucide-react';
+import { useLoading } from '../context/LoadingContext';
 
 export default function OrderTrackingPage() {
+  const { stopLoading } = useLoading();
   const [orderId, setOrderId] = useState('');
   const [phone, setPhone] = useState('');
   const [order, setOrder] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+
+  useEffect(() => {
+    stopLoading();
+  }, [stopLoading]);
 
   const handleTrack = async (e) => {
     e.preventDefault();

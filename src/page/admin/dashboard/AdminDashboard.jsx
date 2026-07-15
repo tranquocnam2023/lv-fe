@@ -1,3 +1,4 @@
+// BẢNG ĐIỀU KHIỂN & BÁO CÁO THỐNG KÊ (DASHBOARD)
 import React, { useState, useEffect } from 'react';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend,

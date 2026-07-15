@@ -132,6 +132,7 @@ export default function ProductCard({
           <img 
             src={image} 
             alt={name} 
+            loading="lazy"
             className="object-contain h-full w-full group-hover:-translate-y-1 transition-transform duration-300"
           />
         ) : (

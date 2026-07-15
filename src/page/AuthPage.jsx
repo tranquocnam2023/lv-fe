@@ -1,6 +1,7 @@
 // src/page/AuthPage.jsx
 import React, { useState, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
+import { useLoading } from '../context/LoadingContext';
 import Breadcrumb from '../components/Breadcrumb';
 import { authService } from '../services/authService';
 import { userService } from '../services/userService';
@@ -18,6 +19,7 @@ import ProfileOrderHistoryTab from './auth/components/ProfileOrderHistoryTab';
 import ProfilePasswordTab from './auth/components/ProfilePasswordTab';
 
 export default function AuthPage() {
+  const { stopLoading } = useLoading();
   const location = useLocation();
 
   // Auth state
@@ -47,6 +49,21 @@ export default function AuthPage() {
 
   // Profile management state
   const [profileTab, setProfileTab] = useState('info'); // 'info', 'addresses', 'password', 'history'
+
+  // Stop loading on mount/data loaded
+  useEffect(() => {
+    if (!isLoggedIn) {
+      stopLoading();
+    } else {
+      Promise.all([
+        userService.getProfile().catch(() => null),
+        shippingInfoService.getAll().catch(() => []),
+        api.get('/Location/provinces').catch(() => [])
+      ]).finally(() => {
+        stopLoading();
+      });
+    }
+  }, [isLoggedIn, stopLoading]);
 
   useEffect(() => {
     const searchParams = new URLSearchParams(location.search);

@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { useLoading } from '../context/LoadingContext';
 import DOMPurify from 'dompurify';
 import Breadcrumb from '../components/Breadcrumb';
 import { useCart } from '../context/CartContext';
@@ -18,7 +19,7 @@ import ProductReviews from './product-detail/components/ProductReviews';
 
 const getMergedSpecs = (baseSpecsStr, specsOverrideStr) => {
   if (!baseSpecsStr) return null;
-  
+
   let baseSpecs = [];
   try {
     baseSpecs = JSON.parse(baseSpecsStr);
@@ -54,10 +55,10 @@ const getMergedSpecs = (baseSpecsStr, specsOverrideStr) => {
       const normalizedKey = item.key.toLowerCase().trim();
 
       let newValue = item.value;
-      
+
       if (overridesMap[normalizedKey] !== undefined) {
         newValue = overridesMap[normalizedKey];
-      } 
+      }
       else if (normalizedKey === 'rom' || normalizedKey.includes('bộ nhớ trong') || normalizedKey === 'internal storage') {
         const romOverrideKey = Object.keys(overridesMap).find(k => k === 'rom' || k.includes('bộ nhớ trong') || k === 'internal storage');
         if (romOverrideKey) {
@@ -85,10 +86,11 @@ const getMergedSpecs = (baseSpecsStr, specsOverrideStr) => {
 };
 
 export default function ProductDetailPage() {
+  const { stopLoading } = useLoading();
   const { id } = useParams();
   const navigate = useNavigate();
   const { addToCart } = useCart();
-  
+
   const [product, setProduct] = useState(null);
   const [activeTab, setActiveTab] = useState('specs');
   const [loading, setLoading] = useState(true);
@@ -114,7 +116,7 @@ export default function ProductDetailPage() {
   const getMasterImages = (prod) => {
     if (!prod) return [];
     let list = [];
-    
+
     if (prod.videoUrl) {
       list.push({ type: 'video', url: prod.videoUrl });
     }
@@ -214,7 +216,7 @@ export default function ProductDetailPage() {
           if (Array.isArray(allProducts)) {
             let suggestions = [];
             const manualIds = MANUAL_BUNDLE_CONFIG[String(id)];
-            
+
             if (manualIds && manualIds.length > 0) {
               // Lấy chính xác các phụ kiện theo cấu hình thủ công của Admin
               suggestions = allProducts.filter(p => manualIds.includes(p.id) && p.isAvailable !== false);
@@ -245,8 +247,11 @@ export default function ProductDetailPage() {
         console.error("Lỗi lấy chi tiết sản phẩm:", err);
         setProduct(null);
       })
-      .finally(() => setLoading(false));
-  }, [id]);
+      .finally(() => {
+        setLoading(false);
+        stopLoading();
+      });
+  }, [id, stopLoading]);
 
   // Tự động chọn biến thể hoạt động đầu tiên làm mặc định khi tải trang
   useEffect(() => {
@@ -340,7 +345,7 @@ export default function ProductDetailPage() {
   // Phân tích các thuộc tính động từ tất cả variants
   const attributesConfig = useMemo(() => {
     const config = {};
-    
+
     variants.forEach(v => {
       let parsed = {};
       if (v.attributes) {
@@ -350,7 +355,7 @@ export default function ProductDetailPage() {
           console.error("Lỗi parse attributes:", e);
         }
       }
-      
+
       if (Object.keys(parsed).length === 0 && v.name && v.name.includes(' - ')) {
         const parts = v.name.split(' - ');
         if (parts.length > 1) {
@@ -399,7 +404,7 @@ export default function ProductDetailPage() {
           console.error("Lỗi parse attributes:", e);
         }
       }
-      
+
       return requiredKeys.every(key => {
         const val = selectedAttributes[key];
         const vVal = Object.entries(parsedAttrs).find(([k]) => k.toLowerCase().trim() === key.toLowerCase().trim())?.[1];
@@ -426,7 +431,7 @@ export default function ProductDetailPage() {
           console.error("Lỗi parse attributes:", e);
         }
       }
-      
+
       return activeSelections.every(([key, val]) => {
         const vVal = Object.entries(parsedAttrs).find(([k]) => k.toLowerCase().trim() === key.toLowerCase().trim())?.[1];
         return String(vVal || '').toLowerCase().trim() === String(val).toLowerCase().trim();
@@ -484,7 +489,7 @@ export default function ProductDetailPage() {
           console.error("Lỗi parse attributes:", e);
         }
       }
-      
+
       if (Object.keys(parsedAttrs).length === 0 && v.name && v.name.includes(' - ')) {
         const parts = v.name.split(' - ');
         if (parts.length > 1) {
@@ -544,7 +549,7 @@ export default function ProductDetailPage() {
 
       if (next[key] === value) {
         delete next[key];
-        
+
         if (isColorAttr) {
           setIsFading(true);
           setTimeout(() => {
@@ -631,7 +636,7 @@ export default function ProductDetailPage() {
       // Thêm các phụ kiện được chọn mua kèm (0.9 tương đương với 90% số tiền của hàng.)
       selectedAccessories.forEach(acc => {
         const originalPrice = acc.price || acc.basePrice || 0;
-        const discountPrice = originalPrice * 0.9;
+        const discountPrice = originalPrice * 0.9; // giảm 10% 
         addToCart({
           ...acc,
           price: discountPrice,
@@ -684,10 +689,10 @@ export default function ProductDetailPage() {
 
   const breadcrumbItems = useMemo(() => {
     if (!product) return [];
-    
+
     const items = [];
     let currentCategoryId = product.categoryId;
-    
+
     if (categories && categories.length > 0) {
       while (currentCategoryId) {
         const cat = categories.find(c => c.id === currentCategoryId);
@@ -707,7 +712,7 @@ export default function ProductDetailPage() {
         path: '/'
       });
     }
-    
+
     items.push({ label: product.name });
     return items;
   }, [product, categories]);
@@ -766,7 +771,7 @@ export default function ProductDetailPage() {
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-start">
           {/* CỘT TRÁI: THƯ VIỆN ẢNH ĐỘNG & GỢI Ý MUA KÈM */}
           <div className="lg:col-span-7 space-y-6">
-            <ProductGallery 
+            <ProductGallery
               product={product}
               selectedColor={selectedColor}
               galleryImages={galleryImages}
@@ -787,12 +792,11 @@ export default function ProductDetailPage() {
                   {accessorySuggestions.map(acc => {
                     const isSelected = selectedAccessories.some(a => a.id === acc.id);
                     return (
-                      <div 
-                        key={acc.id} 
+                      <div
+                        key={acc.id}
                         onClick={() => handleToggleAccessory(acc)}
-                        className={`border rounded-lg p-3.5 flex flex-col justify-between items-center text-center cursor-pointer transition-all hover:shadow-md ${
-                          isSelected ? 'border-orange-500 bg-orange-50/10 shadow-sm ring-1 ring-orange-500' : 'border-gray-200 hover:border-gray-300 bg-white'
-                        }`}
+                        className={`border rounded-lg p-3.5 flex flex-col justify-between items-center text-center cursor-pointer transition-all hover:shadow-md ${isSelected ? 'border-orange-500 bg-orange-50/10 shadow-sm ring-1 ring-orange-500' : 'border-gray-200 hover:border-gray-300 bg-white'
+                          }`}
                       >
                         <div className="flex flex-col items-center">
                           {/* Image */}
@@ -810,9 +814,8 @@ export default function ProductDetailPage() {
                               {(acc.price || acc.basePrice || 0).toLocaleString('vi-VN')}₫
                             </span>
                           </div>
-                          <div className={`w-4 h-4 rounded border flex items-center justify-center transition-all ${
-                            isSelected ? 'bg-orange-500 border-orange-500 text-white' : 'border-gray-300 bg-white'
-                          }`}>
+                          <div className={`w-4 h-4 rounded border flex items-center justify-center transition-all ${isSelected ? 'bg-orange-500 border-orange-500 text-white' : 'border-gray-300 bg-white'
+                            }`}>
                             {isSelected && <Check size={10} className="stroke-[3.5]" />}
                           </div>
                         </div>
@@ -836,7 +839,7 @@ export default function ProductDetailPage() {
 
           {/* CỘT PHẢI: KHU VỰC CHỌN BIẾN THỂ & ĐẶT MUA */}
           <div className="lg:col-span-5 w-full">
-            <ProductSummaryInfo 
+            <ProductSummaryInfo
               product={product}
               displayProductName={displayProductName}
               displayDetails={displayDetails}
@@ -884,9 +887,9 @@ export default function ProductDetailPage() {
             {activeTab === 'specs' && (
               <div className="prose prose-blue max-w-none animate-in fade-in slide-in-from-bottom-4 duration-500">
                 {product.description ? (
-                  <div 
+                  <div
                     className="rich-text-content"
-                    dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(product.description) }} 
+                    dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(product.description) }}
                   />
                 ) : (
                   <>
@@ -912,14 +915,14 @@ export default function ProductDetailPage() {
             )}
 
             {activeTab === 'info' && (
-              <ProductSpecsTab 
+              <ProductSpecsTab
                 mergedSpecs={mergedSpecs}
                 onOpenModal={() => setIsSpecsModalOpen(true)}
               />
             )}
 
             {activeTab === 'reviews' && (
-              <ProductReviews 
+              <ProductReviews
                 productId={id}
                 reviews={reviews}
                 currentUser={currentUser}
@@ -933,7 +936,7 @@ export default function ProductDetailPage() {
       </div>
 
       {/* MODAL THÔNG SỐ KỸ THUẬT ĐẦY ĐỦ */}
-      <ProductSpecsModal 
+      <ProductSpecsModal
         isOpen={isSpecsModalOpen}
         onClose={() => setIsSpecsModalOpen(false)}
         mergedSpecs={mergedSpecs}

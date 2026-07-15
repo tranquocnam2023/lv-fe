@@ -1,3 +1,4 @@
+// QUẢN LÝ GIAO DỊCH & THANH TOÁN
 import React, { useState, useEffect } from 'react';
 import { Search, CreditCard, Clock, CheckCircle2, XCircle, DollarSign, Activity, Copy, Check } from 'lucide-react';
 import { paymentService } from '../../../services/paymentService';

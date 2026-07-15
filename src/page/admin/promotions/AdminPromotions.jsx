@@ -1,3 +1,4 @@
+// QUẢN LÝ CHƯƠNG TRÌNH KHUYẾN MÃI (PROMOTIONS)
 import React, { useState, useEffect } from 'react';
 import { Search, Plus, Edit, Trash2, Ticket, X, Check, Calendar, Settings } from 'lucide-react';
 import { promotionService } from '../../../services/promotionService';

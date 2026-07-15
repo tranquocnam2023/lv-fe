@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect, Suspense } from 'react';
 import { Routes, Route, useLocation } from 'react-router-dom';
 import './App.css';
 
@@ -8,17 +8,24 @@ import { THEME } from './utils/theme';
 
 import Header from './components/Header';
 import Footer from './components/Footer';
-import HomePage from './page/HomePage';
-import AuthPage from './page/AuthPage';
-import CartPage from './page/CartPage';
-import AdminPage from './page/admin/AdminPage';
-import DonatePage from './page/DonatePage';
-import ProductDetailPage from './page/ProductDetailPage';
-import PolicyPage from './page/PolicyPage';
-import CheckoutPage from './page/CheckoutPage';
-import OrderTrackingPage from './page/OrderTrackingPage';
-import PaymentCallbackPage from './page/PaymentCallbackPage';
 import ProductComparison from './components/ProductComparison';
+
+// A tiny, premium loading bar at the very top of the page shown only during chunk downloads (like CellphoneS / TGDĐ)
+const TopBarProgress = () => (
+  <div className="fixed top-0 left-0 right-0 h-[3px] bg-indigo-600 z-[99999] animate-pulse" />
+);
+
+// Dynamic Import (Lazy Loading) for pages to reduce initial bundle size and boost SEO
+const HomePage = React.lazy(() => import('./page/HomePage'));
+const AuthPage = React.lazy(() => import('./page/AuthPage'));
+const CartPage = React.lazy(() => import('./page/CartPage'));
+const AdminPage = React.lazy(() => import('./page/admin/AdminPage'));
+const DonatePage = React.lazy(() => import('./page/DonatePage'));
+const ProductDetailPage = React.lazy(() => import('./page/ProductDetailPage'));
+const PolicyPage = React.lazy(() => import('./page/PolicyPage'));
+const CheckoutPage = React.lazy(() => import('./page/CheckoutPage'));
+const OrderTrackingPage = React.lazy(() => import('./page/OrderTrackingPage'));
+const PaymentCallbackPage = React.lazy(() => import('./page/PaymentCallbackPage'));
 
 function App() {
   const location = useLocation();
@@ -83,9 +90,11 @@ function App() {
 
   if (isAdminPath) {
     return (
-      <Routes>
-        <Route path="/admin" element={<AdminPage />} />
-      </Routes>
+      <Suspense fallback={<div className="min-h-screen flex items-center justify-center font-semibold text-gray-500 bg-gray-50">Đang tải Admin...</div>}>
+        <Routes>
+          <Route path="/admin" element={<AdminPage />} />
+        </Routes>
+      </Suspense>
     );
   }
 
@@ -105,26 +114,30 @@ function App() {
         {/* Main Container */}
         {isCartOrCheckout ? (
           <main className="flex-1 min-h-[50vh]">
-            <Routes>
-              <Route path="/cart" element={<CartPage />} />
-              <Route path="/checkout" element={<CheckoutPage />} />
-              <Route path="/payment-callback" element={<PaymentCallbackPage />} />
-            </Routes>
+            <Suspense fallback={<TopBarProgress />}>
+              <Routes>
+                <Route path="/cart" element={<CartPage />} />
+                <Route path="/checkout" element={<CheckoutPage />} />
+                <Route path="/payment-callback" element={<PaymentCallbackPage />} />
+              </Routes>
+            </Suspense>
           </main>
         ) : (
           <div className="container-box flex flex-1 w-full mt-3 mb-6 flex-col md:flex-row space-y-4 md:space-y-0 px-4">
             {/* Nội dung chính linh hoạt theo Route (Kéo rộng tối đa khi ẩn sidebar) */}
             <main className="flex-1 bg-white p-6 rounded border border-bordercustom min-h-[50vh] min-w-0 w-full">
-              <Routes>
-                <Route path="/" element={<HomePage selectedLocation={selectedLocation} />} />
-                <Route path="/auth" element={<AuthPage />} />
-                <Route path="/profile" element={<AuthPage />} />
-                <Route path="/donate" element={<DonatePage />} />
-                <Route path="/product/:id" element={<ProductDetailPage />} />
-                <Route path="/chinh-sach/:type" element={<PolicyPage />} />
-                <Route path="/danh-muc/:brand" element={<HomePage selectedLocation={selectedLocation} />} />
-                <Route path="/track" element={<OrderTrackingPage />} />
-              </Routes>
+              <Suspense fallback={<TopBarProgress />}>
+                <Routes>
+                  <Route path="/" element={<HomePage selectedLocation={selectedLocation} />} />
+                  <Route path="/auth" element={<AuthPage />} />
+                  <Route path="/profile" element={<AuthPage />} />
+                  <Route path="/donate" element={<DonatePage />} />
+                  <Route path="/product/:id" element={<ProductDetailPage />} />
+                  <Route path="/chinh-sach/:type" element={<PolicyPage />} />
+                  <Route path="/danh-muc/:brand" element={<HomePage selectedLocation={selectedLocation} />} />
+                  <Route path="/track" element={<OrderTrackingPage />} />
+                </Routes>
+              </Suspense>
             </main>
           </div>
         )}

@@ -1,3 +1,4 @@
+//QUẢN LÝ KHO
 import React, { useState, useEffect, useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { Search, ChevronDown, Download, FileText } from 'lucide-react';
@@ -80,13 +81,13 @@ export default function AdminInventory() {
   // Group transactions into batches
   const groupedHistory = useMemo(() => {
     if (!txHistory || txHistory.length === 0) return [];
-    
+
     // Sort descending by ID
     const sorted = [...txHistory].sort((a, b) => b.id - a.id);
-    
+
     const groups = [];
     let currentGroup = null;
-    
+
     for (const tx of sorted) {
       if (!currentGroup) {
         currentGroup = {
@@ -108,30 +109,30 @@ export default function AdminInventory() {
         const sameType = currentGroup.transactionType === tx.transactionType;
         const sameUser = currentGroup.createdByUsername === tx.createdByUsername;
         const sameNote = currentGroup.note === tx.note;
-        
+
         // Group transactions within 5 seconds with same metadata
         if (timeDiff < 5000 && sameType && sameUser && sameNote) {
-           currentGroup.items.push(tx);
-           currentGroup.totalQuantity += Math.abs(tx.quantityChanged);
-           currentGroup.totalPrice += (tx.price || 0) * Math.abs(tx.quantityChanged);
-           if (!currentGroup.isReverted && tx.isReverted) {
-             currentGroup.isReverted = true;
-           }
+          currentGroup.items.push(tx);
+          currentGroup.totalQuantity += Math.abs(tx.quantityChanged);
+          currentGroup.totalPrice += (tx.price || 0) * Math.abs(tx.quantityChanged);
+          if (!currentGroup.isReverted && tx.isReverted) {
+            currentGroup.isReverted = true;
+          }
         } else {
-           currentGroup = {
-             batchId: `BATCH-${tx.id}`,
-             primaryTx: tx,
-             items: [tx],
-             transactionType: tx.transactionType,
-             createdAt: tx.createdAt,
-             note: tx.note,
-             createdByUsername: tx.createdByUsername,
-             totalQuantity: Math.abs(tx.quantityChanged),
-             totalPrice: (tx.price || 0) * Math.abs(tx.quantityChanged),
-             isReverted: tx.isReverted,
-             orderId: tx.orderId
-           };
-           groups.push(currentGroup);
+          currentGroup = {
+            batchId: `BATCH-${tx.id}`,
+            primaryTx: tx,
+            items: [tx],
+            transactionType: tx.transactionType,
+            createdAt: tx.createdAt,
+            note: tx.note,
+            createdByUsername: tx.createdByUsername,
+            totalQuantity: Math.abs(tx.quantityChanged),
+            totalPrice: (tx.price || 0) * Math.abs(tx.quantityChanged),
+            isReverted: tx.isReverted,
+            orderId: tx.orderId
+          };
+          groups.push(currentGroup);
         }
       }
     }
@@ -148,10 +149,10 @@ export default function AdminInventory() {
       const matchUser = group.createdByUsername?.toLowerCase().includes(query);
       const matchId = group.batchId.toLowerCase().includes(query);
       const matchOrder = group.orderId && String(group.orderId).includes(query);
-      
-      const matchProduct = group.items.some(tx => 
-         tx.productName?.toLowerCase().includes(query) ||
-         tx.variantName?.toLowerCase().includes(query)
+
+      const matchProduct = group.items.some(tx =>
+        tx.productName?.toLowerCase().includes(query) ||
+        tx.variantName?.toLowerCase().includes(query)
       );
 
       if (!matchProduct && !matchNote && !matchUser && !matchId && !matchOrder) {
@@ -182,7 +183,7 @@ export default function AdminInventory() {
       alert("Hoàn tác giao dịch thành công!");
       fetchData();
       if (selectedTxGroup) {
-         setSelectedTxGroup(null); // Close modal on revert
+        setSelectedTxGroup(null); // Close modal on revert
       }
     } catch (err) {
       console.error("Lỗi hoàn tác giao dịch:", err);
@@ -252,9 +253,9 @@ export default function AdminInventory() {
                         {tx.name}
                       </button>
                     ))}
-                    
+
                     <hr className="my-1 border-admin-border" />
-                    
+
                     <button
                       onClick={() => {
                         setIsImportModalOpen(true);
@@ -265,7 +266,7 @@ export default function AdminInventory() {
                       <FileText size={16} className="text-gray-400" />
                       Nhập tồn kho từ file Excel
                     </button>
-                    
+
                     <button
                       onClick={() => {
                         handleExportExcel();
@@ -314,7 +315,7 @@ export default function AdminInventory() {
         </div>
 
         {/* History Table */}
-        <HistoryTable 
+        <HistoryTable
           loading={loading}
           error={error}
           paginatedHistory={paginatedHistory}
@@ -381,7 +382,7 @@ export default function AdminInventory() {
       />
 
       {/* Tx Details Batch Modal */}
-      <TxDetailsModal 
+      <TxDetailsModal
         selectedTxGroup={selectedTxGroup}
         onClose={() => setSelectedTxGroup(null)}
         onRevert={handleRevertTransaction}

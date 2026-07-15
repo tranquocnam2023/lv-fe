@@ -1,3 +1,4 @@
+// QUẢN LÝ BANNER QUẢNG CÁO (BANNER MANAGER)
 import React, { useState, useEffect, useRef } from 'react';
 import {
   Settings, Save, RotateCcw, GripVertical, Plus,

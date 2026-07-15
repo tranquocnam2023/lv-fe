@@ -1,3 +1,4 @@
+// QUẢN LÝ DANH MỤC
 import React, { useState, useEffect } from 'react';
 import { Search, FolderOpen, Plus, Loader2, HelpCircle } from 'lucide-react';
 import { categoryService } from '../../../services/categoryService';

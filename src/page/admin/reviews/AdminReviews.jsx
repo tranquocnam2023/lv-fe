@@ -1,3 +1,4 @@
+// QUẢN LÝ ĐÁNH GIÁ SẢN PHẨM (REVIEWS)
 import React, { useState, useEffect } from 'react';
 import { Search, Trash2, Star, Calendar, MessageSquare, Filter, Eye, EyeOff, CornerDownRight, Check } from 'lucide-react';
 // import { MOCK_REVIEWS } from '../utils/mockData'; // Removed mock data

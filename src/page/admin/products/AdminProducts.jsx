@@ -1,3 +1,4 @@
+// QUẢN LÝ DANH SÁCH SẢN PHẨM
 import React, { useState, useEffect } from 'react';
 import { Package, Layout, Bell, ShoppingCart, Settings2, Plus, Edit, Trash2, X, FolderTree, UploadCloud, Loader2, Link2, ChevronDown, ChevronUp, Image as ImageIcon, Search, Eye } from 'lucide-react';
 // import { TRANSACTIONS_MOCK } from '../utils/constants'; // Removed invalid import

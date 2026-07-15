@@ -2,8 +2,10 @@ import React, { useEffect, useState } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import api from '../services/api';
 import { CheckCircle2, XCircle, Loader2, ArrowRight, ShieldCheck, CreditCard, ShoppingBag } from 'lucide-react';
+import { useLoading } from '../context/LoadingContext';
 
 export default function PaymentCallbackPage() {
+  const { stopLoading } = useLoading();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
@@ -14,6 +16,12 @@ export default function PaymentCallbackPage() {
   const sessionId = searchParams.get('session_id');
   const provider = searchParams.get('provider') || 'stripe';
   const isCancel = searchParams.get('cancel') === 'true';
+
+  useEffect(() => {
+    if (!loading) {
+      stopLoading();
+    }
+  }, [loading, stopLoading]);
 
   useEffect(() => {
     if (isCancel) {

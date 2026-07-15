@@ -139,6 +139,7 @@ const BannerSection = ({ showSideBanners = true, showTopBanner = true, showSlide
                 <img
                   src={leftBanner.imageUrl}
                   alt="Quảng cáo trái"
+                  loading="lazy"
                   className="w-full h-auto rounded-lg shadow-md hover:scale-105 transition-transform"
                 />
               </LinkWrapper>
@@ -152,6 +153,7 @@ const BannerSection = ({ showSideBanners = true, showTopBanner = true, showSlide
                 <img
                   src={rightBanner.imageUrl}
                   alt="Quảng cáo phải"
+                  loading="lazy"
                   className="w-full h-auto rounded-lg shadow-md hover:scale-105 transition-transform"
                 />
               </LinkWrapper>

@@ -1,6 +1,7 @@
 // src/page/HomePage.jsx
 import { useState, useEffect } from 'react';
 import { useParams, useSearchParams } from 'react-router-dom';
+import { useLoading } from '../context/LoadingContext';
 import ProductCard from '../components/product/ProductCard';
 import Breadcrumb from '../components/Breadcrumb';
 import FilterBar from '../components/FilterBar';
@@ -40,6 +41,7 @@ const parseSpecs = (specsInput) => {
 };
 
 export default function HomePage({ selectedLocation }) {
+  const { stopLoading } = useLoading();
   const { brand } = useParams();
   const [prevBrand, setPrevBrand] = useState(brand);
   const [selectedBrand, setSelectedBrand] = useState(brand || null);
@@ -88,8 +90,11 @@ export default function HomePage({ selectedLocation }) {
       .catch(err => {
         console.error("Lỗi tải sản phẩm/danh mục:", err);
         setProducts([]);
+      })
+      .finally(() => {
+        stopLoading();
       });
-  }, []);
+  }, [stopLoading]);
 
   const handleApplyFilter = (filters) => {
     setAdvancedFilters(filters);

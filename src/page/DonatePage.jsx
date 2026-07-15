@@ -1,11 +1,16 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Heart, Coffee, QrCode, Copy, Check, Home } from 'lucide-react';
-import { useState } from 'react';
 import { Link } from 'react-router-dom';
+import { useLoading } from '../context/LoadingContext';
 
 const DonatePage = () => {
+  const { stopLoading } = useLoading();
   const [copied, setCopied] = useState(false);
   const accountNo = "1234567890"; // Example account number
+
+  useEffect(() => {
+    stopLoading();
+  }, [stopLoading]);
 
   const handleCopy = () => {
     navigator.clipboard.writeText(accountNo);

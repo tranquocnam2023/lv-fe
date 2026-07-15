@@ -1,3 +1,4 @@
+// CẬP NHẬT THÔNG TIN SẢN PHẨM
 import React from 'react';
 import ProductForm from '../../../components/product/ProductForm';
 

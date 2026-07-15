@@ -1,3 +1,4 @@
+// QUẢN LÝ THƯƠNG HIỆU
 import React, { useState, useEffect, useRef } from 'react';
 import { Search, Plus, HelpCircle } from 'lucide-react';
 import { brandService } from '../../../services/brandService';

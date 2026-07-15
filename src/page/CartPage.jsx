@@ -1,5 +1,6 @@
 // src/page/CartPage.jsx
 import React, { useState, useEffect } from 'react';
+import { useLoading } from '../context/LoadingContext';
 import { Link, useNavigate } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
 import { shippingInfoService } from '../services/shippingInfoService';
@@ -20,12 +21,27 @@ import CartSuccessScreen from './cart/components/CartSuccessScreen';
 import PromotionSelector from '../components/PromotionSelector';
 
 export default function CartPage() {
+  const { stopLoading } = useLoading();
   const { cartItems, updateQuantity, removeFromCart, cartTotal, clearCart } = useCart();
   const navigate = useNavigate();
 
   // Authentication states
   const [isLoggedIn, setIsLoggedIn] = useState(!!localStorage.getItem('token'));
   const [currentUser, setCurrentUser] = useState(null);
+
+  // Stop loading on mount/data loaded
+  useEffect(() => {
+    if (!isLoggedIn) {
+      stopLoading();
+    } else {
+      Promise.all([
+        userService.getProfile().catch(() => null),
+        shippingInfoService.getAll().catch(() => [])
+      ]).finally(() => {
+        stopLoading();
+      });
+    }
+  }, [isLoggedIn, stopLoading]);
 
   // Load user profile on mount & when login state changes
   useEffect(() => {
