@@ -15,6 +15,7 @@ import ProductSummaryInfo from './product-detail/components/ProductSummaryInfo';
 import ProductSpecsTab from './product-detail/components/ProductSpecsTab';
 import ProductSpecsModal from './product-detail/components/ProductSpecsModal';
 import ProductReviews from './product-detail/components/ProductReviews';
+import CoPurchaseRecommendation from './product-detail/components/CoPurchaseRecommendation';
 
 const getMergedSpecs = (baseSpecsStr, specsOverrideStr) => {
   if (!baseSpecsStr) return null;
@@ -575,7 +576,6 @@ export default function ProductDetailPage() {
         selectedColor: selectedAttributes["Màu sắc"] || Object.entries(selectedAttributes).find(([k]) => k.toLowerCase().includes('màu'))?.[1] || null,
         selectedStorage: selectedAttributes["Dung lượng RAM - ROM"] || selectedAttributes["Dung Lượng RAM - ROM"] || Object.entries(selectedAttributes).find(([k]) => k.toLowerCase().includes('dung lượng') || k.toLowerCase().includes('bộ nhớ') || k.toLowerCase().includes('ram') || k.toLowerCase().includes('rom'))?.[1] || null
       });
-      alert('Đã thêm sản phẩm vào giỏ hàng thành công!');
     }
   };
 
@@ -702,6 +702,14 @@ export default function ProductDetailPage() {
             onBuyNow={handleBuyNow}
           />
         </div>
+
+        {/* GỢI Ý MUA KÈM COMBO */}
+        <CoPurchaseRecommendation 
+          mainProduct={product}
+          mainProductPrice={displayDetails.price}
+          selectedVariantId={matchedVariant?.id || selectedVariant?.id}
+          onAddComboToCart={() => {}}
+        />
 
         {/* Khu vực Tabs chi tiết mô tả / Thông số / Reviews */}
         <div className="bg-white rounded-md overflow-hidden mt-12 border border-gray-100" id="product-tabs-container">

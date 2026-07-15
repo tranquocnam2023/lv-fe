@@ -120,6 +120,23 @@ export default function OrderDetailsTracker({ order, onOrderCancelled }) {
     }
   };
 
+  const handlePaymentRetry = async () => {
+    try {
+      const provider = (order.paymentMethod || order.PaymentMethod || 'stripe').toLowerCase();
+      const response = await api.post(`/Payment/create-checkout-session/${order.id}?provider=${provider}`);
+      
+      const data = response?.data || response;
+      if (data?.url) {
+        window.location.href = data.url;
+      } else {
+        alert("Không thể khởi tạo phiên thanh toán mới.");
+      }
+    } catch (err) {
+      console.error("Lỗi khi tạo phiên thanh toán:", err);
+      alert("Đã xảy ra lỗi khi kết nối cổng thanh toán. Vui lòng thử lại.");
+    }
+  };
+
   // Các mốc trạng thái
   const steps = [
     {
@@ -176,6 +193,8 @@ export default function OrderDetailsTracker({ order, onOrderCancelled }) {
           <span className={`px-4 py-1.5 rounded-full text-xs font-black uppercase tracking-wider border ${
             statusId === 5
               ? 'bg-red-50 border-red-200 text-red-500'
+              : statusId === 7
+              ? 'bg-purple-50 border-purple-200 text-purple-600'
               : currentStep === 4
               ? 'bg-green-50 border-green-200 text-green-600'
               : currentStep === 3
@@ -184,6 +203,14 @@ export default function OrderDetailsTracker({ order, onOrderCancelled }) {
           }`}>
             {getStatusText(statusId)}
           </span>
+          {statusId === 1 && (order.paymentMethod?.toLowerCase() === 'stripe' || order.paymentMethod?.toLowerCase() === 'momo') && (
+            <button
+              onClick={handlePaymentRetry}
+              className="px-4 py-1.5 bg-blue-600 border border-blue-600 text-white hover:bg-blue-700 text-xs font-black uppercase tracking-wider rounded-full transition-all active:scale-95 flex items-center gap-1.5 cursor-pointer"
+            >
+              Thanh toán ngay
+            </button>
+          )}
           {canCancel && (
             <button
               onClick={() => setIsCancelModalOpen(true)}
@@ -196,14 +223,7 @@ export default function OrderDetailsTracker({ order, onOrderCancelled }) {
       </div>
 
       {/* TIMELINE / STEPPER TRẠNG THÁI */}
-      {statusId !== 5 ? (
-        <OrderTimeline
-          order={order}
-          currentStep={currentStep}
-          steps={steps}
-          getStepTime={getStepTime}
-        />
-      ) : (
+      {statusId === 5 ? (
         <div className="bg-red-50 border border-red-100 text-red-700 p-4 rounded-md flex items-center gap-3 animate-in zoom-in-95">
           <AlertTriangle className="stroke-[2.5]" />
           <div>
@@ -211,6 +231,23 @@ export default function OrderDetailsTracker({ order, onOrderCancelled }) {
             <p className="text-xs opacity-80 mt-0.5 font-medium">Không còn hiển thị tiến trình giao nhận vận chuyển.</p>
           </div>
         </div>
+      ) : statusId === 7 ? (
+        <div className="bg-purple-50 border border-purple-100 text-purple-700 p-4 rounded-md flex items-center gap-3 animate-in zoom-in-95">
+          <CreditCard className="stroke-[2.5] text-purple-600" />
+          <div>
+            <h4 className="text-sm font-black">Đơn hàng đã được Đổi trả / Hoàn tiền thành công</h4>
+            <p className="text-xs opacity-80 mt-0.5 font-medium">
+              Hệ thống đã thực hiện hoàn trả số tiền {order.totalPrice.toLocaleString('vi-VN')}₫ cho bạn. Tiền hoàn sẽ được cập nhật trong tài khoản của bạn tùy theo chính sách ngân hàng.
+            </p>
+          </div>
+        </div>
+      ) : (
+        <OrderTimeline
+          order={order}
+          currentStep={currentStep}
+          steps={steps}
+          getStepTime={getStepTime}
+        />
       )}
 
       {/* CHI TIẾT SẢN PHẨM MUA */}

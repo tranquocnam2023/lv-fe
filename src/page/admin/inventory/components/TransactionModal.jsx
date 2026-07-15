@@ -584,7 +584,7 @@ export default function TransactionModal({ activeTxTab, setActiveTxTab, products
       setMatchingOrders([]);
       setSelectedOrder(null);
 
-      fetchData();
+      if (onSuccess) onSuccess();
     } catch (err) {
       console.error("Lỗi thực hiện giao dịch kho:", err);
       alert('Giao dịch thất bại: ' + (err.response?.data || err.message || JSON.stringify(err)));

@@ -27,4 +27,6 @@ export const orderService = {
   getMyOrders: () => api.get('/Order/my-orders'),
 
   checkout: (data) => api.post('/Order/checkout', data),
+
+  shipAhamove: (id) => api.post(`/Order/${id}/ship-ahamove`),
 };
