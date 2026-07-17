@@ -5,5 +5,7 @@ export const inventoryService = {
   
   create: (data) => api.post('/InventoryTransaction', data),
   
-  revert: (id) => api.put(`/InventoryTransaction/${id}/revert`)
+  revert: (id) => api.put(`/InventoryTransaction/${id}/revert`),
+
+  getStock: () => api.get('/InventoryTransaction/stock')
 };

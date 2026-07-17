@@ -1,10 +1,11 @@
 //QUẢN LÝ KHO
 import React, { useState, useEffect, useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { Search, ChevronDown, Download, FileText } from 'lucide-react';
+import { Search, ChevronDown, Download, FileText, SlidersHorizontal } from 'lucide-react';
 import { inventoryService } from '../../../services/inventoryService';
 import { productService } from '../../../services/productService';
 import { brandService } from '../../../services/brandService';
+import { categoryService } from '../../../services/categoryService';
 import { useFormat } from '../../../hooks/useFormat';
 import { usePagination } from '../../../hooks/usePagination';
 
@@ -25,6 +26,12 @@ export default function AdminInventory() {
   const [products, setProducts] = useState([]);
   const [txHistory, setTxHistory] = useState([]);
   const [brands, setBrands] = useState([]);
+  const [stockHistory, setStockHistory] = useState([]);
+  const [viewMode, setViewMode] = useState('TRANSACTIONS'); // 'TRANSACTIONS' or 'STOCK'
+  const [stockBrandFilter, setStockBrandFilter] = useState('ALL');
+  const [categories, setCategories] = useState([]);
+  const [stockCategoryFilter, setStockCategoryFilter] = useState('ALL');
+  const [stockStatusFilter, setStockStatusFilter] = useState('ALL'); // 'ALL', 'IN_STOCK', 'LOW_STOCK', 'OUT_OF_STOCK'
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
@@ -52,10 +59,12 @@ export default function AdminInventory() {
     setLoading(true);
     setError(null);
     try {
-      const [productsData, historyData, brandsData] = await Promise.all([
+      const [productsData, historyData, brandsData, stockData, categoriesData] = await Promise.all([
         productService.getAll(true),
         inventoryService.getAll(),
-        brandService.getAll()
+        brandService.getAll(),
+        inventoryService.getStock(),
+        categoryService.getAll()
       ]);
       if (Array.isArray(productsData)) {
         setProducts(productsData);
@@ -65,6 +74,12 @@ export default function AdminInventory() {
       }
       if (brandsData) {
         setBrands(brandsData.items || (Array.isArray(brandsData) ? brandsData : []));
+      }
+      if (Array.isArray(stockData)) {
+        setStockHistory(stockData);
+      }
+      if (categoriesData) {
+        setCategories(categoriesData.items || (Array.isArray(categoriesData) ? categoriesData : []));
       }
     } catch (err) {
       console.error("Lỗi tải dữ liệu kho:", err);
@@ -162,9 +177,56 @@ export default function AdminInventory() {
     return match;
   });
 
-  // Pagination for history list
+  // Filter stock list
+  const filteredStock = useMemo(() => {
+    if (!stockHistory || stockHistory.length === 0) return [];
+    return stockHistory.filter(item => {
+      // 1. Search Query
+      if (searchQuery) {
+        const query = searchQuery.toLowerCase();
+        const matchProduct = item.productName?.toLowerCase().includes(query);
+        const matchVariant = item.variantName?.toLowerCase().includes(query);
+        const matchId = String(item.productId).includes(query);
+        const matchCode = item.transactionCode?.toLowerCase().includes(query);
+        if (!matchProduct && !matchVariant && !matchId && !matchCode) {
+          return false;
+        }
+      }
+
+      // 2. Brand Filter
+      if (stockBrandFilter !== 'ALL') {
+        const productInfo = products.find(p => p.id === item.productId);
+        if (!productInfo || String(productInfo.brandId) !== String(stockBrandFilter)) {
+          return false;
+        }
+      }
+
+      // 3. Category Filter
+      if (stockCategoryFilter !== 'ALL') {
+        const productInfo = products.find(p => p.id === item.productId);
+        if (!productInfo || String(productInfo.categoryId) !== String(stockCategoryFilter)) {
+          return false;
+        }
+      }
+
+      // 4. Status Filter
+      if (stockStatusFilter === 'IN_STOCK') {
+        if (item.quantityRemaining <= 0) return false;
+      } else if (stockStatusFilter === 'LOW_STOCK') {
+        if (item.quantityRemaining <= 0 || item.quantityRemaining > 5) return false;
+      } else if (stockStatusFilter === 'OUT_OF_STOCK') {
+        if (item.quantityRemaining > 0) return false;
+      }
+
+      return true;
+    });
+  }, [stockHistory, searchQuery, stockBrandFilter, stockCategoryFilter, stockStatusFilter, products]);
+
+  const activeDataList = viewMode === 'TRANSACTIONS' ? filteredHistory : filteredStock;
+
+  // Pagination for active view list
   const {
-    currentData: paginatedHistory,
+    currentData: paginatedData,
     currentPage,
     totalPages,
     nextPage,
@@ -173,7 +235,7 @@ export default function AdminInventory() {
     startIndex,
     endIndex,
     totalItems
-  } = usePagination(filteredHistory, 10);
+  } = usePagination(activeDataList, 10);
 
   // Revert Tx
   const handleRevertTransaction = async (txId) => {
@@ -219,7 +281,7 @@ export default function AdminInventory() {
             </div>
             <input
               type="text"
-              placeholder="Tìm theo sản phẩm, mã, ghi chú..."
+              placeholder="Tìm theo sản phẩm..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="pl-10 w-full py-2.5 bg-white border border-admin-border rounded-md focus:ring-1 focus:ring-primary focus:border-primary text-sm font-semibold text-admin-text-main placeholder-gray-400"
@@ -289,74 +351,164 @@ export default function AdminInventory() {
       {/* Stats Cards */}
       <InventoryStats products={products} txHistory={txHistory} />
 
-      {/* Main Content Area */}
-      <div className="bg-white rounded-md p-6 border border-admin-border/50 flex flex-col min-h-[400px]">
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
-          <h3 className="text-lg font-bold text-admin-text-main">Lịch sử xuất/nhập kho</h3>
-
-          {/* Quick Filters */}
-          <div className="flex gap-2 overflow-x-auto w-full sm:w-auto no-scrollbar">
-            <button
-              onClick={() => { setTypeFilter('ALL'); goToPage(1); }}
-              className={`px-4 py-1.5 rounded-full text-xs font-bold transition-all whitespace-nowrap border ${typeFilter === 'ALL' ? 'bg-primary text-white border-primary' : 'bg-admin-bg text-admin-text-muted border-admin-border hover:text-primary'}`}
-            >
-              Tất cả
-            </button>
-            {TRANSACTIONS.map(tx => (
-              <button
-                key={tx.id}
-                onClick={() => { setTypeFilter(tx.id); goToPage(1); }}
-                className={`px-4 py-1.5 rounded-full text-xs font-bold transition-all whitespace-nowrap border ${typeFilter === tx.id ? 'bg-primary text-white border-primary' : 'bg-admin-bg text-admin-text-muted border-admin-border hover:text-primary'}`}
-              >
-                {tx.name.replace('Nhập ', 'Nhập ').replace('Xuất ', 'Xuất ')}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* History Table */}
-        <HistoryTable
-          loading={loading}
-          error={error}
-          paginatedHistory={paginatedHistory}
-          formatCurrency={formatCurrency}
-          handleRevertTransaction={handleRevertTransaction}
-          setSelectedTxGroup={setSelectedTxGroup}
-        />
-
-        {/* Pagination */}
-        {totalPages > 1 && (
-          <div className="mt-6 flex flex-col sm:flex-row justify-between items-center gap-4 border-t border-admin-border pt-4">
-            <div className="text-sm font-bold text-admin-text-muted">
-              Hiển thị {startIndex}-{endIndex} trên {totalItems} giao dịch
+      {/* Layout Grid: Sidebar Filters on the Left, Table on the Right */}
+      <div className="flex flex-col lg:flex-row gap-6 items-start w-full">
+        {/* Sidebar Filters (only in STOCK mode) */}
+        {viewMode === 'STOCK' && (
+          <div className="w-full lg:w-64 flex-shrink-0 bg-white rounded-md border border-admin-border/50 overflow-hidden h-fit">
+            <div className="px-6 py-4 border-b border-admin-border font-bold text-admin-text-main flex items-center text-md">
+              <SlidersHorizontal className="w-4 h-4 mr-3 text-primary" />
+              Bộ lọc tồn kho
             </div>
-            <div className="flex gap-2">
-              <button
-                onClick={prevPage}
-                disabled={currentPage === 1}
-                className="px-4 py-2 bg-admin-bg text-admin-text-main rounded-md text-sm font-bold hover:bg-admin-border transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                TRƯỚC
-              </button>
-              {[...Array(totalPages)].map((_, i) => (
-                <button
-                  key={i}
-                  onClick={() => goToPage(i + 1)}
-                  className={`w-9 h-9 rounded-full text-sm font-bold transition-all ${currentPage === i + 1 ? 'bg-primary text-white shadow-md' : 'bg-transparent text-admin-text-muted hover:bg-admin-bg'}`}
+            <div className="flex flex-col p-4 gap-4">
+              {/* Lọc theo Brand */}
+              <div>
+                <label className="block text-xs font-bold text-admin-text-main mb-2">Thương hiệu</label>
+                <select
+                  value={stockBrandFilter}
+                  onChange={(e) => { setStockBrandFilter(e.target.value); goToPage(1); }}
+                  className="w-full border border-admin-border text-admin-text-main rounded-md px-3 py-2 text-xs font-semibold focus:border-primary focus:ring-1 focus:ring-primary outline-none bg-white cursor-pointer"
                 >
-                  {i + 1}
-                </button>
-              ))}
-              <button
-                onClick={nextPage}
-                disabled={currentPage === totalPages}
-                className="px-4 py-2 bg-admin-bg text-admin-text-main rounded-md text-sm font-bold hover:bg-admin-border transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                SAU
-              </button>
+                  <option value="ALL">Tất cả thương hiệu</option>
+                  {brands.map(b => (
+                    <option key={b.id} value={b.id}>{b.name}</option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Lọc theo Category */}
+              <div>
+                <label className="block text-xs font-bold text-admin-text-main mb-2">Danh mục</label>
+                <select
+                  value={stockCategoryFilter}
+                  onChange={(e) => { setStockCategoryFilter(e.target.value); goToPage(1); }}
+                  className="w-full border border-admin-border text-admin-text-main rounded-md px-3 py-2 text-xs font-semibold focus:border-primary focus:ring-1 focus:ring-primary outline-none bg-white cursor-pointer"
+                >
+                  <option value="ALL">Tất cả danh mục</option>
+                  {categories.map(c => (
+                    <option key={c.id} value={c.id}>{c.name}</option>
+                  ))}
+                </select>
+              </div>
             </div>
           </div>
         )}
+
+        {/* Main Content Area */}
+        <div className="bg-white rounded-md p-6 border border-admin-border/50 flex flex-col min-h-[400px] flex-1 w-full">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+            <div className="flex items-center gap-3">
+              <h3 className="text-lg font-bold text-admin-text-main">
+                {viewMode === 'TRANSACTIONS' ? 'Lịch sử xuất/nhập kho' : 'Tồn kho chi tiết'}
+              </h3>
+              <button
+                onClick={() => {
+                  setViewMode(viewMode === 'TRANSACTIONS' ? 'STOCK' : 'TRANSACTIONS');
+                  goToPage(1);
+                }}
+                className="px-3 py-1 text-xs bg-primary/10 hover:bg-primary/20 text-primary rounded-md font-bold transition-all active:scale-95 border border-primary/20 flex items-center gap-1 cursor-pointer"
+              >
+                {viewMode === 'TRANSACTIONS' ? 'Xem tồn kho' : 'Xem lịch sử GD'}
+              </button>
+            </div>
+
+            {/* Quick Filters */}
+            {viewMode === 'TRANSACTIONS' ? (
+              <div className="flex gap-2 overflow-x-auto w-full sm:w-auto no-scrollbar">
+                <button
+                  onClick={() => { setTypeFilter('ALL'); goToPage(1); }}
+                  className={`px-4 py-1.5 rounded-full text-xs font-bold transition-all whitespace-nowrap border ${typeFilter === 'ALL' ? 'bg-primary text-white border-primary' : 'bg-admin-bg text-admin-text-muted border-admin-border hover:text-primary'}`}
+                >
+                  Tất cả
+                </button>
+                {TRANSACTIONS.map(tx => (
+                  <button
+                    key={tx.id}
+                    onClick={() => { setTypeFilter(tx.id); goToPage(1); }}
+                    className={`px-4 py-1.5 rounded-full text-xs font-bold transition-all whitespace-nowrap border ${typeFilter === tx.id ? 'bg-primary text-white border-primary' : 'bg-admin-bg text-admin-text-muted border-admin-border hover:text-primary'}`}
+                  >
+                    {tx.name.replace('Nhập ', 'Nhập ').replace('Xuất ', 'Xuất ')}
+                  </button>
+                ))}
+              </div>
+            ) : (
+              <div className="flex flex-wrap items-center gap-3 w-full sm:w-auto no-scrollbar">
+                {/* Status Filters */}
+                <div className="flex gap-2 overflow-x-auto no-scrollbar">
+                  <button
+                    onClick={() => { setStockStatusFilter('ALL'); goToPage(1); }}
+                    className={`px-4 py-1.5 rounded-full text-xs font-bold transition-all whitespace-nowrap border ${stockStatusFilter === 'ALL' ? 'bg-primary text-white border-primary' : 'bg-admin-bg text-admin-text-muted border-admin-border hover:text-primary'}`}
+                  >
+                    Tất cả
+                  </button>
+                  <button
+                    onClick={() => { setStockStatusFilter('IN_STOCK'); goToPage(1); }}
+                    className={`px-4 py-1.5 rounded-full text-xs font-bold transition-all whitespace-nowrap border ${stockStatusFilter === 'IN_STOCK' ? 'bg-primary text-white border-primary' : 'bg-admin-bg text-admin-text-muted border-admin-border hover:text-primary'}`}
+                  >
+                    Còn hàng
+                  </button>
+                  <button
+                    onClick={() => { setStockStatusFilter('LOW_STOCK'); goToPage(1); }}
+                    className={`px-4 py-1.5 rounded-full text-xs font-bold transition-all whitespace-nowrap border ${stockStatusFilter === 'LOW_STOCK' ? 'bg-primary text-white border-primary' : 'bg-admin-bg text-admin-text-muted border-admin-border hover:text-primary'}`}
+                  >
+                    Tồn thấp (≤ 5)
+                  </button>
+                  <button
+                    onClick={() => { setStockStatusFilter('OUT_OF_STOCK'); goToPage(1); }}
+                    className={`px-4 py-1.5 rounded-full text-xs font-bold transition-all whitespace-nowrap border ${stockStatusFilter === 'OUT_OF_STOCK' ? 'bg-primary text-white border-primary' : 'bg-admin-bg text-admin-text-muted border-admin-border hover:text-primary'}`}
+                  >
+                    Hết hàng
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* History Table */}
+          <HistoryTable
+            loading={loading}
+            error={error}
+            paginatedHistory={paginatedData}
+            formatCurrency={formatCurrency}
+            handleRevertTransaction={handleRevertTransaction}
+            setSelectedTxGroup={setSelectedTxGroup}
+            viewMode={viewMode}
+          />
+
+          {/* Pagination */}
+          {totalPages > 1 && (
+            <div className="mt-6 flex flex-col sm:flex-row justify-between items-center gap-4 border-t border-admin-border pt-4">
+              <div className="text-sm font-bold text-admin-text-muted">
+                Hiển thị {startIndex}-{endIndex} trên {totalItems} {viewMode === 'TRANSACTIONS' ? 'giao dịch' : 'lô hàng'}
+              </div>
+              <div className="flex gap-2">
+                <button
+                  onClick={prevPage}
+                  disabled={currentPage === 1}
+                  className="px-4 py-2 bg-admin-bg text-admin-text-main rounded-md text-sm font-bold hover:bg-admin-border transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  TRƯỚC
+                </button>
+                {[...Array(totalPages)].map((_, i) => (
+                  <button
+                    key={i}
+                    onClick={() => goToPage(i + 1)}
+                    className={`w-9 h-9 rounded-full text-sm font-bold transition-all ${currentPage === i + 1 ? 'bg-primary text-white shadow-md' : 'bg-transparent text-admin-text-muted hover:bg-admin-bg'}`}
+                  >
+                    {i + 1}
+                  </button>
+                ))}
+                <button
+                  onClick={nextPage}
+                  disabled={currentPage === totalPages}
+                  className="px-4 py-2 bg-admin-bg text-admin-text-main rounded-md text-sm font-bold hover:bg-admin-border transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  SAU
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Transaction Modal Popup Form */}

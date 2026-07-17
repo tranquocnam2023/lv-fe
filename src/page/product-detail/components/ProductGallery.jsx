@@ -109,7 +109,7 @@ export default function ProductGallery({ product, selectedColor, galleryImages, 
   const activeIndex = galleryImages.findIndex(img => img.url === activeImage?.url && img.type === activeImage?.type);
 
   return (
-    <div className="w-full space-y-6">
+    <div className="lg:col-span-7 w-full space-y-6">
       <div className="bg-white rounded-md p-8 flex flex-col items-center relative group" id="product-slideshow-container">
         {/* Khung ảnh chính */}
         <div 
