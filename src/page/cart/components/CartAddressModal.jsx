@@ -43,7 +43,17 @@ export default function CartAddressModal({
 }) {
   if (!showAddressModal) return null;
 
+  // Lấy tên Tỉnh/Thành và Phường/Xã hiện tại để làm ngữ cảnh tìm kiếm bản đồ
+  const selectedProvince = provinces?.find(p => p.id === selectedProvinceId);
+  const provinceName = selectedProvince ? (selectedProvince.fullName || selectedProvince.name) : '';
+
+  const selectedWard = wards?.find(w => w.id === modalWardId);
+  const wardName = selectedWard ? (selectedWard.fullName || selectedWard.name) : '';
+
+  const addressContext = [wardName, provinceName].filter(Boolean).join(', ');
+
   return (
+
     <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 overflow-y-auto animate-in fade-in duration-200">
       <div className="bg-white w-full max-w-md rounded-md flex flex-col relative max-h-[90vh] border border-gray-150 animate-in zoom-in-95 duration-200">
         
@@ -229,6 +239,7 @@ export default function CartAddressModal({
                     disabled={!selectedProvinceId}
                     className="font-bold text-gray-850"
                   />
+                  {validationErrors.ward && <p className="text-red-500 text-[9px] font-medium">{validationErrors.ward}</p>}
                 </div>
               </div>
 
@@ -249,6 +260,7 @@ export default function CartAddressModal({
                     onSelectLocation={onSelectGoongAddress}
                     placeholder="Tìm kiếm số nhà, tên đường bằng Goong Maps..."
                     error={validationErrors.streetAddress}
+                    addressContext={addressContext}
                     className={`w-full bg-gray-50 border ${
                       validationErrors.streetAddress ? 'border-red-500' : 'border-gray-200'
                     } rounded-md px-3 py-2 font-bold focus:outline-none focus:border-blue-500 text-gray-800`}

@@ -8,7 +8,8 @@ export default function GoongAutocomplete({
   onSelectLocation,
   placeholder = 'Nhập số nhà, tên đường...',
   className = '',
-  error = ''
+  error = '',
+  addressContext = ''
 }) {
   const [query, setQuery] = useState(value || '');
   const [suggestions, setSuggestions] = useState([]);
@@ -47,15 +48,43 @@ export default function GoongAutocomplete({
 
     setIsLoading(true);
     try {
+      // Tự động bổ sung ngữ cảnh địa chỉ (Phường/Xã, Tỉnh/Thành) để thu hẹp phạm vi tìm kiếm
+      let finalInput = searchQuery;
+      if (addressContext) {
+        const cleanInput = searchQuery.toLowerCase();
+        const cleanContext = addressContext.toLowerCase();
+        // Chỉ append nếu người dùng chưa tự tay gõ cụm từ đó
+        if (!cleanInput.includes(cleanContext)) {
+          finalInput = `${searchQuery}, ${addressContext}`;
+        }
+      }
+
       const response = await axios.get('https://rsapi.goong.io/Place/Autocomplete', {
         params: {
           api_key: apiKey,
-          input: searchQuery,
-          limit: 5
+          input: finalInput,
+          limit: 10 // Tăng limit lên một chút để bù trừ các kết quả bị lọc
         }
       });
       if (response.data && response.data.predictions) {
-        setSuggestions(response.data.predictions);
+        // Lọc bỏ các kết quả chỉ là đơn vị hành chính (Tỉnh, Huyện, Xã) mà không phải là số nhà/đường
+        let filteredPredictions = response.data.predictions.filter(p => {
+          const mainText = p.structured_formatting?.main_text || p.description;
+          
+          // Loại bỏ nếu kết quả là Phường/Xã/Quận/Huyện/Tỉnh đơn thuần
+          const isJustAdminName = /^(phường|xã|thị trấn|quận|huyện|tỉnh|thành phố)\s/i.test(mainText);
+          
+          // Tuy nhiên nếu có số nhà (ví dụ: Đường Phường 1) thì giữ lại
+          const hasNumber = /\d/.test(mainText);
+          
+          if (isJustAdminName && !hasNumber) {
+            return false;
+          }
+          return true;
+        });
+
+        // Chỉ lấy tối đa 5 kết quả sau khi lọc
+        setSuggestions(filteredPredictions.slice(0, 5));
         setIsOpen(true);
       }
     } catch (error) {
@@ -64,6 +93,7 @@ export default function GoongAutocomplete({
       setIsLoading(false);
     }
   };
+
 
   const handleInputChange = (e) => {
     const val = e.target.value;

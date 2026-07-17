@@ -147,6 +147,7 @@ export default function CartPage() {
   const [shippingCarrier, setShippingCarrier] = useState('');
   const [shippingEstimatedDays, setShippingEstimatedDays] = useState('');
   const [shippingLoading, setShippingLoading] = useState(false);
+  const [shippingOptions, setShippingOptions] = useState([]);
 
   // Effect to calculate shipping fee dynamically
   useEffect(() => {
@@ -161,9 +162,20 @@ export default function CartPage() {
       })
       .then(res => {
         if (res) {
-          setShippingFee(Number(res.fee || res.Fee || 0));
-          setShippingCarrier(res.carrier || res.Carrier || 'Giao Hàng Nhanh (GHN)');
-          setShippingEstimatedDays(res.estimatedDeliveryDays || res.EstimatedDeliveryDays || '2-3 ngày');
+          const options = res.options || res.Options || [];
+          setShippingOptions(options);
+
+          if (options.length > 0) {
+            // Mặc định chọn phương thức rẻ nhất (thường là Giao Hàng Tiêu Chuẩn) để không làm khách hoảng vì phí ship cao
+            const cheapestOption = [...options].sort((a, b) => (Number(a.fee || a.Fee || 0)) - (Number(b.fee || b.Fee || 0)))[0];
+            setShippingFee(Number(cheapestOption.fee || cheapestOption.Fee || 0));
+            setShippingCarrier(cheapestOption.carrier || cheapestOption.Carrier || '');
+            setShippingEstimatedDays(cheapestOption.estimatedDeliveryDays || cheapestOption.EstimatedDeliveryDays || '');
+          } else {
+            setShippingFee(Number(res.fee || res.Fee || 0));
+            setShippingCarrier(res.carrier || res.Carrier || 'Giao Hàng Nhanh (GHN)');
+            setShippingEstimatedDays(res.estimatedDeliveryDays || res.EstimatedDeliveryDays || '2-3 ngày');
+          }
         }
       })
       .catch(err => {
@@ -265,11 +277,29 @@ export default function CartPage() {
         });
         
         if (matchedProv) {
-          handleProvinceChange(matchedProv.id);
-          
-          // 2. Lưu lại tên phường/xã để so khớp khi API tải xong wards của tỉnh này
-          if (compound.commune) {
-            setPendingWardName(compound.commune);
+          // Chỉ đổi tỉnh (và reset phường/xã) nếu tỉnh mới khác tỉnh đang chọn
+          if (String(matchedProv.id) !== String(selectedProvinceId)) {
+            handleProvinceChange(matchedProv.id);
+            
+            // 2. Lưu lại tên phường/xã để so khớp khi API tải xong wards của tỉnh mới
+            if (compound.commune) {
+              setPendingWardName(compound.commune);
+            }
+          } else {
+            // Nếu trùng tỉnh, cố gắng khớp ward mới từ Goong.
+            // Nếu không tìm thấy khớp hoặc commune trống, giữ nguyên ward người dùng đã chọn thay vì reset!
+            if (compound.commune) {
+              const cleanNameStr = (str) => String(str).toLowerCase().replace(/^(phường|xã|thị trấn|p\.?)\s+/i, '').trim();
+              const targetName = cleanNameStr(compound.commune);
+              const matchedWard = wards.find(w => {
+                const wName = cleanNameStr(w.fullName || w.name);
+                return wName === targetName || wName.includes(targetName) || targetName.includes(wName);
+              });
+              if (matchedWard) {
+                setModalWardId(matchedWard.id);
+                setModalWard(matchedWard.fullName || matchedWard.name);
+              }
+            }
           }
         }
       }
@@ -285,12 +315,40 @@ export default function CartPage() {
     }
   };
 
-  const handleSelectSavedAddress = (addr) => {
+  const handleSelectSavedAddress = async (addr) => {
     setModalFullName(addr.recipientName || '');
     setModalPhone(addr.phoneNumber || '');
     setModalStreetAddress(addr.addressLine || '');
-    setModalLatitude(addr.latitude || null);
-    setModalLongitude(addr.longitude || null);
+
+    // Nếu địa chỉ đã có tọa độ trong DB → dùng luôn
+    if (addr.latitude && addr.longitude) {
+      setModalLatitude(addr.latitude);
+      setModalLongitude(addr.longitude);
+    } else {
+      // Không có tọa độ → tự động geocode bằng Goong Maps
+      setModalLatitude(null);
+      setModalLongitude(null);
+      const goongApiKey = import.meta.env.VITE_GOONG_API_KEY || '';
+      if (goongApiKey && addr.addressLine) {
+        try {
+          const fullAddr = [addr.addressLine, addr.wardName || addr.ward || '', addr.provinceName || addr.province || ''].filter(Boolean).join(', ');
+          const searchRes = await fetch(`https://rsapi.goong.io/Place/Autocomplete?input=${encodeURIComponent(fullAddr)}&api_key=${goongApiKey}&limit=1`);
+          const searchData = await searchRes.json();
+          const placeId = searchData?.predictions?.[0]?.place_id;
+          if (placeId) {
+            const detailRes = await fetch(`https://rsapi.goong.io/Place/Detail?place_id=${placeId}&api_key=${goongApiKey}`);
+            const detailData = await detailRes.json();
+            const location = detailData?.result?.geometry?.location;
+            if (location?.lat && location?.lng) {
+              setModalLatitude(location.lat);
+              setModalLongitude(location.lng);
+            }
+          }
+        } catch (geoErr) {
+          console.warn('Goong geocode failed for saved address:', geoErr);
+        }
+      }
+    }
 
     if (provinces && provinces.length > 0) {
       const cleanProvinceStr = (str) => String(str).toLowerCase().replace(/^(tỉnh|thành phố|tp\.?)\s+/i, '').trim();
@@ -301,7 +359,6 @@ export default function CartPage() {
       });
       if (match) {
         handleProvinceChange(match.id);
-        
         if (addr.wardName || addr.ward) {
           setPendingWardName(addr.wardName || addr.ward);
         }
@@ -336,7 +393,7 @@ export default function CartPage() {
   useEffect(() => {
     if (isLoggedIn) {
       shippingInfoService.getAll()
-        .then(res => {
+        .then(async res => {
           if (Array.isArray(res)) {
             setUserAddresses(res);
             if (res.length > 0) {
@@ -344,6 +401,32 @@ export default function CartPage() {
               const recipient = defaultAddr.recipientName || '';
               const phoneNum = defaultAddr.phoneNumber || '';
               const fullAddress = `${defaultAddr.addressLine}, ${defaultAddr.wardName || defaultAddr.ward || ''}, ${defaultAddr.provinceName || defaultAddr.province || ''}`;
+
+              // Nếu địa chỉ mặc định chưa có tọa độ → geocode qua Goong Maps
+              let lat = defaultAddr.latitude || null;
+              let lng = defaultAddr.longitude || null;
+              if ((!lat || !lng) && defaultAddr.addressLine) {
+                const goongApiKey = import.meta.env.VITE_GOONG_API_KEY || '';
+                if (goongApiKey) {
+                  try {
+                    const fullAddrStr = [defaultAddr.addressLine, defaultAddr.wardName || '', defaultAddr.provinceName || ''].filter(Boolean).join(', ');
+                    const searchRes = await fetch(`https://rsapi.goong.io/Place/Autocomplete?input=${encodeURIComponent(fullAddrStr)}&api_key=${goongApiKey}&limit=1`);
+                    const searchData = await searchRes.json();
+                    const placeId = searchData?.predictions?.[0]?.place_id;
+                    if (placeId) {
+                      const detailRes = await fetch(`https://rsapi.goong.io/Place/Detail?place_id=${placeId}&api_key=${goongApiKey}`);
+                      const detailData = await detailRes.json();
+                      const loc = detailData?.result?.geometry?.location;
+                      if (loc?.lat && loc?.lng) {
+                        lat = loc.lat;
+                        lng = loc.lng;
+                      }
+                    }
+                  } catch (geoErr) {
+                    console.warn('Goong geocode failed for default address:', geoErr);
+                  }
+                }
+              }
 
               setFormData(prev => ({
                 ...prev,
@@ -354,8 +437,8 @@ export default function CartPage() {
                 ward: defaultAddr.wardName || defaultAddr.ward || '',
                 streetAddress: defaultAddr.addressLine || '',
                 wardId: defaultAddr.wardId || '',
-                deliveryLatitude: defaultAddr.latitude || null,
-                deliveryLongitude: defaultAddr.longitude || null
+                deliveryLatitude: lat,
+                deliveryLongitude: lng
               }));
 
               // Sync modal temporary states as well
@@ -365,8 +448,8 @@ export default function CartPage() {
               setModalCity(defaultAddr.provinceName || defaultAddr.province || 'Hồ Chí Minh');
               setModalWard(defaultAddr.wardName || defaultAddr.ward || '');
               setModalWardId(defaultAddr.wardId || '');
-              setModalLatitude(defaultAddr.latitude || null);
-              setModalLongitude(defaultAddr.longitude || null);
+              setModalLatitude(lat);
+              setModalLongitude(lng);
               setAddressProvided(true);
             }
           }
@@ -425,8 +508,15 @@ export default function CartPage() {
     if (!modalPhone.trim()) errors.phone = 'Vui lòng nhập số điện thoại';
 
     if (deliveryMethod === 'ship') {
-      if (!modalStreetAddress.trim()) errors.streetAddress = 'Vui lòng nhập địa chỉ chi tiết (số nhà, tên đường)';
-      if (!selectedProvinceId) errors.city = 'Vui lòng chọn Tỉnh/Thành phố';
+      if (!selectedProvinceId) {
+        errors.city = 'Vui lòng chọn Tỉnh/Thành phố';
+      }
+      if (!modalWardId) {
+        errors.ward = 'Vui lòng chọn Phường/Xã';
+      }
+      if (!modalStreetAddress.trim()) {
+        errors.streetAddress = 'Vui lòng nhập địa chỉ chi tiết (số nhà, tên đường)';
+      }
     }
 
     if (modalSomeoneElse) {
@@ -624,6 +714,21 @@ export default function CartPage() {
       return;
     }
 
+    if (deliveryMethod === 'ship') {
+      if (!formData.city || !formData.wardId || !formData.streetAddress) {
+        alert("Địa chỉ giao hàng chưa đầy đủ (Tỉnh/Thành phố, Phường/Xã, Số nhà/Đường). Vui lòng cập nhật trước khi đặt hàng.");
+        openAddressModal();
+        return;
+      }
+    }
+
+    // Kiểm tra giới hạn thu hộ (COD) của Ahamove (Tối đa 10.000.000đ)
+    const finalTotalPay = cartTotal + (deliveryMethod === 'ship' ? shippingFee : 0) - discountAmount - (usePoints ? pointsDiscount : 0);
+    if (deliveryMethod === 'ship' && paymentMethod === 'cod' && shippingCarrier && shippingCarrier.toLowerCase().includes('ahamove') && finalTotalPay > 10000000) {
+      alert("Ahamove chỉ hỗ trợ giao hàng thu hộ (COD) tối đa 10.000.000₫ cho mỗi đơn hàng để đảm bảo an toàn. Vui lòng chuyển sang hình thức thanh toán trực tuyến (Stripe, MoMo, Chuyển khoản) hoặc đổi phương thức sang Giao Hàng Tiêu Chuẩn.");
+      return;
+    }
+
     setIsSubmitting(true);
 
     try {
@@ -676,6 +781,7 @@ export default function CartPage() {
         pointsToRedeem: usePoints ? pointsDiscount : 0,
         note: finalNote,
         paymentMethod: paymentMethod,
+        shippingCarrier: shippingCarrier,
         deliveryLatitude: deliveryMethod === 'ship' ? formData.deliveryLatitude : null,
         deliveryLongitude: deliveryMethod === 'ship' ? formData.deliveryLongitude : null,
         items: cartItems.map(item => ({
@@ -893,78 +999,14 @@ export default function CartPage() {
             />
 
             {/* Card 4: Support Request Checklist */}
-            <div className="bg-white rounded-md border border-gray-100 p-4 space-y-3">
-              <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider">Yêu cầu hỗ trợ đặc biệt</h3>
-              <div className="flex flex-col gap-2.5">
-                <label className="flex items-center gap-2 text-xs font-semibold text-gray-700 cursor-pointer hover:text-gray-900 select-none">
-                  <input
-                    type="checkbox"
-                    checked={specialRequests.transferData}
-                    onChange={(e) => setSpecialRequests({ ...specialRequests, transferData: e.target.checked })}
-                    className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-0 cursor-pointer"
-                  />
-                  <span>Chuyển danh bạ, sao lưu dữ liệu sang máy mới (Miễn phí)</span>
-                </label>
-
-                <label className="flex items-center gap-2 text-xs font-semibold text-gray-700 cursor-pointer hover:text-gray-900 select-none">
-                  <input
-                    type="checkbox"
-                    checked={specialRequests.companyInvoice}
-                    onChange={(e) => setSpecialRequests({ ...specialRequests, companyInvoice: e.target.checked })}
-                    className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-0 cursor-pointer"
-                  />
-                  <span>Yêu cầu xuất hóa đơn công ty</span>
-                </label>
-
-                {specialRequests.companyInvoice && (
-                  <div className="ml-6 space-y-2 animate-in slide-in-from-top-2 duration-150">
-                    <input
-                      type="text"
-                      placeholder="Tên công ty"
-                      value={companyInvoiceDetails.companyName}
-                      onChange={(e) => setCompanyInvoiceDetails({ ...companyInvoiceDetails, companyName: e.target.value })}
-                      className="w-full bg-gray-50 border border-gray-200 rounded-md p-2.5 text-xs font-semibold focus:outline-none focus:border-blue-500 text-gray-800"
-                    />
-                    <input
-                      type="text"
-                      placeholder="Mã số thuế"
-                      value={companyInvoiceDetails.taxCode}
-                      onChange={(e) => setCompanyInvoiceDetails({ ...companyInvoiceDetails, taxCode: e.target.value })}
-                      className="w-full bg-gray-50 border border-gray-200 rounded-md p-2.5 text-xs font-semibold focus:outline-none focus:border-blue-500 text-gray-800"
-                    />
-                    <input
-                      type="text"
-                      placeholder="Địa chỉ công ty"
-                      value={companyInvoiceDetails.companyAddress}
-                      onChange={(e) => setCompanyInvoiceDetails({ ...companyInvoiceDetails, companyAddress: e.target.value })}
-                      className="w-full bg-gray-50 border border-gray-200 rounded-md p-2.5 text-xs font-semibold focus:outline-none focus:border-blue-500 text-gray-800"
-                    />
-                  </div>
-                )}
-
-                <label className="flex items-center gap-2 text-xs font-semibold text-gray-700 cursor-pointer hover:text-gray-900 select-none">
-                  <input
-                    type="checkbox"
-                    checked={specialRequests.otherRequest}
-                    onChange={(e) => setSpecialRequests({ ...specialRequests, otherRequest: e.target.checked })}
-                    className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-0 cursor-pointer"
-                  />
-                  <span>Yêu cầu giao nhận hàng đặc biệt khác</span>
-                </label>
-
-                {specialRequests.otherRequest && (
-                  <div className="ml-6 animate-in slide-in-from-top-2 duration-150">
-                    <textarea
-                      placeholder="Ví dụ: Giao ngoài giờ hành chính, gọi trước khi đến..."
-                      value={otherRequestText}
-                      onChange={(e) => setOtherRequestText(e.target.value)}
-                      rows="2"
-                      className="w-full bg-gray-50 border border-gray-200 rounded-md p-2.5 text-xs font-semibold focus:outline-none focus:border-blue-500 resize-none text-gray-800"
-                    ></textarea>
-                  </div>
-                )}
-              </div>
-            </div>
+            <CartSpecialRequests
+              specialRequests={specialRequests}
+              setSpecialRequests={setSpecialRequests}
+              companyInvoiceDetails={companyInvoiceDetails}
+              setCompanyInvoiceDetails={setCompanyInvoiceDetails}
+              otherRequestText={otherRequestText}
+              setOtherRequestText={setOtherRequestText}
+            />
 
             {/* Cards 5-8: Payment & Checkout Summary */}
             <CartSummaryPayment
@@ -986,6 +1028,12 @@ export default function CartPage() {
               deliveryMethod={deliveryMethod}
               shippingFee={shippingFee}
               shippingEstimatedDays={shippingEstimatedDays}
+              shippingOptions={shippingOptions}
+              onSelectShippingOption={(option) => {
+                setShippingFee(Number(option.fee || option.Fee || 0));
+                setShippingCarrier(option.carrier || option.Carrier || '');
+                setShippingEstimatedDays(option.estimatedDeliveryDays || option.EstimatedDeliveryDays || '');
+              }}
               finalTotalPay={finalTotalPay}
               paymentMethod={paymentMethod}
               setPaymentMethod={setPaymentMethod}

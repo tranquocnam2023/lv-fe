@@ -80,6 +80,9 @@ export default function OrderDetailsModal({ order, onClose, onShipWithAhamove })
               <p className="text-admin-text-muted font-bold text-xs">
                 Địa chỉ giao: <span className="text-admin-text-main font-medium block mt-1 leading-relaxed">{order.shippingAddress}</span>
               </p>
+              <p className="text-admin-text-muted font-bold text-xs mt-2">
+                Đơn vị vận chuyển: <span className="text-admin-text-main font-semibold ml-1">{order.shippingCarrier || 'Không xác định'}</span>
+              </p>
               {order.deliveryLatitude && order.deliveryLongitude && (
                 <p className="text-admin-text-muted font-bold text-xs">
                   Tọa độ giao hàng: <span className="text-admin-text-main font-semibold ml-1">{order.deliveryLatitude.toFixed(6)}, {order.deliveryLongitude.toFixed(6)}</span>
@@ -250,7 +253,7 @@ export default function OrderDetailsModal({ order, onClose, onShipWithAhamove })
 
         {/* Footer */}
         <div className="flex justify-end gap-3 px-6 py-4 bg-admin-bg border-t border-admin-border flex-shrink-0">
-          {(order.status === 'confirmed' || order.status === 'preparing') && order.deliveryLatitude && order.deliveryLongitude && !order.ahamoveOrderId && (
+          {(order.status === 'confirmed' || order.status === 'preparing') && order.deliveryLatitude && order.deliveryLongitude && !order.ahamoveOrderId && order.shippingCarrier && order.shippingCarrier.toLowerCase().includes('ahamove') && (
             <button
               onClick={() => onShipWithAhamove(order.id)}
               className="px-5 py-2.5 bg-primary text-white rounded-md font-bold hover:bg-primary/90 transition-colors text-xs cursor-pointer shadow-sm animate-pulse"

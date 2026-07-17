@@ -18,6 +18,8 @@ export default function CartSummaryPayment({
   deliveryMethod,
   shippingFee,
   shippingEstimatedDays,
+  shippingOptions,
+  onSelectShippingOption,
   finalTotalPay,
   paymentMethod,
   setPaymentMethod,
@@ -36,6 +38,44 @@ export default function CartSummaryPayment({
           onApplyPromotion={onApplyPromotion}
         />
       </div>
+
+      {/* Shipping Options (If more than 1 option is available) */}
+      {deliveryMethod === 'ship' && shippingOptions && shippingOptions.length > 0 && (
+        <div className="bg-white rounded-md border border-gray-100 p-4 space-y-3">
+          <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider">Đơn vị vận chuyển</h3>
+          <div className="space-y-2">
+            {shippingOptions.map((option, idx) => {
+              const carrier = option.carrier || option.Carrier;
+              const fee = Number(option.fee || option.Fee || 0);
+              const isSelected = shippingCarrier === carrier;
+              const estimatedDays = option.estimatedDeliveryDays || option.EstimatedDeliveryDays;
+              
+              return (
+                <label key={idx} className={`flex items-center gap-3 p-3 border rounded-md transition cursor-pointer select-none ${
+                  isSelected ? 'border-blue-500 bg-blue-50/20' : 'border-gray-200 hover:border-gray-300'
+                }`}>
+                  <input
+                    type="radio"
+                    name="shippingOption"
+                    checked={isSelected}
+                    onChange={() => onSelectShippingOption(option)}
+                    className="w-4 h-4 text-blue-600 border-gray-300 focus:ring-0 cursor-pointer"
+                  />
+                  <div className="text-xs flex-1">
+                    <p className="font-bold text-gray-800">{carrier}</p>
+                    {estimatedDays && (
+                      <p className="text-[10px] text-gray-400">Giao hàng dự kiến: {estimatedDays}</p>
+                    )}
+                  </div>
+                  <div className="text-right shrink-0">
+                    <p className="text-xs font-bold text-red-600">{fee.toLocaleString('vi-VN')}₫</p>
+                  </div>
+                </label>
+              );
+            })}
+          </div>
+        </div>
+      )}
 
       {/* Payment Methods */}
       <div className="bg-white rounded-md border border-gray-100 p-4 space-y-3">

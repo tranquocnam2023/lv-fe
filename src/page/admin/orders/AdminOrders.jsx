@@ -103,7 +103,8 @@ export default function AdminOrders() {
                 ahamoveOrderId: order.ahamoveOrderId || null,
                 ahamoveStatus: order.ahamoveStatus || null,
                 ahamoveSharedLink: order.ahamoveSharedLink || null,
-                actualShippingFee: order.actualShippingFee || 0
+                actualShippingFee: order.actualShippingFee || 0,
+                shippingCarrier: order.shippingCarrier || null
               };
             });
             console.log("AdminOrders: Mapped orders:", mappedOrders);
@@ -513,7 +514,7 @@ export default function AdminOrders() {
                         {/* Nút hành động vận chuyển */}
                         {(order.status === 'confirmed' || order.status === 'preparing') && (
                           <div className="flex gap-1.5 items-center">
-                            {order.deliveryLatitude && order.deliveryLongitude ? (
+                            {order.deliveryLatitude && order.deliveryLongitude && order.shippingCarrier && order.shippingCarrier.toLowerCase().includes('ahamove') ? (
                               <button
                                 onClick={() => handleShipWithAhamove(order.id)}
                                 className="text-[10px] font-extrabold text-white bg-primary hover:bg-primary/90 px-2 py-1 rounded-md transition-all active:scale-95 whitespace-nowrap shadow-sm"
