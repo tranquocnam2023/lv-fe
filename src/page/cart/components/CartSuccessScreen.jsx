@@ -41,13 +41,12 @@ export default function CartSuccessScreen({
             Thanh toán trực tuyến qua Stripe
           </p>
           <div className="text-xs text-gray-700 space-y-1.5 font-semibold">
-            <p>Trạng thái cổng thanh toán: <strong className="text-green-600 font-bold">Hoạt động</strong></p>
             <p>Số tiền thanh toán: <strong className="text-red-600 font-extrabold text-sm">{finalTotalPay.toLocaleString('vi-VN')}₫</strong></p>
             <p className="text-[10px] text-gray-400 italic font-medium pt-1">Hệ thống đang chuyển hướng bạn tới trang thanh toán bảo mật của Stripe...</p>
           </div>
         </div>
       )}
-
+       
       {paymentMethod === 'momo' && (
         <div className="w-full bg-gray-50 rounded-md p-5 border border-gray-150 mb-8 text-left space-y-3">
           <p className="text-xs font-bold text-[#A50064] uppercase tracking-widest flex items-center gap-1.5">

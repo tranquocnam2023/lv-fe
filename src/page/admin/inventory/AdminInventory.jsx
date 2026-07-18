@@ -27,14 +27,14 @@ export default function AdminInventory() {
   const [txHistory, setTxHistory] = useState([]);
   const [brands, setBrands] = useState([]);
   const [stockHistory, setStockHistory] = useState([]);
-  const [viewMode, setViewMode] = useState('TRANSACTIONS'); // 'TRANSACTIONS' or 'STOCK'
+  //const [viewMode, setViewMode] = useState('TRANSACTIONS'); //MẶC ĐỊNH HIỆN BẢNG: 'TRANSACTIONS' (Lịch sử giao dịch)
+  const [viewMode, setViewMode] = useState('STOCK'); // MẶC ĐỊNH HIỆN BẢNG: 'STOCK' (Tồn kho chi tiết)
   const [stockBrandFilter, setStockBrandFilter] = useState('ALL');
   const [categories, setCategories] = useState([]);
   const [stockCategoryFilter, setStockCategoryFilter] = useState('ALL');
   const [stockStatusFilter, setStockStatusFilter] = useState('ALL'); // 'ALL', 'IN_STOCK', 'LOW_STOCK', 'OUT_OF_STOCK'
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-
   const [searchParams, setSearchParams] = useSearchParams();
   const urlProductId = searchParams.get('productId');
   const urlAction = searchParams.get('action');

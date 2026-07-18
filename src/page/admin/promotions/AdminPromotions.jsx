@@ -289,30 +289,45 @@ export default function AdminPromotions() {
                   />
                 </div>
 
-                <div>
+                <div className="relative group">
                   <label className="block text-sm font-bold text-admin-text-main mb-2">Loại giảm giá *</label>
                   <select
-                    className="w-full px-4 py-3 border border-admin-border rounded-md focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all font-semibold text-admin-text-main"
+                    // disabled={!!editingPromotion} // KHÓA CHỈNH SỬA 
+                    className="w-full px-4 py-3 border border-admin-border rounded-md focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all font-semibold text-admin-text-main disabled:bg-gray-100 disabled:text-gray-400 disabled:cursor-not-allowed"
                     value={formData.discountType}
                     onChange={(e) => setFormData({ ...formData, discountType: e.target.value, discountValue: e.target.value === 'PERCENTAGE' ? Math.min(100, formData.discountValue) : formData.discountValue })}
                   >
                     <option value="PERCENTAGE">Giảm theo phần trăm (%)</option>
                     <option value="FIXED_AMOUNT">Giảm số tiền cố định (₫)</option>
                   </select>
+                  {/* RÀNG BUỘC HIỆN HOVERBOX KHI EDIT  */}
+                  {/* {editingPromotion && (
+                    <div className="absolute hidden group-hover:block bg-gray-800 text-white text-xs font-semibold rounded py-1 px-2.5 -top-8 left-0 z-50 shadow-md whitespace-nowrap">
+                      Không thể thay đổi loại giảm giá sau khi đã tạo
+                    </div>
+                  )} */}
                 </div>
 
-                <div>
+                <div className="relative group">
                   <label className="block text-sm font-bold text-admin-text-main mb-2">Giá trị giảm *</label>
                   <input
                     type="number"
                     required
                     min={1}
+                    //GIỚI HẠN % : TIỀN MÃ GIẢM GIÁ
                     max={formData.discountType === 'PERCENTAGE' ? 100 : 99999999}
-                    className="w-full px-4 py-3 border border-admin-border rounded-md focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all font-bold text-admin-text-main"
+                    // disabled={!!editingPromotion} // RÀNG BUỘC CHỈNH SỬA 
+                    className="w-full px-4 py-3 border border-admin-border rounded-md focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all font-bold text-admin-text-main disabled:bg-gray-100 disabled:text-gray-400 disabled:cursor-not-allowed"
                     placeholder={formData.discountType === 'PERCENTAGE' ? "Nhập % (1-100)" : "Nhập số tiền giảm"}
                     value={formData.discountValue}
                     onChange={(e) => setFormData({ ...formData, discountValue: Number(e.target.value) })}
                   />
+                  {/* RÀNG BUỘC HIỆN HOVERBOX KHI EDIT  */}
+                  {/* {editingPromotion && (
+                    <div className="absolute hidden group-hover:block bg-gray-800 text-white text-xs font-semibold rounded py-1 px-2.5 -top-8 left-0 z-50 shadow-md whitespace-nowrap">
+                      Không thể thay đổi giá trị giảm sau khi đã tạo
+                    </div>
+                  )} */}
                 </div>
 
                 <div>
@@ -338,7 +353,7 @@ export default function AdminPromotions() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-bold text-admin-text-main mb-2">Giới hạn số lần dùng (0 = vô hạn)</label>
+                  <label className="block text-sm font-bold text-admin-text-main mb-2">Giới hạn số tài khoản dùng (0 = vô hạn)</label>
                   <input
                     type="number"
                     min={0}

@@ -160,33 +160,33 @@ export default function CartPage() {
         longitude: formData.deliveryLongitude,
         addressLine: formData.streetAddress
       })
-      .then(res => {
-        if (res) {
-          const options = res.options || res.Options || [];
-          setShippingOptions(options);
+        .then(res => {
+          if (res) {
+            const options = res.options || res.Options || [];
+            setShippingOptions(options);
 
-          if (options.length > 0) {
-            // Mặc định chọn phương thức rẻ nhất (thường là Giao Hàng Tiêu Chuẩn) để không làm khách hoảng vì phí ship cao
-            const cheapestOption = [...options].sort((a, b) => (Number(a.fee || a.Fee || 0)) - (Number(b.fee || b.Fee || 0)))[0];
-            setShippingFee(Number(cheapestOption.fee || cheapestOption.Fee || 0));
-            setShippingCarrier(cheapestOption.carrier || cheapestOption.Carrier || '');
-            setShippingEstimatedDays(cheapestOption.estimatedDeliveryDays || cheapestOption.EstimatedDeliveryDays || '');
-          } else {
-            setShippingFee(Number(res.fee || res.Fee || 0));
-            setShippingCarrier(res.carrier || res.Carrier || 'Giao Hàng Nhanh (GHN)');
-            setShippingEstimatedDays(res.estimatedDeliveryDays || res.EstimatedDeliveryDays || '2-3 ngày');
+            if (options.length > 0) {
+              // Mặc định chọn phương thức rẻ nhất (thường là Giao Hàng Tiêu Chuẩn) để không làm khách hoảng vì phí ship cao
+              const cheapestOption = [...options].sort((a, b) => (Number(a.fee || a.Fee || 0)) - (Number(b.fee || b.Fee || 0)))[0];
+              setShippingFee(Number(cheapestOption.fee || cheapestOption.Fee || 0));
+              setShippingCarrier(cheapestOption.carrier || cheapestOption.Carrier || '');
+              setShippingEstimatedDays(cheapestOption.estimatedDeliveryDays || cheapestOption.EstimatedDeliveryDays || '');
+            } else {
+              setShippingFee(Number(res.fee || res.Fee || 0));
+              setShippingCarrier(res.carrier || res.Carrier || 'Giao Hàng Nhanh (GHN)');
+              setShippingEstimatedDays(res.estimatedDeliveryDays || res.EstimatedDeliveryDays || '2-3 ngày');
+            }
           }
-        }
-      })
-      .catch(err => {
-        console.error("Lỗi tính phí vận chuyển:", err);
-        setShippingFee(25000); // fallback
-        setShippingCarrier('Giao Hàng Nhanh (GHN)');
-        setShippingEstimatedDays('3-5 ngày');
-      })
-      .finally(() => {
-        setShippingLoading(false);
-      });
+        })
+        .catch(err => {
+          console.error("Lỗi tính phí vận chuyển:", err);
+          setShippingFee(25000); // fallback
+          setShippingCarrier('Giao Hàng Nhanh (GHN)');
+          setShippingEstimatedDays('3-5 ngày');
+        })
+        .finally(() => {
+          setShippingLoading(false);
+        });
     } else {
       setShippingFee(0);
       setShippingCarrier('');
@@ -246,12 +246,12 @@ export default function CartPage() {
     if (wards.length > 0 && pendingWardName) {
       const cleanNameStr = (str) => String(str).toLowerCase().replace(/^(phường|xã|thị trấn|p\.?)\s+/i, '').trim();
       const targetName = cleanNameStr(pendingWardName);
-      
+
       const matchedWard = wards.find(w => {
         const wName = cleanNameStr(w.fullName || w.name);
         return wName === targetName || wName.includes(targetName) || targetName.includes(wName);
       });
-      
+
       if (matchedWard) {
         setModalWardId(matchedWard.id);
         setModalWard(matchedWard.fullName || matchedWard.name);
@@ -262,7 +262,7 @@ export default function CartPage() {
 
   const handleSelectGoongAddress = (locationData) => {
     const { formattedAddress, lat, lng, compound } = locationData;
-    
+
     setModalLatitude(lat);
     setModalLongitude(lng);
 
@@ -275,12 +275,12 @@ export default function CartPage() {
           const pName = cleanProvinceStr(p.fullName || p.name);
           return pName.includes(goongProvName) || goongProvName.includes(pName);
         });
-        
+
         if (matchedProv) {
           // Chỉ đổi tỉnh (và reset phường/xã) nếu tỉnh mới khác tỉnh đang chọn
           if (String(matchedProv.id) !== String(selectedProvinceId)) {
             handleProvinceChange(matchedProv.id);
-            
+
             // 2. Lưu lại tên phường/xã để so khớp khi API tải xong wards của tỉnh mới
             if (compound.commune) {
               setPendingWardName(compound.commune);
@@ -568,7 +568,7 @@ export default function CartPage() {
         longitude: modalLongitude,
         isDefault: userAddresses.length === 0
       };
-      
+
       shippingInfoService.create(newAddrPayload)
         .then(() => {
           shippingInfoService.getAll().then(res => {
@@ -813,7 +813,7 @@ export default function CartPage() {
                   console.error("Lỗi parse attributes:", e);
                 }
               }
-              
+
               if (Object.keys(parsedAttrs).length === 0 && v.name.includes(' - ')) {
                 const parts = v.name.split(' - ');
                 if (parts.length > 1) {
@@ -829,18 +829,18 @@ export default function CartPage() {
                 return String(str).toLowerCase().replace(/[\s-]/g, '');
               };
 
-              const colorMatch = !item.selectedColor || 
-                Object.entries(parsedAttrs).some(([k, val]) => 
-                  (k.toLowerCase().includes('màu') || k.toLowerCase().includes('color')) && 
+              const colorMatch = !item.selectedColor ||
+                Object.entries(parsedAttrs).some(([k, val]) =>
+                  (k.toLowerCase().includes('màu') || k.toLowerCase().includes('color')) &&
                   cleanString(val) === cleanString(item.selectedColor)
-                ) || 
+                ) ||
                 cleanString(v.name).includes(cleanString(item.selectedColor));
 
-              const storageMatch = !item.selectedStorage || 
-                Object.entries(parsedAttrs).some(([k, val]) => 
-                  (k.toLowerCase().includes('dung lượng') || k.toLowerCase().includes('bộ nhớ') || k.toLowerCase().includes('ram') || k.toLowerCase().includes('rom') || k.toLowerCase().includes('storage')) && 
+              const storageMatch = !item.selectedStorage ||
+                Object.entries(parsedAttrs).some(([k, val]) =>
+                  (k.toLowerCase().includes('dung lượng') || k.toLowerCase().includes('bộ nhớ') || k.toLowerCase().includes('ram') || k.toLowerCase().includes('rom') || k.toLowerCase().includes('storage')) &&
                   cleanString(val) === cleanString(item.selectedStorage)
-                ) || 
+                ) ||
                 cleanString(v.name).includes(cleanString(item.selectedStorage));
 
               return colorMatch && storageMatch;
@@ -895,6 +895,17 @@ export default function CartPage() {
           alert("Đơn hàng đã được tạo thành công! Tuy nhiên, không thể kết nối tới cổng thanh toán trực tuyến. Quý khách vui lòng thực hiện chuyển khoản hoặc liên hệ CSKH.");
         }
       }
+
+      //  Truyền dữ liệu thanh toán COD về Server để lưu trong Nhật ký giao dịch thanh toán
+      /*
+      if (paymentMethod === 'cod') {
+        try {
+          await api.post(`/Payment/create-checkout-session/${newOrderId}?provider=cod`);
+        } catch (payErr) {
+          console.error("Lỗi gửi thông tin giao dịch COD:", payErr);
+        }
+      }
+      */
 
       setIsFinished(true);
     } catch (err) {

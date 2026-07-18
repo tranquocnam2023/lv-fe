@@ -123,6 +123,8 @@ export default function AdminPayments() {
         return 'bg-indigo-50 text-indigo-600 border border-indigo-100 dark:bg-indigo-900/20 dark:text-indigo-400 dark:border-indigo-800/30';
       case 'momo':
         return 'bg-pink-50 text-pink-600 border border-pink-100 dark:bg-pink-900/20 dark:text-pink-400 dark:border-pink-800/30';
+      // case 'cod':
+      //   return 'bg-blue-50 text-blue-600 border border-blue-100 dark:bg-blue-900/20 dark:text-blue-400 dark:border-blue-800/30';
       default:
         return 'bg-gray-50 text-gray-600 border border-gray-100 dark:bg-gray-800/30 dark:text-gray-400 dark:border-gray-700/30';
     }
@@ -132,6 +134,7 @@ export default function AdminPayments() {
     switch (provider?.toLowerCase()) {
       case 'stripe': return 'Stripe Card';
       case 'momo': return 'Ví MoMo';
+      // case 'cod': return 'Thanh toán khi nhận hàng';
       default: return provider;
     }
   };
@@ -247,6 +250,7 @@ export default function AdminPayments() {
               <option value="all">Tất cả</option>
               <option value="stripe">Stripe Card</option>
               <option value="momo">Ví MoMo</option>
+              {/* <option value="cod">Thanh toán khi nhận hàng</option> */}
             </select>
           </div>
         </div>
