@@ -36,10 +36,17 @@ export default function CartItemsList({ cartItems, updateQuantity, removeFromCar
           const renderItem = (item) => (
             <div key={item.cartId} className="flex gap-4 py-4 first:pt-0 last:pb-0">
               {/* Image */}
-              <div className="w-16 h-16 bg-white p-1 border border-gray-100 rounded-md shrink-0 flex justify-center items-center">
-                <img src={item.image} alt={item.name} className="max-w-full max-h-full object-contain" />
+              <div className="w-16 h-16 bg-white p-1 border border-gray-100 rounded-md shrink-0 flex justify-center items-center overflow-hidden">
+                {(item.image || item.thumbnailImage || item.mainImage) ? (
+                  <img
+                    src={item.image || item.thumbnailImage || item.mainImage}
+                    alt={item.name || 'Sản phẩm'}
+                    className="max-w-full max-h-full object-contain"
+                  />
+                ) : (
+                  <ShoppingBag size={24} className="text-gray-300" />
+                )}
               </div>
-
               {/* Info */}
               <div className="flex-1 min-w-0 flex flex-col justify-between">
                 <div>
@@ -59,6 +66,12 @@ export default function CartItemsList({ cartItems, updateQuantity, removeFromCar
                           {(item.originalPrice * item.quantity).toLocaleString('vi-VN')}₫
                         </p>
                       )}
+                      {/* cưa đôi giá gốc trên trang giỏ hàng
+                      {item.originalPrice && (
+                        <p className="text-[10px] text-gray-400 line-through font-semibold">
+                          {((item.originalPrice/2) * item.quantity).toLocaleString('vi-VN')}₫
+                        </p>
+                      )}*/}
                     </div>
                   </div>
                   {item.selectedAttributes && Object.keys(item.selectedAttributes).length > 0 ? (
@@ -144,8 +157,15 @@ export default function CartItemsList({ cartItems, updateQuantity, removeFromCar
         )}
         <div className="flex justify-between items-center text-xs">
           <span className="text-gray-400 font-bold">Tạm tính:</span>
-          <span className="font-black text-gray-900 text-[15px]">{cartTotal.toLocaleString('vi-VN')}₫</span>
+          <span className="font-black text-gray-900 text-[15px]">{cartTotal.toLocaleString('vi-VN')}₫</span>         
         </div>
+        {/*tạm tính chia đôi*/}
+        {/*
+        <div className="flex justify-between items-center text-xs">
+          <span className="text-gray-400 font-bold">Tạm tính:</span>
+          <span className="font-black text-gray-900 text-[15px]">{(cartTotal / 2).toLocaleString('vi-VN')}₫</span>
+        </div>
+        */}
       </div>
     </div>
   );

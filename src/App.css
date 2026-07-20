@@ -7,7 +7,7 @@
   /* Brand & Status Colors */
   --primary: rgb(21, 36, 208);
   --primary-soft: rgba(21, 36, 208, 0.12);
-  --secondary: rgb(29, 58, 226);
+  --secondary: rgb(29, 141, 226);
   --success: rgb(0, 219, 146);
   --warning: rgb(255, 139, 56);
   --danger: rgb(255, 61, 84);
@@ -48,7 +48,7 @@
   /* Brand & Status Colors */
   --primary: #152bd0;
   --primary-soft: rgba(167, 139, 250, 0.12);
-  --secondary: #2b45cc; 
+  --secondary: #2b7ecc; 
   --success: rgb(0, 230, 153);
   --warning: rgb(255, 151, 77);
   --danger: rgb(255, 77, 97);

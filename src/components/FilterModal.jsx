@@ -1,3 +1,4 @@
+//Modal lọc sản phẩm
 import React, { useState, useEffect } from 'react';
 import { X } from 'lucide-react';
 import Slider from 'rc-slider';

@@ -49,76 +49,76 @@ export const CartProvider = ({ children }) => {
     // 1. Explode items (Tách tất cả ra thành số lượng 1 để dễ ghép cặp)
     let exploded = [];
     items.forEach(item => {
-        for(let i = 0; i < item.quantity; i++) {
-            const basePrice = item.originalBasePrice || item.price;
-            exploded.push({ 
-                ...item, 
-                quantity: 1, 
-                appliedComboId: null, 
-                comboPrice: null,
-                price: basePrice,
-                originalBasePrice: basePrice
-            });
-        }
+      for (let i = 0; i < item.quantity; i++) {
+        const basePrice = item.originalBasePrice || item.price;
+        exploded.push({
+          ...item,
+          quantity: 1,
+          appliedComboId: null,
+          comboPrice: null,
+          price: basePrice,
+          originalBasePrice: basePrice
+        });
+      }
     });
 
     // 2. Thuật toán ghép Combo
     for (const combo of combosList) {
-        const mainDef = combo.items?.find(i => i.isMain);
-        const accDefs = combo.items?.filter(i => !i.isMain) || [];
-        if (!mainDef) continue;
+      const mainDef = combo.items?.find(i => i.isMain);
+      const accDefs = combo.items?.filter(i => !i.isMain) || [];
+      if (!mainDef) continue;
 
-        let availableMains = exploded.filter(i => i.id === mainDef.productId && !i.appliedComboId);
-        
-        for (const mainItem of availableMains) {
-            let comboApplied = false;
-            
-            for (const accDef of accDefs) {
-                const unappliedAccs = exploded.filter(i => i.id === accDef.productId && !i.appliedComboId);
-                const accsToApply = unappliedAccs.slice(0, 5); // Tối đa 5 phụ kiện mỗi loại cho 1 sản phẩm chính
-                
-                for (const accItem of accsToApply) {
-                    accItem.appliedComboId = combo.id;
-                    let cPrice = accItem.originalBasePrice;
-                    if (accDef.discountType === 'Percentage') {
-                        cPrice = cPrice * (1 - accDef.discountValue / 100);
-                    } else if (accDef.discountType === 'Fixed') {
-                        cPrice = Math.max(0, cPrice - accDef.discountValue);
-                    }
-                    accItem.comboPrice = cPrice;
-                    accItem.price = cPrice;
-                    comboApplied = true;
-                }
+      let availableMains = exploded.filter(i => i.id === mainDef.productId && !i.appliedComboId);
+
+      for (const mainItem of availableMains) {
+        let comboApplied = false;
+
+        for (const accDef of accDefs) {
+          const unappliedAccs = exploded.filter(i => i.id === accDef.productId && !i.appliedComboId);
+          const accsToApply = unappliedAccs.slice(0, 5); // Tối đa 5 phụ kiện mỗi loại cho 1 sản phẩm chính
+
+          for (const accItem of accsToApply) {
+            accItem.appliedComboId = combo.id;
+            let cPrice = accItem.originalBasePrice;
+            if (accDef.discountType === 'Percentage') {
+              cPrice = cPrice * (1 - accDef.discountValue / 100);
+            } else if (accDef.discountType === 'Fixed') {
+              cPrice = Math.max(0, cPrice - accDef.discountValue);
             }
-            
-            if (comboApplied) {
-                mainItem.appliedComboId = combo.id;
-                mainItem.isComboMain = true;
-                let mPrice = mainItem.originalBasePrice;
-                if (mainDef.discountType === 'Percentage') {
-                    mPrice = mPrice * (1 - mainDef.discountValue / 100);
-                } else if (mainDef.discountType === 'Fixed') {
-                    mPrice = Math.max(0, mPrice - mainDef.discountValue);
-                }
-                mainItem.comboPrice = mPrice;
-                mainItem.price = mPrice;
-            }
+            accItem.comboPrice = cPrice;
+            accItem.price = cPrice;
+            comboApplied = true;
+          }
         }
+
+        if (comboApplied) {
+          mainItem.appliedComboId = combo.id;
+          mainItem.isComboMain = true;
+          let mPrice = mainItem.originalBasePrice;
+          if (mainDef.discountType === 'Percentage') {
+            mPrice = mPrice * (1 - mainDef.discountValue / 100);
+          } else if (mainDef.discountType === 'Fixed') {
+            mPrice = Math.max(0, mPrice - mainDef.discountValue);
+          }
+          mainItem.comboPrice = mPrice;
+          mainItem.price = mPrice;
+        }
+      }
     }
 
     // 3. Regroup items (Gộp lại những món giống nhau)
     let regrouped = [];
     exploded.forEach(item => {
-        const cartId = item.appliedComboId 
-            ? `combo-${item.appliedComboId}-${item.id}-${item.selectedStorage || ''}-${item.selectedColor || ''}`
-            : `${item.id}-${item.selectedStorage || ''}-${item.selectedColor || ''}`;
-            
-        const existing = regrouped.find(i => i.cartId === cartId);
-        if (existing) {
-            existing.quantity += 1;
-        } else {
-            regrouped.push({ ...item, cartId });
-        }
+      const cartId = item.appliedComboId
+        ? `combo-${item.appliedComboId}-${item.id}-${item.selectedStorage || ''}-${item.selectedColor || ''}`
+        : `${item.id}-${item.selectedStorage || ''}-${item.selectedColor || ''}`;
+
+      const existing = regrouped.find(i => i.cartId === cartId);
+      if (existing) {
+        existing.quantity += 1;
+      } else {
+        regrouped.push({ ...item, cartId });
+      }
     });
 
     return regrouped;
@@ -128,17 +128,17 @@ export const CartProvider = ({ children }) => {
     setCartItems((prevItems) => {
       // Create a temporary base item
       const tempId = `temp-${Date.now()}`;
-      const newItem = { 
-        ...product, 
-        quantity, 
-        cartId: tempId, 
-        originalBasePrice: product.originalBasePrice || product.price 
+      const newItem = {
+        ...product,
+        quantity,
+        cartId: tempId,
+        originalBasePrice: product.originalBasePrice || product.price
       };
-      
+
       const newItemsList = [...prevItems, newItem];
       return autoGroupCombos(newItemsList, activeCombos);
     });
-    
+
     showToast(`Đã thêm "${product.name}" vào giỏ hàng thành công!`);
   };
 

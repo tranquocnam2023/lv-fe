@@ -1,3 +1,4 @@
+//quản lý chọn mã giảm giá
 import React, { useState, useEffect } from 'react';
 import { Tag, ChevronDown, ChevronUp, X, CheckCircle2, AlertCircle, Gift } from 'lucide-react';
 import { promotionService } from '../services/promotionService';

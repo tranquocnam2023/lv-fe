@@ -1,3 +1,4 @@
+//So sánh sản phẩm
 import React, { useState, useEffect } from 'react';
 import { X, GitCompare, ShoppingCart, Trash2, ArrowRight } from 'lucide-react';
 

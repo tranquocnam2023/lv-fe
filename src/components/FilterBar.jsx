@@ -1,3 +1,4 @@
+// thanh lọc giá sản phẩm
 import React, { useState, useEffect } from 'react';
 import { Filter, X } from 'lucide-react';
 import FilterModal from './FilterModal';

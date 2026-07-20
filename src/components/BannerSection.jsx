@@ -1,3 +1,4 @@
+//Quản lý quảng cáo
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { bannerService } from '../services/bannerService';
@@ -7,7 +8,7 @@ import bannerLeft from '../assets/banner-left.png';
 import bannerRight from '../assets/banner-right.png';
 
 // Banner ngang trên cùng 
-import topBannerImg from '../assets/top-banner.png'; 
+import topBannerImg from '../assets/top-banner.png';
 // Banner cho Slider trượt
 import banner1 from '../assets/banner-1.jpg';
 import banner2 from '../assets/banner-2.png';
@@ -16,7 +17,7 @@ import banner4 from '../assets/banner-4.webp';
 import banner5 from '../assets/banner-5.png';
 import banner6 from '../assets/banner-6.png';
 
-// Tạo danh sách banner mặc định tĩnh để fallback
+// Tạo danh sách banner mặc định tĩnh để fallback khi tải không được
 const DEFAULT_BANNERS = [
   { id: 's1', imageUrl: banner1, linkUrl: '/khuyen-mai-1', type: 'Slider', isActive: true, position: 0 },
   { id: 's2', imageUrl: banner2, linkUrl: '/khuyen-mai-2', type: 'Slider', isActive: true, position: 1 },

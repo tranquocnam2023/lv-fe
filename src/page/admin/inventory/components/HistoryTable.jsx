@@ -1,4 +1,5 @@
 import React from 'react';
+import { Package, Eye } from 'lucide-react';
 
 export default function HistoryTable({
   loading,
@@ -7,6 +8,7 @@ export default function HistoryTable({
   formatCurrency,
   handleRevertTransaction,
   setSelectedTxGroup,
+  setSelectedStockProduct,
   viewMode = 'TRANSACTIONS'
 }) {
   const isStockMode = viewMode === 'STOCK';
@@ -18,16 +20,13 @@ export default function HistoryTable({
           <tr className="border-b border-admin-border text-admin-text-muted text-[11px] font-bold uppercase tracking-wider">
             {isStockMode ? (
               <>
-                <th className="pb-3 px-4">ID Sản phẩm</th>
-                {/* <th className="pb-3 px-4">Mã giao dịch</th> */}
-                <th className="pb-3 px-4">Ngày nhận</th>
+                <th className="pb-3 px-4">ID</th>
                 <th className="pb-3 px-4">Sản phẩm</th>
-
-                <th className="pb-3 px-4 text-center">Đơn vị</th>
-                <th className="pb-3 px-4 text-center">SL Nhập</th>
-                <th className="pb-3 px-4 text-center">SL Tồn</th>
-                <th className="pb-3 px-4 text-right">Đơn giá</th>
+                <th className="pb-3 px-4">Thương hiệu / Danh mục</th>
+                <th className="pb-3 px-4 text-center">Tổng SL Nhập</th>
+                <th className="pb-3 px-4 text-center">Tổng SL Tồn</th>
                 <th className="pb-3 px-4 text-right">Tổng giá trị tồn</th>
+                <th className="pb-3 px-4 text-center">Chi tiết</th>
               </>
             ) : (
               <>
@@ -60,30 +59,67 @@ export default function HistoryTable({
           ) : paginatedHistory.length > 0 ? (
             paginatedHistory.map((item) => {
               if (isStockMode) {
-                const formattedDate = new Date(item.receivedDate).toLocaleString('vi-VN');
-                const lotCode = `#LOT${item.inventoryDetailId}`;
-                const importCode = item.receivingDetailId ? `#ORD${item.receivingDetailId}` : 'Điều chỉnh';
-                const totalValue = item.price * item.quantityRemaining;
+                const totalRem = item.totalQuantityRemaining || 0;
+                const variantCount = item.variants ? item.variants.length : 0;
+                const catName = (item.categoryName || '').toLowerCase();
+                const prodName = (item.productName || '').toLowerCase();
+                
+                // Kiểm tra nếu là Phụ kiện hoặc Sản phẩm đơn (chỉ có 1 biến thể duy nhất)
+                const isAccessory = catName.includes('phụ kiện') || catName.includes('tai nghe') || catName.includes('cáp') || catName.includes('sạc') || catName.includes('ốp') || catName.includes('kính') || prodName.includes('tai nghe') || prodName.includes('sạc') || prodName.includes('ốp') || prodName.includes('kính');
+                const hasMultipleVariants = variantCount > 1 && !isAccessory;
 
                 return (
-                  <tr key={item.inventoryDetailId} className="border-b border-admin-border hover:bg-admin-bg transition-colors">
+                  <tr 
+                    key={item.productId} 
+                    onClick={() => {
+                      if (hasMultipleVariants && setSelectedStockProduct) {
+                        setSelectedStockProduct(item);
+                      }
+                    }}
+                    className={`border-b border-admin-border transition-colors ${hasMultipleVariants ? 'hover:bg-admin-bg/80 cursor-pointer group' : 'hover:bg-gray-50/50'}`}
+                  >
                     <td className="py-3.5 px-4 font-mono font-bold text-xs text-blue-600">#{item.productId}</td>
-                    {/*kết hợp hai mã giao dịch*/ }
-                    {/*<td className="py-3.5 px-4 font-mono text-xs font-bold text-blue-600">{item.transactionCode}-SP{item.productId}</td> */}
-                    <td className="py-3.5 px-4 text-xs text-admin-text-muted">{formattedDate}</td>
                     <td className="py-3.5 px-4 font-bold text-admin-text-main">
-                      {/* Hiển thị tên đầy đủ của biến thể nếu có (ví dụ: Samsung S25 Ultra - 16GB/1TB - Trắng) */}
-                      {/* Đối với sản phẩm đơn giản hoặc phụ kiện không có biến thể thực tế (tên biến thể là 'Tiêu chuẩn' hoặc 'Mặc định'), chỉ hiển thị tên sản phẩm */}
-                      {item.variantName && item.variantName !== 'Tiêu chuẩn' && item.variantName !== 'Mặc định'
-                        ? item.variantName
-                        : item.productName}
+                      <div className="flex flex-col">
+                        <span className={`${hasMultipleVariants ? 'group-hover:text-primary' : ''} transition-colors text-sm`}>{item.productName}</span>
+                        {hasMultipleVariants && (
+                          <span className="text-[11px] font-semibold text-gray-400 mt-0.5">
+                            Gồm {variantCount} biến thể & lô hàng
+                          </span>
+                        )}
+                      </div>
                     </td>
-
-                    <td className="py-3.5 px-4 text-center font-semibold text-admin-text-main">{item.unit || 'Cái'}</td>
-                    <td className="py-3.5 px-4 text-center font-bold text-admin-text-main">{item.quantityIn}</td>
-                    <td className="py-3.5 px-4 text-center font-bold text-admin-text-main">{item.quantityRemaining}</td>
-                    <td className="py-3.5 px-4 text-right font-bold text-admin-text-main">{formatCurrency(item.price)}</td>
-                    <td className="py-3.5 px-4 text-right font-bold text-admin-text-main">{formatCurrency(totalValue)}</td>
+                    <td className="py-3.5 px-4 text-xs font-semibold text-admin-text-muted">
+                      <div><b className="text-gray-700">{item.brandName || '---'}</b></div>
+                      <div className="text-[11px] text-gray-400">{item.categoryName || '---'}</div>
+                    </td>
+                    <td className="py-3.5 px-4 text-center font-bold text-admin-text-main">{item.totalQuantityIn}</td>
+                    <td className="py-3.5 px-4 text-center">
+                      <span className={`px-2.5 py-1 rounded-full text-xs font-black inline-block ${
+                        totalRem > 5 ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' :
+                        totalRem > 0 ? 'bg-amber-50 text-amber-700 border border-amber-200' :
+                        'bg-red-50 text-red-600 border border-red-200'
+                      }`}>
+                        {totalRem > 0 ? `Còn ${totalRem} hàng` : 'Hết hàng'}
+                      </span>
+                    </td>
+                    <td className="py-3.5 px-4 text-right font-black text-indigo-600">{formatCurrency(item.totalStockValue)}</td>
+                    <td className="py-3.5 px-4 text-center">
+                      {hasMultipleVariants ? (
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setSelectedStockProduct && setSelectedStockProduct(item);
+                          }}
+                          className="px-3 py-1.5 bg-blue-50 hover:bg-blue-100 text-blue-600 font-bold rounded-lg text-xs transition-all flex items-center justify-center gap-1 mx-auto border border-blue-200 active:scale-95 cursor-pointer"
+                        >
+                          <Eye size={13} />
+                          <span>Xem biến thể</span>
+                        </button>
+                      ) : (
+                        <span className="text-gray-300 font-bold text-xs">-</span>
+                      )}
+                    </td>
                   </tr>
                 );
               }

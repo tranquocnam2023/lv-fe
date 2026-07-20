@@ -14,6 +14,7 @@ import InventoryStats from './components/InventoryStats';
 import HistoryTable from './components/HistoryTable';
 import ImportCsvModal from './components/ImportCsvModal';
 import TransactionModal from './components/TransactionModal';
+import StockProductDetailModal from './components/StockProductDetailModal';
 
 const TRANSACTIONS = [
   { id: 'IMPORT_SUPPLIER', name: 'Nhập từ nhà cung cấp', type: 'IN', bgColor: '#E0E7FF', textColor: 'var(--color-primary)', borderColor: 'var(--color-primary)' },
@@ -51,6 +52,7 @@ export default function AdminInventory() {
   const [searchQuery, setSearchQuery] = useState('');
   const [typeFilter, setTypeFilter] = useState('ALL');
   const [selectedTxGroup, setSelectedTxGroup] = useState(null);
+  const [selectedStockProduct, setSelectedStockProduct] = useState(null);
 
   const { formatCurrency } = useFormat();
 
@@ -177,52 +179,107 @@ export default function AdminInventory() {
     return match;
   });
 
-  // Filter stock list
-  const filteredStock = useMemo(() => {
+  // Group stock list by Product and aggregate stock by ProductVariant
+  const groupedProductStock = useMemo(() => {
     if (!stockHistory || stockHistory.length === 0) return [];
-    return stockHistory.filter(item => {
+
+    const productMap = {};
+
+    stockHistory.forEach(item => {
+      const pId = item.productId;
+      const productInfo = products.find(p => p.id === pId);
+      const brandInfo = brands.find(b => b.id === (productInfo?.brandId || item.brandId));
+      const categoryInfo = categories.find(c => c.id === (productInfo?.categoryId || item.categoryId));
+
+      if (!productMap[pId]) {
+        const baseName = productInfo?.name || item.productName?.split(' - ')[0] || item.productName || `Sản phẩm #${pId}`;
+
+        productMap[pId] = {
+          productId: pId,
+          productName: baseName,
+          productImage: productInfo?.image || productInfo?.thumbnailImage || productInfo?.mainImage,
+          brandName: brandInfo?.name || '---',
+          categoryName: categoryInfo?.name || '---',
+          brandId: productInfo?.brandId || item.brandId,
+          categoryId: productInfo?.categoryId || item.categoryId,
+          totalQuantityIn: 0,
+          totalQuantityRemaining: 0,
+          totalStockValue: 0,
+          variantMap: {}
+        };
+      }
+
+      const grp = productMap[pId];
+      grp.totalQuantityIn += (item.quantityIn || 0);
+      grp.totalQuantityRemaining += (item.quantityRemaining || 0);
+      grp.totalStockValue += ((item.quantityRemaining || 0) * (item.price || 0));
+
+      const vKey = item.variantId || item.productVariantId || item.inventoryDetailId;
+      if (!grp.variantMap[vKey]) {
+        grp.variantMap[vKey] = {
+          variantId: item.variantId || item.productVariantId,
+          variantName: item.variantName,
+          unit: item.unit || 'Cái',
+          price: item.price || 0,
+          quantityIn: 0,
+          quantityRemaining: 0
+        };
+      }
+      grp.variantMap[vKey].quantityIn += (item.quantityIn || 0);
+      grp.variantMap[vKey].quantityRemaining += (item.quantityRemaining || 0);
+    });
+
+    return Object.values(productMap).map(p => ({
+      ...p,
+      variants: Object.values(p.variantMap)
+    }));
+  }, [stockHistory, products, brands, categories]);
+
+  // Filter grouped stock list
+  const filteredGroupedStock = useMemo(() => {
+    if (!groupedProductStock || groupedProductStock.length === 0) return [];
+    return groupedProductStock.filter(prod => {
       // 1. Search Query
       if (searchQuery) {
         const query = searchQuery.toLowerCase();
-        const matchProduct = item.productName?.toLowerCase().includes(query);
-        const matchVariant = item.variantName?.toLowerCase().includes(query);
-        const matchId = String(item.productId).includes(query);
-        const matchCode = item.transactionCode?.toLowerCase().includes(query);
-        if (!matchProduct && !matchVariant && !matchId && !matchCode) {
+        const matchName = prod.productName?.toLowerCase().includes(query);
+        const matchId = String(prod.productId).includes(query);
+        const matchBrand = prod.brandName?.toLowerCase().includes(query);
+        const matchCategory = prod.categoryName?.toLowerCase().includes(query);
+        const matchVariant = prod.variants.some(v => v.variantName?.toLowerCase().includes(query));
+        if (!matchName && !matchId && !matchBrand && !matchCategory && !matchVariant) {
           return false;
         }
       }
 
       // 2. Brand Filter
       if (stockBrandFilter !== 'ALL') {
-        const productInfo = products.find(p => p.id === item.productId);
-        if (!productInfo || String(productInfo.brandId) !== String(stockBrandFilter)) {
+        if (String(prod.brandId) !== String(stockBrandFilter)) {
           return false;
         }
       }
 
       // 3. Category Filter
       if (stockCategoryFilter !== 'ALL') {
-        const productInfo = products.find(p => p.id === item.productId);
-        if (!productInfo || String(productInfo.categoryId) !== String(stockCategoryFilter)) {
+        if (String(prod.categoryId) !== String(stockCategoryFilter)) {
           return false;
         }
       }
 
       // 4. Status Filter
       if (stockStatusFilter === 'IN_STOCK') {
-        if (item.quantityRemaining <= 0) return false;
+        if (prod.totalQuantityRemaining <= 0) return false;
       } else if (stockStatusFilter === 'LOW_STOCK') {
-        if (item.quantityRemaining <= 0 || item.quantityRemaining > 5) return false;
+        if (prod.totalQuantityRemaining <= 0 || prod.totalQuantityRemaining > 5) return false;
       } else if (stockStatusFilter === 'OUT_OF_STOCK') {
-        if (item.quantityRemaining > 0) return false;
+        if (prod.totalQuantityRemaining > 0) return false;
       }
 
       return true;
     });
-  }, [stockHistory, searchQuery, stockBrandFilter, stockCategoryFilter, stockStatusFilter, products]);
+  }, [groupedProductStock, searchQuery, stockBrandFilter, stockCategoryFilter, stockStatusFilter]);
 
-  const activeDataList = viewMode === 'TRANSACTIONS' ? filteredHistory : filteredStock;
+  const activeDataList = viewMode === 'TRANSACTIONS' ? filteredHistory : filteredGroupedStock;
 
   // Pagination for active view list
   const {
@@ -288,7 +345,8 @@ export default function AdminInventory() {
             />
           </div>
 
-          {/* Actions Dropdown */}
+          {/* Actions Dropdown (Commented out as requested) */}
+          {/* 
           <div className="relative">
             <button
               onClick={() => setIsTxDropdownOpen(!isTxDropdownOpen)}
@@ -345,6 +403,7 @@ export default function AdminInventory() {
               </>
             )}
           </div>
+          */}
         </div>
       </div>
 
@@ -472,6 +531,7 @@ export default function AdminInventory() {
             formatCurrency={formatCurrency}
             handleRevertTransaction={handleRevertTransaction}
             setSelectedTxGroup={setSelectedTxGroup}
+            setSelectedStockProduct={setSelectedStockProduct}
             viewMode={viewMode}
           />
 
@@ -479,7 +539,7 @@ export default function AdminInventory() {
           {totalPages > 1 && (
             <div className="mt-6 flex flex-col sm:flex-row justify-between items-center gap-4 border-t border-admin-border pt-4">
               <div className="text-sm font-bold text-admin-text-muted">
-                Hiển thị {startIndex}-{endIndex} trên {totalItems} {viewMode === 'TRANSACTIONS' ? 'giao dịch' : 'lô hàng'}
+                Hiển thị {startIndex}-{endIndex} trên {totalItems} {viewMode === 'TRANSACTIONS' ? 'giao dịch' : 'sản phẩm'}
               </div>
               <div className="flex gap-2">
                 <button
@@ -539,6 +599,25 @@ export default function AdminInventory() {
         onClose={() => setSelectedTxGroup(null)}
         onRevert={handleRevertTransaction}
       />
+
+      {/* Stock Product Detail Modal */}
+      {selectedStockProduct && (
+        <StockProductDetailModal
+          selectedStockProduct={selectedStockProduct}
+          onClose={() => setSelectedStockProduct(null)}
+          formatCurrency={formatCurrency}
+          onOpenImportTx={(prodId) => {
+            setSearchParams(prev => {
+              const p = new URLSearchParams(prev);
+              p.set('tab', 'inventory');
+              p.set('productId', String(prodId));
+              p.set('action', 'IMPORT_SUPPLIER');
+              return p;
+            });
+            setActiveTxTab('IMPORT_SUPPLIER');
+          }}
+        />
+      )}
     </div>
   );
 }

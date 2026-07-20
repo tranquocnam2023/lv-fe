@@ -86,9 +86,13 @@ export default function TransactionModal({ activeTxTab, setActiveTxTab, products
             urlAction === 'EXPORT_DEFECT' ? 'Trả hàng lỗi cho nhà cung cấp' : '');
 
       setSearchParams(prev => {
-        prev.delete('productId');
-        prev.delete('action');
-        return prev;
+        const p = new URLSearchParams(prev);
+        p.delete('productId');
+        p.delete('action');
+        if (!p.get('tab')) {
+          p.set('tab', 'inventory');
+        }
+        return p;
       }, { replace: true });
     }
   }, [urlProductId, urlAction, setSearchParams]);
@@ -127,6 +131,10 @@ export default function TransactionModal({ activeTxTab, setActiveTxTab, products
     if (txProductId) {
       const selectedProd = products.find(p => p.id === parseInt(txProductId));
       if (!selectedProd) return;
+
+      if (selectedProd.brandId) {
+        setSelectedBrandId(String(selectedProd.brandId));
+      }
 
       setVariantsLoading(true);
       api.get(`/ProductVariant?productId=${txProductId}`)

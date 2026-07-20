@@ -172,10 +172,17 @@ export default function ProductCard({
           {originalPrice ? (
             <div className="text-xs text-gray-400 line-through mb-0.5">
               {originalPrice.toLocaleString('vi-VN')}₫
-            </div>
+            </div>         
           ) : (
             <div className="h-4"></div> /* Khung trống để các card bằng nhau */
           )}
+          {/* chia đôi giá gốc trên trang sản phẩm*/}
+          {/* {originalPrice && (
+            <div className="text-xs text-gray-400 mb-0.5">
+              {(originalPrice / 2).toLocaleString('vi-VN')}₫
+            </div>
+          )} */}
+
           <div 
             className="font-bold text-base md:text-lg"
             style={{ color: THEME.primary }}

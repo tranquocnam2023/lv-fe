@@ -1,3 +1,4 @@
+// 
 import React, { useState } from 'react';
 
 export default function PriceInput({ value, onChange, placeholder, className, required, id, errorAbsolute }) {

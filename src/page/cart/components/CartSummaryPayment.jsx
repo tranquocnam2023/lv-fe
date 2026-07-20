@@ -30,7 +30,7 @@ export default function CartSummaryPayment({
 
   return (
     <div className="space-y-4 animate-in fade-in duration-300">
-      
+
       {/* Voucher discount selector */}
       <div className="bg-white rounded-md border border-gray-100 p-4">
         <PromotionSelector
@@ -49,11 +49,10 @@ export default function CartSummaryPayment({
               const fee = Number(option.fee || option.Fee || 0);
               const isSelected = shippingCarrier === carrier;
               const estimatedDays = option.estimatedDeliveryDays || option.EstimatedDeliveryDays;
-              
+
               return (
-                <label key={idx} className={`flex items-center gap-3 p-3 border rounded-md transition cursor-pointer select-none ${
-                  isSelected ? 'border-blue-500 bg-blue-50/20' : 'border-gray-200 hover:border-gray-300'
-                }`}>
+                <label key={idx} className={`flex items-center gap-3 p-3 border rounded-md transition cursor-pointer select-none ${isSelected ? 'border-blue-500 bg-blue-50/20' : 'border-gray-200 hover:border-gray-300'
+                  }`}>
                   <input
                     type="radio"
                     name="shippingOption"
@@ -83,9 +82,8 @@ export default function CartSummaryPayment({
         <div className="space-y-2">
 
           {/* Stripe */}
-          <label className={`flex items-center gap-3 p-3 border rounded-md transition cursor-pointer select-none ${
-            paymentMethod === 'stripe' ? 'border-blue-500 bg-blue-50/20' : 'border-gray-200 hover:border-gray-300'
-          }`}>
+          <label className={`flex items-center gap-3 p-3 border rounded-md transition cursor-pointer select-none ${paymentMethod === 'stripe' ? 'border-blue-500 bg-blue-50/20' : 'border-gray-200 hover:border-gray-300'
+            }`}>
             <input
               type="radio"
               name="paymentMethod"
@@ -102,9 +100,8 @@ export default function CartSummaryPayment({
           </label>
 
           {/* MoMo */}
-          <label className={`flex items-center gap-3 p-3 border rounded-md transition cursor-pointer select-none ${
-            paymentMethod === 'momo' ? 'border-blue-500 bg-blue-50/20' : 'border-gray-200 hover:border-gray-300'
-          }`}>
+          <label className={`flex items-center gap-3 p-3 border rounded-md transition cursor-pointer select-none ${paymentMethod === 'momo' ? 'border-blue-500 bg-blue-50/20' : 'border-gray-200 hover:border-gray-300'
+            }`}>
             <input
               type="radio"
               name="paymentMethod"
@@ -121,9 +118,8 @@ export default function CartSummaryPayment({
           </label>
 
           {/* Bank transfer */}
-          <label className={`flex items-center gap-3 p-3 border rounded-md transition cursor-pointer select-none ${
-            paymentMethod === 'transfer' ? 'border-blue-500 bg-blue-50/20' : 'border-gray-200 hover:border-gray-300'
-          }`}>
+          <label className={`flex items-center gap-3 p-3 border rounded-md transition cursor-pointer select-none ${paymentMethod === 'transfer' ? 'border-blue-500 bg-blue-50/20' : 'border-gray-200 hover:border-gray-300'
+            }`}>
             <input
               type="radio"
               name="paymentMethod"
@@ -140,13 +136,12 @@ export default function CartSummaryPayment({
           </label>
 
           {/* COD (requires login) */}
-          <label className={`flex items-center gap-3 p-3 border rounded-md transition select-none ${
-            !isLoggedIn
+          <label className={`flex items-center gap-3 p-3 border rounded-md transition select-none ${!isLoggedIn
               ? 'opacity-50 bg-gray-50 border-gray-100 cursor-not-allowed'
               : paymentMethod === 'cod'
-              ? 'border-blue-500 bg-blue-50/20 cursor-pointer'
-              : 'border-gray-200 hover:border-gray-300 cursor-pointer'
-          }`}>
+                ? 'border-blue-500 bg-blue-50/20 cursor-pointer'
+                : 'border-gray-200 hover:border-gray-300 cursor-pointer'
+            }`}>
             <input
               type="radio"
               name="paymentMethod"
@@ -223,7 +218,7 @@ export default function CartSummaryPayment({
         <div className="space-y-2 text-xs font-semibold text-gray-500 uppercase tracking-tighter">
           <div className="flex justify-between">
             <span>Tạm tính ({cartItems.length} sản phẩm)</span>
-            <span className="text-gray-900 font-bold">{cartTotal.toLocaleString('vi-VN')}₫</span>
+            <span className="text-gray-900 font-bold">{(cartTotal).toLocaleString('vi-VN')}₫</span>
           </div>
           {discountAmount > 0 && (
             <div className="flex justify-between text-green-600">

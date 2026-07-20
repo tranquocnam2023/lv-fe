@@ -1,3 +1,4 @@
+// Trang chi tiết sản phẩm
 import React, { useState, useEffect, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import DOMPurify from 'dompurify';
@@ -19,7 +20,7 @@ import CoPurchaseRecommendation from './product-detail/components/CoPurchaseReco
 
 const getMergedSpecs = (baseSpecsStr, specsOverrideStr) => {
   if (!baseSpecsStr) return null;
-  
+
   let baseSpecs = [];
   try {
     baseSpecs = JSON.parse(baseSpecsStr);
@@ -55,10 +56,10 @@ const getMergedSpecs = (baseSpecsStr, specsOverrideStr) => {
       const normalizedKey = item.key.toLowerCase().trim();
 
       let newValue = item.value;
-      
+
       if (overridesMap[normalizedKey] !== undefined) {
         newValue = overridesMap[normalizedKey];
-      } 
+      }
       else if (normalizedKey === 'rom' || normalizedKey.includes('bộ nhớ trong') || normalizedKey === 'internal storage') {
         const romOverrideKey = Object.keys(overridesMap).find(k => k === 'rom' || k.includes('bộ nhớ trong') || k === 'internal storage');
         if (romOverrideKey) {
@@ -85,11 +86,14 @@ const getMergedSpecs = (baseSpecsStr, specsOverrideStr) => {
   });
 };
 
+// Tỉ lệ giảm giá phụ kiện mua kèm (0.9 = giảm 10%, 0.8 = giảm 20%, 0.5 = giảm 50%)
+const BUNDLE_DISCOUNT_RATE = 0.9;
+
 export default function ProductDetailPage() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { addToCart } = useCart();
-  
+
   const [product, setProduct] = useState(null);
   const [activeTab, setActiveTab] = useState('specs');
   const [loading, setLoading] = useState(true);
@@ -99,6 +103,10 @@ export default function ProductDetailPage() {
   const [selectedAttributes, setSelectedAttributes] = useState({});
   const [variants, setVariants] = useState([]);
   const [categories, setCategories] = useState([]);
+
+  // States gợi ý mua kèm phụ kiện
+  const [accessorySuggestions, setAccessorySuggestions] = useState([]);
+  const [selectedAccessories, setSelectedAccessories] = useState([]);
 
   // States Thư viện hình ảnh động
   const [activeImage, setActiveImage] = useState(null);
@@ -111,11 +119,23 @@ export default function ProductDetailPage() {
 
   const selectedColor = selectedAttributes["Màu sắc"] || Object.entries(selectedAttributes).find(([k]) => k.toLowerCase().includes('màu'))?.[1] || '';
 
+  // Toggle phụ kiện mua kèm
+  const handleToggleAccessory = (acc) => {
+    setSelectedAccessories(prev => {
+      const exists = prev.some(item => item.id === acc.id);
+      if (exists) {
+        return prev.filter(item => item.id !== acc.id);
+      } else {
+        return [...prev, acc];
+      }
+    });
+  };
+
   // Phân tách ảnh chung (Master Images)
   const getMasterImages = (prod) => {
     if (!prod) return [];
     let list = [];
-    
+
     if (prod.videoUrl) {
       list.push({ type: 'video', url: prod.videoUrl });
     }
@@ -172,15 +192,16 @@ export default function ProductDetailPage() {
     return '';
   };
 
-  // Tải dữ liệu Product, danh sách Variants & Categories
+  // Tải dữ liệu Product, danh sách Variants & Categories & Accessories
   useEffect(() => {
     setLoading(true);
     Promise.all([
       productService.getById(id),
       api.get(`/ProductVariant?productId=${id}`).catch(() => []),
-      categoryService.getAll().catch(() => [])
+      categoryService.getAll().catch(() => []),
+      productService.getAll().catch(() => [])
     ])
-      .then(([productData, variantData, categoryData]) => {
+      .then(([productData, variantData, categoryData, allProducts]) => {
         if (productData) {
           const normalized = {
             ...productData,
@@ -198,6 +219,77 @@ export default function ProductDetailPage() {
           }
           if (Array.isArray(categoryData)) {
             setCategories(categoryData);
+          }
+
+          // Cấu hình thủ công danh sách phụ kiện đi kèm theo ý muốn của Admin (Key: ProductID chính, Value: Danh sách ProductID phụ kiện)
+          const MANUAL_BUNDLE_CONFIG = {
+            "2": [50, 49, 43], // Xiaomi 17T -> Gợi ý Sạc dự phòng Xiaomi, Sạc dự phòng Anker, Tai nghe Sony
+          };
+
+          // Lọc danh sách phụ kiện mua kèm gợi ý (ưu tiên cấu hình của Admin, nếu không có sẽ tự động gợi ý cùng hãng)
+          if (Array.isArray(allProducts)) {
+            let suggestions = [];
+            const manualIds = MANUAL_BUNDLE_CONFIG[String(id)];
+
+            if (manualIds && manualIds.length > 0) {
+              // Lấy chính xác các phụ kiện theo cấu hình thủ công của Admin
+              suggestions = allProducts.filter(p => manualIds.includes(p.id) && p.isAvailable !== false);
+            } else {
+              // Tự động gợi ý phụ kiện cùng hãng hoặc hãng thứ 3 (LOẠI BỎ tuyệt đối phụ kiện của hãng điện thoại đối thủ)
+              const PHONE_BRAND_KEYWORDS = {
+                apple: ['apple', 'iphone', 'ipad', 'airpods', 'magsafe', 'earpods'],
+                samsung: ['samsung', 'galaxy', 'buds'],
+                xiaomi: ['xiaomi', 'redmi', 'poco'],
+                oppo: ['oppo', 'reno'],
+                vivo: ['vivo'],
+                realme: ['realme']
+              };
+
+              // Xác định hãng của sản phẩm chính hiện tại
+              const mainProdNameLower = normalized.name.toLowerCase();
+              let currentBrandKey = '';
+              for (const [bKey, keywordsList] of Object.entries(PHONE_BRAND_KEYWORDS)) {
+                if (keywordsList.some(kw => mainProdNameLower.includes(kw))) {
+                  currentBrandKey = bKey;
+                  break;
+                }
+              }
+
+              // Tổng hợp danh sách các từ khóa của các hãng đối thủ cần loại bỏ
+              const rivalKeywords = [];
+              for (const [bKey, keywordsList] of Object.entries(PHONE_BRAND_KEYWORDS)) {
+                if (bKey !== currentBrandKey) {
+                  rivalKeywords.push(...keywordsList);
+                }
+              }
+
+              const keywords = ["sạc", "tai nghe", "loa", "dự phòng", "cáp", "ốp", "kính", "jbl", "anker", "sony", "baseus", "spigen", "zealot", "pin", "củ sạc", "adapter"];
+
+              const validAccessories = allProducts.filter(p => {
+                if (p.id === parseInt(id)) return false;
+                if (p.isAvailable === false) return false;
+                const nameLower = p.name.toLowerCase();
+
+                // 1. Phải là món thuộc loại phụ kiện
+                const isAccessory = keywords.some(kw => nameLower.includes(kw));
+                if (!isAccessory) return false;
+
+                // 2. Không được chứa tên/dòng sản phẩm của hãng điện thoại đối thủ!
+                const isRivalAccessory = rivalKeywords.some(rk => nameLower.includes(rk));
+                if (isRivalAccessory) return false;
+
+                return true;
+              });
+
+              // Ưu tiên phụ kiện cùng hãng lên đầu, sau đó đến phụ kiện từ hãng thứ 3 (Sony, Anker, JBL, Spigen...)
+              const sameBrandAccs = validAccessories.filter(p => p.brandId === normalized.brandId || (currentBrandKey && p.name.toLowerCase().includes(currentBrandKey)));
+              const thirdPartyAccs = validAccessories.filter(p => !sameBrandAccs.includes(p));
+              suggestions = [...sameBrandAccs, ...thirdPartyAccs];
+            }
+
+            suggestions = suggestions.slice(0, 3);
+            setAccessorySuggestions(suggestions);
+            setSelectedAccessories([]); // Reset selected khi chuyển sản phẩm
           }
         } else {
           setProduct(null);
@@ -302,7 +394,7 @@ export default function ProductDetailPage() {
   // Phân tích các thuộc tính động từ tất cả variants
   const attributesConfig = useMemo(() => {
     const config = {};
-    
+
     variants.forEach(v => {
       let parsed = {};
       if (v.attributes) {
@@ -312,7 +404,7 @@ export default function ProductDetailPage() {
           console.error("Lỗi parse attributes:", e);
         }
       }
-      
+
       if (Object.keys(parsed).length === 0 && v.name && v.name.includes(' - ')) {
         const parts = v.name.split(' - ');
         if (parts.length > 1) {
@@ -361,7 +453,7 @@ export default function ProductDetailPage() {
           console.error("Lỗi parse attributes:", e);
         }
       }
-      
+
       return requiredKeys.every(key => {
         const val = selectedAttributes[key];
         const vVal = Object.entries(parsedAttrs).find(([k]) => k.toLowerCase().trim() === key.toLowerCase().trim())?.[1];
@@ -388,7 +480,7 @@ export default function ProductDetailPage() {
           console.error("Lỗi parse attributes:", e);
         }
       }
-      
+
       return activeSelections.every(([key, val]) => {
         const vVal = Object.entries(parsedAttrs).find(([k]) => k.toLowerCase().trim() === key.toLowerCase().trim())?.[1];
         return String(vVal || '').toLowerCase().trim() === String(val).toLowerCase().trim();
@@ -446,7 +538,7 @@ export default function ProductDetailPage() {
           console.error("Lỗi parse attributes:", e);
         }
       }
-      
+
       if (Object.keys(parsedAttrs).length === 0 && v.name && v.name.includes(' - ')) {
         const parts = v.name.split(' - ');
         if (parts.length > 1) {
@@ -484,13 +576,15 @@ export default function ProductDetailPage() {
         const finalStock = matchedVariants.reduce((sum, v) => sum + v.availableStock, 0);
 
         return {
+          //muốn chia 2,3 giá điện thoại gì đó thì vô đây
+          //price: firstMatch.price / 2,
           price: firstMatch.price,
           originalPrice: firstMatch.price * 1.12,
           stock: finalStock
         };
       }
     }
-
+    // giá gốc khi chưa chọn giá, thì không chia gì cả
     return {
       price: product.price,
       originalPrice: product.originalPrice || (product.price * 1.1),
@@ -506,7 +600,7 @@ export default function ProductDetailPage() {
 
       if (next[key] === value) {
         delete next[key];
-        
+
         if (isColorAttr) {
           setIsFading(true);
           setTimeout(() => {
@@ -569,6 +663,7 @@ export default function ProductDetailPage() {
       }
     }
     if (product) {
+      // Thêm sản phẩm chính
       addToCart({
         ...product,
         price: displayDetails.price,
@@ -576,6 +671,23 @@ export default function ProductDetailPage() {
         selectedColor: selectedAttributes["Màu sắc"] || Object.entries(selectedAttributes).find(([k]) => k.toLowerCase().includes('màu'))?.[1] || null,
         selectedStorage: selectedAttributes["Dung lượng RAM - ROM"] || selectedAttributes["Dung Lượng RAM - ROM"] || Object.entries(selectedAttributes).find(([k]) => k.toLowerCase().includes('dung lượng') || k.toLowerCase().includes('bộ nhớ') || k.toLowerCase().includes('ram') || k.toLowerCase().includes('rom'))?.[1] || null
       });
+
+      // Thêm các phụ kiện được chọn mua kèm (sử dụng tỉ lệ BUNDLE_DISCOUNT_RATE)
+      const BUNDLE_DISCOUNT_RATE = 0.9; // Giảm 10% (muốn 10% thì sửa thành 0.90)
+      selectedAccessories.forEach(acc => {
+        const originalPrice = acc.price || acc.basePrice || 0;
+        const discountPrice = originalPrice * BUNDLE_DISCOUNT_RATE;
+        addToCart({
+          ...acc,
+          price: discountPrice,
+          selectedAttributes: {},
+          selectedColor: null,
+          selectedStorage: null
+        });
+      });
+
+      alert('Đã thêm sản phẩm chính' + (selectedAccessories.length > 0 ? ` và ${selectedAccessories.length} phụ kiện mua kèm` : '') + ' vào giỏ hàng thành công!');
+      setSelectedAccessories([]);
     }
   };
 
@@ -595,16 +707,30 @@ export default function ProductDetailPage() {
         selectedColor: selectedAttributes["Màu sắc"] || Object.entries(selectedAttributes).find(([k]) => k.toLowerCase().includes('màu'))?.[1] || null,
         selectedStorage: selectedAttributes["Dung lượng RAM - ROM"] || selectedAttributes["Dung Lượng RAM - ROM"] || Object.entries(selectedAttributes).find(([k]) => k.toLowerCase().includes('dung lượng') || k.toLowerCase().includes('bộ nhớ') || k.toLowerCase().includes('ram') || k.toLowerCase().includes('rom'))?.[1] || null
       });
+
+      selectedAccessories.forEach(acc => {
+        const originalPrice = acc.price || acc.basePrice || 0;
+        const discountPrice = originalPrice * BUNDLE_DISCOUNT_RATE;
+        addToCart({
+          ...acc,
+          price: discountPrice,
+          selectedAttributes: {},
+          selectedColor: null,
+          selectedStorage: null
+        });
+      });
+
+      setSelectedAccessories([]);
       navigate('/cart');
     }
   };
 
   const breadcrumbItems = useMemo(() => {
     if (!product) return [];
-    
+
     const items = [];
     let currentCategoryId = product.categoryId;
-    
+
     if (categories && categories.length > 0) {
       while (currentCategoryId) {
         const cat = categories.find(c => c.id === currentCategoryId);
@@ -624,7 +750,7 @@ export default function ProductDetailPage() {
         path: '/'
       });
     }
-    
+
     items.push({ label: product.name });
     return items;
   }, [product, categories]);
@@ -681,17 +807,76 @@ export default function ProductDetailPage() {
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-start">
-          {/* CỘT TRÁI: THƯ VIỆN ẢNH ĐỘNG */}
-          <ProductGallery 
-            product={product}
-            selectedColor={selectedColor}
-            galleryImages={galleryImages}
-            activeImage={activeImage}
-            setActiveImage={setActiveImage}
-          />
+          {/* CỘT TRÁI: THƯ VIỆN ẢNH ĐỘNG & GỢI Ý MUA KÈM PHỤ KIỆN */}
+          <div className="lg:col-span-7 space-y-6">
+            <ProductGallery
+              product={product}
+              selectedColor={selectedColor}
+              galleryImages={galleryImages}
+              activeImage={activeImage}
+              setActiveImage={setActiveImage}
+            />
+
+            {/* Box mua kèm giá sốc (Gợi ý phụ kiện đi kèm) */}
+            {accessorySuggestions && accessorySuggestions.length > 0 && (
+              <div className="bg-white rounded-md p-6 border border-gray-100 mt-6 shadow-sm">
+                <h4 className="text-xs font-black text-gray-800 uppercase tracking-widest flex items-center gap-2 mb-4">
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5 text-orange-500">
+                    <path fillRule="evenodd" d="M12 2.25c-5.385 0-9.75 4.365-9.75 9.75s4.365 9.75 9.75 9.75 9.75-4.365 9.75-9.75S17.385 2.25 12 2.25ZM12.75 9a.75.75 0 0 0-1.5 0v2.25H9a.75.75 0 0 0 0 1.5h2.25V15a.75.75 0 0 0 1.5 0v-2.25H15a.75.75 0 0 0 0-1.5h-2.25V9Z" clipRule="evenodd" />
+                  </svg>
+                  Mua kèm giá sốc (Gợi ý phụ kiện đi kèm)
+                </h4>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  {accessorySuggestions.map(acc => {
+                    const isSelected = selectedAccessories.some(a => a.id === acc.id);
+                    return (
+                      <div
+                        key={acc.id}
+                        onClick={() => handleToggleAccessory(acc)}
+                        className={`border rounded-lg p-3.5 flex flex-col justify-between items-center text-center cursor-pointer transition-all hover:shadow-md ${isSelected ? 'border-orange-500 bg-orange-50/10 shadow-sm ring-1 ring-orange-500' : 'border-gray-200 hover:border-gray-300 bg-white'
+                          }`}
+                      >
+                        <div className="flex flex-col items-center">
+                          {/* Image */}
+                          <div className="w-16 h-16 rounded overflow-hidden bg-slate-50 flex items-center justify-center p-1.5 mb-2.5">
+                            <img src={acc.image || acc.thumbnailImage} alt={acc.name} className="max-w-full max-h-full object-contain" />
+                          </div>
+                          <p className="text-xs font-bold text-gray-800 line-clamp-2 min-h-[32px] leading-tight" title={acc.name}>{acc.name}</p>
+                        </div>
+                        <div className="w-full mt-3 pt-2 border-t border-gray-100 flex items-center justify-between">
+                          <div className="flex flex-col items-start">
+                            <span className="text-xs text-red-600 font-black">
+                              {((acc.price || acc.basePrice || 0) * BUNDLE_DISCOUNT_RATE).toLocaleString('vi-VN')}₫
+                            </span>
+                            <span className="text-[9px] text-gray-400 line-through">
+                              {(acc.price || acc.basePrice || 0).toLocaleString('vi-VN')}₫
+                            </span>
+                          </div>
+                          <div className={`w-4 h-4 rounded border flex items-center justify-center transition-all ${isSelected ? 'bg-orange-500 border-orange-500 text-white' : 'border-gray-300 bg-white'
+                            }`}>
+                            {isSelected && <Check size={10} className="stroke-[3.5]" />}
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+                {selectedAccessories.length > 0 && (
+                  <div className="mt-4 pt-3 border-t border-gray-100 flex justify-between items-center bg-orange-50/5 p-3 rounded-md">
+                    <span className="text-xs text-gray-600 font-bold">
+                      Đã chọn mua kèm: <span className="text-orange-600 font-black">{selectedAccessories.length}</span> phụ kiện
+                    </span>
+                    <span className="text-xs font-black text-red-600">
+                      Tổng cộng thêm: +{selectedAccessories.reduce((sum, item) => sum + ((item.price || item.basePrice || 0) * BUNDLE_DISCOUNT_RATE), 0).toLocaleString('vi-VN')}₫
+                    </span>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
 
           {/* CỘT PHẢI: KHU VỰC CHỌN BIẾN THỂ & ĐẶT MUA */}
-          <ProductSummaryInfo 
+          <ProductSummaryInfo
             product={product}
             displayProductName={displayProductName}
             displayDetails={displayDetails}
@@ -704,11 +889,11 @@ export default function ProductDetailPage() {
         </div>
 
         {/* GỢI Ý MUA KÈM COMBO */}
-        <CoPurchaseRecommendation 
+        <CoPurchaseRecommendation
           mainProduct={product}
           mainProductPrice={displayDetails.price}
           selectedVariantId={matchedVariant?.id || selectedVariant?.id}
-          onAddComboToCart={() => {}}
+          onAddComboToCart={() => { }}
         />
 
         {/* Khu vực Tabs chi tiết mô tả / Thông số / Reviews */}
@@ -746,9 +931,9 @@ export default function ProductDetailPage() {
             {activeTab === 'specs' && (
               <div className="prose prose-blue max-w-none animate-in fade-in slide-in-from-bottom-4 duration-500">
                 {product.description ? (
-                  <div 
+                  <div
                     className="rich-text-content"
-                    dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(product.description) }} 
+                    dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(product.description) }}
                   />
                 ) : (
                   <>
@@ -774,14 +959,14 @@ export default function ProductDetailPage() {
             )}
 
             {activeTab === 'info' && (
-              <ProductSpecsTab 
+              <ProductSpecsTab
                 mergedSpecs={mergedSpecs}
                 onOpenModal={() => setIsSpecsModalOpen(true)}
               />
             )}
 
             {activeTab === 'reviews' && (
-              <ProductReviews 
+              <ProductReviews
                 productId={id}
                 reviews={reviews}
                 currentUser={currentUser}
@@ -795,7 +980,7 @@ export default function ProductDetailPage() {
       </div>
 
       {/* MODAL THÔNG SỐ KỸ THUẬT ĐẦY ĐỦ */}
-      <ProductSpecsModal 
+      <ProductSpecsModal
         isOpen={isSpecsModalOpen}
         onClose={() => setIsSpecsModalOpen(false)}
         mergedSpecs={mergedSpecs}
