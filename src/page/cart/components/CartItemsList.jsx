@@ -159,7 +159,7 @@ export default function CartItemsList({ cartItems, updateQuantity, removeFromCar
           <span className="text-gray-400 font-bold">Tạm tính:</span>
           <span className="font-black text-gray-900 text-[15px]">{cartTotal.toLocaleString('vi-VN')}₫</span>         
         </div>
-        {/*tạm tính chia đôi*/}
+        {/*tạm tính chia đôi trong giỏ hàng*/}
         {/*
         <div className="flex justify-between items-center text-xs">
           <span className="text-gray-400 font-bold">Tạm tính:</span>

@@ -3,11 +3,12 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { bannerService } from '../services/bannerService';
 //quảng cáo tĩnh phòng trường hợp lỗi
-// Banner dọc 2 bên mép
+
+// Banner  side - banner dọc 2 bên màn hình)
 import bannerLeft from '../assets/banner-left.png';
 import bannerRight from '../assets/banner-right.png';
 
-// Banner ngang trên cùng 
+// Banner top - banner trên đầu trang)
 import topBannerImg from '../assets/top-banner.png';
 // Banner cho Slider trượt
 import banner1 from '../assets/banner-1.jpg';
@@ -17,17 +18,21 @@ import banner4 from '../assets/banner-4.webp';
 import banner5 from '../assets/banner-5.png';
 import banner6 from '../assets/banner-6.png';
 
-// Tạo danh sách banner mặc định tĩnh để fallback khi tải không được
+// Hằng số đường dẫn chương trình khuyến mãi Thế Giới Di Động (TGDD)
+const TGDD_LINKS = {
+  SLIDER: 'https://www.thegioididong.com/chuong-trinh-back-to-cool',
+  TOP: 'https://www.thegioididong.com/chuong-trinh-apple-back-to-school',
+  SIDE: 'https://www.thegioididong.com/tuu-truong-2026'
+};
+
+// Danh sách banner mặc định được tối ưu gọn gàng
 const DEFAULT_BANNERS = [
-  { id: 's1', imageUrl: banner1, linkUrl: '/khuyen-mai-1', type: 'Slider', isActive: true, position: 0 },
-  { id: 's2', imageUrl: banner2, linkUrl: '/khuyen-mai-2', type: 'Slider', isActive: true, position: 1 },
-  { id: 's3', imageUrl: banner3, linkUrl: '/khuyen-mai-3', type: 'Slider', isActive: true, position: 2 },
-  { id: 's4', imageUrl: banner4, linkUrl: '/khuyen-mai-4', type: 'Slider', isActive: true, position: 3 },
-  { id: 's5', imageUrl: banner5, linkUrl: '/khuyen-mai-5', type: 'Slider', isActive: true, position: 4 },
-  { id: 's6', imageUrl: banner6, linkUrl: '/khuyen-mai-6', type: 'Slider', isActive: true, position: 5 },
-  { id: 'top', imageUrl: topBannerImg, linkUrl: '/khuyen-mai-hot', type: 'Top', isActive: true, position: 0 },
-  { id: 'left', imageUrl: bannerLeft, linkUrl: '/khuyen-mai-trai', type: 'Left', isActive: true, position: 0 },
-  { id: 'right', imageUrl: bannerRight, linkUrl: '/khuyen-mai-phai', type: 'Right', isActive: true, position: 0 },
+  ...[banner1, banner2, banner3, banner4, banner5, banner6].map((img, idx) => ({
+    id: `s${idx + 1}`, imageUrl: img, linkUrl: TGDD_LINKS.SLIDER, type: 'Slider', isActive: true, position: idx
+  })),
+  { id: 'top', imageUrl: topBannerImg, linkUrl: TGDD_LINKS.TOP, type: 'Top', isActive: true, position: 0 },
+  { id: 'left', imageUrl: bannerLeft, linkUrl: TGDD_LINKS.SIDE, type: 'Left', isActive: true, position: 0 },
+  { id: 'right', imageUrl: bannerRight, linkUrl: TGDD_LINKS.SIDE, type: 'Right', isActive: true, position: 0 },
 ];
 
 const LinkWrapper = ({ to, children }) => {
@@ -53,14 +58,27 @@ const BannerSection = ({ showSideBanners = true, showTopBanner = true, showSlide
 
   // Đồng bộ banners khi bannersData thay đổi hoặc khi có sự kiện cập nhật từ API hoặc localStorage
   useEffect(() => {
+    const ensureTgddLink = (list) => {
+      if (!Array.isArray(list)) return DEFAULT_BANNERS;
+      return list.map(b => {
+        let url = b.linkUrl;
+        if (!url || url.startsWith('/khuyen-mai')) {
+          if (b.type === 'Top') url = TGDD_LINKS.TOP;
+          else if (b.type === 'Left' || b.type === 'Right') url = TGDD_LINKS.SIDE;
+          else url = TGDD_LINKS.SLIDER;
+        }
+        return { ...b, linkUrl: url };
+      });
+    };
+
     if (bannersData) {
-      setBanners(bannersData);
+      setBanners(ensureTgddLink(bannersData));
     } else {
       const fetchBanners = async () => {
         try {
           const data = await bannerService.getBanners();
           if (data && data.length > 0) {
-            setBanners(data);
+            setBanners(ensureTgddLink(data));
           } else {
             setBanners(DEFAULT_BANNERS);
           }
@@ -69,7 +87,7 @@ const BannerSection = ({ showSideBanners = true, showTopBanner = true, showSlide
           try {
             const saved = localStorage.getItem('publishedBanners');
             if (saved) {
-              setBanners(JSON.parse(saved));
+              setBanners(ensureTgddLink(JSON.parse(saved)));
             } else {
               setBanners(DEFAULT_BANNERS);
             }
@@ -135,21 +153,22 @@ const BannerSection = ({ showSideBanners = true, showTopBanner = true, showSlide
         <>
           {/* Trái */}
           {leftBanner && (
-            <div className="fixed top-28 right-[calc(50%+620px)] w-[120px] hidden min-[1440px]:block z-40 pointer-events-auto side-banner side-banner-left">
+            <div className="fixed top-28 right-[calc(50%+620px)] w-[120px] hidden min-[1440px]:flex flex-col gap-3 z-40 pointer-events-auto side-banner side-banner-left">
               <LinkWrapper to={leftBanner.linkUrl}>
                 <img
                   src={leftBanner.imageUrl}
-                  alt="Quảng cáo trái"
+                  alt="Quảng cáo trái "
                   loading="lazy"
                   className="w-full h-auto rounded-lg shadow-md hover:scale-105 transition-transform"
                 />
               </LinkWrapper>
+              {/*làm cho 2 banner song song thì đổi flex-col thành flex-row và gap-3 thành gap-2. Copy từ <linkwrapper> xuống hết}*/}
             </div>
           )}
 
           {/* Phải */}
           {rightBanner && (
-            <div className="fixed top-28 left-[calc(50%+620px)] w-[120px] hidden min-[1440px]:block z-40 pointer-events-auto side-banner side-banner-right">
+            <div className="fixed top-28 left-[calc(50%+620px)] w-[120px] hidden min-[1440px]:flex flex-col gap-3 z-40 pointer-events-auto side-banner side-banner-right">
               <LinkWrapper to={rightBanner.linkUrl}>
                 <img
                   src={rightBanner.imageUrl}

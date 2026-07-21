@@ -147,7 +147,13 @@ export default function ProductForm({ productId, onBack, onSaveSuccess, onCreate
 
             {/* Khối D - Giá & Tồn kho mặc định */}
             <div className="bg-white p-6 rounded-md border-0 bg-gray-50/50">
-              <h3 className="text-lg font-bold text-admin-text-main mb-4">Khối D - Giá & Tồn kho mặc định</h3>
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-bold text-admin-text-main">Khối D - Giá & Tồn kho mặc định</h3>
+                <span className="text-[11px] font-bold px-2.5 py-1 bg-blue-50 text-blue-700 rounded-full border border-blue-200 flex items-center gap-1 shadow-2xs">
+                  <span className="w-2 h-2 rounded-full bg-blue-500 animate-pulse"></span>
+                  Tự động sinh phiếu nhập kho
+                </span>
+              </div>
               <div className="space-y-4">
                 <div>
                   <label className="block text-sm font-bold text-admin-text-main mb-2">Giá khuyến mãi / Giá bán *</label>
@@ -186,6 +192,17 @@ export default function ProductForm({ productId, onBack, onSaveSuccess, onCreate
                     />
                   </div>
                 )}
+
+                {/* Thông báo cơ chế tự động sinh phiếu nhập kho */}
+                <div className="mt-3 p-3 bg-blue-50/80 border border-blue-200/70 rounded-md text-xs text-blue-900 flex items-start gap-2.5">
+                  <span className="text-base leading-none">💡</span>
+                  <div className="space-y-1">
+                    <p className="font-bold text-blue-900">Cơ chế xử lý ngầm (Tự động sinh Phiếu nhập kho):</p>
+                    <p className="text-blue-800/90 leading-relaxed">
+                      Khi anh nhấn <strong>"Lưu"</strong> sản phẩm mới có số tồn kho &gt; 0, hệ thống sẽ tự động khởi tạo 1 <strong>Phiếu nhập kho ban đầu</strong> với lý do <em>"Khởi tạo tồn kho ban đầu"</em>. Dữ liệu sẽ lưu vết chi tiết trong Audit Log và xuất hiện ở lịch sử Nhập/Xuất kho.
+                    </p>
+                  </div>
+                </div>
               </div>
             </div>
 
