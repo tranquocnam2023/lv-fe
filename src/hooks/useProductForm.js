@@ -438,6 +438,7 @@ export const useProductForm = ({ productId, onBack, onSaveSuccess, searchParams,
         totalStock: calculatedStock,
         isActive: formData.isActive,
         isFeatured: formData.isFeatured,
+        // Lấy thuộc tính ID danh mục từ Form, ép kiểu sang số nguyên (int) để gán vào thuộc tính khóa ngoại của Product gửi lên API
         categoryId: parseInt(formData.categoryId),
         brandId: formData.brandId ? parseInt(formData.brandId) : null,
         thumbnailImage: mainImage,

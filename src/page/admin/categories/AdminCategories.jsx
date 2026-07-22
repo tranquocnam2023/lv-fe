@@ -190,16 +190,19 @@ export default function AdminCategories() {
       setLockParentRoot(false);
     } else {
       setEditingCategory(null);
+      // LOGIC TẠO MỚI: Khởi tạo giá trị rỗng cho các trường dữ liệu
       setFormData({
         name: '',
         categoryCode: '',
         description: '',
         iconUrl: '',
-        parentId: defaultParentId,
+        parentId: defaultParentId, // Nếu là tạo danh mục gốc thì parentId = '', nếu là con thì parentId = ID của cha
         isActive: true,
         specsTemplate: ''
       });
       setIsCodeEditable(true);
+      // Nếu lockParentToRoot = true (khi bấm tạo gốc) hoặc đã có defaultParentId (khi bấm tạo con từ dòng):
+      // Khóa không cho người dùng tự ý thay đổi danh mục cha trong Form chọn
       setLockParentRoot(lockParentToRoot || !!defaultParentId);
     }
     setCatErrorMessage('');
@@ -255,13 +258,15 @@ export default function AdminCategories() {
     setSaving(true);
     try {
       const generatedCode = formData.categoryCode.trim() || generateBrandOrCategoryCode(formData.name, 20);
+      // LOGIC LƯU DANH MỤC: Thiết lập payload gửi API
+      // Nếu parentId để trống (tức là tạo danh mục gốc Cấp 1), ta chuyển nó thành null để DB nhận diện
       const payload = {
         name: formData.name.trim(),
         slug: generateSlug(formData.name.trim()),
         categoryCode: generatedCode,
         description: formData.description.trim(),
         iconUrl: formData.iconUrl,
-        parentId: formData.parentId ? parseInt(formData.parentId) : null,
+        parentId: formData.parentId ? parseInt(formData.parentId) : null, // Gửi null nếu là danh mục gốc
         isActive: formData.isActive,
         specsTemplate: formData.specsTemplate
       };
@@ -343,6 +348,7 @@ export default function AdminCategories() {
             />
           </div>
           <div className="flex items-center gap-2">
+            {/* LOGIC TẠO DANH MỤC GỐC: defaultParentId = '' (không có cha), lockParentToRoot = true để khóa lựa chọn cha */}
             <button
               onClick={() => handleOpenModal(null, '', true, '')}
               className="flex items-center justify-center gap-2 px-6 py-3 bg-primary text-white rounded-md font-bold hover:bg-admin-primary-hover transition-all active:scale-95 whitespace-nowrap cursor-pointer border-0"

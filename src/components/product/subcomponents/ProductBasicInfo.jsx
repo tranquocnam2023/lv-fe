@@ -50,6 +50,7 @@ export default function ProductBasicInfo({ productId }) {
         </div>
         <div>
           <label className="block text-sm font-bold text-admin-text-main mb-2">Danh mục *</label>
+          {/* LOGIC LIÊN KẾT DANH MỤC: Lấy thuộc tính 'id' (khóa chính) của danh mục đã chọn làm value để lưu vào formData.categoryId */}
           <select
             value={formData.categoryId}
             onChange={(e) => setFormData(prev => ({ ...prev, categoryId: e.target.value }))}

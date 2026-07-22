@@ -5,10 +5,11 @@ import { productService } from '../../../../services/productService';
 
 export default function CategoryRow({ category, level = 1, onEdit, onAddSubCategory, onDelete, allCategories = [], onRefresh }) {
   const [expanded, setExpanded] = useState(true);
-  const [details, setDetails] = useState([]);
+  const [details, setDetails] = useState([]); // Chứa danh sách các danh mục con trực tiếp của danh mục hiện tại
   const [loadingDetails, setLoadingDetails] = useState(false);
   const [inlineUploading, setInlineUploading] = useState(false);
 
+  // LOGIC CHA-CON: Lọc ra các danh mục con trực tiếp từ danh sách phẳng (allCategories)
   React.useEffect(() => {
     if (allCategories && allCategories.length > 0) {
       const subCats = allCategories.filter(c => c.parentId === category.id);
@@ -95,21 +96,23 @@ export default function CategoryRow({ category, level = 1, onEdit, onAddSubCateg
     return 'bg-success/10 text-success';
   };
 
+  // LOGIC KẾ THỪA TRẠNG THÁI ẨN: Duyệt ngược lên các cấp cha (Ancestor)
+  // Nếu có bất kỳ danh mục cha nào đang bị ẩn (isActive === false), thì danh mục hiện tại cũng phải chịu trạng thái ẩn theo.
   const checkInheritedInactive = (cat) => {
     let parentId = cat.parentId;
     while (parentId) {
       const parent = allCategories.find(c => c.id === parentId);
       if (!parent) break;
-      if (parent.isActive === false) return true;
-      parentId = parent.parentId;
+      if (parent.isActive === false) return true; // Có tổ tiên bị ẩn
+      parentId = parent.parentId; // Đi ngược lên tiếp
     }
     return false;
   };
 
   const inheritedInactive = checkInheritedInactive(category);
   const isSelfInactive = category.isActive === false;
-  const isInactive = inheritedInactive || isSelfInactive;
-  const currentLevel = category.level || level;
+  const isInactive = inheritedInactive || isSelfInactive; // Trạng thái ẩn thực tế cuối cùng
+  const currentLevel = category.level || level; // Xác định cấp hiện tại (Cấp 1, 2, hay 3)
 
   const getDirectoryPath = (cat) => {
     const parts = [];
@@ -218,6 +221,7 @@ export default function CategoryRow({ category, level = 1, onEdit, onAddSubCateg
         </td>
         <td className="px-6 py-4 text-center">
           <div className="flex items-center justify-center gap-2">
+            {/* LOGIC PHÂN CẤP TỐI ĐA: Chỉ hiển thị nút thêm con nếu cấp hiện tại dưới 3 (chỉ cho phép tối đa 3 cấp) */}
             {currentLevel < 3 && (
               <button
                 onClick={() => onAddSubCategory(category.id, currentLevel + 1, category.name)}
@@ -234,6 +238,7 @@ export default function CategoryRow({ category, level = 1, onEdit, onAddSubCateg
             >
               <Edit size={18} />
             </button>
+            {/* LOGIC BẢO VỆ DỮ LIỆU KHI XÓA: Chỉ cho phép xóa khi danh mục không có con cháu và không có sản phẩm liên kết */}
             {category.subCategoriesCount === 0 && category.productsCount === 0 && (
               <button
                 onClick={() => onDelete(category.id)}
@@ -256,7 +261,7 @@ export default function CategoryRow({ category, level = 1, onEdit, onAddSubCateg
         </td>
       </tr>
       
-      {/* Expanded Row containing child CategoryRows */}
+      {/* LOGIC ĐỆ QUY: Render các dòng con (CategoryRow) lồng nhau ở cấp tiếp theo (level = currentLevel + 1) */}
       {expanded && details && details.length > 0 && (
         <tr className="bg-slate-50/40">
           <td colSpan="5" className="p-0 border-b border-admin-border">
@@ -272,7 +277,7 @@ export default function CategoryRow({ category, level = 1, onEdit, onAddSubCateg
                       <CategoryRow 
                         key={sub.id} 
                         category={sub} 
-                        level={currentLevel + 1}
+                        level={currentLevel + 1} // Tăng cấp độ phân cấp lên +1
                         onEdit={onEdit}
                         onAddSubCategory={onAddSubCategory}
                         onDelete={onDelete}
