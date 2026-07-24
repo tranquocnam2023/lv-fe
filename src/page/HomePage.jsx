@@ -22,6 +22,7 @@ import ProductCard from '../components/product/ProductCard';
 import Breadcrumb from '../components/Breadcrumb';
 import FilterBar from '../components/FilterBar';
 import BannerSection from '../components/BannerSection';
+import { Sliders } from 'lucide-react';
 import { productService } from '../services/productService';
 import { categoryService } from '../services/categoryService';
 import { THEME } from '../utils/theme';
@@ -39,7 +40,7 @@ const parseSpecs = (specsInput) => {
   if (!Array.isArray(parsed)) return [];
   if (parsed.length === 0) return [];
   if (typeof parsed[0] === 'string') return parsed;
-  
+
   const tags = [];
   parsed.forEach(group => {
     if (group && Array.isArray(group.items)) {
@@ -73,23 +74,79 @@ export default function HomePage({ selectedLocation }) {
   }
 
   const [advancedFilters, setAdvancedFilters] = useState(null);
+  const [sortBy, setSortBy] = useState('featured');
+  const [isPriceDropdownOpen, setIsPriceDropdownOpen] = useState(false);
   const [products, setProducts] = useState([]);
   const [categories, setCategories] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [visibleCount, setVisibleCount] = useState(12);
 
-  const isAvailableInLocation = (product, locationName) => {
-    return true; 
-  };
 
+  // 1. LOGIC LẤY DỮ LIỆU DANH MỤC (Categories) - Chỉ lấy 1 lần duy nhất khi component mount
+  useEffect(() => {
+    categoryService.getAll()
+      .then(data => {
+        if (Array.isArray(data)) {
+          setCategories(data);
+        }
+      })
+      .catch(err => console.error("Lỗi tải danh mục:", err));
+  }, []);
+
+  // 2. LOGIC LẤY DỮ LIỆU SẢN PHẨM ĐỘNG TỪ API/DATABASE (Server-side Sorting & Filtering)
+  // Mỗi khi người dùng thay đổi danh mục (selectedBrand), từ khóa tìm kiếm (searchQuery) hay sắp xếp (sortBy),
+  // frontend sẽ gọi lại API để sắp xếp/phân lọc chuẩn xác từ SQL Database, tránh lỗi tải tất cả làm trộn lẫn phụ kiện.
   useEffect(() => {
     setIsLoading(true);
-    Promise.all([
-      productService.getAll(),
-      categoryService.getAll().catch(() => [])
-    ])
-      .then(([productsData, categoriesData]) => {
-        if (Array.isArray(productsData) && productsData.length > 0) {
+
+    const brandLower = selectedBrand ? selectedBrand.toLowerCase() : '';
+    // Kiểm tra xem selectedBrand trên URL là Danh mục (Category) hay Hãng (Brand)
+    const matchingCat = categories.find(c => 
+      c.name.toLowerCase() === brandLower || 
+      (c.slug && c.slug.toLowerCase() === brandLower)
+    );
+
+    let categoryId = matchingCat ? (matchingCat.id || matchingCat.Id) : null;
+    const brandParam = (!matchingCat && selectedBrand) ? selectedBrand : null;
+
+    // Nếu đang ở trang chủ (không tìm kiếm và không chọn hãng cụ thể)
+    // Mặc định chúng ta lọc theo danh mục "Điện thoại" để không bị trộn lẫn phụ kiện rẻ tiền giống TGDD
+    if (!selectedBrand && !searchQuery) {
+      const defaultCat = categories.find(c => {
+        const nameLower = (c.name || '').toLowerCase();
+        return nameLower === 'điện thoại' || nameLower === 'dien thoai' || nameLower === 'điện thoại di động';
+      });
+      if (defaultCat) {
+        categoryId = defaultCat.id || defaultCat.Id;
+      }
+    }
+
+    // Ánh xạ các tiêu chí sắp xếp từ frontend sang tham số API của Backend
+    let apiSortBy = 'featured';
+    let apiSortOrder = 'desc';
+
+    if (sortBy === 'price_asc') {
+      apiSortBy = 'price';
+      apiSortOrder = 'asc';
+    } else if (sortBy === 'price_desc') {
+      apiSortBy = 'price';
+      apiSortOrder = 'desc';
+    } else {
+      apiSortBy = sortBy;
+      apiSortOrder = 'desc';
+    }
+
+    const params = {
+      categoryId,
+      brand: brandParam,
+      search: searchQuery,
+      sortBy: apiSortBy,
+      sortOrder: apiSortOrder
+    };
+
+    productService.getAll(params)
+      .then(productsData => {
+        if (Array.isArray(productsData)) {
           const normalizedData = productsData.map(p => ({
             ...p,
             price: p.price || p.basePrice,
@@ -102,19 +159,16 @@ export default function HomePage({ selectedLocation }) {
         } else {
           setProducts([]);
         }
-        if (Array.isArray(categoriesData)) {
-          setCategories(categoriesData);
-        }
       })
       .catch(err => {
-        console.error("Lỗi tải sản phẩm/danh mục:", err);
+        console.error("Lỗi tải sản phẩm từ API:", err);
         setProducts([]);
       })
       .finally(() => {
         setIsLoading(false);
         stopLoading();
       });
-  }, [stopLoading]);
+  }, [selectedBrand, searchQuery, sortBy, categories, stopLoading]);
 
   // Reset visible items count when filters change
   useEffect(() => {
@@ -123,29 +177,12 @@ export default function HomePage({ selectedLocation }) {
 
   const handleApplyFilter = (filters) => {
     setAdvancedFilters(filters);
-    setSelectedBrand(null); 
+    setSelectedBrand(null);
   };
 
+  // 3. LỌC NÂNG CAO (Advanced Filters) Ở CLIENT
+  // Các bộ lọc nhẹ như khoảng giá trượt của Slider, Spec RAM được thực hiện ở client-side trên tập dữ liệu đã rút gọn của API.
   const filteredProducts = products.filter(product => {
-    // Lọc theo từ khóa tìm kiếm trên URL (?search=...)
-    if (searchQuery) {
-      const query = searchQuery.toLowerCase().trim();
-      
-      // Resolve category name from categories list using categoryId (type-safe)
-      const pCatId = product.categoryId || product.CategoryId;
-      const catObj = categories.find(c => String(c.id || c.Id || '') === String(pCatId || ''));
-      const resolvedCatName = catObj ? catObj.name.toLowerCase() : '';
-
-      const matchesSearch = 
-        product.name.toLowerCase().includes(query) ||
-        (product.brandName && product.brandName.toLowerCase().includes(query)) ||
-        (product.BrandName && product.BrandName.toLowerCase().includes(query)) ||
-        (product.brand && product.brand.toLowerCase().includes(query)) ||
-        (product.description && product.description.toLowerCase().includes(query)) ||
-        resolvedCatName.includes(query);
-      if (!matchesSearch) return false;
-    }
-
     // Lọc theo khoảng giá từ URL (?price_min=...&price_max=...)
     if (priceMinParam !== null) {
       const minPrice = parseFloat(priceMinParam);
@@ -156,62 +193,8 @@ export default function HomePage({ selectedLocation }) {
       if (!isNaN(maxPrice) && product.price > maxPrice) return false;
     }
 
-    // Quick brand / category filter
-    if (selectedBrand) {
-      const brandLower = selectedBrand.toLowerCase();
-      
-      // Check if selectedBrand is a Category name or slug in database
-      const matchingCat = categories.find(c => 
-        c.name.toLowerCase() === brandLower || 
-        (c.slug && c.slug.toLowerCase() === brandLower)
-      );
-
-      if (matchingCat) {
-        // Hàm lấy đệ quy tất cả các ID của danh mục con
-        const getAllCategoryIds = (parentId, categoriesList) => {
-          let ids = [String(parentId)];
-          const children = categoriesList.filter(c => String(c.parentId) === String(parentId));
-          for (const child of children) {
-            ids = ids.concat(getAllCategoryIds(child.id, categoriesList));
-          }
-          return ids;
-        };
-
-        const allowedCatIds = getAllCategoryIds(matchingCat.id || matchingCat.Id, categories);
-        if (!allowedCatIds.includes(String(product.categoryId || product.CategoryId || ''))) return false;
-
-        // Nếu có param filterBrand trên URL, lọc thêm theo thương hiệu
-        if (filterBrandParam) {
-          const fbLower = filterBrandParam.toLowerCase();
-          const matchesBrand = (product.brand && product.brand.toLowerCase() === fbLower) ||
-                               (product.brandName && product.brandName.toLowerCase() === fbLower) ||
-                               (product.BrandName && product.BrandName.toLowerCase() === fbLower);
-          if (!matchesBrand) return false;
-        }
-        
-        return true;
-      }
-      
-      const matches = (product.brand && product.brand.toLowerCase() === brandLower) ||
-                      (product.brandName && product.brandName.toLowerCase() === brandLower) ||
-                      (product.BrandName && product.BrandName.toLowerCase() === brandLower) ||
-                      product.name.toLowerCase().includes(brandLower) || 
-                      (product.category && product.category.toLowerCase().includes(brandLower)) ||
-                      (product.categoryName && product.categoryName.toLowerCase().includes(brandLower)) ||
-                      (product.categorySlug && product.categorySlug.toLowerCase() === brandLower);
-      
-      if (!matches) return false;
-    }
-
-    // Advanced filters from modal
+    // Lọc nâng cao từ FilterModal
     if (advancedFilters) {
-      if (advancedFilters['Hãng'] && advancedFilters['Hãng'].length > 0) {
-        const matchesBrand = advancedFilters['Hãng'].some(brand => 
-          product.name.toLowerCase().includes(brand.toLowerCase())
-        );
-        if (!matchesBrand) return false;
-      }
-
       const [min, max] = advancedFilters.priceRange;
       if (product.price < min || product.price > max) {
         return false;
@@ -229,16 +212,14 @@ export default function HomePage({ selectedLocation }) {
     return true;
   });
 
-  const localProducts = filteredProducts.filter(p => isAvailableInLocation(p, selectedLocation));
-  const otherLocationProducts = filteredProducts.filter(p => !isAvailableInLocation(p, selectedLocation));
-
-  const featuredProducts = localProducts.filter(p => p.isFeatured || p.IsFeatured);
+  // Tách riêng sản phẩm nổi bật
+  const featuredProducts = filteredProducts.filter(p => p.isFeatured || p.IsFeatured);
 
   const displaySelectedBrand = () => {
     if (!selectedBrand) return '';
     const brandLower = selectedBrand.toLowerCase();
-    const matchingCat = categories.find(c => 
-      c.name.toLowerCase() === brandLower || 
+    const matchingCat = categories.find(c =>
+      c.name.toLowerCase() === brandLower ||
       (c.slug && c.slug.toLowerCase() === brandLower)
     );
     if (matchingCat) return matchingCat.name;
@@ -253,18 +234,18 @@ export default function HomePage({ selectedLocation }) {
         <Breadcrumb items={[{ label: 'Tất cả sản phẩm điện thoại' }]} />
       )}
 
-      <h2 
+      <h2
         className="text-2xl font-bold mb-4 pb-2 border-b"
         style={{ color: THEME.primary, borderColor: THEME.border }}
       >
-        {searchQuery 
-          ? `Kết quả tìm kiếm cho: "${searchQuery}"` 
+        {searchQuery
+          ? `Kết quả tìm kiếm cho: "${searchQuery}"`
           : (selectedBrand || advancedFilters ? `Sản phẩm ${displaySelectedBrand() || 'đã lọc'}` : 'Chào mừng đến với hệ thống PhoneShop!')}
       </h2>
 
       {!selectedBrand && !searchQuery && !advancedFilters && (
         <>
-          <div 
+          <div
             className="p-4 rounded mb-6 border bg-primary/5 text-secondary border-primary/20"
           >
             Khám phá các sản phẩm điện thoại, phụ kiện và nhiều ưu đãi Mùa hè hấp dẫn.
@@ -285,19 +266,19 @@ export default function HomePage({ selectedLocation }) {
           </div>
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
             {featuredProducts.map((product) => (
-              <ProductCard 
-                 key={`featured-${product.id}`}
-                 id={product.id}
-                 name={product.name}
-                 price={product.price}
-                 originalPrice={product.originalPrice}
-                 discount={product.discount}
-                 specs={product.specs || []}
-                 image={product.image}
-                 stockQuantity={product.stockQuantity}
-                 isFeatured={true}
-                 averageRating={product.averageRating}
-                 reviewCount={product.reviewCount}
+              <ProductCard
+                key={`featured-${product.id}`}
+                id={product.id}
+                name={product.name}
+                price={product.price}
+                originalPrice={product.originalPrice}
+                discount={product.discount}
+                specs={product.specs || []}
+                image={product.image}
+                stockQuantity={product.stockQuantity}
+                isFeatured={true}
+                averageRating={product.averageRating}
+                reviewCount={product.reviewCount}
               />
             ))}
           </div>
@@ -310,19 +291,112 @@ export default function HomePage({ selectedLocation }) {
           <BannerSection showTopBanner={false} showSideBanners={false} />
         </div>
       )}
-      
-      <FilterBar 
-        selectedBrand={selectedBrand} 
+
+      <FilterBar
+        selectedBrand={selectedBrand}
         onSelectBrand={(brand) => {
           setSelectedBrand(brand);
-          setAdvancedFilters(null); 
-        }} 
+          setAdvancedFilters(null);
+        }}
         onApplyFilter={handleApplyFilter}
         onClearAll={(selectedBrand || advancedFilters) ? () => {
           setSelectedBrand(null);
           setAdvancedFilters(null);
         } : null}
       />
+
+      {/* Sắp xếp theo (TGDD Style - 2 hàng độc lập, không viền, không nền) */}
+      <div className="flex items-center gap-2 mb-4 mt-2 text-[14px] text-gray-700 select-none flex-wrap py-1.5">
+        <span className="font-semibold text-gray-500">Sắp xếp theo:</span>
+        <div className="flex items-center gap-3 flex-wrap">
+          <button
+            onClick={() => setSortBy('featured')}
+            className={`cursor-pointer transition-colors px-1.5 py-0.5 rounded hover:bg-gray-100 ${sortBy === 'featured' ? 'text-primary font-bold bg-primary/5' : 'hover:text-primary'}`}
+          >
+            Nổi bật
+          </button>
+
+          <span className="text-gray-300">•</span>
+
+          <button
+            onClick={() => setSortBy('best_seller')}
+            className={`cursor-pointer transition-colors px-1.5 py-0.5 rounded hover:bg-gray-100 ${sortBy === 'best_seller' ? 'text-primary font-bold bg-primary/5' : 'hover:text-primary'}`}
+          >
+            Bán chạy
+          </button>
+
+          <span className="text-gray-300">•</span>
+
+          <button
+            onClick={() => setSortBy('discount')}
+            className={`cursor-pointer transition-colors px-1.5 py-0.5 rounded hover:bg-gray-100 ${sortBy === 'discount' ? 'text-primary font-bold bg-primary/5' : 'hover:text-primary'}`}
+          >
+            Giảm giá
+          </button>
+
+          <span className="text-gray-300">•</span>
+
+          <button
+            onClick={() => setSortBy('newest')}
+            className={`cursor-pointer transition-colors px-1.5 py-0.5 rounded hover:bg-gray-100 ${sortBy === 'newest' ? 'text-primary font-bold bg-primary/5' : 'hover:text-primary'}`}
+          >
+            Mới
+          </button>
+
+          <span className="text-gray-300">•</span>
+
+          {/* Dropdown Giá */}
+          <div className="relative">
+            <button
+              onClick={() => setIsPriceDropdownOpen(!isPriceDropdownOpen)}
+              className={`flex items-center gap-0.5 cursor-pointer transition-colors px-1.5 py-0.5 rounded hover:bg-gray-100 ${(sortBy === 'price_asc' || sortBy === 'price_desc') ? 'text-primary font-bold bg-primary/5' : 'hover:text-primary'
+                }`}
+            >
+              <span>
+                {sortBy === 'price_asc'
+                  ? 'Giá thấp - cao'
+                  : sortBy === 'price_desc'
+                    ? 'Giá cao - thấp'
+                    : 'Giá'}
+              </span>
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-3 h-3">
+                <path strokeLinecap="round" strokeLinejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
+              </svg>
+            </button>
+
+            {isPriceDropdownOpen && (
+              <>
+                <div
+                  className="fixed inset-0 z-10"
+                  onClick={() => setIsPriceDropdownOpen(false)}
+                />
+                <div className="absolute left-0 mt-1.5 w-[160px] bg-white border border-gray-200 rounded-lg shadow-lg py-1.5 z-20 animate-in fade-in slide-in-from-top-1 duration-150">
+                  <button
+                    onClick={() => {
+                      setSortBy('price_asc');
+                      setIsPriceDropdownOpen(false);
+                    }}
+                    className={`w-full text-left px-4 py-2 text-[13px] transition-colors cursor-pointer ${sortBy === 'price_asc' ? 'bg-primary/5 text-primary font-bold' : 'text-gray-700 hover:bg-gray-50'
+                      }`}
+                  >
+                    Giá thấp - cao
+                  </button>
+                  <button
+                    onClick={() => {
+                      setSortBy('price_desc');
+                      setIsPriceDropdownOpen(false);
+                    }}
+                    className={`w-full text-left px-4 py-2 text-[13px] transition-colors cursor-pointer ${sortBy === 'price_desc' ? 'bg-primary/5 text-primary font-bold' : 'text-gray-700 hover:bg-gray-50'
+                      }`}
+                  >
+                    Giá cao - thấp
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+      </div>
 
       {isLoading ? (
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 mt-6">
@@ -332,96 +406,62 @@ export default function HomePage({ selectedLocation }) {
         </div>
       ) : filteredProducts.length === 0 ? (
         <div className="text-center py-10 text-gray-500">
-           <p className="text-lg">Không tìm thấy sản phẩm phù hợp.</p>
-           <button 
-             onClick={() => {
-               setSelectedBrand(null);
-               setAdvancedFilters(null);
-             }}
-             className="mt-4 hover:underline cursor-pointer font-bold"
-             style={{ color: THEME.primary }}
-           >
-             Xem tất cả sản phẩm
-           </button>
+          <p className="text-lg">Không tìm thấy sản phẩm phù hợp.</p>
+          <button
+            onClick={() => {
+              setSelectedBrand(null);
+              setAdvancedFilters(null);
+            }}
+            className="mt-4 hover:underline cursor-pointer font-bold"
+            style={{ color: THEME.primary }}
+          >
+            Xem tất cả sản phẩm
+          </button>
         </div>
       ) : (
         <>
-          {localProducts.length > 0 ? (
+          {filteredProducts.length > 0 ? (
             <>
               <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 animate-fade-in">
-                {localProducts.slice(0, visibleCount).map((product) => (
-                  <ProductCard 
-                     key={product.id}
-                     id={product.id}
-                     name={product.name}
-                     price={product.price}
-                     originalPrice={product.originalPrice}
-                     discount={product.discount}
-                     specs={product.specs || []}
-                     image={product.image}
-                     stockQuantity={product.stockQuantity}
-                     isFeatured={product.isFeatured}
-                     averageRating={product.averageRating}
-                     reviewCount={product.reviewCount}
+                {filteredProducts.slice(0, visibleCount).map((product) => (
+                  <ProductCard
+                    key={product.id}
+                    id={product.id}
+                    name={product.name}
+                    price={product.price}
+                    originalPrice={product.originalPrice}
+                    discount={product.discount}
+                    specs={product.specs || []}
+                    image={product.image}
+                    stockQuantity={product.stockQuantity}
+                    isFeatured={product.isFeatured}
+                    averageRating={product.averageRating}
+                    reviewCount={product.reviewCount}
                   />
                 ))}
               </div>
 
               {/* Nút Xem thêm sản phẩm (Batch Loading) */}
-              {localProducts.length > visibleCount && (
+              {filteredProducts.length > visibleCount && (
                 <div className="flex flex-col items-center justify-center my-8">
                   <button
                     onClick={() => setVisibleCount(prev => prev + 12)}
                     className="px-8 py-3 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 hover:border-blue-500 text-slate-800 dark:text-slate-100 font-bold rounded-xl shadow-sm hover:shadow-md transition-all duration-200 flex items-center gap-2 group cursor-pointer"
                   >
-                    <span>Xem thêm {localProducts.length - visibleCount} sản phẩm</span>
+                    <span>Xem thêm {filteredProducts.length - visibleCount} sản phẩm</span>
                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4 group-hover:translate-y-0.5 transition-transform">
                       <path strokeLinecap="round" strokeLinejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
                     </svg>
                   </button>
                   <p className="text-xs text-slate-400 mt-2">
-                    Đang hiển thị {Math.min(visibleCount, localProducts.length)} trên tổng số {localProducts.length} sản phẩm
+                    Đang hiển thị {Math.min(visibleCount, filteredProducts.length)} trên tổng số {filteredProducts.length} sản phẩm
                   </p>
                 </div>
               )}
             </>
           ) : (
             <div className="text-center py-10 text-gray-500 bg-slate-50 rounded-md border border-dashed border-admin-border">
-               <p className="text-sm font-semibold text-admin-text-muted">Sản phẩm hiện tạm hết hàng tại khu vực này.</p>
-            </div>
-          )}
-
-          {/* SECTION SẢN PHẨM KHU VỰC KHÁC */}
-          {otherLocationProducts.length > 0 && (
-            <div className="mt-12 border-t border-admin-border pt-8 animate-fade-in">
-              <div className="flex flex-col mb-5">
-                <h3 className="text-lg font-bold text-gray-800">
-                  Sản phẩm bạn tìm hiện không có ở khu vực này?
-                </h3>
-                <p className="text-xs text-admin-text-muted mt-1">
-                  Dưới đây là các sản phẩm đang có sẵn tại các chi nhánh và kho hàng ở khu vực khác:
-                </p>
-              </div>
-              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 opacity-80 hover:opacity-100 transition-opacity duration-300">
-                {otherLocationProducts.slice(0, 8).map((product) => (
-                  <ProductCard 
-                     key={`other-${product.id}`}
-                     id={product.id}
-                     name={product.name}
-                     price={product.price}
-                     originalPrice={product.originalPrice}
-                     discount={product.discount}
-                     specs={product.specs || []}
-                     image={product.image}
-                     stockQuantity={product.stockQuantity}
-                     isFeatured={product.isFeatured}
-                     badgeText="Khu vực khác"
-                     badgeBg="bg-indigo-600"
-                     averageRating={product.averageRating}
-                     reviewCount={product.reviewCount}
-                  />
-                ))}
-              </div>
+              <p className="text-sm font-semibold text-admin-text-muted">Sản phẩm hiện tạm hết hàng.</p>
             </div>
           )}
         </>

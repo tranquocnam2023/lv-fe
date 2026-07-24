@@ -1,6 +1,6 @@
 //Modal lọc sản phẩm
 import React, { useState, useEffect } from 'react';
-import { X } from 'lucide-react';
+import { X, Sliders } from 'lucide-react';
 import Slider from 'rc-slider';
 import 'rc-slider/assets/index.css';
 import { brandService } from '../services/brandService';
@@ -10,11 +10,7 @@ const filterData = {
   types: ['Android', 'iPhone (iOS)', 'Điện thoại phổ thông', 'Điện thoại gập'],
   needs: ['Chơi game / Cấu hình cao', 'Pin khủng trên 7000 mAh', 'Chụp ảnh, quay phim', 'Livestream', 'Mỏng nhẹ'],
   ram: ['3 GB', '4 GB', '6 GB', '8 GB', '12 GB', '16 GB'],
-  resolution: ['HD+', 'Full HD+', '1.5K', '2K+', 'Retina (iPhone)'],
-  refreshRate: ['60 Hz', '90 Hz', '120 Hz', '144 Hz', '165 Hz'],
-  storage: ['64 GB', '128 GB', '256 GB', '512 GB', '1 TB'],
-  battery: ['Sạc nhanh (từ 20W)', 'Sạc siêu nhanh (từ 60W)', 'Sạc không dây'],
-  features: ['Điện thoại AI', 'Chụp ảnh AI', 'Kháng nước, bụi', 'Hỗ trợ 5G', 'Bảo mật khuôn mặt 3D', 'Công nghệ NFC']
+  storage: ['64 GB', '128 GB', '256 GB', '512 GB', '1 TB']
 };
 
 /**
@@ -45,10 +41,85 @@ const FilterSection = ({ title, options, selected, onSelect }) => {
   );
 };
 
+const MIN_PRICE = 0;        // Giới hạn giá tối thiểu trên bộ lọc kéo (mặc định: 0)
+const MAX_PRICE = 60000000; // Giới hạn giá tối đa trên bộ lọc kéo. Sửa số này để đổi giá tối đa
+
 export default function FilterModal({ onClose, onApply }) {
   const [brands, setBrands] = useState([]);
   const [selectedFilters, setSelectedFilters] = useState({});
-  const [priceRange, setPriceRange] = useState([0, 54000000]);
+  const [priceRange, setPriceRange] = useState([MIN_PRICE, MAX_PRICE]);
+
+  // States for custom price inputs editing
+  const [minFocused, setMinFocused] = useState(false);
+  const [maxFocused, setMaxFocused] = useState(false);
+  const [minInputVal, setMinInputVal] = useState("");
+  const [maxInputVal, setMaxInputVal] = useState("");
+
+  const formatPrefix = (value) => {
+    if (value === undefined || value === null || value === "") return "";
+    const clean = value.toString().replace(/\D/g, '');
+    if (clean === "") return "";
+    const num = parseInt(clean, 10);
+    return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+  };
+
+  const handleMinFocus = () => {
+    setMinFocused(true);
+    setMinInputVal(priceRange[0] === MIN_PRICE ? "0" : (priceRange[0] / 1000).toString());
+  };
+
+  const handleMinBlur = () => {
+    setMinFocused(false);
+    let val = parseInt(minInputVal.replace(/\D/g, ''), 10);
+    if (isNaN(val)) val = MIN_PRICE / 1000;
+    if (val < MIN_PRICE / 1000) val = MIN_PRICE / 1000;
+    if (val > MAX_PRICE / 1000) val = MAX_PRICE / 1000;
+
+    setPriceRange(prev => {
+      const newMin = Math.min(val * 1000, prev[1]);
+      return [newMin, prev[1]];
+    });
+  };
+
+  const handleMinChange = (e) => {
+    const val = e.target.value.replace(/\D/g, '');
+    setMinInputVal(val);
+
+    let numeric = parseInt(val, 10);
+    if (isNaN(numeric)) numeric = MIN_PRICE / 1000;
+    if (numeric < MIN_PRICE / 1000) numeric = MIN_PRICE / 1000;
+    if (numeric > MAX_PRICE / 1000) numeric = MAX_PRICE / 1000;
+    setPriceRange(prev => [Math.min(numeric * 1000, prev[1]), prev[1]]);
+  };
+
+  const handleMaxFocus = () => {
+    setMaxFocused(true);
+    setMaxInputVal(priceRange[1] === MIN_PRICE ? "0" : (priceRange[1] / 1000).toString());
+  };
+
+  const handleMaxBlur = () => {
+    setMaxFocused(false);
+    let val = parseInt(maxInputVal.replace(/\D/g, ''), 10);
+    if (isNaN(val)) val = MIN_PRICE / 1000;
+    if (val < MIN_PRICE / 1000) val = MIN_PRICE / 1000;
+    if (val > MAX_PRICE / 1000) val = MAX_PRICE / 1000;
+
+    setPriceRange(prev => {
+      const newMax = Math.max(val * 1000, prev[0]);
+      return [prev[0], newMax];
+    });
+  };
+
+  const handleMaxChange = (e) => {
+    const val = e.target.value.replace(/\D/g, '');
+    setMaxInputVal(val);
+
+    let numeric = parseInt(val, 10);
+    if (isNaN(numeric)) numeric = MIN_PRICE / 1000;
+    if (numeric < MIN_PRICE / 1000) numeric = MIN_PRICE / 1000;
+    if (numeric > MAX_PRICE / 1000) numeric = MAX_PRICE / 1000;
+    setPriceRange(prev => [prev[0], Math.max(numeric * 1000, prev[0])]);
+  };
 
   useEffect(() => {
     brandService.getAll()
@@ -69,7 +140,7 @@ export default function FilterModal({ onClose, onApply }) {
         'Từ 4 - 7 triệu': [4000000, 7000000],
         'Từ 7 - 13 triệu': [7000000, 13000000],
         'Từ 13 - 20 triệu': [13000000, 20000000],
-        'Trên 20 triệu': [20000000, 60000000]
+        'Trên 20 triệu': [20000000, MAX_PRICE]
       };
       if (ranges[value]) {
         setPriceRange(ranges[value]);
@@ -92,7 +163,7 @@ export default function FilterModal({ onClose, onApply }) {
 
   const clearAll = () => {
     setSelectedFilters({});
-    setPriceRange([0, 54000000]);
+    setPriceRange([MIN_PRICE, MAX_PRICE]);
   };
 
   const formatPrice = (value) => {
@@ -131,71 +202,57 @@ export default function FilterModal({ onClose, onApply }) {
           <FilterSection title="Giá" options={filterData.prices} selected={selectedFilters['Giá'] || []} onSelect={toggleFilter} />
           {/* Custom price slider */}
           {/* ================= GIÁ + SLIDER ================= */}
-          <div className="mb-6 -mt-3">
-
-            {/* Tiêu đề nhỏ */}
-            <div className="text-[13px] text-primary mb-3">
+          <div className="mb-6 mt-2 flex flex-col sm:flex-row items-start sm:items-start gap-2 sm:gap-4">
+            {/* Cột trái: Tiêu đề nhỏ */}
+            <div className="flex items-center gap-1.5 text-[13px] text-gray-700 h-8 font-medium whitespace-nowrap">
+              <Sliders size={16} className="text-primary" />
               <span>Hoặc chọn mức giá phù hợp với bạn</span>
             </div>
 
-            <div className="flex items-center gap-4">
-              <input type="text" value={formatPrice(priceRange[0])} readOnly className="border border-gray-300 rounded px-3 py-1.5 w-[120px] text-center text-sm outline-none" />
-              <div className="flex-1 px-2">
+            {/* Cột phải: Slider nằm trên, các ô nhập nằm dưới căn chỉnh chính xác trục dọc */}
+            <div className="flex-1 flex flex-col gap-3 min-w-[260px] max-w-[320px] sm:max-w-none w-full mx-auto sm:mx-0">
+              {/* Slider nằm trên, với padding 55px hai bên để thanh trượt khớp với tâm của 2 ô input rộng 110px */}
+              <div className="px-[55px] h-8 flex items-center">
                 <Slider
-                  range min={0} max={60000000} step={500000} value={priceRange} onChange={handlePriceChange}
-                  trackStyle={[{ backgroundColor: 'var(--color-primary)', height: 2 }]}
+                  range min={MIN_PRICE} max={MAX_PRICE} step={500000} value={priceRange} onChange={handlePriceChange}
+                  trackStyle={[{ backgroundColor: 'var(--color-primary)', height: 4 }]}
                   handleStyle={[
-                    { borderColor: 'var(--color-primary)', height: 14, width: 14, marginTop: -6, backgroundColor: '#fff' },
-                    { borderColor: 'var(--color-primary)', height: 14, width: 14, marginTop: -6, backgroundColor: '#fff' }
+                    { border: '2.5px solid var(--color-primary)', height: 16, width: 16, marginTop: -6, backgroundColor: '#fff', opacity: 1, boxShadow: 'none' },
+                    { border: '2.5px solid var(--color-primary)', height: 16, width: 16, marginTop: -6, backgroundColor: '#fff', opacity: 1, boxShadow: 'none' }
                   ]}
-                  railStyle={{ backgroundColor: '#e5e7eb', height: 2 }}
+                  railStyle={{ backgroundColor: '#e5e7eb', height: 4 }}
                 />
               </div>
-              <input type="text" value={formatPrice(priceRange[1])} readOnly className="border border-gray-300 rounded px-3 py-1.5 w-[120px] text-center text-sm outline-none" />
-            </div>
-            {/* ========================================================
-                CẤU TRÚC 2: Thanh kéo nằm TRÊN hai mức giá              
-            ======================================================== */}
-            {/* 
-            <div className="mb-6 px-3 pt-2 mt-2">
-              <Slider
-                range min={0} max={60000000} step={500000} value={priceRange} onChange={handlePriceChange}
-                trackStyle={[{backgroundColor: 'var(--color-primary)', height: 2}]}
-                handleStyle={[
-                  { borderColor: 'var(--color-primary)', height: 14, width: 14, marginTop: -6, backgroundColor: '#fff'},
-                  { borderColor: 'var(--color-primary)', height: 14, width: 14, marginTop: -6, backgroundColor: '#fff'}
-                ]}
-                railStyle={{ backgroundColor: '#e5e7eb', height: 2 }}
-              />
-            </div>
-            <div className="flex items-center gap-4 justify-between">
-              <input type="text" value={formatPrice(priceRange[0])} readOnly className="border border-gray-300 rounded px-3 py-1.5 w-[140px] text-center text-sm outline-none" />
-              <span className="text-gray-400">-</span>
-              <input type="text" value={formatPrice(priceRange[1])} readOnly className="border border-gray-300 rounded px-3 py-1.5 w-[140px] text-center text-sm outline-none" />
-            </div>
-            */}
 
-            {/* ========================================================
-                CẤU TRÚC 3: Thanh kéo nằm DƯỚI hai mức giá      
-            ======================================================== */}
-            {/* 
-            <div className="flex items-center gap-4 justify-between mb-6 mt-2">
-              <input type="text" value={formatPrice(priceRange[0])} readOnly className="border border-gray-300 rounded px-3 py-1.5 w-[140px] text-center text-sm outline-none" />
-              <span className="text-gray-400">-</span>
-              <input type="text" value={formatPrice(priceRange[1])} readOnly className="border border-gray-300 rounded px-3 py-1.5 w-[140px] text-center text-sm outline-none" />
+              {/* Hai ô nhập giá trị nằm dưới, căn chỉnh theo trục dọc với Slider */}
+              <div className="flex items-center justify-between gap-2">
+                <div className="flex items-center justify-end border border-gray-300 rounded-md px-2 py-1 w-[110px] bg-white focus-within:border-primary focus-within:ring-1 focus-within:ring-primary/20 transition-all">
+                  <input
+                    type="text"
+                    value={minFocused ? formatPrefix(minInputVal) : formatPrefix(priceRange[0] / 1000)}
+                    onFocus={handleMinFocus}
+                    onBlur={handleMinBlur}
+                    onChange={handleMinChange}
+                    className="w-full text-right bg-transparent border-none outline-none p-0 text-[13px] font-semibold text-gray-800 pr-0.5"
+                  />
+                  <span className="text-gray-400 text-[13px] font-semibold select-none pr-1">.000đ</span>
+                </div>
+
+                <div className="w-5 h-[1px] bg-gray-300 flex-shrink-0"></div>
+
+                <div className="flex items-center justify-end border border-gray-300 rounded-md px-2 py-1 w-[110px] bg-white focus-within:border-primary focus-within:ring-1 focus-within:ring-primary/20 transition-all">
+                  <input
+                    type="text"
+                    value={maxFocused ? formatPrefix(maxInputVal) : formatPrefix(priceRange[1] / 1000)}
+                    onFocus={handleMaxFocus}
+                    onBlur={handleMaxBlur}
+                    onChange={handleMaxChange}
+                    className="w-full text-right bg-transparent border-none outline-none p-0 text-[13px] font-semibold text-gray-800 pr-0.5"
+                  />
+                  <span className="text-gray-400 text-[13px] font-semibold select-none pr-1">.000đ</span>
+                </div>
+              </div>
             </div>
-            <div className="px-3 pb-2">
-              <Slider
-                range min={0} max={60000000} step={500000} value={priceRange} onChange={handlePriceChange}
-                trackStyle={[{backgroundColor: 'var(--color-primary)', height: 2}]}
-                handleStyle={[
-                  { borderColor: 'var(--color-primary)', height: 14, width: 14, marginTop: -6, backgroundColor: '#fff'},
-                  { borderColor: 'var(--color-primary)', height: 14, width: 14, marginTop: -6, backgroundColor: '#fff'}
-                ]}
-                railStyle={{ backgroundColor: '#e5e7eb', height: 2 }}
-              />
-            </div>
-            */}
           </div>
 
           <FilterSection title="Loại điện thoại" options={filterData.types} selected={selectedFilters['Loại điện thoại'] || []} onSelect={toggleFilter} />

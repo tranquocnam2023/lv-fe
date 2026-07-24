@@ -12,7 +12,13 @@ export default function FilterBar({ selectedBrand, onSelectBrand, onApplyFilter,
     brandService.getAll()
       .then(data => {
         if (Array.isArray(data)) {
-          setQuickBrands(data.map(b => b.name));
+          const names = data.map(b => b.name);
+          // Danh sách các thương hiệu điện thoại
+          const PHONE_BRANDS = ['iPhone', 'Vivo', 'OPPO', 'Xiaomi', 'Samsung'];
+          const phoneNames = PHONE_BRANDS.filter(pb => 
+            names.some(name => name.toLowerCase() === pb.toLowerCase())
+          );
+          setQuickBrands(phoneNames);
         }
       })
       .catch(err => console.error("Lỗi tải thương hiệu cho FilterBar:", err));
@@ -22,7 +28,7 @@ export default function FilterBar({ selectedBrand, onSelectBrand, onApplyFilter,
     <>
       {/* MOBILE & TABLET: Horizontal scrollable brand filter | DESKTOP: Wrapped flex layout */}
       <div 
-        className="flex items-center gap-2 mb-4 p-2 rounded-md border border-bordercustom bg-white overflow-hidden"
+        className="flex items-center gap-2 py-2 overflow-hidden"
       >
         <button 
           onClick={() => setIsModalOpen(true)}

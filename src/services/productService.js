@@ -1,7 +1,13 @@
 import api from './api';
 
 export const productService = {
-  getAll: (includeInactive = false) => api.get(`/Product?includeInactive=${includeInactive}`),
+  getAll: (params = {}) => {
+    let queryParams = params;
+    if (typeof params === 'boolean') {
+      queryParams = { includeInactive: params };
+    }
+    return api.get('/Product', { params: queryParams });
+  },
   
   getById: (id) => api.get(`/Product/${id}`),
   
