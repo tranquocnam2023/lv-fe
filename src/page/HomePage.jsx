@@ -1,7 +1,23 @@
 // src/page/HomePage.jsx
+/**
+ * ============================================================================
+ * PAGE: HomePage (Trang Chủ Hệ Thống PhoneShop)
+ * ============================================================================
+ * Chức năng & Nâng cấp tối ưu:
+ *  1. Tải Dữ Liệu Async & Skeleton UI: Tải danh sách sản phẩm/danh mục bất đồng bộ kèm Skeleton Loaders.
+ *  2. Tải Sản Phẩm Theo Đợt (Batch Loading): Giới hạn số lượng sản phẩm render ban đầu (12 items)
+ *     và mở rộng bằng nút "Xem thêm sản phẩm", giúp giảm tải số lượng DOM Nodes trên trình duyệt.
+ *  3. Bộ Lọc Linh Hoạt: Hỗ trợ lọc theo Từ khóa tìm kiếm, Thương hiệu, Danh mục đệ quy, Khoảng giá & Specs.
+ *  4. Phân Khu Sản Phẩm: Tách riêng Sản phẩm nổi bật (Featured), Sản phẩm đúng khu vực và Sản phẩm khu vực khác.
+ * ============================================================================
+ */
+
 import { useState, useEffect } from 'react';
 import { useParams, useSearchParams } from 'react-router-dom';
 import { useLoading } from '../context/LoadingContext';
+import BannerSkeleton from '../components/common/skeletons/BannerSkeleton';
+import ProductCardSkeleton from '../components/common/skeletons/ProductCardSkeleton';
+import CategorySkeleton from '../components/common/skeletons/CategorySkeleton';
 import ProductCard from '../components/product/ProductCard';
 import Breadcrumb from '../components/Breadcrumb';
 import FilterBar from '../components/FilterBar';
@@ -59,12 +75,15 @@ export default function HomePage({ selectedLocation }) {
   const [advancedFilters, setAdvancedFilters] = useState(null);
   const [products, setProducts] = useState([]);
   const [categories, setCategories] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [visibleCount, setVisibleCount] = useState(12);
 
   const isAvailableInLocation = (product, locationName) => {
     return true; 
   };
 
   useEffect(() => {
+    setIsLoading(true);
     Promise.all([
       productService.getAll(),
       categoryService.getAll().catch(() => [])
@@ -92,9 +111,15 @@ export default function HomePage({ selectedLocation }) {
         setProducts([]);
       })
       .finally(() => {
+        setIsLoading(false);
         stopLoading();
       });
   }, [stopLoading]);
+
+  // Reset visible items count when filters change
+  useEffect(() => {
+    setVisibleCount(12);
+  }, [selectedBrand, searchQuery, advancedFilters]);
 
   const handleApplyFilter = (filters) => {
     setAdvancedFilters(filters);
@@ -299,7 +324,13 @@ export default function HomePage({ selectedLocation }) {
         } : null}
       />
 
-      {filteredProducts.length === 0 ? (
+      {isLoading ? (
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 mt-6">
+          {Array.from({ length: 8 }).map((_, idx) => (
+            <ProductCardSkeleton key={`skeleton-${idx}`} />
+          ))}
+        </div>
+      ) : filteredProducts.length === 0 ? (
         <div className="text-center py-10 text-gray-500">
            <p className="text-lg">Không tìm thấy sản phẩm phù hợp.</p>
            <button 
@@ -307,7 +338,7 @@ export default function HomePage({ selectedLocation }) {
                setSelectedBrand(null);
                setAdvancedFilters(null);
              }}
-             className="mt-4 hover:underline cursor-pointer"
+             className="mt-4 hover:underline cursor-pointer font-bold"
              style={{ color: THEME.primary }}
            >
              Xem tất cả sản phẩm
@@ -316,24 +347,44 @@ export default function HomePage({ selectedLocation }) {
       ) : (
         <>
           {localProducts.length > 0 ? (
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 animate-fade-in">
-              {localProducts.map((product) => (
-                <ProductCard 
-                   key={product.id}
-                   id={product.id}
-                   name={product.name}
-                   price={product.price}
-                   originalPrice={product.originalPrice}
-                   discount={product.discount}
-                   specs={product.specs || []}
-                   image={product.image}
-                   stockQuantity={product.stockQuantity}
-                   isFeatured={product.isFeatured}
-                   averageRating={product.averageRating}
-                   reviewCount={product.reviewCount}
-                />
-              ))}
-            </div>
+            <>
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 animate-fade-in">
+                {localProducts.slice(0, visibleCount).map((product) => (
+                  <ProductCard 
+                     key={product.id}
+                     id={product.id}
+                     name={product.name}
+                     price={product.price}
+                     originalPrice={product.originalPrice}
+                     discount={product.discount}
+                     specs={product.specs || []}
+                     image={product.image}
+                     stockQuantity={product.stockQuantity}
+                     isFeatured={product.isFeatured}
+                     averageRating={product.averageRating}
+                     reviewCount={product.reviewCount}
+                  />
+                ))}
+              </div>
+
+              {/* Nút Xem thêm sản phẩm (Batch Loading) */}
+              {localProducts.length > visibleCount && (
+                <div className="flex flex-col items-center justify-center my-8">
+                  <button
+                    onClick={() => setVisibleCount(prev => prev + 12)}
+                    className="px-8 py-3 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 hover:border-blue-500 text-slate-800 dark:text-slate-100 font-bold rounded-xl shadow-sm hover:shadow-md transition-all duration-200 flex items-center gap-2 group cursor-pointer"
+                  >
+                    <span>Xem thêm {localProducts.length - visibleCount} sản phẩm</span>
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4 group-hover:translate-y-0.5 transition-transform">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
+                    </svg>
+                  </button>
+                  <p className="text-xs text-slate-400 mt-2">
+                    Đang hiển thị {Math.min(visibleCount, localProducts.length)} trên tổng số {localProducts.length} sản phẩm
+                  </p>
+                </div>
+              )}
+            </>
           ) : (
             <div className="text-center py-10 text-gray-500 bg-slate-50 rounded-md border border-dashed border-admin-border">
                <p className="text-sm font-semibold text-admin-text-muted">Sản phẩm hiện tạm hết hàng tại khu vực này.</p>
@@ -352,7 +403,7 @@ export default function HomePage({ selectedLocation }) {
                 </p>
               </div>
               <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 opacity-80 hover:opacity-100 transition-opacity duration-300">
-                {otherLocationProducts.map((product) => (
+                {otherLocationProducts.slice(0, 8).map((product) => (
                   <ProductCard 
                      key={`other-${product.id}`}
                      id={product.id}

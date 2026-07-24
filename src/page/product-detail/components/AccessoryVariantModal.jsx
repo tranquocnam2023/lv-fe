@@ -3,7 +3,7 @@ import { X, Check } from 'lucide-react';
 import api from '../../../services/api';
 import { useCart } from '../../../context/CartContext';
 
-export default function AccessoryVariantModal({ isOpen, onClose, productId, basePrice, comboPrice }) {
+export default function AccessoryVariantModal({ isOpen, onClose, productId, basePrice, comboPrice, campaignId, maxQuantityAllowed = 5, hideQuantity = false }) {
   const [product, setProduct] = useState(null);
   const [variants, setVariants] = useState([]);
   const [attributeOptions, setAttributeOptions] = useState({});
@@ -11,6 +11,16 @@ export default function AccessoryVariantModal({ isOpen, onClose, productId, base
   const [quantity, setQuantity] = useState(1);
   const [loading, setLoading] = useState(true);
   const { addToCart } = useCart();
+
+  useEffect(() => {
+    if (isOpen) {
+      const originalStyle = window.getComputedStyle(document.body).overflow;
+      document.body.style.overflow = 'hidden';
+      return () => {
+        document.body.style.overflow = originalStyle;
+      };
+    }
+  }, [isOpen]);
 
   useEffect(() => {
     if (!isOpen || !productId) return;
@@ -23,13 +33,13 @@ export default function AccessoryVariantModal({ isOpen, onClose, productId, base
       const prod = prodRes.data || prodRes;
       setProduct(prod);
       const vars = varRes.data || varRes || [];
-      
+
       const parsedVars = vars.map(v => {
         let attrs = {};
         if (v.attributes) {
           try {
             attrs = JSON.parse(v.attributes);
-          } catch (e) {}
+          } catch (e) { }
         } else if (v.name && v.name.includes(' - ')) {
           const parts = v.name.split(' - ');
           if (parts.length > 1) attrs['Phiên bản'] = parts[1];
@@ -45,8 +55,8 @@ export default function AccessoryVariantModal({ isOpen, onClose, productId, base
       parsedVars.forEach(v => {
         Object.entries(v.parsedAttrs).forEach(([key, val]) => {
           if (val) {
-             if (!options[key]) options[key] = new Set();
-             options[key].add(val);
+            if (!options[key]) options[key] = new Set();
+            options[key].add(val);
           }
         });
       });
@@ -74,7 +84,7 @@ export default function AccessoryVariantModal({ isOpen, onClose, productId, base
     const selectedVar = variants.find(v => {
       return Object.entries(selectedAttributes).every(([k, val]) => v.parsedAttrs[k] === val);
     }) || variants[0];
-    
+
     // Tìm key tương ứng với màu và dung lượng để truyền vào cartItem
     const colorKey = Object.keys(selectedAttributes).find(k => k.toLowerCase().includes('màu') || k.toLowerCase().includes('color'));
     const storageKey = Object.keys(selectedAttributes).find(k => k.toLowerCase().includes('dung lượng') || k.toLowerCase().includes('storage') || k.toLowerCase().includes('ram') || k.toLowerCase().includes('phiên bản'));
@@ -83,13 +93,16 @@ export default function AccessoryVariantModal({ isOpen, onClose, productId, base
       ...product,
       id: product.id,
       name: product.name,
-      price: product.basePrice,
-      originalBasePrice: product.basePrice,
+      price: comboPrice,
+      originalBasePrice: basePrice,
       selectedAttributes: { ...selectedAttributes },
       selectedColor: colorKey ? selectedAttributes[colorKey] : null,
       selectedStorage: storageKey ? selectedAttributes[storageKey] : null,
       variantId: selectedVar?.id,
-      image: selectedVar?.imageId || product.thumbnailImage
+      image: selectedVar?.imageId || product.thumbnailImage,
+      appliedCampaignId: campaignId,
+      isAddon: true,
+      maxQuantityAllowed: maxQuantityAllowed
     }, quantity);
     onClose();
   };
@@ -147,15 +160,16 @@ export default function AccessoryVariantModal({ isOpen, onClose, productId, base
                 </div>
               ))}
 
-              {/* Quantity */}
-              <div className="mb-2">
-                <h5 className="text-sm font-bold text-gray-700 mb-3">Số lượng (Tối đa 5/món/Combo):</h5>
-                <div className="flex items-center w-32 border border-gray-200 rounded-xl overflow-hidden bg-gray-50">
-                  <button onClick={() => setQuantity(Math.max(1, quantity - 1))} className="flex-1 py-2 text-gray-500 hover:bg-gray-200 font-bold">-</button>
-                  <span className="flex-1 text-center py-2 bg-white border-x border-gray-200 font-bold text-sm">{quantity}</span>
-                  <button onClick={() => setQuantity(Math.min(5, quantity + 1))} className="flex-1 py-2 text-gray-500 hover:bg-gray-200 font-bold disabled:opacity-50" disabled={quantity >= 5}>+</button>
+              {!hideQuantity && (
+                <div className="mb-2">
+                  <h5 className="text-sm font-bold text-gray-700 mb-3">Số lượng (Tối đa {maxQuantityAllowed}/món/Chiến dịch):</h5>
+                  <div className="flex items-center w-32 border border-gray-200 rounded-xl overflow-hidden bg-gray-50">
+                    <button onClick={() => setQuantity(Math.max(1, quantity - 1))} className="flex-1 py-2 text-gray-500 hover:bg-gray-200 font-bold">-</button>
+                    <span className="flex-1 text-center py-2 bg-white border-x border-gray-200 font-bold text-sm">{quantity}</span>
+                    <button onClick={() => setQuantity(Math.min(maxQuantityAllowed, quantity + 1))} className="flex-1 py-2 text-gray-500 hover:bg-gray-200 font-bold disabled:opacity-50" disabled={quantity >= maxQuantityAllowed}>+</button>
+                  </div>
                 </div>
-              </div>
+              )}
             </>
           )}
         </div>
@@ -173,7 +187,7 @@ export default function AccessoryVariantModal({ isOpen, onClose, productId, base
               </div>
             )}
           </div>
-          <button 
+          <button
             onClick={handleAddToCart}
             disabled={loading}
             className="bg-red-600 hover:bg-red-700 text-white font-black px-6 py-2.5 rounded-xl transition-colors disabled:opacity-50 uppercase text-sm tracking-wide"

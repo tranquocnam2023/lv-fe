@@ -20,14 +20,11 @@ export default function CartItemsList({ cartItems, updateQuantity, removeFromCar
       <div className="divide-y divide-gray-100">
         {(() => {
           const standaloneItems = [];
-          const comboGroups = {};
+          const addonItems = [];
 
           cartItems.forEach(item => {
-            if (item.appliedComboId) {
-              if (!comboGroups[item.appliedComboId]) {
-                comboGroups[item.appliedComboId] = [];
-              }
-              comboGroups[item.appliedComboId].push(item);
+            if (item.isAddon) {
+              addonItems.push(item);
             } else {
               standaloneItems.push(item);
             }
@@ -117,7 +114,8 @@ export default function CartItemsList({ cartItems, updateQuantity, removeFromCar
                     <button
                       type="button"
                       onClick={() => updateQuantity(item.cartId, item.quantity + 1)}
-                      className="w-6 h-6 flex items-center justify-center bg-gray-50 hover:bg-gray-100 text-gray-600 font-bold text-xs cursor-pointer"
+                      disabled={item.isAddon && item.maxQuantityAllowed && item.quantity >= item.maxQuantityAllowed}
+                      className="w-6 h-6 flex items-center justify-center bg-gray-50 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed text-gray-600 font-bold text-xs cursor-pointer"
                     >
                       +
                     </button>
@@ -129,20 +127,20 @@ export default function CartItemsList({ cartItems, updateQuantity, removeFromCar
 
           return (
             <>
-              {Object.entries(comboGroups).map(([comboId, groupItems]) => {
-                const mainItem = groupItems.find(i => i.isComboMain) || groupItems[0];
-                return (
-                  <div key={`combo-${comboId}`} className="border-2 border-dashed border-red-200 rounded-xl p-4 relative mt-6 mb-4 bg-red-50/20">
-                    <div className="absolute -top-3.5 left-4 bg-red-600 text-white text-[11px] font-black px-3 py-1 rounded-full uppercase shadow-md flex items-center gap-1.5">
-                      <span>🎉</span> Áp dụng thành công Combo {mainItem.name}
-                    </div>
-                    <div className="divide-y divide-gray-100 pt-2">
-                      {groupItems.map(renderItem)}
-                    </div>
-                  </div>
-                );
-              })}
               {standaloneItems.map(renderItem)}
+              {addonItems.length > 0 && (
+                <div className="border-2 border-dashed border-red-200 rounded-xl p-4 relative mt-6 mb-4 bg-red-50/20 ml-4">
+                  <div className="absolute -top-3.5 left-4 bg-gradient-to-r from-orange-500 to-red-500 text-white text-[11px] font-black px-3 py-1 rounded-full uppercase shadow-md flex items-center gap-1.5">
+                    <span>🔥</span> Mua kèm tiết kiệm hơn
+                  </div>
+                  <div className="absolute -top-2.5 right-4 text-[11px] text-red-600 font-bold bg-white px-2">
+                    Bạn chọn mua kèm {addonItems.length} sản phẩm
+                  </div>
+                  <div className="divide-y divide-gray-100 pt-2">
+                    {addonItems.map(renderItem)}
+                  </div>
+                </div>
+              )}
             </>
           );
         })()}
@@ -151,7 +149,7 @@ export default function CartItemsList({ cartItems, updateQuantity, removeFromCar
       <div className="border-t border-gray-50 pt-4 flex flex-col gap-2">
         {cartSavings > 0 && (
           <div className="flex justify-between items-center text-xs">
-            <span className="text-gray-400 font-bold">Tiết kiệm từ Combo:</span>
+            <span className="text-gray-400 font-bold">Tiết kiệm mua kèm:</span>
             <span className="font-black text-green-600 text-[13px]">- {cartSavings.toLocaleString('vi-VN')}₫</span>
           </div>
         )}

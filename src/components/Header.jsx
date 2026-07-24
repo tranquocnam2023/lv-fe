@@ -25,7 +25,11 @@ import { brandService } from '../services/brandService';
 const getCategoryIcon = (name, iconUrl) => {
   if (iconUrl) {
     return (
-      <img src={iconUrl} alt={name} className="w-3.5 h-3.5 object-contain shrink-0" />
+      <img
+        src={iconUrl}
+        alt={name}
+        className="w-6 h-6 object-contain shrink-0 rounded border border-gray-200/90 dark:border-slate-700/80 bg-white p-0.5 shadow-2xs transition-all"
+      />
     );
   }
 
@@ -42,7 +46,7 @@ const getCategoryIcon = (name, iconUrl) => {
     IconComponent = Headphones;
   } else if (normalized.includes('cáp') || normalized.includes('sạc') || normalized.includes('cable') || normalized.includes('củ')) {
     IconComponent = Cable;
-  } else if (normalized.includes('ốp') || normalized.includes('cường lực') || normalized.includes('bao da') || normalized.includes('kính') || normalized.includes('shield')) {
+  } else if (normalized.includes('ốp') || normalized.includes('cường lực') || normalized.includes('bao da') || normalized.includes('kính') || normalized.includes('shield') || normalized.includes('dán')) {
     IconComponent = Shield;
   } else if (normalized.includes('lưu trữ') || normalized.includes('thẻ nhớ') || normalized.includes('ổ cứng') || normalized.includes('usb') || normalized.includes('sd')) {
     IconComponent = HardDrive;
@@ -50,20 +54,56 @@ const getCategoryIcon = (name, iconUrl) => {
     IconComponent = Cpu;
   }
 
-  return <IconComponent className="w-3.5 h-3.5 shrink-0 opacity-80" />;
+  return (
+    <div className="w-6 h-6 rounded flex items-center justify-center shrink-0 text-blue-600 dark:text-blue-400">
+      <IconComponent className="w-4 h-4 shrink-0" />
+    </div>
+  );
 };
 
 // Subcomponents
 import HeaderSearchBar from './header/HeaderSearchBar';
 import HeaderAccountMenu from './header/HeaderAccountMenu';
 
-const getMegaMenuData = (cat, subcategories, allProducts, dbBrands) => {
+// Fallback logo các thương hiệu lớn nếu DB chưa cập nhật imageUrl
+const BRAND_FALLBACK_LOGOS = {
+  apple: 'https://cdn.simpleicons.org/apple',
+  iphone: 'https://cdn.simpleicons.org/apple',
+  samsung: 'https://cdn.simpleicons.org/samsung/142890',
+  xiaomi: 'https://cdn.simpleicons.org/xiaomi/FF6900',
+  oppo: 'https://cdn.simpleicons.org/oppo/008000',
+  sony: 'https://cdn.simpleicons.org/sony',
+  jbl: 'https://cdn.simpleicons.org/jbl/FF6600',
+  anker: 'https://cdn.simpleicons.org/anker/00A4E4',
+  baseus: 'https://upload.wikimedia.org/wikipedia/commons/thumb/d/d4/Baseus_logo.svg/320px-Baseus_logo.svg.png',
+  garmin: 'https://cdn.simpleicons.org/garmin/007CC3',
+  vivo: 'https://cdn.simpleicons.org/vivo/415FFF',
+  realme: 'https://cdn.simpleicons.org/realme/FFC900',
+  nokia: 'https://cdn.simpleicons.org/nokia/124191',
+  asus: 'https://cdn.simpleicons.org/asus/00539B'
+};
+
+// Hàm đệ quy lấy tất cả ID danh mục con và cháu
+const getAllCategoryIdsRecursive = (parentId, allCategories) => {
+  let result = [parentId];
+  const children = allCategories.filter(c => String(c.parentId || c.ParentId) === String(parentId));
+  children.forEach(child => {
+    const childId = child.id || child.Id;
+    result = result.concat(getAllCategoryIdsRecursive(childId, allCategories));
+  });
+  return result;
+};
+
+const getMegaMenuData = (cat, subcategories, allProducts, dbBrands, allCategories = []) => {
   const normName = cat.name.toLowerCase();
   const catId = cat.id || cat.Id;
-  const subIds = subcategories.map(s => s.id || s.Id);
-  const targetCategoryIds = [catId, ...subIds];
 
-  // 1. Lọc sản phẩm thực tế thuộc danh mục này và các danh mục con
+  // Lấy tất cả ID danh mục con & cháu đệ quy (Cấp 2, Cấp 3, Cấp 4)
+  const targetCategoryIds = allCategories.length > 0
+    ? getAllCategoryIdsRecursive(catId, allCategories)
+    : [catId, ...subcategories.map(s => s.id || s.Id)];
+
+  // 1. Lọc sản phẩm thực tế thuộc danh mục này và tất cả các danh mục con/cháu
   const catProducts = allProducts.filter(p => {
     const pCatId = p.categoryId || p.CategoryId;
     if (pCatId && targetCategoryIds.includes(pCatId)) return true;
@@ -85,8 +125,8 @@ const getMegaMenuData = (cat, subcategories, allProducts, dbBrands) => {
     productBrands.some(pb => pb.toLowerCase() === b.name.toLowerCase())
   );
 
-  // Nếu không tìm thấy thương hiệu khớp nào từ sản phẩm (ví dụ DB chưa có sản phẩm),
-  // hiển thị các thương hiệu lấy từ DB
+  // Nếu không tìm thấy thương hiệu khớp nào từ sản phẩm (ví dụ DB chưa gán brand cho sản phẩm),
+  // hiển thị các thương hiệu mặc định lấy từ DB
   if (categoryBrands.length === 0) {
     categoryBrands = dbBrands.length > 0 ? dbBrands : [
       { id: 1, name: 'Apple' },
@@ -98,34 +138,61 @@ const getMegaMenuData = (cat, subcategories, allProducts, dbBrands) => {
     ];
   }
 
-  // Chuyển đổi định dạng
-  const brands = categoryBrands.map(b => ({
-    name: b.name,
-    logoText: b.name.toUpperCase()
-  }));
+  // Chuyển đổi định dạng kèm logoUrl
+  const brands = categoryBrands.map(b => {
+    const nameLower = (b.name || '').toLowerCase().trim();
+    const dbImage = b.imageUrl || b.ImageUrl || b.logoUrl || b.logo || b.image;
+    const logoUrl = dbImage || BRAND_FALLBACK_LOGOS[nameLower] || null;
+    return {
+      name: b.name,
+      logoText: b.name.toUpperCase(),
+      logoUrl: logoUrl
+    };
+  });
 
-  // 3. Lấy danh sách sản phẩm HOT thực tế từ SQL Server
+  // 3. Lấy danh sách sản phẩm HOT thực tế thuộc danh mục này
   let hotProds = catProducts.filter(p => p.isFeatured || p.IsFeatured);
-  if (hotProds.length < 8) {
+  if (hotProds.length < 4) {
     const regularProds = catProducts.filter(p => !(p.isFeatured || p.IsFeatured));
     hotProds = [...hotProds, ...regularProds];
   }
 
-  // Fallback
+  // Nếu vẫn không có sản phẩm nào thuộc danh mục này, thử lọc từ allProducts theo từ khóa đặc thù của danh mục
+  // (Đảm bảo tuyệt đối KHÔNG hiển thị Điện thoại như Samsung S25 Ultra trong danh mục Phụ kiện hay Âm thanh)
   if (hotProds.length === 0) {
-    hotProds = allProducts.filter(p => p.isFeatured || p.IsFeatured);
-  }
-  if (hotProds.length === 0) {
-    hotProds = allProducts;
+    if (normName.includes('phụ kiện')) {
+      hotProds = allProducts.filter(p => {
+        const pCatName = (p.categoryName || p.CategoryName || p.category || '').toLowerCase();
+        const pName = (p.name || '').toLowerCase();
+        return (
+          pCatName.includes('phụ kiện') || pCatName.includes('sạc') || pCatName.includes('ốp') ||
+          pName.includes('sạc') || pName.includes('cáp') || pName.includes('ốp') || pName.includes('pin') || pName.includes('dán') || pName.includes('thẻ nhớ') || pName.includes('usb') || pName.includes('tai nghe')
+        );
+      });
+    } else if (normName.includes('âm thanh')) {
+      hotProds = allProducts.filter(p => {
+        const pCatName = (p.categoryName || p.CategoryName || p.category || '').toLowerCase();
+        const pName = (p.name || '').toLowerCase();
+        return (
+          pCatName.includes('âm thanh') || pCatName.includes('tai nghe') || pCatName.includes('loa') ||
+          pName.includes('tai nghe') || pName.includes('loa') || pName.includes('airpods') || pName.includes('headphone')
+        );
+      });
+    } else if (normName.includes('thoại') || normName.includes('phone') || normName.includes('mobile')) {
+      hotProds = allProducts.filter(p => p.isFeatured || p.IsFeatured);
+    }
   }
 
-  const hotProducts = hotProds.slice(0, 8).map((p, idx) => ({
+  const hotProducts = hotProds.slice(0, 4).map((p, idx) => ({
     id: p.id || p.Id,
     name: p.name,
-    tag: p.isFeatured || p.IsFeatured || idx === 0 ? 'Hot' : p.originalPrice > p.price ? 'Giảm Giá' : ''
+    price: p.price || p.basePrice || 0,
+    originalPrice: p.originalPrice || 0,
+    image: p.image || p.thumbnailImage || p.mainImage,
+    tag: p.isFeatured || p.IsFeatured || idx === 0 ? 'Hot' : (p.originalPrice && p.originalPrice > p.price) ? 'Giảm Giá' : ''
   }));
 
-  // 4. Tạo mức giá
+  // 4. Tạo các mức giá lọc nhanh
   let priceRanges = [];
   if (normName.includes('thoại') || normName.includes('phone') || normName.includes('mobile')) {
     priceRanges = [
@@ -478,16 +545,16 @@ export default function Header() {
 
                 {/* Mega menu giống CellphoneS đè lên nội dung */}
                 {isHovered && hasSub && (() => {
-                  const megaData = getMegaMenuData(cat, subcategories, allProducts, dbBrands);
+                  const megaData = getMegaMenuData(cat, subcategories, allProducts, dbBrands, categories);
                   return (
                     <div
                       className="absolute top-full left-0 right-0 w-full z-[100] pt-2"
                       onMouseEnter={() => setHoveredCatId(cat.id)}
                       onMouseLeave={() => setHoveredCatId(null)}
                     >
-                      <div className={`${isDark ? 'bg-slate-900 text-slate-100 border-slate-850' : 'bg-white text-gray-800 border-gray-200/80'} rounded-2xl shadow-2xl p-6 border grid grid-cols-3 gap-6 animate-in fade-in slide-in-from-top-2 duration-150 w-full`}>
+                      <div className={`${isDark ? 'bg-slate-900 text-slate-100 border-slate-800' : 'bg-white text-gray-800 border-gray-200'} rounded-2xl p-6 border grid grid-cols-3 gap-6 shadow-none animate-in fade-in slide-in-from-top-2 duration-150 w-full`}>
 
-                        {/* Cột 1: Hãng sản xuất */}
+                        {/* Cột 1: Hãng sản xuất (Hiển thị ảnh Logo thực tế từ Database trên Card nền trắng mượt cả Sáng & Tối) */}
                         <div className="space-y-3">
                           <h4 className={`text-xs font-extrabold uppercase tracking-wider ${isDark ? 'text-slate-400' : 'text-gray-400'}`}>
                             Thương hiệu
@@ -497,64 +564,205 @@ export default function Header() {
                               <Link
                                 key={bIdx}
                                 to={`/danh-muc/${encodeURIComponent(brand.name.toLowerCase())}`}
-                                className={`flex items-center justify-center p-2.5 rounded-lg border text-center font-bold text-[11px] transition-all hover:-translate-y-0.5 hover:shadow-sm ${isDark
-                                  ? 'bg-slate-850 border-slate-800 hover:border-slate-700 hover:bg-slate-800 text-slate-200'
-                                  : 'bg-gray-50 border-gray-150 hover:border-gray-250 hover:bg-gray-100/50 text-gray-700'
-                                  }`}
+                                className={`flex items-center justify-center p-2 h-11 rounded-xl bg-white border transition-colors ${
+                                  isDark ? 'border-slate-700/80 hover:border-blue-400' : 'border-gray-200/90 hover:border-blue-500'
+                                }`}
                               >
-                                {brand.logoText}
+                                {brand.logoUrl ? (
+                                  <img
+                                    src={brand.logoUrl}
+                                    alt={brand.name}
+                                    className="max-h-7 max-w-[85%] object-contain transition-all"
+                                    onError={(e) => {
+                                      e.currentTarget.style.display = 'none';
+                                      const textSpan = e.currentTarget.parentElement.querySelector('.brand-text');
+                                      if (textSpan) {
+                                        textSpan.style.setProperty('display', 'block', 'important');
+                                      }
+                                    }}
+                                  />
+                                ) : null}
+                                <span className={`brand-text font-black text-[12px] uppercase tracking-wider text-gray-800 text-center ${brand.logoUrl ? 'hidden' : 'block'}`}>
+                                  {brand.name}
+                                </span>
                               </Link>
                             ))}
                           </div>
                         </div>
 
-                        {/* Cột 2: Phân khúc sản phẩm */}
+                        {/* Cột 2: Phân khúc sản phẩm (Chuẩn giao diện CellphoneS: Card Pill rounded-xl, viền mảnh nhẹ & Thumbnail 28px) */}
                         <div className="space-y-3">
                           <h4 className={`text-xs font-extrabold uppercase tracking-wider ${isDark ? 'text-slate-400' : 'text-gray-400'}`}>
                             Phân khúc sản phẩm
                           </h4>
-                          <div className="flex flex-col gap-1.5">
-                            {subcategories.map((sub) => (
-                              <Link
-                                key={sub.id}
-                                to={`/danh-muc/${encodeURIComponent(sub.name.toLowerCase())}`}
-                                className={`flex items-center px-3 py-2 rounded-lg text-xs font-semibold border border-transparent transition-all ${isDark
-                                  ? 'hover:bg-slate-800 hover:text-white text-slate-300'
-                                  : 'hover:bg-primary/5 hover:text-primary text-gray-700'
-                                  }`}
-                              >
-                                {sub.name}
-                              </Link>
-                            ))}
+                          <div className="flex flex-col gap-4 max-h-[340px] overflow-y-auto pr-1 no-scrollbar">
+                            {(() => {
+                              const level2Cats = categories.filter(c => String(c.parentId) === String(cat.id));
+                              const hasLevel3 = level2Cats.some(l2 => categories.some(c => String(c.parentId) === String(l2.id)));
+
+                              if (hasLevel3) {
+                                // Gom nhóm theo từng danh mục cha cấp 2 (Ví dụ: Phụ kiện di động, Thiết bị lưu trữ...)
+                                return level2Cats.map((l2) => {
+                                  const l3Children = categories.filter(c => String(c.parentId) === String(l2.id));
+                                  return (
+                                    <div key={l2.id} className="space-y-2">
+                                      {/* Tiêu đề nhóm danh mục cha cấp 2 (Chuẩn CellphoneS: Chữ Bold đậm, sạch sẽ) */}
+                                      <Link
+                                        to={`/danh-muc/${encodeURIComponent(l2.name.toLowerCase())}`}
+                                        className={`block font-extrabold text-[13px] transition-colors pt-1 pb-0.5 ${
+                                          isDark ? 'text-slate-100 hover:text-blue-400' : 'text-gray-900 hover:text-blue-600'
+                                        }`}
+                                      >
+                                        <span>{l2.name}</span>
+                                      </Link>
+
+                                      {/* Danh sách danh mục con cấp 3 (Card Pill bo góc rounded-xl viền mảnh CellphoneS style) */}
+                                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                                        {(l3Children.length > 0 ? l3Children : [l2]).map((sub) => (
+                                          <Link
+                                            key={sub.id}
+                                            to={`/danh-muc/${encodeURIComponent(sub.name.toLowerCase())}`}
+                                            className={`flex items-center gap-2.5 px-3 py-2 rounded-xl border transition-colors ${
+                                              isDark
+                                                ? 'bg-slate-800/80 border-slate-700/80 hover:border-blue-400/80 hover:bg-slate-800 text-slate-100'
+                                                : 'bg-white border-gray-200/90 hover:border-blue-500 hover:text-blue-600 text-gray-800'
+                                            }`}
+                                          >
+                                            {/* Thumbnail 28px chuẩn CellphoneS */}
+                                            {sub.iconUrl ? (
+                                              <img
+                                                src={sub.iconUrl}
+                                                alt={sub.name}
+                                                className="w-7 h-7 object-contain shrink-0 rounded"
+                                              />
+                                            ) : (
+                                              <div className="w-7 h-7 rounded-lg bg-blue-50 text-blue-600 dark:bg-slate-700 dark:text-blue-400 flex items-center justify-center shrink-0">
+                                                {getCategoryIcon(sub.name, null)}
+                                              </div>
+                                            )}
+                                            <span className="truncate text-[12px] font-semibold">{sub.name}</span>
+                                          </Link>
+                                        ))}
+                                      </div>
+                                    </div>
+                                  );
+                                });
+                              }
+
+                              // Trường hợp danh mục phẳng (chỉ có cấp 2)
+                              return (
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                                  {level2Cats.map((sub) => (
+                                    <Link
+                                      key={sub.id}
+                                      to={`/danh-muc/${encodeURIComponent(sub.name.toLowerCase())}`}
+                                      className={`flex items-center gap-2.5 px-3 py-2 rounded-xl border transition-colors ${
+                                        isDark
+                                          ? 'bg-slate-800/80 border-slate-700/80 hover:border-blue-400/80 hover:bg-slate-800 text-slate-100'
+                                          : 'bg-white border-gray-200/90 hover:border-blue-500 hover:text-blue-600 text-gray-800'
+                                      }`}
+                                    >
+                                      {sub.iconUrl ? (
+                                        <img
+                                          src={sub.iconUrl}
+                                          alt={sub.name}
+                                          className="w-7 h-7 object-contain shrink-0 rounded"
+                                        />
+                                      ) : (
+                                        <div className="w-7 h-7 rounded-lg bg-blue-50 text-blue-600 dark:bg-slate-700 dark:text-blue-400 flex items-center justify-center shrink-0">
+                                          {getCategoryIcon(sub.name, null)}
+                                        </div>
+                                      )}
+                                      <span className="truncate text-[12px] font-semibold">{sub.name}</span>
+                                    </Link>
+                                  ))}
+                                </div>
+                              );
+                            })()}
                           </div>
                         </div>
 
-                        {/* Cột 3: Sản phẩm HOT */}
-                        <div className="space-y-3">
-                          <h4 className={`text-xs font-extrabold uppercase tracking-wider ${isDark ? 'text-slate-400' : 'text-gray-400'}`}>
-                            Sản phẩm HOT
-                          </h4>
-                          <div className="flex flex-col gap-1.5">
-                            {megaData.hotProducts.map((prod, pIdx) => (
-                              <Link
-                                key={pIdx}
-                                to={prod.id ? `/product/${prod.id}` : `/?search=${encodeURIComponent(prod.name)}`}
-                                className={`flex items-center justify-between px-3 py-2 rounded-lg text-left text-xs font-semibold border border-transparent transition-all ${isDark ? 'hover:bg-slate-800 hover:text-white text-slate-300' : 'hover:bg-primary/5 hover:text-primary text-gray-700'
+                        {/* Cột 3: Mức Giá Phổ Biến & Top Sản Phẩm HOT (Bỏ border thô, thiết kế minimalist mượt mà) */}
+                        <div className="space-y-4 flex flex-col justify-between">
+                          {/* Khối Mức Giá Phổ Biến */}
+                          {megaData.priceRanges && megaData.priceRanges.length > 0 && (
+                            <div className="space-y-2">
+                              <h4 className={`text-xs font-extrabold uppercase tracking-wider ${isDark ? 'text-slate-400' : 'text-gray-400'}`}>
+                                Mức giá phổ biến
+                              </h4>
+                              <div className="flex flex-wrap gap-1.5">
+                                {megaData.priceRanges.map((range, rIdx) => (
+                                  <Link
+                                    key={rIdx}
+                                    to={`/danh-muc/${encodeURIComponent(cat.name.toLowerCase())}?${range.query}`}
+                                    className={`px-2.5 py-1 rounded-md text-[11px] font-medium transition-all ${
+                                      isDark
+                                        ? 'bg-slate-800/80 text-slate-300 hover:bg-blue-600 hover:text-white'
+                                        : 'bg-gray-100 text-gray-700 hover:bg-blue-600 hover:text-white'
+                                    }`}
+                                  >
+                                    {range.label}
+                                  </Link>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+
+                          {/* Khối Top Sản Phẩm HOT (Loại bỏ border ô hình chữ nhật, dạng list thanh lịch) */}
+                          <div className="space-y-2">
+                            <h4 className={`text-xs font-extrabold uppercase tracking-wider ${isDark ? 'text-slate-400' : 'text-gray-400'}`}>
+                              Sản phẩm HOT nhất
+                            </h4>
+                            <div className="flex flex-col gap-1">
+                              {megaData.hotProducts.map((prod, pIdx) => (
+                                <Link
+                                  key={pIdx}
+                                  to={prod.id ? `/product/${prod.id}` : `/?search=${encodeURIComponent(prod.name)}`}
+                                  className={`flex items-center justify-between p-2 rounded-xl transition-all ${
+                                    isDark
+                                      ? 'hover:bg-slate-800/80 text-slate-200'
+                                      : 'hover:bg-blue-50/60 text-gray-800'
                                   }`}
-                              >
-                                <span className="truncate text-[11px]">{prod.name}</span>
-                                {prod.tag && (
-                                  <span className={`text-[8px] font-extrabold px-1.5 py-0.5 rounded uppercase tracking-wider shrink-0 ${prod.tag === 'Hot'
-                                    ? 'bg-red-500 text-white animate-pulse'
-                                    : prod.tag === 'Mới'
-                                      ? 'bg-blue-500 text-white'
-                                      : 'bg-orange-500 text-white'
+                                >
+                                  <div className="flex items-center gap-2.5 overflow-hidden">
+                                    {prod.image ? (
+                                      <img
+                                        src={prod.image}
+                                        alt={prod.name}
+                                        className="w-8 h-8 object-contain shrink-0 rounded-md bg-white p-0.5 border border-gray-150 dark:border-slate-700"
+                                      />
+                                    ) : (
+                                      <div className="w-8 h-8 rounded-md bg-blue-50 dark:bg-slate-800 flex items-center justify-center shrink-0">
+                                        <ShoppingBag size={14} className="text-blue-500" />
+                                      </div>
+                                    )}
+                                    <div className="flex flex-col truncate">
+                                      <span className="truncate text-[11px] font-semibold">{prod.name}</span>
+                                      <div className="flex items-center gap-1.5">
+                                        <span className="text-[11px] font-bold text-red-500">
+                                          {prod.price > 0 ? `${prod.price.toLocaleString('vi-VN')}₫` : 'Liên hệ'}
+                                        </span>
+                                        {prod.originalPrice > prod.price && (
+                                          <span className="text-[9px] text-gray-400 line-through">
+                                            {prod.originalPrice.toLocaleString('vi-VN')}₫
+                                          </span>
+                                        )}
+                                      </div>
+                                    </div>
+                                  </div>
+
+                                  {prod.tag && (
+                                    <span className={`text-[8px] font-extrabold px-1.5 py-0.5 rounded uppercase tracking-wider shrink-0 ${
+                                      prod.tag === 'Hot'
+                                        ? 'bg-red-500 text-white'
+                                        : 'bg-orange-500 text-white'
                                     }`}>
-                                    {prod.tag}
-                                  </span>
-                                )}
-                              </Link>
-                            ))}
+                                      {prod.tag}
+                                    </span>
+                                  )}
+                                </Link>
+                              ))}
+                            </div>
                           </div>
                         </div>
 
