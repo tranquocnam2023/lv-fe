@@ -1,6 +1,22 @@
+// src/components/product/ProductCard.jsx
+/**
+ * ============================================================================
+ * COMPONENT: ProductCard (Thẻ hiển thị sản phẩm)
+ * ============================================================================
+ * Chức năng & Nâng cấp tối ưu:
+ *  1. Hiển thị thông tin tổng quan sản phẩm (Tên, Giá gốc, Giá giảm, Rating, Tồn kho, Specs).
+ *  2. Tối ưu Anti-CLS: Cấu hình `aspect-square` (tỷ lệ 1/1 cố định) cho khung chứa ảnh.
+ *  3. Tối ưu Hiệu năng: Áp dụng native `loading="lazy"` & `decoding="async"` giảm nghẽn mạng.
+ *  4. Xử lý Lỗi Ảnh: Tự động chuyển sang biểu tượng SVG fallback khi ảnh bị hỏng/lỗi URL.
+ * ============================================================================
+ */
+
 import { Link } from 'react-router-dom';
 import { THEME } from '../../utils/theme';
 
+/**
+ * Hàm hỗ trợ bóc tách thông số kỹ thuật (RAM, ROM, Màn hình...) từ dữ liệu JSON specs
+ */
 const parseSpecs = (specsInput, priorityKeys = []) => {
   if (!specsInput) return [];
   
@@ -126,22 +142,32 @@ export default function ProductCard({
         )}
       </div>
 
-      {/* Product Image */}
-      <div className="w-full h-44 mb-3 mt-4 overflow-hidden flex items-center justify-center relative">
+      {/* Product Image Container (aspect-ratio 1/1 chống giật CLS) */}
+      <div className="w-full aspect-square mb-3 mt-4 overflow-hidden flex items-center justify-center relative bg-slate-50 dark:bg-slate-800/40 rounded-lg p-2">
         {image ? (
           <img 
             src={image} 
             alt={name} 
             loading="lazy"
-            className="object-contain h-full w-full group-hover:-translate-y-1 transition-transform duration-300"
+            decoding="async"
+            className="object-contain max-h-full max-w-full group-hover:scale-105 transition-transform duration-300"
+            onError={(e) => {
+              e.currentTarget.style.display = 'none';
+              if (e.currentTarget.nextSibling) {
+                e.currentTarget.nextSibling.style.display = 'flex';
+              }
+            }}
           />
-        ) : (
-          <div className="w-full h-full bg-gray-50 rounded flex flex-col items-center justify-center text-gray-300">
-             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1} stroke="currentColor" className="w-12 h-12 mb-1">
-               <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 1.5H8.25A2.25 2.25 0 0 0 6 3.75v16.5a2.25 2.25 0 0 0 2.25 2.25h7.5A2.25 2.25 0 0 0 18 20.25V3.75a2.25 2.25 0 0 0-2.25-2.25H13.5m-3 0V3h3V1.5m-3 0h3m-3 18.75h3" />
-             </svg>
-          </div>
-        )}
+        ) : null}
+        
+        {/* Fallback SVG if no image or image load fails */}
+        <div 
+          className={`w-full h-full flex flex-col items-center justify-center text-gray-300 ${image ? 'hidden' : 'flex'}`}
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1} stroke="currentColor" className="w-12 h-12 mb-1">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 1.5H8.25A2.25 2.25 0 0 0 6 3.75v16.5a2.25 2.25 0 0 0 2.25 2.25h7.5A2.25 2.25 0 0 0 18 20.25V3.75a2.25 2.25 0 0 0-2.25-2.25H13.5m-3 0V3h3V1.5m-3 0h3m-3 18.75h3" />
+          </svg>
+        </div>
       </div>
 
       {/* Product Name */}

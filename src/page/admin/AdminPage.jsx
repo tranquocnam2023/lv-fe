@@ -15,6 +15,7 @@ const AdminCategories    = React.lazy(() => import('./categories/AdminCategories
 const AdminBrands        = React.lazy(() => import('./brands/AdminBrands'));
 const AdminPromotions    = React.lazy(() => import('./promotions/AdminPromotions'));
 const AdminCombos        = React.lazy(() => import('./combos/AdminCombos'));
+const AdminComboForm     = React.lazy(() => import('./combos/AdminComboForm'));
 const AdminReviews       = React.lazy(() => import('./reviews/AdminReviews'));
 const AdminCreateProduct = React.lazy(() => import('./products/AdminCreateProduct'));
 const AdminUpdateProduct = React.lazy(() => import('./products/AdminUpdateProduct'));
@@ -36,6 +37,7 @@ export default function AdminPage() {
 
   const activeAdminTab = searchParams.get('tab') || 'dashboard';
   const editProductId  = searchParams.get('productId');
+  const editComboId    = searchParams.get('comboId');
 
   const [selectedBrandId, setSelectedBrandId] = React.useState(null);
 
@@ -50,6 +52,9 @@ export default function AdminPage() {
       }
       if (tab !== 'update_product') {
         prev.delete('productId');
+      }
+      if (tab !== 'update_combo') {
+        prev.delete('comboId');
       }
       return prev;
     });
@@ -105,7 +110,30 @@ export default function AdminPage() {
       case 'payments':    return <AdminPayments />;
       case 'customers':   return <AdminCustomers />;
       case 'promotions':  return <AdminPromotions />;
-      case 'combos':      return <AdminCombos />;
+      case 'combos':
+        return (
+          <AdminCombos
+            onCreate={() => handleTabChange('create_combo')}
+            onEdit={(id) => setSearchParams(prev => {
+              prev.set('tab', 'update_combo');
+              prev.set('comboId', id);
+              return prev;
+            })}
+          />
+        );
+
+      case 'create_combo':
+        return (
+          <AdminComboForm onBack={() => handleTabChange('combos')} />
+        );
+
+      case 'update_combo':
+        return (
+          <AdminComboForm
+            comboId={editComboId}
+            onBack={() => handleTabChange('combos')}
+          />
+        );
       case 'reviews':     return <AdminReviews />;
       case 'dashboard':   return <AdminDashboard />;
       case 'audit_logs':  return <AdminAuditLogs />;

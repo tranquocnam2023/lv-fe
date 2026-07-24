@@ -17,8 +17,10 @@ import CartDeliveryForm from './cart/components/CartDeliveryForm';
 import CartAddressModal from './cart/components/CartAddressModal';
 import CartSpecialRequests from './cart/components/CartSpecialRequests';
 import CartSummaryPayment from './cart/components/CartSummaryPayment';
+import CartPaymentMethods from './cart/components/CartPaymentMethods';
 import CartSuccessScreen from './cart/components/CartSuccessScreen';
 import PromotionSelector from '../components/PromotionSelector';
+import CoPurchaseRecommendation from './product-detail/components/CoPurchaseRecommendation';
 
 export default function CartPage() {
   const { stopLoading } = useLoading();
@@ -852,7 +854,8 @@ export default function CartPage() {
             syncItems.push({
               variantId: matchedVariant.id,
               quantity: item.quantity,
-              appliedComboId: item.appliedComboId
+              appliedCampaignId: item.appliedCampaignId,
+              isAddon: item.isAddon || false
             });
           }
         } catch (err) {
@@ -940,7 +943,7 @@ export default function CartPage() {
 
   return (
     <div className="w-full min-h-screen bg-gray-100 py-6 font-sans">
-      <div className="max-w-[660px] mx-auto px-4 space-y-4">
+      <div className="max-w-6xl mx-auto px-4 space-y-4">
 
         {/* Simple Navigation Header */}
         <div className="flex items-center justify-between pb-2">
@@ -970,9 +973,12 @@ export default function CartPage() {
           </div>
         ) : (
           // Main Ordering form
-          <div className="space-y-4">
+          <div className="flex flex-col lg:flex-row gap-6 items-start">
 
-            {/* Card 1: Selected Products */}
+            {/* Left Column (Main Content) */}
+            <div className="w-full lg:w-2/3 flex flex-col space-y-4">
+
+              {/* Card 1: Selected Products */}
             <CartItemsList
               cartItems={cartItems}
               updateQuantity={updateQuantity}
@@ -980,7 +986,29 @@ export default function CartPage() {
               cartTotal={cartTotal}
             />
 
-            {/* Card 2: Inline Registration / Login for Guest */}
+              {/* Co-Purchase Recommendation */}
+              {cartItems.length > 0 && cartItems.find(i => !i.isAddon) && (
+                <div className="mt-2">
+                  <CoPurchaseRecommendation 
+                    isCartPage={true}
+                    mainProduct={{ id: cartItems.find(i => !i.isAddon).id }} 
+                    mainProductPrice={cartItems.find(i => !i.isAddon).price}
+                    selectedVariantId={cartItems.find(i => !i.isAddon).variantId}
+                    onAddComboToCart={(comboData) => {
+                      addToCart({
+                        id: comboData.variantId,
+                        name: comboData.productName,
+                        price: comboData.price,
+                        isAddon: true,
+                        appliedCampaignId: comboData.campaignId,
+                        parentCartItemId: cartItems.find(i => !i.isAddon).id
+                      }, comboData.quantity);
+                    }}
+                  />
+                </div>
+              )}
+
+              {/* Card 2: Inline Registration / Login for Guest */}
             <CartAuthSection
               isLoggedIn={isLoggedIn}
               currentUser={currentUser}
@@ -1019,39 +1047,51 @@ export default function CartPage() {
               setOtherRequestText={setOtherRequestText}
             />
 
-            {/* Cards 5-8: Payment & Checkout Summary */}
-            <CartSummaryPayment
+            {/* Card 5: Payment Methods and Shipping Options */}
+            <CartPaymentMethods
               isLoggedIn={isLoggedIn}
-              currentUser={currentUser}
-              usePoints={usePoints}
-              setUsePoints={setUsePoints}
-              pointsDiscount={pointsDiscount}
-              cartItems={cartItems}
-              cartTotal={cartTotal}
-              appliedPromo={appliedPromo}
-              onApplyPromotion={(code, discount) => {
-                setAppliedPromo(code);
-                setDiscountAmount(discount);
-              }}
-              discountAmount={discountAmount}
-              shippingCarrier={shippingCarrier}
-              shippingLoading={shippingLoading}
               deliveryMethod={deliveryMethod}
-              shippingFee={shippingFee}
-              shippingEstimatedDays={shippingEstimatedDays}
+              shippingCarrier={shippingCarrier}
               shippingOptions={shippingOptions}
               onSelectShippingOption={(option) => {
                 setShippingFee(Number(option.fee || option.Fee || 0));
                 setShippingCarrier(option.carrier || option.Carrier || '');
                 setShippingEstimatedDays(option.estimatedDeliveryDays || option.EstimatedDeliveryDays || '');
               }}
-              finalTotalPay={finalTotalPay}
               paymentMethod={paymentMethod}
               setPaymentMethod={setPaymentMethod}
-              isSubmitting={isSubmitting}
-              handleCheckoutSubmit={handleCheckoutSubmit}
+              finalTotalPay={finalTotalPay}
             />
 
+            </div>
+
+            {/* Right Column (Summary & Payment) */}
+            <div className="w-full lg:w-1/3 sticky top-6 space-y-4">
+              {/* Cards 6-7: Checkout Summary */}
+              <CartSummaryPayment
+                isLoggedIn={isLoggedIn}
+                currentUser={currentUser}
+                usePoints={usePoints}
+                setUsePoints={setUsePoints}
+                pointsDiscount={pointsDiscount}
+                cartItems={cartItems}
+                cartTotal={cartTotal}
+                appliedPromo={appliedPromo}
+                onApplyPromotion={(code, discount) => {
+                  setAppliedPromo(code);
+                  setDiscountAmount(discount);
+                }}
+                discountAmount={discountAmount}
+                shippingCarrier={shippingCarrier}
+                shippingLoading={shippingLoading}
+                deliveryMethod={deliveryMethod}
+                shippingFee={shippingFee}
+                shippingEstimatedDays={shippingEstimatedDays}
+                finalTotalPay={finalTotalPay}
+                isSubmitting={isSubmitting}
+                handleCheckoutSubmit={handleCheckoutSubmit}
+              />
+            </div>
           </div>
         )}
 

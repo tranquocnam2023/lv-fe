@@ -17,6 +17,8 @@ import ProductSpecsTab from './product-detail/components/ProductSpecsTab';
 import ProductSpecsModal from './product-detail/components/ProductSpecsModal';
 import ProductReviews from './product-detail/components/ProductReviews';
 import CoPurchaseRecommendation from './product-detail/components/CoPurchaseRecommendation';
+import FrequentlyBoughtTogether from './product-detail/components/FrequentlyBoughtTogether';
+import AccessoryVariantModal from './product-detail/components/AccessoryVariantModal';
 
 const getMergedSpecs = (baseSpecsStr, specsOverrideStr) => {
   if (!baseSpecsStr) return null;
@@ -106,23 +108,8 @@ export default function ProductDetailPage() {
 
   // States gợi ý mua kèm phụ kiện
   const [accessorySuggestions, setAccessorySuggestions] = useState([]);
-  const [selectedAccessories, setSelectedAccessories] = useState([]);
-
-  // Ref và Handler cho Thanh trượt Carousel Phụ kiện mua kèm
-  const accSliderRef = React.useRef(null);
-  const handleScrollAcc = (direction) => {
-    if (accSliderRef.current) {
-      const scrollAmount = direction === 'left' ? -260 : 260;
-      accSliderRef.current.scrollBy({ left: scrollAmount, behavior: 'smooth' });
-    }
-  };
-
-  // Chuyển sang trang bán chi tiết của phụ kiện khi bấm vào tên / ảnh phụ kiện
-  const handleGoToAccessoryProduct = (e, accId) => {
-    e.stopPropagation();
-    navigate(`/product/${accId}`);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  };
+  const [selectedAccessoryForModal, setSelectedAccessoryForModal] = useState(null);
+  const [isAccessoryModalOpen, setIsAccessoryModalOpen] = useState(false);
 
   // States Thư viện hình ảnh động
   const [activeImage, setActiveImage] = useState(null);
@@ -237,22 +224,51 @@ export default function ProductDetailPage() {
             setCategories(categoryData);
           }
 
-          // Cấu hình thủ công danh sách phụ kiện đi kèm theo ý muốn của Admin (Key: ProductID chính, Value: Danh sách ProductID phụ kiện)
-          const MANUAL_BUNDLE_CONFIG = {
-            "1": [72, 73, 74, 75, 76], // Samsung S25 Ultra -> Gợi ý Kính cường lực S25 Ultra, Kính camera S25 Ultra, Ốp lưng S25 Ultra Spigen, Ốp lưng UAG S25 Ultra, Củ sạc 45W
-            "2": [50, 49, 43], // Xiaomi 17T -> Gợi ý Sạc dự phòng Xiaomi, Sạc dự phòng Anker, Tai nghe Sony
-          };
+          // QUY TẮC HIỂN THỊ: 
+          // - Hiện: Điện thoại, Tablet, Laptop, Watch... và Danh mục "Tai nghe"
+          // - Ẩn: Danh mục "Loa" và các loại "Phụ kiện" (sạc, cáp, ốp, kính, bao da...)
+          const HIDE_RECOMMENDATION_KEYWORDS = ["loa", "speaker", "phụ kiện", "accessory", "sạc", "cáp", "ốp", "kính", "dán", "pin", "dự phòng", "adapter", "củ sạc", "bao da", "cường lực"];
 
-          // Lọc danh sách phụ kiện mua kèm gợi ý (ưu tiên cấu hình của Admin, nếu không có sẽ tự động gợi ý cùng hãng)
-          if (Array.isArray(allProducts)) {
+          const productCatNames = [];
+          let currentCatId = normalized.categoryId;
+          if (Array.isArray(categoryData) && categoryData.length > 0) {
+            while (currentCatId) {
+              const foundCat = categoryData.find(c => c.id === currentCatId);
+              if (foundCat) {
+                productCatNames.push((foundCat.name || '').toLowerCase());
+                currentCatId = foundCat.parentId;
+              } else {
+                break;
+              }
+            }
+          }
+
+          // Kiểm tra xem sản phẩm hiện tại có thuộc nhóm bị ẨN (Loa, Phụ kiện) hay không
+          const isHideCategory = HIDE_RECOMMENDATION_KEYWORDS.some(kw => {
+            const inName = (normalized.name || '').toLowerCase().includes(kw);
+            const inCategory = productCatNames.some(cName => cName.includes(kw));
+            return inName || inCategory;
+          });
+
+          if (isHideCategory) {
+            setAccessorySuggestions([]);
+          } else if (Array.isArray(allProducts)) {
             let suggestions = [];
-            const manualIds = MANUAL_BUNDLE_CONFIG[String(id)];
 
+            // 1. Cấu hình thủ công danh sách phụ kiện theo ID (nếu có)
+            const MANUAL_BUNDLE_CONFIG = {
+              "1": [72, 73, 74, 75, 76],
+              "2": [50, 49, 43],
+            };
+
+            const manualIds = MANUAL_BUNDLE_CONFIG[String(id)];
             if (manualIds && manualIds.length > 0) {
-              // Lấy chính xác các phụ kiện theo cấu hình thủ công của Admin
-              suggestions = allProducts.filter(p => manualIds.includes(p.id) && p.isAvailable !== false);
-            } else {
-              // Tự động gợi ý phụ kiện cùng hãng hoặc hãng thứ 3 (LOẠI BỎ tuyệt đối phụ kiện của hãng điện thoại đối thủ)
+              const manualProds = allProducts.filter(p => manualIds.includes(p.id) && p.isAvailable !== false);
+              suggestions.push(...manualProds);
+            }
+
+            // 2. Tự động gợi ý phụ kiện cùng hãng hoặc hãng thứ 3 nếu chưa đạt tối đa 8 sản phẩm
+            if (suggestions.length < 8) {
               const PHONE_BRAND_KEYWORDS = {
                 apple: ['apple', 'iphone', 'ipad', 'airpods', 'magsafe', 'earpods'],
                 samsung: ['samsung', 'galaxy', 'buds'],
@@ -262,7 +278,6 @@ export default function ProductDetailPage() {
                 realme: ['realme']
               };
 
-              // Xác định hãng của sản phẩm chính hiện tại
               const mainProdNameLower = normalized.name.toLowerCase();
               let currentBrandKey = '';
               for (const [bKey, keywordsList] of Object.entries(PHONE_BRAND_KEYWORDS)) {
@@ -272,7 +287,6 @@ export default function ProductDetailPage() {
                 }
               }
 
-              // Tổng hợp danh sách các từ khóa của các hãng đối thủ cần loại bỏ
               const rivalKeywords = [];
               for (const [bKey, keywordsList] of Object.entries(PHONE_BRAND_KEYWORDS)) {
                 if (bKey !== currentBrandKey) {
@@ -285,23 +299,22 @@ export default function ProductDetailPage() {
               const validAccessories = allProducts.filter(p => {
                 if (p.id === parseInt(id)) return false;
                 if (p.isAvailable === false) return false;
+                if (suggestions.some(s => s.id === p.id)) return false;
                 const nameLower = p.name.toLowerCase();
 
                 // 1. Phải là món thuộc loại phụ kiện
                 const isAccessory = keywords.some(kw => nameLower.includes(kw));
                 if (!isAccessory) return false;
 
-                // 2. Không được chứa tên/dòng sản phẩm của hãng điện thoại đối thủ!
+                // 2. Không được chứa tên/dòng sản phẩm của hãng điện thoại đối thủ
                 const isRivalAccessory = rivalKeywords.some(rk => nameLower.includes(rk));
                 if (isRivalAccessory) return false;
 
                 return true;
               });
 
-              // Trích xuất từ khóa tên dòng sản phẩm (ví dụ "s25", "s24", "15 pro"...) để ưu tiên phụ kiện đúng đời máy
               const modelTokens = mainProdNameLower.match(/(s\d+|note\d+|z\s*fold\d*|z\s*flip\d*|iphone\s*\d+|ipad\s*\w+)/gi) || [];
 
-              // Ưu tiên phụ kiện cùng hãng và cùng đời sản phẩm lên đầu
               const sameBrandAccs = validAccessories.filter(p => p.brandId === normalized.brandId || (currentBrandKey && p.name.toLowerCase().includes(currentBrandKey)));
               sameBrandAccs.sort((a, b) => {
                 const aMatchesModel = modelTokens.some(tok => a.name.toLowerCase().includes(tok.toLowerCase()));
@@ -312,12 +325,25 @@ export default function ProductDetailPage() {
               });
 
               const thirdPartyAccs = validAccessories.filter(p => !sameBrandAccs.includes(p));
-              suggestions = [...sameBrandAccs, ...thirdPartyAccs];
+              suggestions.push(...sameBrandAccs, ...thirdPartyAccs);
             }
 
-            suggestions = suggestions.slice(0, 12);
+            // 3. Chỉ dự phòng nếu số lượng sản phẩm phù hợp bị ít hơn 4 (tối thiểu 4 sản phẩm)
+            if (suggestions.length < 4) {
+              const keywords = ["sạc", "tai nghe", "loa", "dự phòng", "cáp", "ốp", "kính", "jbl", "anker", "sony", "baseus", "spigen", "zealot", "pin", "củ sạc", "adapter"];
+              const generalAccessories = allProducts.filter(p => {
+                if (p.id === parseInt(id)) return false;
+                if (p.isAvailable === false) return false;
+                if (suggestions.some(s => s.id === p.id)) return false;
+                const nameLower = p.name.toLowerCase();
+                return keywords.some(kw => nameLower.includes(kw));
+              });
+              suggestions.push(...generalAccessories);
+            }
+
+            // Cắt tối đa 8 sản phẩm (nếu tìm thấy 5, 6, 7 món phù hợp thì giữ đúng 5, 6, 7 món)
+            suggestions = suggestions.slice(0, 8);
             setAccessorySuggestions(suggestions);
-            setSelectedAccessories([]); // Reset selected khi chuyển sản phẩm
           }
         } else {
           setProduct(null);
@@ -603,11 +629,15 @@ export default function ProductDetailPage() {
         const firstMatch = matchedVariants[0];
         const finalStock = matchedVariants.reduce((sum, v) => sum + v.availableStock, 0);
 
+        const ratio = (product.originalPrice && product.price && product.originalPrice > product.price)
+          ? (product.originalPrice / product.price)
+          : 1;
+
         return {
           //muốn chia 2,3 giá điện thoại trên trang chi tiết gì đó thì vô đây
           //price: firstMatch.price / 2,
           price: firstMatch.price,
-          originalPrice: firstMatch.price * 1.12,
+          originalPrice: firstMatch.price * ratio,
           stock: finalStock
         };
       }
@@ -615,7 +645,7 @@ export default function ProductDetailPage() {
     // giá gốc khi chưa chọn giá, thì không chia gì cả
     return {
       price: product.price,
-      originalPrice: product.originalPrice || (product.price * 1.1),
+      originalPrice: product.originalPrice || product.price,
       stock: product.stockQuantity
     };
   }, [product, selectedAttributes, variants]);
@@ -700,22 +730,7 @@ export default function ProductDetailPage() {
         selectedStorage: selectedAttributes["Dung lượng RAM - ROM"] || selectedAttributes["Dung Lượng RAM - ROM"] || Object.entries(selectedAttributes).find(([k]) => k.toLowerCase().includes('dung lượng') || k.toLowerCase().includes('bộ nhớ') || k.toLowerCase().includes('ram') || k.toLowerCase().includes('rom'))?.[1] || null
       });
 
-      // Thêm các phụ kiện được chọn mua kèm (sử dụng tỉ lệ BUNDLE_DISCOUNT_RATE)
-      const BUNDLE_DISCOUNT_RATE = 0.9; // Giảm 10% (muốn 10% thì sửa thành 0.90)
-      selectedAccessories.forEach(acc => {
-        const originalPrice = acc.price || acc.basePrice || 0;
-        const discountPrice = originalPrice * BUNDLE_DISCOUNT_RATE;
-        addToCart({
-          ...acc,
-          price: discountPrice,
-          selectedAttributes: {},
-          selectedColor: null,
-          selectedStorage: null
-        });
-      });
-
-      alert('Đã thêm sản phẩm chính' + (selectedAccessories.length > 0 ? ` và ${selectedAccessories.length} phụ kiện mua kèm` : '') + ' vào giỏ hàng thành công!');
-      setSelectedAccessories([]);
+      alert('Đã thêm sản phẩm vào giỏ hàng thành công!');
     }
   };
 
@@ -736,19 +751,6 @@ export default function ProductDetailPage() {
         selectedStorage: selectedAttributes["Dung lượng RAM - ROM"] || selectedAttributes["Dung Lượng RAM - ROM"] || Object.entries(selectedAttributes).find(([k]) => k.toLowerCase().includes('dung lượng') || k.toLowerCase().includes('bộ nhớ') || k.toLowerCase().includes('ram') || k.toLowerCase().includes('rom'))?.[1] || null
       });
 
-      selectedAccessories.forEach(acc => {
-        const originalPrice = acc.price || acc.basePrice || 0;
-        const discountPrice = originalPrice * BUNDLE_DISCOUNT_RATE;
-        addToCart({
-          ...acc,
-          price: discountPrice,
-          selectedAttributes: {},
-          selectedColor: null,
-          selectedStorage: null
-        });
-      });
-
-      setSelectedAccessories([]);
       navigate('/cart');
     }
   };
@@ -845,132 +847,7 @@ export default function ProductDetailPage() {
               setActiveImage={setActiveImage}
             />
 
-            {/* Box mua kèm giá sốc (Gợi ý phụ kiện đi kèm) với Thanh trượt Carousel */}
-            {accessorySuggestions && accessorySuggestions.length > 0 && (
-              <div className="bg-white rounded-xl p-5 border border-gray-200 mt-6 shadow-sm relative group">
-                {/* Header thanh trượt */}
-                <div className="flex items-center justify-between mb-3.5 pb-2.5 border-b border-gray-100">
-                  <div className="flex items-center gap-2">
-                    <span className="p-1.5 bg-orange-100 text-orange-600 rounded-lg">
-                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-4 h-4">
-                        <path fillRule="evenodd" d="M12 2.25c-5.385 0-9.75 4.365-9.75 9.75s4.365 9.75 9.75 9.75 9.75-4.365 9.75-9.75S17.385 2.25 12 2.25ZM12.75 9a.75.75 0 0 0-1.5 0v2.25H9a.75.75 0 0 0 0 1.5h2.25V15a.75.75 0 0 0 1.5 0v-2.25H15a.75.75 0 0 0 0-1.5h-2.25V9Z" clipRule="evenodd" />
-                      </svg>
-                    </span>
-                    <div>
-                      <h4 className="text-xs font-black text-gray-900 uppercase tracking-wide">
-                        Mua kèm giá sốc (Gợi ý phụ kiện đi kèm)
-                      </h4>
-                      <p className="text-[11px] text-gray-400 font-medium">Kéo ngang hoặc bấm nút mũi tên để xem tất cả {accessorySuggestions.length} phụ kiện đi kèm</p>
-                    </div>
-                  </div>
-
-                  {/* Nút điều hướng Trượt Trái / Trượt Phải */}
-                  <div className="flex items-center gap-1.5">
-                    <button
-                      type="button"
-                      onClick={() => handleScrollAcc('left')}
-                      className="p-1.5 rounded-full border border-gray-200 bg-white text-gray-600 hover:bg-orange-500 hover:text-white hover:border-orange-500 transition-all shadow-sm active:scale-95 disabled:opacity-30"
-                      title="Trượt sang trái"
-                    >
-                      <ChevronLeft size={16} />
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => handleScrollAcc('right')}
-                      className="p-1.5 rounded-full border border-gray-200 bg-white text-gray-600 hover:bg-orange-500 hover:text-white hover:border-orange-500 transition-all shadow-sm active:scale-95 disabled:opacity-30"
-                      title="Trượt sang phải"
-                    >
-                      <ChevronRight size={16} />
-                    </button>
-                  </div>
-                </div>
-
-                {/* Thanh trượt Carousel sản phẩm Phụ kiện */}
-                <div
-                  ref={accSliderRef}
-                  className="flex gap-3.5 overflow-x-auto scrollbar-none snap-x snap-mandatory py-1.5 px-0.5 scroll-smooth"
-                  style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
-                >
-                  {accessorySuggestions.map(acc => {
-                    const isSelected = selectedAccessories.some(a => a.id === acc.id);
-                    return (
-                      <div
-                        key={acc.id}
-                        onClick={() => handleToggleAccessory(acc)}
-                        className={`w-[175px] sm:w-[190px] shrink-0 snap-start border rounded-xl p-3 flex flex-col justify-between items-center text-center cursor-pointer transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md ${isSelected
-                            ? 'border-orange-500 bg-orange-50/20 ring-2 ring-orange-500/30 shadow-sm'
-                            : 'border-gray-200 hover:border-orange-300 bg-white'
-                          }`}
-                      >
-                        <div className="flex flex-col items-center w-full">
-                          {/* Badge Tiết kiệm & Checkbox */}
-                          <div className="w-full flex justify-between items-center mb-1.5">
-                            <span className="text-[10px] font-bold bg-red-100 text-red-600 px-1.5 py-0.5 rounded">
-                              Giảm 10%
-                            </span>
-                            <div className={`w-4 h-4 rounded border flex items-center justify-center transition-all ${isSelected ? 'bg-orange-500 border-orange-500 text-white' : 'border-gray-300 bg-white'
-                              }`}>
-                              {isSelected && <Check size={10} className="stroke-[3.5]" />}
-                            </div>
-                          </div>
-
-                          {/* Image (Click chuyển thẳng trang bán phụ kiện) */}
-                          <div
-                            onClick={(e) => handleGoToAccessoryProduct(e, acc.id)}
-                            className="w-20 h-20 rounded-lg overflow-hidden bg-slate-50 flex items-center justify-center p-1 mb-2 border border-gray-100 group/img cursor-pointer hover:border-blue-400 transition-all relative shadow-2xs"
-                            title={`Xem trang bán ${acc.name}`}
-                          >
-                            <img
-                              src={acc.image || acc.thumbnailImage || '/no_image.png'}
-                              alt={acc.name}
-                              className="max-w-full max-h-full object-contain group-hover/img:scale-110 transition-transform duration-200"
-                            />
-                            <span className="absolute bottom-1 right-1 p-1 bg-black/60 text-white rounded-full opacity-0 group-hover/img:opacity-100 transition-opacity shadow-sm">
-                              <ExternalLink size={9} />
-                            </span>
-                          </div>
-
-                          {/* Name (Click vào chữ chuyển thẳng trang bán phụ kiện) */}
-                          <a
-                            href={`/product/${acc.id}`}
-                            onClick={(e) => handleGoToAccessoryProduct(e, acc.id)}
-                            className="text-xs font-bold text-gray-800 hover:text-blue-600 hover:underline line-clamp-2 min-h-[32px] leading-tight text-center flex items-center justify-center gap-1 group/title cursor-pointer transition-colors"
-                            title={`Bấm vào đây để chuyển sang trang bán ${acc.name}`}
-                          >
-                            <span>{acc.name}</span>
-                            <ExternalLink size={11} className="text-gray-400 group-hover/title:text-blue-600 shrink-0 opacity-60 group-hover/title:opacity-100 transition-opacity" />
-                          </a>
-                        </div>
-
-                        {/* Price Box */}
-                        <div className="w-full mt-2.5 pt-2 border-t border-gray-100 flex flex-col items-center">
-                          <span className="text-xs text-red-600 font-black">
-                            {((acc.price || acc.basePrice || 0) * BUNDLE_DISCOUNT_RATE).toLocaleString('vi-VN')}₫
-                          </span>
-                          <span className="text-[10px] text-gray-400 line-through">
-                            {(acc.price || acc.basePrice || 0).toLocaleString('vi-VN')}₫
-                          </span>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-
-                {/* Footer thông tin số lượng đã chọn */}
-                {selectedAccessories.length > 0 && (
-                  <div className="mt-4 pt-3 border-t border-gray-100 flex justify-between items-center bg-orange-50/20 p-3 rounded-lg border border-orange-100">
-                    <span className="text-xs text-gray-700 font-bold flex items-center gap-1.5">
-                      <span className="w-2 h-2 rounded-full bg-orange-500 animate-pulse"></span>
-                      Đã chọn mua kèm: <span className="text-orange-600 font-black text-sm">{selectedAccessories.length}</span> phụ kiện
-                    </span>
-                    <span className="text-xs font-black text-red-600">
-                      Tổng cộng thêm: +{selectedAccessories.reduce((sum, item) => sum + ((item.price || item.basePrice || 0) * BUNDLE_DISCOUNT_RATE), 0).toLocaleString('vi-VN')}₫
-                    </span>
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
+            </div>
 
           {/* CỘT PHẢI: KHU VỰC CHỌN BIẾN THỂ & ĐẶT MUA */}
           <ProductSummaryInfo
@@ -1074,7 +951,31 @@ export default function ProductDetailPage() {
             )}
           </div>
         </div>
+
+        {/* SẢN PHẨM THƯỜNG MUA CÙNG (CHUẨN PHONG CÁCH THẾ GIỚI DI ĐỘNG) */}
+        <FrequentlyBoughtTogether
+          accessorySuggestions={accessorySuggestions}
+          onSelectAccessory={(acc) => {
+            setSelectedAccessoryForModal(acc);
+            setIsAccessoryModalOpen(true);
+          }}
+        />
       </div>
+
+      {/* MODAL CHỌN BIẾN THỂ PHỤ KIỆN THƯỜNG MUA CÙNG */}
+      {selectedAccessoryForModal && (
+        <AccessoryVariantModal
+          isOpen={isAccessoryModalOpen}
+          onClose={() => {
+            setIsAccessoryModalOpen(false);
+            setSelectedAccessoryForModal(null);
+          }}
+          productId={selectedAccessoryForModal.id}
+          basePrice={selectedAccessoryForModal.price || selectedAccessoryForModal.basePrice || 0}
+          comboPrice={(selectedAccessoryForModal.price || selectedAccessoryForModal.basePrice || 0) * BUNDLE_DISCOUNT_RATE}
+          hideQuantity={true}
+        />
+      )}
 
       {/* MODAL THÔNG SỐ KỸ THUẬT ĐẦY ĐỦ */}
       <ProductSpecsModal

@@ -275,9 +275,21 @@ function VoucherCard({ coupon, isUsed, onApply, isVIP }) {
     year: 'numeric'
   });
 
-  const discountDesc = coupon.discountType.toUpperCase() === 'PERCENTAGE'
-    ? `Giảm ${coupon.discountValue}% trên tổng đơn hàng`
+  let discountDesc = coupon.discountType.toUpperCase() === 'PERCENTAGE'
+    ? `Giảm ${coupon.discountValue}% trên tổng đơn`
     : `Giảm trực tiếp ${coupon.discountValue.toLocaleString('vi-VN')}₫`;
+
+  if (coupon.discountType.toUpperCase() === 'PERCENTAGE' && coupon.maxDiscountAmount) {
+    discountDesc += ` (Tối đa ${coupon.maxDiscountAmount.toLocaleString('vi-VN')}₫)`;
+  }
+
+  const conditions = [];
+  if (coupon.minOrderAmount) {
+    conditions.push(`Đơn tối thiểu ${coupon.minOrderAmount.toLocaleString('vi-VN')}₫`);
+  }
+  if (coupon.maxPerUser) {
+    conditions.push(`Tối đa ${coupon.maxPerUser} lần/tài khoản`);
+  }
 
   return (
     <div 
@@ -326,6 +338,11 @@ function VoucherCard({ coupon, isUsed, onApply, isVIP }) {
             )}
           </div>
           <p className="font-bold text-gray-800 text-xs mt-2 leading-tight">{discountDesc}</p>
+          {conditions.length > 0 && (
+            <p className="text-[10px] font-semibold text-amber-600 mt-1">
+              📌 {conditions.join(' • ')}
+            </p>
+          )}
           <p className="text-[10px] text-gray-400 font-medium mt-1">Hạn dùng: {formattedDate}</p>
         </div>
 

@@ -17,7 +17,10 @@ export default function AdminPromotions() {
     startDate: '',
     endDate: '',
     isActive: true,
-    usageLimit: 0
+    usageLimit: 0,
+    minOrderAmount: '',
+    maxDiscountAmount: '',
+    maxPerUser: ''
   });
 
   const fetchPromotions = () => {
@@ -51,7 +54,10 @@ export default function AdminPromotions() {
         startDate: startIso,
         endDate: endIso,
         isActive: promo.isActive !== undefined ? promo.isActive : true,
-        usageLimit: promo.usageLimit || 0
+        usageLimit: promo.usageLimit || 0,
+        minOrderAmount: promo.minOrderAmount ?? '',
+        maxDiscountAmount: promo.maxDiscountAmount ?? '',
+        maxPerUser: promo.maxPerUser ?? ''
       });
     } else {
       setEditingPromotion(null);
@@ -67,7 +73,10 @@ export default function AdminPromotions() {
         startDate: now.toISOString().slice(0, 16),
         endDate: nextMonth.toISOString().slice(0, 16),
         isActive: true,
-        usageLimit: 0
+        usageLimit: 0,
+        minOrderAmount: '',
+        maxDiscountAmount: '',
+        maxPerUser: 1
       });
     }
     setIsModalOpen(true);
@@ -84,7 +93,10 @@ export default function AdminPromotions() {
         startDate: new Date(formData.startDate).toISOString(),
         endDate: new Date(formData.endDate).toISOString(),
         isActive: formData.isActive,
-        usageLimit: Number(formData.usageLimit)
+        usageLimit: Number(formData.usageLimit),
+        minOrderAmount: formData.minOrderAmount !== '' ? Number(formData.minOrderAmount) : null,
+        maxDiscountAmount: formData.maxDiscountAmount !== '' ? Number(formData.maxDiscountAmount) : null,
+        maxPerUser: formData.maxPerUser !== '' ? Number(formData.maxPerUser) : null
       };
 
       if (editingPromotion) {
@@ -353,7 +365,44 @@ export default function AdminPromotions() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-bold text-admin-text-main mb-2">Giới hạn số tài khoản dùng (0 = vô hạn)</label>
+                  <label className="block text-sm font-bold text-admin-text-main mb-2">Tổng đơn tối thiểu (₫)</label>
+                  <input
+                    type="number"
+                    min={0}
+                    className="w-full px-4 py-3 border border-admin-border rounded-md focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all font-bold text-admin-text-main"
+                    placeholder="Để trống = Không quy định"
+                    value={formData.minOrderAmount}
+                    onChange={(e) => setFormData({ ...formData, minOrderAmount: e.target.value })}
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-bold text-admin-text-main mb-2">Mức giảm tối đa (₫)</label>
+                  <input
+                    type="number"
+                    min={0}
+                    disabled={formData.discountType === 'FIXED_AMOUNT'}
+                    className="w-full px-4 py-3 border border-admin-border rounded-md focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all font-bold text-admin-text-main disabled:bg-gray-100 disabled:text-gray-400"
+                    placeholder={formData.discountType === 'PERCENTAGE' ? "Để trống = Không giới hạn" : "Chỉ áp dụng cho giảm theo %"}
+                    value={formData.maxDiscountAmount}
+                    onChange={(e) => setFormData({ ...formData, maxDiscountAmount: e.target.value })}
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-bold text-admin-text-main mb-2">Số lượt dùng tối đa / 1 User</label>
+                  <input
+                    type="number"
+                    min={1}
+                    className="w-full px-4 py-3 border border-admin-border rounded-md focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all font-bold text-admin-text-main"
+                    placeholder="Mặc định: 1 lượt/người"
+                    value={formData.maxPerUser}
+                    onChange={(e) => setFormData({ ...formData, maxPerUser: e.target.value })}
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-bold text-admin-text-main mb-2">Tổng số lượt dùng toàn hệ thống (0 = vô hạn)</label>
                   <input
                     type="number"
                     min={0}

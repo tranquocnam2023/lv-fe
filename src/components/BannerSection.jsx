@@ -1,4 +1,16 @@
-//Quản lý quảng cáo
+// src/components/BannerSection.jsx
+/**
+ * ============================================================================
+ * COMPONENT: BannerSection (Quản lý & Hiển thị các khối Banner Quảng cáo)
+ * ============================================================================
+ * Chức năng & Nâng cấp tối ưu:
+ *  1. Quản lý 3 loại Banner: Top Banner, Side Banners (Cố định 2 bên), Slider Banners (Trượt 2 hình).
+ *  2. Tối ưu LCP (Largest Contentful Paint): Bổ sung `fetchpriority="high"` cho Top Banner đầu trang.
+ *  3. Chống giật trang (Anti-CLS): Giữ cố định aspect-ratio (21/4 cho Top Banner, 21/9 cho Slider).
+ *  4. Tối ưu nạp ảnh: Slider tự động chọn `loading="eager"` cho 2 hình đầu và `loading="lazy"` cho các hình sau.
+ * ============================================================================
+ */
+
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { bannerService } from '../services/bannerService';
@@ -186,11 +198,13 @@ const BannerSection = ({ showSideBanners = true, showTopBanner = true, showSlide
       {showTopBanner && topBanner && (
         <div className="w-full max-w-[1200px] px-4 mx-auto mt-4 relative z-0">
           <LinkWrapper to={topBanner.linkUrl}>
-            <div className="block w-full rounded-xl overflow-hidden shadow-sm hover:opacity-95 transition-opacity">
+            <div className="block w-full aspect-[21/6] md:aspect-[21/4] rounded-xl overflow-hidden shadow-sm hover:opacity-95 transition-opacity bg-slate-100 dark:bg-slate-800">
               <img
                 src={topBanner.imageUrl}
                 alt="Quảng cáo nổi bật"
-                className="w-full h-auto object-cover"
+                fetchpriority="high"
+                decoding="async"
+                className="w-full h-full object-cover"
               />
             </div>
           </LinkWrapper>
@@ -211,6 +225,8 @@ const BannerSection = ({ showSideBanners = true, showTopBanner = true, showSlide
                     <img
                       src={banner.imageUrl}
                       alt={`Khuyến mãi ${index + 1}`}
+                      loading={index < 2 ? "eager" : "lazy"}
+                      decoding="async"
                       className="w-full h-full object-cover cursor-pointer hover:scale-[1.02] transition-transform duration-300"
                     />
                   </LinkWrapper>
