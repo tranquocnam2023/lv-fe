@@ -321,7 +321,7 @@ export default function AdminOrders() {
           }
           return o;
         }));
-        
+
         // Cập nhật selectedOrderDetails nếu modal đang mở
         if (selectedOrderDetails && selectedOrderDetails.id === orderId) {
           setSelectedOrderDetails(prev => ({
@@ -526,7 +526,7 @@ export default function AdminOrders() {
                             <button
                               onClick={() => handleStatusChange(order.id, 'shipping')}
                               className="text-[10px] font-extrabold text-primary hover:underline px-2 py-1 bg-primary/5 rounded-md border border-primary/10 transition-all hover:bg-primary/10 active:scale-95 whitespace-nowrap"
-                              title="Mô phỏng: Bên vận chuyển đến lấy hàng và bắt đầu giao"
+                              title=" Bên vận chuyển đến lấy hàng và bắt đầu giao"
                             >
                               Giao hàng (Manual)
                             </button>
@@ -537,14 +537,14 @@ export default function AdminOrders() {
                             <button
                               onClick={() => handleStatusChange(order.id, 'delivered')}
                               className="text-[10px] font-extrabold text-success hover:underline px-2 py-1 bg-success/5 rounded-md border border-success/10 transition-all hover:bg-success/10 active:scale-95 whitespace-nowrap"
-                              title="Mô phỏng: Bên vận chuyển cập nhật giao hàng thành công"
+                              title=" Bên vận chuyển cập nhật giao hàng thành công"
                             >
                               Xác nhận đã giao
                             </button>
                             <button
                               onClick={() => handleStatusChange(order.id, 'shipping_failed')}
                               className="text-[10px] font-extrabold text-admin-danger hover:underline px-2 py-1 bg-admin-danger/5 rounded-md border border-admin-danger/10 transition-all hover:bg-admin-danger/10 active:scale-95 whitespace-nowrap ml-1"
-                              title="Mô phỏng: Giao hàng thất bại"
+                              title=" Giao hàng thất bại"
                             >
                               Giao thất bại
                             </button>
@@ -556,7 +556,7 @@ export default function AdminOrders() {
                             <button
                               onClick={() => handleStatusChange(order.id, 'shipping')}
                               className="text-[10px] font-extrabold text-info hover:underline px-2 py-1 bg-info/5 rounded-md border border-info/10 transition-all hover:bg-info/10 active:scale-95 whitespace-nowrap"
-                              title="Mô phỏng: Giao hàng lại lần tiếp theo"
+                              title=" Giao hàng lại lần tiếp theo"
                             >
                               Giao lại
                             </button>

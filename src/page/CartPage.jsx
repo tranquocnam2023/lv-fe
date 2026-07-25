@@ -786,6 +786,7 @@ export default function CartPage() {
         shippingCarrier: shippingCarrier,
         deliveryLatitude: deliveryMethod === 'ship' ? formData.deliveryLatitude : null,
         deliveryLongitude: deliveryMethod === 'ship' ? formData.deliveryLongitude : null,
+        email: formData.email,
         items: cartItems.map(item => ({
           productId: item.id || item.Id,
           storage: item.selectedStorage || '',

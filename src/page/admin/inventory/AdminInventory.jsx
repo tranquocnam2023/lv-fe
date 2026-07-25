@@ -345,8 +345,7 @@ export default function AdminInventory() {
             />
           </div>
 
-          {/* Actions Dropdown (Commented out as requested) */}
-          {/* 
+          {/* Actions Dropdown */}
           <div className="relative">
             <button
               onClick={() => setIsTxDropdownOpen(!isTxDropdownOpen)}
@@ -403,7 +402,6 @@ export default function AdminInventory() {
               </>
             )}
           </div>
-          */}
         </div>
       </div>
 

@@ -1,8 +1,9 @@
 import React, { useRef } from 'react';
 import { ChevronLeft, ChevronRight, Plus, Star } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-
-const BUNDLE_DISCOUNT_RATE = 0.9; // Giảm 10%
+// Tỉ lệ giảm giá phụ kiện mua kèm hiển thị trên giao diện (giảm 10%).
+// LƯU Ý: Giá trị giảm giá thực tế và giới hạn số lượng mua kèm (MaxQuantityAllowed) sẽ do Back-End tính toán và áp đặt khi tạo đơn hàng.
+const BUNDLE_DISCOUNT_RATE = 0.9;
 
 export default function FrequentlyBoughtTogether({ accessorySuggestions = [], onSelectAccessory }) {
   const sliderRef = useRef(null);

@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import api from '../services/api';
 import { Check } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
 const CartContext = createContext();
 
@@ -100,14 +101,20 @@ export const CartProvider = ({ children }) => {
     >
       {children}
       {toast && (
-        <div className="fixed bottom-6 right-6 z-[99999] bg-slate-900/95 backdrop-blur-md border border-slate-800 text-white rounded-xl shadow-2xl flex items-center gap-3 p-4 max-w-sm animate-in slide-in-from-bottom-5 fade-in duration-300">
-          <div className="w-7 h-7 bg-green-500 rounded-full flex items-center justify-center text-white shrink-0 shadow-lg">
-            <Check size={16} strokeWidth={3} />
+        <div className="fixed bottom-6 right-6 z-[99999] bg-white border border-slate-200 text-slate-800 rounded-none shadow-2xl flex flex-col gap-3 p-4 w-64 animate-in slide-in-from-bottom-5 fade-in duration-300">
+          <div className="flex items-center gap-2.5">
+            <div className="w-6 h-6 bg-emerald-50 text-emerald-600 rounded-full flex items-center justify-center shrink-0">
+              <Check size={14} strokeWidth={3} />
+            </div>
+            <p className="text-sm font-semibold text-slate-800">Đã thêm vào giỏ hàng</p>
           </div>
-          <div>
-            <p className="text-xs font-semibold text-gray-400">Giỏ hàng</p>
-            <p className="text-sm font-black leading-snug line-clamp-2">{toast.message}</p>
-          </div>
+          <Link
+            to="/cart"
+            onClick={() => setToast(null)}
+            className="w-full text-center py-2 bg-[#E6F0FA] hover:bg-[#D8E6F5] text-blue-600 font-bold text-sm rounded-none transition-colors"
+          >
+            Xem giỏ hàng
+          </Link>
         </div>
       )}
     </CartContext.Provider>

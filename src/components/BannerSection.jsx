@@ -128,8 +128,9 @@ const BannerSection = ({ showSideBanners = true, showTopBanner = true, showSlide
   const leftBanner = banners.find(b => b.type === 'Left' && b.isActive);
   const rightBanner = banners.find(b => b.type === 'Right' && b.isActive);
 
-  // Logic tự động trượt cho Slider
+  // Logic tự động trượt cho Slider đoàn tàu
   useEffect(() => {
+    // nếu chỉ có 2 banner thì không cần slide chạy
     if (sliderBanners.length <= 2) {
       setCurrentIndex(0);
       return;
@@ -142,13 +143,15 @@ const BannerSection = ({ showSideBanners = true, showTopBanner = true, showSlide
         }
         return prevIndex + step;
       });
-    }, 4000);
+    }, 4000); // thời gian slide
     return () => clearInterval(slideInterval);
   }, [sliderBanners.length]);
 
   const nextSlide = () => {
     if (sliderBanners.length <= 2) return;
+    //xử lý số lượng banner hiển thị, Nếu tổng số banner là số chẵn thì trượt 2 banner mỗi lần bấm
     const step = sliderBanners.length % 2 === 0 ? 2 : 1;
+    // Nếu tổng số banner là số lẻ thì trượt 1 banner mỗi lần
     setCurrentIndex((prev) => (prev >= sliderBanners.length - 2 ? 0 : prev + step));
   };
 
@@ -160,7 +163,7 @@ const BannerSection = ({ showSideBanners = true, showTopBanner = true, showSlide
 
   return (
     <>
-      {/* QUẢNG CÁO DỌC BÁM MÀN HÌNH (FIXED) */}
+      {/* QUẢNG CÁO DỌC BÁM MÀN HÌNH (FIXED-cố định) */}
       {showSideBanners && (
         <>
           {/* Trái */}

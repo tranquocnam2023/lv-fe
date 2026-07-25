@@ -88,7 +88,8 @@ const getMergedSpecs = (baseSpecsStr, specsOverrideStr) => {
   });
 };
 
-// Tỉ lệ giảm giá phụ kiện mua kèm (0.9 = giảm 10%, 0.8 = giảm 20%, 0.5 = giảm 50%)
+// Tỉ lệ giảm giá phụ kiện mua kèm hiển thị trên giao diện (giảm 10%). 
+// LƯU Ý: Giá trị giảm giá thực tế và giới hạn số lượng mua kèm (MaxQuantityAllowed) sẽ do Back-End tính toán và áp đặt khi tạo đơn hàng.
 const BUNDLE_DISCOUNT_RATE = 0.9;
 
 export default function ProductDetailPage() {
@@ -606,6 +607,7 @@ export default function ProductDetailPage() {
       return {
         ...v,
         parsedAttrs,
+        // FE tính availableStock để hiển thị hàng còn; BE dùng để check tồn thực tế khi checkout và giữ chỗ qua ReservedStock.
         availableStock: v.totalStock - v.reservedStock
       };
     });
@@ -729,8 +731,7 @@ export default function ProductDetailPage() {
         selectedColor: selectedAttributes["Màu sắc"] || Object.entries(selectedAttributes).find(([k]) => k.toLowerCase().includes('màu'))?.[1] || null,
         selectedStorage: selectedAttributes["Dung lượng RAM - ROM"] || selectedAttributes["Dung Lượng RAM - ROM"] || Object.entries(selectedAttributes).find(([k]) => k.toLowerCase().includes('dung lượng') || k.toLowerCase().includes('bộ nhớ') || k.toLowerCase().includes('ram') || k.toLowerCase().includes('rom'))?.[1] || null
       });
-
-      alert('Đã thêm sản phẩm vào giỏ hàng thành công!');
+      // Alert removed to rely on custom toast
     }
   };
 
