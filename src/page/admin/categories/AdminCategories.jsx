@@ -20,7 +20,7 @@ export default function AdminCategories() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingCategory, setEditingCategory] = useState(null);
   const [saving, setSaving] = useState(false);
-  
+
   const [formData, setFormData] = useState({
     name: '',
     categoryCode: '',
@@ -50,7 +50,7 @@ export default function AdminCategories() {
       msg = typeof err.response.data === 'string' ? err.response.data : (err.response.data.message || JSON.stringify(err.response.data));
     }
     if (typeof err === 'object' && err.errors) msg = JSON.stringify(err.errors);
-    
+
     let parsed = {
       message: msg,
       details: []
@@ -225,11 +225,11 @@ export default function AdminCategories() {
   const handleImageUpload = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
-    
+
     if (file.size > 2 * 1024 * 1024) {
       return showToast('warning', 'File quá lớn (>2MB)', 'Vui lòng chọn ảnh nhỏ hơn.');
     }
-    
+
     setUploading(true);
     try {
       const res = await productService.uploadLocalImage(file, 'categories');
@@ -257,8 +257,27 @@ export default function AdminCategories() {
     setFormError(null);
     setSaving(true);
     try {
-      const generatedCode = formData.categoryCode.trim() || generateBrandOrCategoryCode(formData.name, 20);
-      // LOGIC LƯU DANH MỤC: Thiết lập payload gửi API
+     
+      // [XỬ LÝ MÃ DANH MỤC - FRONT-END]
+      // - Nếu mã danh mục trống, FE gọi hàm 'generateBrandOrCategoryCode' để tự động sinh mã viết tắt (Ví dụ: "Điện thoại" -> "DT"). 
+      const rawCode = formData.categoryCode.trim();
+      // Nếu rawCode có giá trị thì lấy rawCode, ngược lại nếu rỗng ("") thì tự sinh mã và admin có quyền sửa mã
+      const generatedCode = rawCode || generateBrandOrCategoryCode(formData.name, 20);
+      
+      // BẮT BUỘC TỰ NHẬP MÃ (KHÔNG CHO TỰ SINH)
+      // if (!rawCode) return showToast('warning', 'Thiếu dữ liệu', 'Vui lòng tự nhập mã danh mục.');
+      // const generatedCode = rawCode;
+ 
+      //  BẮT BUỘC NHẬP TÊN DMUC VÀ TỰ SINH MÃ VIẾT TẮT THEO CHỮ CÁI ĐẦU CỦA MỖI TỪ( KHÔNG CHO SỬA, Ví dụ: NHẬP "Điện thoại" -> "DT")
+      // const generatedCode = generateBrandOrCategoryCode(formData.name, 20);
+
+      //  BẮT BUỘC NHẬP TÊN DMUC VÀ TỰ SINH MÃ NGUYÊN CHỮ VIẾT HOA ( KHÔNG CHO SỬA, Ví dụ: "Điện thoại" -> "DT-DIENTHOAI")
+      // const generatedCode = `DT-${generateSlug(formData.name).replace(/-/g, '').toUpperCase()}`;
+      
+      // TỰ SINH MÃ KÈM TIỀN TỐ CỐ ĐỊNH NẾU BỎ TRỐNG Ô MÃ (Ví dụ: "DT-MTB") NẾU BỎ TRỐNG
+      // const generatedCode = rawCode || `DT-${generateBrandOrCategoryCode(formData.name, 20)}`; //viết tắt
+      // const generatedCode = rawCode || `DT-${generateSlug(formData.name).replace(/-/g, '').toUpperCase()}`;//đầy đủ
+      
       // Nếu parentId để trống (tức là tạo danh mục gốc Cấp 1), ta chuyển nó thành null để DB nhận diện
       const payload = {
         name: formData.name.trim(),
@@ -287,7 +306,7 @@ export default function AdminCategories() {
       console.error(err);
       const parsed = parseError(err);
       setFormError(parsed);
-      
+
       const msgLower = parsed.message.toLowerCase();
       if (msgLower.includes('mã này đã tồn tại')) {
         setCatErrorMessage('Mã này đã tồn tại trong hệ thống.');
@@ -297,7 +316,7 @@ export default function AdminCategories() {
     }
   };
 
-  const filteredRoots = rootCategories.filter(cat => 
+  const filteredRoots = rootCategories.filter(cat =>
     cat.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     (cat.categoryCode && cat.categoryCode.toLowerCase().includes(searchTerm.toLowerCase()))
   );
@@ -397,10 +416,10 @@ export default function AdminCategories() {
               <tbody className="text-sm bg-white">
                 {filteredRoots.length > 0 ? (
                   filteredRoots.map((cat) => (
-                    <CategoryRow 
-                      key={cat.id} 
-                      category={cat} 
-                      level={1} 
+                    <CategoryRow
+                      key={cat.id}
+                      category={cat}
+                      level={1}
                       onEdit={(c) => handleOpenModal(c)}
                       onAddSubCategory={(parentId, nextLevel, parentNameVal) => handleOpenModal(null, parentId, true, parentNameVal)}
                       onDelete={handleDeleteCategory}

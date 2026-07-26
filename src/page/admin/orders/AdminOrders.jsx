@@ -452,6 +452,10 @@ export default function AdminOrders() {
                           onClick={() => setSelectedOrderDetails(order)}
                           className="text-primary font-bold hover:underline flex items-center gap-1 cursor-pointer"
                         >
+                          {/* =========================================================================
+                               [HIỂN THỊ MÃ ĐƠN HÀNG - FRONT-END]
+                               - Mã đơn hàng được hiển thị bằng cách thêm tiền tố '#' trước ID tự tăng của Database (Ví dụ: #10).
+                               ========================================================================= */}
                           <span>#{order.id}</span>
                         </button>
                         <button

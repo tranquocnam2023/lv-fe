@@ -200,7 +200,12 @@ export default function AdminPromotions() {
                   const status = getPromoStatus(promo);
                   return (
                     <tr key={promo.id} className="hover:bg-admin-bg transition-colors group">
-                      <td className="px-6 py-4 text-admin-text-muted font-bold">#{promo.id}</td>
+                       {/* =========================================================================
+                           [MÃ KHUYẾN MÃI - FRONT-END]
+                           - ID: Khóa chính tự tăng dưới CSDL, hiển thị dạng '#{promo.id}'.
+                           - Code: Mã voucher do Admin nhập thủ công (Ví dụ: GIAM20K, CHAOSONG).
+                           ========================================================================= */}
+                       <td className="px-6 py-4 text-admin-text-muted font-bold">#{promo.id}</td>
                       <td className="px-6 py-4">
                         <div className="flex items-center gap-2">
                           <div className="w-8 h-8 rounded-md bg-primary/5 text-primary flex items-center justify-center">

@@ -1,17 +1,24 @@
 import React from 'react';
 
-const getRankBadgeStyle = (points) => {
-  if (points >= 5000) return 'bg-amber-100 text-amber-800 border border-amber-200';
-  if (points >= 1000) return 'bg-slate-100 text-slate-800 border border-slate-200';
-  return 'bg-orange-100 text-orange-800 border border-orange-200';
-};
+// LUỒNG PHÂN HẠNG THÀNH VIÊN (CUSTOMER TIERS):
+// - Hạng thành viên được xác định động dựa trên Điểm Tích Lũy Trọn Đời (accumulatedPoints).
+// - Hạng Đồng: < 1000 điểm
+// - Hạng Bạc: >= 1000 điểm và < 5000 điểm
+// - Hạng Vàng: >= 5000 điểm
 
+// màu hạng
+const getRankBadgeStyle = (points) => {
+  if (points >= 5000) return 'bg-amber-100 text-amber-800 border border-amber-200';// vàng 
+  if (points >= 1000) return 'bg-slate-100 text-slate-800 border border-slate-200';// xám bạc
+  return 'bg-orange-100 text-orange-800 border border-orange-200';// cam ngả đồng
+};
+// thứ hạng hiển thị
 const getRankLabel = (points) => {
   if (points >= 5000) return 'Vàng';
   if (points >= 1000) return 'Bạc';
   return 'Đồng';
 };
-
+// chữ màu hạng
 const getRankColorClass = (points) => {
   if (points >= 5000) return 'text-amber-600';
   if (points >= 1000) return 'text-slate-500';

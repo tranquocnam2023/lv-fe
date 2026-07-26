@@ -413,7 +413,13 @@ export const useProductForm = ({ productId, onBack, onSaveSuccess, searchParams,
     try {
       const mainImage = formData.images[0]?.url || "";
       const otherImages = formData.images.slice(1).map(i => i.url);
-      const generatedCode = formData.productCode.trim() || generateProductCode(formData.name, 20);
+      // =========================================================================
+      // [XỬ LÝ MÃ SẢN PHẨM - FRONT-END]
+      // - Nếu mã sản phẩm bỏ trống, FE tự sinh viết tắt từ tên sản phẩm (Ví dụ: "iPhone 15 Pro" -> "IP15P").
+      // =========================================================================
+      const rawCode = formData.productCode.trim() || generateProductCode(formData.name, 20);
+      const generatedCode = rawCode || generateProductCode(formData.name, 20);
+      //const generatedCode = `SP-${rawCode}`;
 
       let calculatedStock = 0;
       if (formData.hasVariants && activeCombinations.length > 0) {

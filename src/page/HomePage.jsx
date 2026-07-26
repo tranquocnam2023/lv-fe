@@ -94,8 +94,11 @@ export default function HomePage({ selectedLocation }) {
   }, []);
 
   // 2. LOGIC LẤY DỮ LIỆU SẢN PHẨM ĐỘNG TỪ API/DATABASE (Server-side Sorting & Filtering)
-  // Mỗi khi người dùng thay đổi danh mục (selectedBrand), từ khóa tìm kiếm (searchQuery) hay sắp xếp (sortBy),
-  // frontend sẽ gọi lại API để sắp xếp/phân lọc chuẩn xác từ SQL Database, tránh lỗi tải tất cả làm trộn lẫn phụ kiện.
+  // [LUỒNG HEADER & BỘ LỌC]:
+  // - Khi người dùng chọn danh mục trên Header (được ánh xạ thành selectedBrand) hoặc thanh FilterBar:
+  // - Hệ thống so khớp selectedBrand với danh sách Categories để lấy categoryId (ví dụ: Điện thoại, Tablet, Phụ kiện).
+  // - Nếu không khớp danh mục nào, hệ thống coi đây là lọc theo Hãng (brandParam) gửi lên Backend.
+  // - Nếu ở trang chủ mặc định (không lọc), hệ thống gán categoryId của "Điện thoại" để tránh lẫn phụ kiện giá rẻ.
   useEffect(() => {
     setIsLoading(true);
 
@@ -121,19 +124,24 @@ export default function HomePage({ selectedLocation }) {
       }
     }
 
-    // Ánh xạ các tiêu chí sắp xếp từ frontend sang tham số API của Backend
+    // Ánh xạ các tiêu chí sắp xếp từ tăng giảm frontend sang tham số API của Backend
+    // - featured (Sản phẩm nổi bật): Sắp xếp dựa theo trạng thái tick IsFeatured của Admin ở trang quản trị.
+    // - best_seller (Sản phẩm bán chạy): Sắp xếp dựa theo tổng số lượng Reviews không bị ẩn trong DB.
     let apiSortBy = 'featured';
     let apiSortOrder = 'desc';
-
+//nếu người dùng chọn giá tăng dần
     if (sortBy === 'price_asc') {
       apiSortBy = 'price';
       apiSortOrder = 'asc';
-    } else if (sortBy === 'price_desc') {
+      //giá thấp đến cao
+    } else if (sortBy === 'price_desc') {//nếu người dùng chọn giá giảm dần
       apiSortBy = 'price';
       apiSortOrder = 'desc';
+      //giá cao đến thấp
     } else {
       apiSortBy = sortBy;
       apiSortOrder = 'desc';
+      //nổi bật
     }
 
     const params = {
@@ -180,8 +188,11 @@ export default function HomePage({ selectedLocation }) {
     setSelectedBrand(null);
   };
 
-  // 3. LỌC NÂNG CAO (Advanced Filters) Ở CLIENT
-  // Các bộ lọc nhẹ như khoảng giá trượt của Slider, Spec RAM được thực hiện ở client-side trên tập dữ liệu đã rút gọn của API.
+  // 3. LỌC NÂNG CAO (Advanced Filters) Ở CLIENT (TRÌNH DUYỆT)
+  // [LUỒNG LỌC CHI TIẾT TẠI CLIENT]:
+  // - Trực tiếp lọc trên mảng 'products' trong RAM client mà không gọi lại Database.
+  // - Lọc giá bán thực tế nằm trong khoảng giá trượt của Slider (advancedFilters.priceRange).
+  // - Lọc RAM: Phân tích chuỗi cấu hình product.specs qua hàm parseSpecs, giữ sản phẩm chứa dung lượng RAM khách chọn.
   const filteredProducts = products.filter(product => {
     // Lọc theo khoảng giá từ URL (?price_min=...&price_max=...)
     if (priceMinParam !== null) {
@@ -243,6 +254,9 @@ export default function HomePage({ selectedLocation }) {
           : (selectedBrand || advancedFilters ? `Sản phẩm ${displaySelectedBrand() || 'đã lọc'}` : 'Chào mừng đến với hệ thống PhoneShop!')}
       </h2>
 
+      {/*chọn nhãn hàng trên header*/}
+      <BannerSection showSlider={false} />
+
       {!selectedBrand && !searchQuery && !advancedFilters && (
         <>
           <div
@@ -291,7 +305,7 @@ export default function HomePage({ selectedLocation }) {
           <BannerSection showTopBanner={false} showSideBanners={false} />
         </div>
       )}
-
+{/*Logic click chọn sản phẩm theo danh mục*/}
       <FilterBar
         selectedBrand={selectedBrand}
         onSelectBrand={(brand) => {
@@ -305,7 +319,7 @@ export default function HomePage({ selectedLocation }) {
         } : null}
       />
 
-      {/* Sắp xếp theo (TGDD Style - 2 hàng độc lập, không viền, không nền) */}
+      {/* Sắp xếp theo nổi bật, bán chạy, giảm giá, giá tăng dần, giảm dần */}
       <div className="flex items-center gap-2 mb-4 mt-2 text-[14px] text-gray-700 select-none flex-wrap py-1.5">
         <span className="font-semibold text-gray-500">Sắp xếp theo:</span>
         <div className="flex items-center gap-3 flex-wrap">

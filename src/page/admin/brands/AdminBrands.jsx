@@ -234,6 +234,10 @@ export default function AdminBrands({ onRedirectToProducts, onRedirectToCreatePr
     setSaving(true);
 
     try {
+      // =========================================================================
+      // [XỬ LÝ MÃ THƯƠNG HIỆU - FRONT-END]
+      // - Nếu mã thương hiệu trống, FE tự sinh viết tắt từ tên (Ví dụ: "Samsung" -> "SAMSUNG").
+      // =========================================================================
       const generatedCode = formData.brandCode.trim() || generateBrandOrCategoryCode(formData.name.trim(), 10);
       const generatedSlugStr = formData.slug.trim() || generateSlug(formData.name.trim());
       

@@ -63,14 +63,14 @@ export default function HistoryTable({
                 const variantCount = item.variants ? item.variants.length : 0;
                 const catName = (item.categoryName || '').toLowerCase();
                 const prodName = (item.productName || '').toLowerCase();
-                
+
                 // Kiểm tra nếu là Phụ kiện hoặc Sản phẩm đơn (chỉ có 1 biến thể duy nhất)
                 const isAccessory = catName.includes('phụ kiện') || catName.includes('tai nghe') || catName.includes('cáp') || catName.includes('sạc') || catName.includes('ốp') || catName.includes('kính') || prodName.includes('tai nghe') || prodName.includes('sạc') || prodName.includes('ốp') || prodName.includes('kính');
                 const hasMultipleVariants = variantCount > 1 && !isAccessory;
 
                 return (
-                  <tr 
-                    key={item.productId} 
+                  <tr
+                    key={item.productId}
                     onClick={() => {
                       if (hasMultipleVariants && setSelectedStockProduct) {
                         setSelectedStockProduct(item);
@@ -93,14 +93,15 @@ export default function HistoryTable({
                       <div><b className="text-gray-700">{item.brandName || '---'}</b></div>
                       <div className="text-[11px] text-gray-400">{item.categoryName || '---'}</div>
                     </td>
+                    {/* cột */}
                     <td className="py-3.5 px-4 text-center font-bold text-admin-text-main">{item.totalQuantityIn}</td>
+                    {/* cột */}
                     <td className="py-3.5 px-4 text-center">
-                      <span className={`px-2.5 py-1 rounded-full text-xs font-black inline-block ${
-                        totalRem > 5 ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' :
+                      <span className={`px-2.5 py-1 rounded-full text-xs font-black inline-block ${totalRem > 5 ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' :
                         totalRem > 0 ? 'bg-amber-50 text-amber-700 border border-amber-200' :
-                        'bg-red-50 text-red-600 border border-red-200'
-                      }`}>
-                        {totalRem > 0 ? `Còn ${totalRem} hàng` : 'Hết hàng'}
+                          'bg-red-50 text-red-600 border border-red-200'
+                        }`}>
+                        {totalRem > 0 ? `${totalRem} sản phẩm` : 'Hết hàng'}
                       </span>
                     </td>
                     <td className="py-3.5 px-4 text-right font-black text-indigo-600">{formatCurrency(item.totalStockValue)}</td>
@@ -124,17 +125,22 @@ export default function HistoryTable({
                 );
               }
 
-              // Transaction history mode (original code)
-              let prefix = '#TX';
+
+              // [ĐỊNH DẠNG MÃ GIAO DỊCH KHO - PHÍA FRONT-END]
+
+              let prefix = '#TX'; // Tiền tố mặc định cho điều chỉnh kho thủ công
+
               if (item.transactionType === 'EXPORT_SELL') {
-                prefix = '#PS';
+                prefix = '#PS';   // Tiền tố Xuất bán hàng
               } else if (item.transactionType === 'IMPORT_SUPPLIER') {
-                prefix = '#ORD';
+                prefix = '#ORD';  // Tiền tố Nhập hàng từ nhà cung cấp (NCC)
               } else if (item.transactionType === 'IMPORT_RETURN') {
-                prefix = '#REO';
+                prefix = '#REO';  // Tiền tố Nhập trả hàng lỗi từ khách
               } else if (item.transactionType === 'EXPORT_DEFECT' || item.transactionType === 'EXPORT_DAMAGE') {
-                prefix = '#ER';
+                prefix = '#ER';   // Tiền tố Xuất trả hàng lỗi cho NCC / Xuất kho hư hỏng
               }
+              //sửa xong vô BE sửa,Controllers/InventoryTransactionController dòng 337-346
+              // Nếu có liên kết đơn hàng thì dùng orderId, ngược lại dùng id giao dịch kho tự tăng
               const code = item.orderId ? `${prefix}${item.orderId}` : `${prefix}${item.primaryTx.id}`;
               const formattedDate = new Date(item.createdAt).toLocaleString('vi-VN');
 
