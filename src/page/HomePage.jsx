@@ -264,9 +264,6 @@ export default function HomePage({ selectedLocation }) {
           >
             Khám phá các sản phẩm điện thoại, phụ kiện và nhiều ưu đãi Mùa hè hấp dẫn.
           </div>
-          <div className="mb-6">
-            <BannerSection showSlider={false} />
-          </div>
         </>
       )}
 

@@ -66,7 +66,7 @@ export default function AdminLayout({ activeAdminTab, onTabChange, setSearchPara
   // ── Sidebar mobile ──────────────────────────────────────────────────────────
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
-  // ── Global cross-module search ──────────────────────────────────────────────
+  // các state cho thanh tìm kiếm toàn cục
   const [searchQuery, setSearchQuery] = useState('');
   const [allProducts, setAllProducts] = useState([]);
   const [allOrders, setAllOrders] = useState([]);
@@ -106,7 +106,7 @@ export default function AdminLayout({ activeAdminTab, onTabChange, setSearchPara
   const notifications = React.useMemo(() => {
     const list = [];
     
-    // 1. Pending orders (statusId === 1)
+    // 1. Pending orders (statusId === 1) tất cả 
     allOrders.forEach(o => {
       if (o.statusId === 1) {
         list.push({
@@ -121,7 +121,7 @@ export default function AdminLayout({ activeAdminTab, onTabChange, setSearchPara
       }
     });
 
-    // 2. Low stock products (< 5)
+    // 2. Low stock products (< 5) hết hàng 
     allProducts.forEach(p => {
       const stock = p.totalStock ?? p.stock ?? p.stockQuantity ?? 0;
       if (stock < 5) {
@@ -136,18 +136,20 @@ export default function AdminLayout({ activeAdminTab, onTabChange, setSearchPara
         });
       }
     });
-
     const orders = list.filter(n => n.type === 'order').sort((a, b) => new Date(b.time) - new Date(a.time));
-    const stocks = list.filter(n => n.type === 'stock');
+    const stocks = list.filter(n => n.type === 'stock') ;
     return [...orders, ...stocks];
-  }, [allOrders, allProducts]);
+  }, 
+  [allOrders, allProducts]);
 
+  //bộ lọc tab thông báo
   const filteredNotifications = React.useMemo(() => {
     return notifications.filter(n => {
       const isRead = readNotificationIds.includes(n.id);
       if (notificationFilter === 'unread') return !isRead;
       if (notificationFilter === 'order') return n.type === 'order';
       if (notificationFilter === 'stock') return n.type === 'stock';
+
       return true;
     });
   }, [notifications, notificationFilter, readNotificationIds]);
@@ -172,7 +174,7 @@ export default function AdminLayout({ activeAdminTab, onTabChange, setSearchPara
     setShowNotifications(false);
   };
 
-  // Tải dữ liệu cho cross-module search
+  // Tải dữ liệu cho thông báo và tìm kiếm toàn cục
   useEffect(() => {
     const fetchSearchData = async () => {
       try {
@@ -180,6 +182,7 @@ export default function AdminLayout({ activeAdminTab, onTabChange, setSearchPara
           productService.getAll(true).catch(() => []),
           orderService.getAll().catch(() => []),
           userService.getAll().catch(() => []),
+
         ]);
 
         if (Array.isArray(productsData)) setAllProducts(productsData);
@@ -484,12 +487,13 @@ export default function AdminLayout({ activeAdminTab, onTabChange, setSearchPara
 
                   {/* Tabs */}
                   <div className="flex border-b border-admin-border px-2 py-1 bg-gray-50/50 dark:bg-admin-bg/30">
-                    {['all', 'unread', 'order', 'stock'].map(tab => {
+                    {['all', 'unread', 'order', 'stock','logs'].map(tab => {
                       const labels = {
                         all: 'Tất cả',
                         unread: 'Chưa đọc',
                         order: 'Đơn hàng',
-                        stock: 'Hết hàng'
+                        stock: 'Hết hàng',
+                        logs: 'Nhật ký'
                       };
                       return (
                         <button

@@ -4,72 +4,72 @@
   /* =========================================
      LIGHT THEME (Giao diện sáng)
      ========================================= */
-  /* Brand & Status Colors */
-  --primary: rgb(21, 36, 208);
-  --primary-soft: rgba(21, 36, 208, 0.12);
-  --secondary: rgb(29, 141, 226);
-  --success: rgb(0, 219, 146);
-  --warning: rgb(255, 139, 56);
-  --danger: rgb(255, 61, 84);
-  --info: rgb(38, 188, 253);
-  --yellow: rgb(252, 212, 54);
+  /* Brand & Status Colors (Màu thương hiệu & Nút bấm & Trạng thái) */
+  --primary: rgb(21, 36, 208);          /* Màu thương hiệu chính: dùng cho nút bấm chính (Primary Button), các thẻ active, liên kết quan trọng */
+  --primary-soft: rgba(21, 36, 208, 0.12); /* Màu xanh nhạt: làm nền cho các badge trạng thái, tab được chọn hoặc highlight nhẹ */
+  --secondary: rgb(29, 141, 226);      /* Màu phụ: dùng cho các nút bấm phụ (Secondary Button), các thông tin bổ sung */
+  --success: rgb(0, 219, 146);         /* Màu thành công: dùng cho nút đồng ý, trạng thái Đã giao hàng, Thành công */
+  --warning: rgb(255, 139, 56);         /* Màu cảnh báo: dùng cho trạng thái Chờ xác nhận, Đang xử lý */
+  --danger: rgb(255, 61, 84);          /* Màu nguy hiểm: dùng cho nút Xóa, Hủy đơn, báo lỗi đỏ */
+  --info: rgb(38, 188, 253);           /* Màu thông tin: dùng cho thông báo thông tin chung, badge chỉ dẫn */
+  --yellow: rgb(252, 212, 54);         /* Màu vàng: dùng cho ngôi sao đánh giá (Rating Stars) hoặc các điểm nhấn đặc biệt */
 
-  /* Backgrounds & Surfaces */
-  --bg: rgb(243, 244, 246);
-  --surface: rgb(255, 255, 255);
-  --bgcard: rgb(255, 255, 255);
-  --headerbg: rgb(68, 26, 255);
-  --footerbg: rgb(255, 255, 255);
-  --sidebarbg: rgb(255, 255, 255);
+  /* Backgrounds & Surfaces (Màu nền giao diện & Các khối) */
+  --bg: rgb(243, 244, 246);            /* Màu nền chính của toàn bộ trang web (body background) */
+  --surface: rgb(255, 255, 255);       /* Màu nền của các khối/bảng/khu vực nội dung chính */
+  --bgcard: rgb(255, 255, 255);        /* Màu nền riêng của các thẻ sản phẩm (Card) hoặc thẻ thông tin */
+  --headerbg: rgb(68, 26, 255);        /* Màu nền của thanh Menu đầu trang (Header) */
+  --footerbg: rgb(255, 255, 255);       /* Màu nền của khu vực chân trang (Footer) */
+  --sidebarbg: rgb(255, 255, 255);      /* Màu nền thanh menu bên (Sidebar) của người dùng */
 
-  /* Borders & Text */
-  --bordercustom: rgb(237, 242, 247);
-  --text: rgb(31, 38, 46);
-  --textmain: rgb(52, 64, 80);
-  --textmuted: rgb(155, 168, 187);
+  /* Borders & Text (Màu viền & Màu chữ) */
+  --bordercustom: rgb(237, 242, 247);  /* Màu viền phân cách mặc định giữa các phần tử */
+  --text: rgb(31, 38, 46);             /* Màu chữ đậm nhất: dùng cho Tiêu đề lớn (h1, h2, h3), tên sản phẩm */
+  --textmain: rgb(52, 64, 80);         /* Màu chữ chính: dùng cho đoạn văn mô tả, thông tin chi tiết */
+  --textmuted: rgb(155, 168, 187);     /* Màu chữ nhạt/phụ: dùng cho ngày tháng, chú thích nhỏ, placeholder */
 
-  /* Admin Colors */
-  --admin-sidebar-bg: rgb(17, 29, 69);
-  --admin-sidebar-border: rgb(27, 37, 75);
-  --admin-sidebar-hover: rgb(27, 37, 75);
-  --admin-sidebar-text: rgb(163, 175, 209);
-  --admin-bg: rgb(246, 248, 254);
-  --admin-border: rgb(227, 231, 242);
-  --admin-text-main: rgb(43, 54, 115);
-  --admin-text-muted: rgb(163, 175, 209);
-  --admin-danger: rgb(239, 91, 78);
-  --admin-primary-hover: rgb(17, 33, 212);
+  /* Admin Colors (Hệ màu riêng cho giao diện quản trị Admin) */
+  --admin-sidebar-bg: rgb(17, 29, 69);     /* Màu nền thanh menu bên (Sidebar) của Admin */
+  --admin-sidebar-border: rgb(27, 37, 75); /* Màu viền của Sidebar Admin */
+  --admin-sidebar-hover: rgb(27, 37, 75);  /* Màu nền của menu item trong Sidebar Admin khi hover */
+  --admin-sidebar-text: rgb(163, 175, 209);/* Màu chữ menu trong Sidebar Admin */
+  --admin-bg: rgb(246, 248, 254);         /* Màu nền toàn trang Admin */
+  --admin-border: rgb(227, 231, 242);     /* Màu viền các khung/bảng dữ liệu trong Admin */
+  --admin-text-main: rgb(43, 54, 115);     /* Màu chữ tiêu đề/chính trong Admin */
+  --admin-text-muted: rgb(163, 175, 209);  /* Màu chữ nhạt/chú thích trong Admin (nút Xem tất cả khách hàng lúc trước dùng màu này) */
+  --admin-danger: rgb(239, 91, 78);        /* Màu đỏ báo lỗi/nút xóa trong trang Admin */
+  --admin-primary-hover: rgb(17, 33, 212); /* Màu nút bấm chính của Admin khi hover */
 }
 
 .dark {
   /* =========================================
-     DARK THEME (Giao diện tối mới cập nhật)
+     DARK THEME (Giao diện tối)
      ========================================= */
-  /* Brand & Status Colors */
-  --primary: #152bd0;
-  --primary-soft: rgba(167, 139, 250, 0.12);
-  --secondary: #2b7ecc; 
-  --success: rgb(0, 230, 153);
-  --warning: rgb(255, 151, 77);
-  --danger: rgb(255, 77, 97);
-  --info: rgb(78, 201, 253);
-  --yellow: rgb(252, 218, 79);
+  /* Brand & Status Colors (Màu nút & trạng thái ở Dark Mode) */
+  --primary: #152bd0;                  /* Nút bấm chính & Brand color (Dark mode) */
+  --primary-soft: rgba(167, 139, 250, 0.12); /* Nền hover nhẹ hoặc badge nhạt */
+  --secondary: #2b7ecc;                /* Nút bấm phụ */
+  --success: rgb(0, 230, 153);         /* Trạng thái thành công */
+  --warning: rgb(255, 151, 77);         /* Trạng thái chờ/cảnh báo */
+  --danger: rgb(255, 77, 97);          /* Nút xóa/hủy */
+  --info: rgb(78, 201, 253);           /* Trạng thái thông tin */
+  --yellow: rgb(252, 218, 79);         /* Sao đánh giá */
 
-  /* Backgrounds & Surfaces (Phân tầng độ sâu) */
-  --bg: #0F1117;
-  --surface: #171923;
-  --bgcard: #1E2230;
-  --headerbg: #171923;
-  --footerbg: #0F1117;
-  --sidebarbg: #171923;
+  /* Backgrounds & Surfaces (Màu nền & Các khối ở Dark Mode) */
+  --bg: #0F1117;                       /* Màu nền trang (tối sẫm) */
+  --surface: #171923;                  /* Màu nền của bảng/khung nội dung */
+  --bgcard: #1E2230;                   /* Màu nền của thẻ sản phẩm */
+  --headerbg: #171923;                 /* Màu nền Header */
+  --footerbg: #0F1117;                 /* Màu nền Footer */
+  --sidebarbg: #171923;                /* Màu nền Sidebar người dùng */
 
-  /* Borders & Text */
-  --bordercustom: #2C3242;
-  --text: #F8FAFC;
-  --textmain: #CBD5E1;
-  --textmuted: #94A3B8;
+  /* Borders & Text (Màu viền & Màu chữ ở Dark Mode) */
+  --bordercustom: #2C3242;              /* Màu viền phân cách tối */
+  --text: #F8FAFC;                     /* Màu chữ tiêu đề (sáng trắng) */
+  --textmain: #CBD5E1;                 /* Màu chữ chính (sáng xám) */
+  --textmuted: #94A3B8;                /* Màu chữ phụ/nhạt (xám trung tính) */
 
-  /* Admin Colors (Được map đồng bộ với các biến hệ thống) */
+  /* Admin Colors (Được đồng bộ với Dark Mode chung của hệ thống) */
   --admin-sidebar-bg: var(--surface);
   --admin-sidebar-border: var(--bordercustom);
   --admin-sidebar-hover: var(--bgcard);
@@ -84,8 +84,9 @@
 
 @theme {
   /* =========================================
-     TAILWIND V4 VARIABLE MAPPING
+     TAILWIND V4 VARIABLE MAPPING (Ánh xạ biến CSS động vào tiện ích Tailwind)
      ========================================= */
+  /* Ánh xạ màu thương hiệu & trạng thái */
   --color-primary: var(--primary);
   --color-primary-soft: var(--primary-soft);
   --color-secondary: var(--secondary);
@@ -95,6 +96,7 @@
   --color-info: var(--info);
   --color-yellow: var(--yellow);
   
+  /* Ánh xạ màu nền giao diện */
   --color-bg: var(--bg);
   --color-surface: var(--surface);
   --color-bgcard: var(--bgcard);
@@ -102,12 +104,15 @@
   --color-footerbg: var(--footerbg);
   --color-sidebarbg: var(--sidebarbg);
   
+  /* Ánh xạ màu viền phân cách */
   --color-bordercustom: var(--bordercustom);
   
+  /* Ánh xạ màu chữ */
   --color-text: var(--text);
   --color-textmuted: var(--textmuted);
   --color-textmain: var(--textmain);
 
+  /* Ánh xạ màu hệ Admin */
   --color-admin-sidebar-bg: var(--admin-sidebar-bg);
   --color-admin-sidebar-border: var(--admin-sidebar-border);
   --color-admin-sidebar-hover: var(--admin-sidebar-hover);
@@ -119,11 +124,11 @@
   --color-admin-danger: var(--admin-danger);
   --color-admin-primary-hover: var(--admin-primary-hover);
 
-  /* Khai báo Gradient cho Tailwind */
+  /* Khai báo Gradient cho Tailwind (nền màu chuyển sắc tím - hồng mượt mà) */
   --background-image-gradient-safe: linear-gradient(to bottom right, #7C3AED, #8B5CF6, #C084FC);
   --background-image-gradient-pop: linear-gradient(to bottom right, #6D28D9, #9333EA, #EC4899);
 
-  /* Định nghĩa lại Bo Góc nhỏ nhất có thể (Flat Style) */
+  /* Định nghĩa bo góc (Bo góc phẳng - Flat Style rất nhỏ giúp giao diện vuông vắn hiện đại) */
   --radius-xs: 1px;
   --radius-sm: 2px;
   --radius-md: 2px;
@@ -133,10 +138,12 @@
   --radius-3xl: 2px;
 }
 
-/* Dark mode utility overrides for standard Tailwind color classes */
+/* =========================================
+   DARK MODE UTILITY OVERRIDES (Ghi đè tự động các Class mặc định của Tailwind trong chế độ tối)
+   ========================================= */
 .dark {
 
-  /* Override backgrounds to deep card style */
+  /* Tự động chuyển tất cả các khối nền trắng (.bg-white) thành nền thẻ tối sẫm khi ở Dark Mode */
   .bg-white,
   div.bg-white,
   section.bg-white,
@@ -149,6 +156,7 @@
     background-color: var(--bgcard) !important;
   }
 
+  /* Tự động chuyển các nền xám nhạt (như bg-gray-50) thành màu nền tối chính */
   .bg-gray-50,
   .bg-slate-50,
   .bg-zinc-50,
@@ -160,7 +168,7 @@
     background-color: var(--bg) !important;
   }
 
-  /* Override text colors to light mode counterparts */
+  /* Tự động chuyển màu chữ tối mặc định của Tailwind thành màu chữ sáng trắng */
   .text-gray-900,
   .text-gray-800,
   .text-slate-900,
@@ -171,6 +179,7 @@
     color: var(--text) !important;
   }
 
+  /* Chuyển màu chữ mô tả chính thành màu chữ xám sáng */
   .text-gray-700,
   .text-gray-600,
   .text-slate-700,
@@ -180,6 +189,7 @@
     color: var(--textmain) !important;
   }
 
+  /* Chuyển màu chữ phụ/chú thích thành màu xám trung tính */
   .text-gray-500,
   .text-slate-500,
   .text-zinc-500,
@@ -187,7 +197,7 @@
     color: var(--textmuted) !important;
   }
 
-  /* Override borders to subtle dark border */
+  /* Tự động chuyển các viền sáng màu thành viền tối chìm */
   .border-gray-200,
   .border-gray-150,
   .border-gray-100,
@@ -199,7 +209,7 @@
     border-color: var(--bordercustom) !important;
   }
 
-  /* Form inputs, selections and textareas inside dark mode */
+  /* Định hình các trường biểu mẫu (Form Inputs, Textareas, Selections) trong chế độ tối */
   input,
   select,
   textarea {
@@ -218,7 +228,7 @@
     color: var(--text) !important;
   }
 
-  /* Shadows override to look more premium in dark environment */
+  /* Làm bóng đổ (Shadows) trông dịu và huyền ảo hơn trong không gian tối để giao diện cao cấp hơn */
   .shadow,
   .shadow-sm,
   .shadow-md,
@@ -230,10 +240,10 @@
 }
 
 /* =========================================
-   GLOBAL RESET & UTILITIES
+   GLOBAL RESET & UTILITIES (Cấu hình chung và Tiện ích toàn cục)
    ========================================= */
 
-/* Container dùng chung cho layout 1200px */
+/* Khung bọc giới hạn chiều rộng nội dung 1200px, tự động căn giữa */
 .container-box {
   width: 1200px;
   max-width: 100%;
@@ -259,7 +269,7 @@ body {
   flex-direction: column;
 }
 
-/* Hide number input spin-buttons (up/down arrows) */
+/* Ẩn các nút tăng/giảm số mặc định trên trình duyệt cho ô nhập số (spin-buttons) */
 input::-webkit-outer-spin-button,
 input::-webkit-inner-spin-button {
   -webkit-appearance: none;
@@ -270,7 +280,7 @@ input[type=number] {
   -moz-appearance: textfield;
 }
 
-/* Utilities to hide scrollbars */
+/* Tiện ích ẩn thanh cuộn vật lý (scrollbar) nhưng vẫn giữ chức năng cuộn trang */
 .no-scrollbar::-webkit-scrollbar {
   display: none !important;
 }
@@ -280,7 +290,7 @@ input[type=number] {
   scrollbar-width: none !important;
 }
 
-/* Micro-interactions for theme toggling */
+/* Hiệu ứng chuyển động vi mô (Micro-interactions) cho nút chuyển đổi giao diện sáng/tối */
 .theme-toggle-btn {
   transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
@@ -293,7 +303,7 @@ input[type=number] {
   transform: scale(0.92) rotate(-6deg);
 }
 
-/* Side banner fade-out when mega menu is active */
+/* Hiệu ứng ẩn mượt mà của Banner quảng cáo hai bên hông khi mở rộng Mega Menu */
 .side-banner {
   transition: opacity 0.25s ease-in-out, visibility 0.25s ease-in-out, transform 0.25s ease-in-out !important;
 }
@@ -305,21 +315,19 @@ body.mega-menu-active .side-banner {
   pointer-events: none !important;
 }
 
-/* Admin Banner Preview Override Rules */
+/* Cấu hình định vị riêng cho Banner ở chế độ Xem trước (Preview Mode) trong trang Admin */
 .admin-preview-mode .side-banner {
   position: absolute !important;
   top: 10px !important;
-  display: block !important; /* Luôn hiển thị để xem trước, không phụ thuộc min-width 1440px */
+  display: block !important;
   z-index: 10 !important;
 }
 
-/* Banner Trái trong khung Preview */
 .admin-preview-mode .side-banner-left {
   left: 10px !important;
   right: auto !important;
 }
 
-/* Banner Phải trong khung Preview */
 .admin-preview-mode .side-banner-right {
   right: 10px !important;
   left: auto !important;

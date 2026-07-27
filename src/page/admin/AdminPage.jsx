@@ -135,7 +135,7 @@ export default function AdminPage() {
           />
         );
       case 'reviews':     return <AdminReviews />;
-      case 'dashboard':   return <AdminDashboard />;
+      case 'dashboard':   return <AdminDashboard onTabChange={handleTabChange} />;
       case 'audit_logs':  return <AdminAuditLogs />;
 
       case 'settings':

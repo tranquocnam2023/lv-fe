@@ -1,3 +1,4 @@
+//Nguồn lưu trữ dữ liệu duy nhất của giỏ hàng 
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import api from '../services/api';
 import { Check } from 'lucide-react';
@@ -39,23 +40,23 @@ export const CartProvider = ({ children }) => {
 
   const addToCart = (product, quantity = 1) => {
     setCartItems((prevItems) => {
-      const cartId = product.isAddon && product.appliedCampaignId 
-            ? `addon-${product.appliedCampaignId}-${product.id}-${product.selectedStorage || ''}-${product.selectedColor || ''}`
-            : `${product.id}-${product.selectedStorage || ''}-${product.selectedColor || ''}`;
-      
+      const cartId = product.isAddon && product.appliedCampaignId
+        ? `addon-${product.appliedCampaignId}-${product.id}-${product.selectedStorage || ''}-${product.selectedColor || ''}`
+        : `${product.id}-${product.selectedStorage || ''}-${product.selectedColor || ''}`;
+
       const existingItemIndex = prevItems.findIndex(item => item.cartId === cartId);
-      
+
       if (existingItemIndex >= 0) {
         const newItems = [...prevItems];
         newItems[existingItemIndex].quantity += quantity;
         return newItems;
       }
-      
-      return [...prevItems, { 
-        ...product, 
-        quantity, 
+
+      return [...prevItems, {
+        ...product,
+        quantity,
         cartId,
-        originalBasePrice: product.originalBasePrice || product.price 
+        originalBasePrice: product.originalBasePrice || product.price
       }];
     });
 
@@ -79,6 +80,14 @@ export const CartProvider = ({ children }) => {
     setCartItems([]);
   };
 
+  //Logic tính toán động giá sản phẩm mua kèm và tổng tiền (ngắn gọn)
+ // const counts = {};
+ // const displayCartItems = cartItems.map(i => ({
+ //   ...i,
+ //   price: (i.originalBasePrice || i.price) * (i.isAddon && i.parentCartItemId ? ((counts[i.parentCartItemId] = (counts[i.parentCartItemId] || 0) + 1) === 1 ? 0.9 : 0.85) : 1)
+ // }));
+
+  //  logic tính tổng tiền
   const cartTotal = cartItems.reduce(
     (total, item) => total + item.price * item.quantity,
     0

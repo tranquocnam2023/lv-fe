@@ -16,7 +16,7 @@ import api from '../../../services/api';
 
 import { THEME, PIE_COLORS } from '../../../utils/theme';
 
-export default function AdminDashboard() {
+export default function AdminDashboard({ onTabChange }) {
   const [chartType, setChartType] = useState('cumulative'); // 'cumulative' or 'daily'
   const [revenueData, setRevenueData] = useState([]);
   const [productStats, setProductStats] = useState([]);
@@ -505,7 +505,10 @@ export default function AdminDashboard() {
               )}
             </div>
           </div>
-          <button className="w-full mt-6 py-2 bg-gray-50 hover:bg-gray-100 text-xs font-bold text-admin-text-muted rounded-md transition-colors border border-gray-100">
+          <button 
+            onClick={() => onTabChange && onTabChange('customers')}
+            className="w-full mt-6 py-2 bg-blue-500 hover:bg-blue-600 text-xs font-bold text-admin-text-muted rounded-md transition-colors border border-gray-100"
+          >
             Xem tất cả khách hàng
           </button>
         </div>
