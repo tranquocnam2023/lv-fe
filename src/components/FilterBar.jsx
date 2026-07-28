@@ -12,13 +12,9 @@ export default function FilterBar({ selectedBrand, onSelectBrand, onApplyFilter,
     brandService.getAll()
       .then(data => {
         if (Array.isArray(data)) {
-          const names = data.map(b => b.name);
-          // Danh sách các thương hiệu điện thoại
-          const PHONE_BRANDS = ['Apple', 'Vivo', 'OPPO', 'Xiaomi', 'Samsung'];
-          const phoneNames = PHONE_BRANDS.filter(pb => 
-            names.some(name => name.toLowerCase() === pb.toLowerCase())
-          );
-          setQuickBrands(phoneNames);
+          // Lấy tất cả các thương hiệu đang hoạt động trực tiếp từ API dưới DB
+          const activeBrands = data.filter(b => b.isActive !== false).map(b => b.name);
+          setQuickBrands(activeBrands);
         }
       })
       .catch(err => console.error("Lỗi tải thương hiệu cho FilterBar:", err));
