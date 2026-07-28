@@ -12,8 +12,11 @@ export default function FilterBar({ selectedBrand, onSelectBrand, onApplyFilter,
     brandService.getAll()
       .then(data => {
         if (Array.isArray(data)) {
-          // Lấy tất cả các thương hiệu đang hoạt động trực tiếp từ API dưới DB
-          const activeBrands = data.filter(b => b.isActive !== false).map(b => b.name);
+          // Chỉ cho hiện các hãng điện thoại đang hoạt động
+          const PHONE_BRANDS = ['Apple', 'Vivo', 'OPPO', 'Xiaomi', 'Samsung', 'Sony'];
+          const activeBrands = data
+            .filter(b => b.isActive !== false && PHONE_BRANDS.some(pb => pb.toLowerCase() === b.name.toLowerCase()))
+            .map(b => b.name);
           setQuickBrands(activeBrands);
         }
       })
@@ -36,22 +39,19 @@ export default function FilterBar({ selectedBrand, onSelectBrand, onApplyFilter,
         {/* Scrollable brand listing on mobile, wrapped flex on desktop */}
         <div className="flex-1 flex items-center gap-2 overflow-x-auto no-scrollbar py-0.5 whitespace-nowrap">
           {/* Quick Brands */}
-          {quickBrands.map(brand => {
-            const displayLabel = brand === 'Apple' ? 'iPhone' : brand;
-            return (
-              <button 
-                key={brand} 
-                onClick={() => onSelectBrand(selectedBrand === brand ? null : brand)}
-                className={`flex-shrink-0 px-3 py-1.5 border rounded-md text-[13px] transition-all duration-200 cursor-pointer ${
-                  selectedBrand === brand 
-                  ? 'font-bold shadow-inner bg-primary/10 text-primary border-primary' 
-                  : 'hover:bg-gray-50 border-gray-200 text-gray-700 bg-white'
-                }`}
-              >
-                {displayLabel}
-              </button>
-            );
-          })}
+          {quickBrands.map(brand => (
+            <button 
+              key={brand} 
+              onClick={() => onSelectBrand(selectedBrand === brand ? null : brand)}
+              className={`flex-shrink-0 px-3 py-1.5 border rounded-md text-[13px] transition-all duration-200 cursor-pointer ${
+                selectedBrand === brand 
+                ? 'font-bold shadow-inner bg-primary/10 text-primary border-primary' 
+                : 'hover:bg-gray-50 border-gray-200 text-gray-700 bg-white'
+              }`}
+            >
+              {brand}
+            </button>
+          ))}
 
           {selectedBrand && (
             <button 
