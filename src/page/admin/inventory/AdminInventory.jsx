@@ -406,7 +406,7 @@ export default function AdminInventory() {
       </div>
 
       {/* Stats Cards */}
-      <InventoryStats products={products} txHistory={txHistory} categories={categories} />
+      <InventoryStats products={products} txHistory={txHistory} />
 
       {/* Layout Grid: Sidebar Filters on the Left, Table on the Right */}
       <div className="flex flex-col lg:flex-row gap-6 items-start w-full">

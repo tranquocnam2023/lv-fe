@@ -104,7 +104,7 @@ export default function AdminPage() {
             onRedirectToCreateProduct={(brandId) => handleTabChange('create_product', brandId)}
           />
         );
-
+      //không truyền biến vì trong component có xử lý dữ liệu
       case 'inventory':   return <AdminInventory />;
       case 'orders':      return <AdminOrders />;
       case 'payments':    return <AdminPayments />;

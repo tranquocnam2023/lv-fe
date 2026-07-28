@@ -2,7 +2,7 @@ import React from 'react';
 import { Package, Activity, FileText, AlertCircle, Award, ShoppingCart, TrendingUp } from 'lucide-react';
 import { useFormat } from '../../../../hooks/useFormat';
 
-export default function InventoryStats({ products, txHistory, categories }) {
+export default function InventoryStats({ products, txHistory }) {
   const { formatCurrency } = useFormat();
 
   // 1. Tính toán các chỉ số tồn kho cơ bản
@@ -19,25 +19,9 @@ export default function InventoryStats({ products, txHistory, categories }) {
   ];
 
   // 2. Logic xếp hạng Sản phẩm & Phụ kiện bán chạy nhất tháng gần nhất
-  const getCategoryName = (categoryId) => {
-    const cat = categories?.find(c => c.id === categoryId);
-    return cat ? cat.name : '';
-  };
-
   const isAccessoryProduct = (product) => {
     if (!product) return false;
-    const catName = (getCategoryName(product.categoryId) || '').toLowerCase();
-    const prodName = (product.name || '').toLowerCase();
-    return catName.includes('phụ kiện') || 
-           catName.includes('tai nghe') || 
-           catName.includes('cáp') || 
-           catName.includes('sạc') || 
-           catName.includes('ốp') || 
-           catName.includes('kính') || 
-           prodName.includes('tai nghe') || 
-           prodName.includes('sạc') || 
-           prodName.includes('ốp') || 
-           prodName.includes('kính');
+    return product.isAccessory === true;
   };
 
   // Xác định mốc thời gian 30 ngày từ thời điểm có giao dịch mới nhất để tránh dữ liệu cũ không hiển thị
@@ -81,8 +65,7 @@ export default function InventoryStats({ products, txHistory, categories }) {
       if (item.productObj) {
         return !isAccessoryProduct(item.productObj);
       }
-      const name = item.productName.toLowerCase();
-      return !(name.includes('tai nghe') || name.includes('sạc') || name.includes('ốp') || name.includes('kính') || name.includes('cáp'));
+      return true; // Mặc định là sản phẩm chính nếu không thấy đối tượng từ API
     })
     .sort((a, b) => b.quantitySold - a.quantitySold)
     .slice(0, 5);
@@ -92,8 +75,7 @@ export default function InventoryStats({ products, txHistory, categories }) {
       if (item.productObj) {
         return isAccessoryProduct(item.productObj);
       }
-      const name = item.productName.toLowerCase();
-      return name.includes('tai nghe') || name.includes('sạc') || name.includes('ốp') || name.includes('kính') || name.includes('cáp');
+      return false; // Mặc định không phải phụ kiện
     })
     .sort((a, b) => b.quantitySold - a.quantitySold)
     .slice(0, 5);
@@ -228,3 +210,5 @@ export default function InventoryStats({ products, txHistory, categories }) {
         </div>
       </div>
     </div>
+  );
+}
