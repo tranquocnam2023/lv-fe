@@ -14,7 +14,7 @@ export default function FilterBar({ selectedBrand, onSelectBrand, onApplyFilter,
         if (Array.isArray(data)) {
           const names = data.map(b => b.name);
           // Danh sách các thương hiệu điện thoại
-          const PHONE_BRANDS = ['iPhone', 'Vivo', 'OPPO', 'Xiaomi', 'Samsung'];
+          const PHONE_BRANDS = ['Apple', 'Vivo', 'OPPO', 'Xiaomi', 'Samsung'];
           const phoneNames = PHONE_BRANDS.filter(pb => 
             names.some(name => name.toLowerCase() === pb.toLowerCase())
           );
@@ -40,19 +40,22 @@ export default function FilterBar({ selectedBrand, onSelectBrand, onApplyFilter,
         {/* Scrollable brand listing on mobile, wrapped flex on desktop */}
         <div className="flex-1 flex items-center gap-2 overflow-x-auto no-scrollbar py-0.5 whitespace-nowrap">
           {/* Quick Brands */}
-          {quickBrands.map(brand => (
-            <button 
-              key={brand} 
-              onClick={() => onSelectBrand(selectedBrand === brand ? null : brand)}
-              className={`flex-shrink-0 px-3 py-1.5 border rounded-md text-[13px] transition-all duration-200 cursor-pointer ${
-                selectedBrand === brand 
-                ? 'font-bold shadow-inner bg-primary/10 text-primary border-primary' 
-                : 'hover:bg-gray-50 border-gray-200 text-gray-700 bg-white'
-              }`}
-            >
-              {brand}
-            </button>
-          ))}
+          {quickBrands.map(brand => {
+            const displayLabel = brand === 'Apple' ? 'iPhone' : brand;
+            return (
+              <button 
+                key={brand} 
+                onClick={() => onSelectBrand(selectedBrand === brand ? null : brand)}
+                className={`flex-shrink-0 px-3 py-1.5 border rounded-md text-[13px] transition-all duration-200 cursor-pointer ${
+                  selectedBrand === brand 
+                  ? 'font-bold shadow-inner bg-primary/10 text-primary border-primary' 
+                  : 'hover:bg-gray-50 border-gray-200 text-gray-700 bg-white'
+                }`}
+              >
+                {displayLabel}
+              </button>
+            );
+          })}
 
           {selectedBrand && (
             <button 
