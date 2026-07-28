@@ -82,7 +82,7 @@ export default function OrderTrackingPage() {
               Tra cứu đơn hàng khác
             </button>
           </div>
-          <OrderDetailsTracker order={order} onOrderCancelled={handleRefresh} />
+          <OrderDetailsTracker order={order} onOrderCancelled={handleRefresh} isGuest={true} />
         </div>
       ) : (
         // Chưa tra cứu: Hiển thị Form nhập liệu tra cứu

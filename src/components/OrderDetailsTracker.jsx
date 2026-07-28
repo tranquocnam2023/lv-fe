@@ -17,7 +17,7 @@ const getPaymentMethodLabel = (method) => {
   }
 };
 
-export default function OrderDetailsTracker({ order, onOrderCancelled }) {
+export default function OrderDetailsTracker({ order, onOrderCancelled, isGuest = false }) {
   const [isCancelModalOpen, setIsCancelModalOpen] = useState(false);
   const [cancelReason, setCancelReason] = useState('');
   const [customReason, setCustomReason] = useState('');
@@ -203,7 +203,8 @@ export default function OrderDetailsTracker({ order, onOrderCancelled }) {
           }`}>
             {getStatusText(statusId)}
           </span>
-          {statusId === 1 && (order.paymentMethod?.toLowerCase() === 'stripe' || order.paymentMethod?.toLowerCase() === 'momo') && (
+          {/* PHÂN QUYỀN: Ẩn nút "Thanh toán ngay" nếu đây là giao diện tra cứu của khách vãng lai (!isGuest) */}
+          {!isGuest && statusId === 1 && (order.paymentMethod?.toLowerCase() === 'stripe' || order.paymentMethod?.toLowerCase() === 'momo') && (
             <button
               onClick={handlePaymentRetry}
               className="px-4 py-1.5 bg-blue-600 border border-blue-600 text-white hover:bg-blue-700 text-xs font-black uppercase tracking-wider rounded-full transition-all active:scale-95 flex items-center gap-1.5 cursor-pointer"
@@ -211,7 +212,8 @@ export default function OrderDetailsTracker({ order, onOrderCancelled }) {
               Thanh toán ngay
             </button>
           )}
-          {canCancel && (
+          {/* PHÂN QUYỀN: Ẩn nút "Hủy đơn hàng" nếu đây là giao diện tra cứu của khách vãng lai (!isGuest) */}
+          {!isGuest && canCancel && (
             <button
               onClick={() => setIsCancelModalOpen(true)}
               className="px-4 py-1.5 border border-red-500 text-red-500 hover:bg-red-50 text-xs font-black uppercase tracking-wider rounded-full transition-all active:scale-95 flex items-center gap-1.5 cursor-pointer bg-white"
