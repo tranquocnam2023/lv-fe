@@ -58,11 +58,12 @@ export default function CartItemsList({ cartItems, updateQuantity, removeFromCar
                       <span className="font-black text-red-600 text-xs">
                         {(item.price * item.quantity).toLocaleString('vi-VN')}₫
                       </span>
-                      {item.originalPrice && (
+                      {item.originalPrice && item.originalPrice > item.price && (
                         <p className="text-[10px] text-gray-400 line-through font-semibold">
                           {(item.originalPrice * item.quantity).toLocaleString('vi-VN')}₫
                         </p>
                       )}
+                      
                       {/* cưa đôi giá gốc trên trang giỏ hàng
                       {item.originalPrice && (
                         <p className="text-[10px] text-gray-400 line-through font-semibold">

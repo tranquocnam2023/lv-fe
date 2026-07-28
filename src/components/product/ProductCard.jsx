@@ -195,13 +195,14 @@ export default function ProductCard({
       <div className="mt-auto pt-2">
         {/* Price */}
         <div className="flex flex-col">
-          {originalPrice ? (
+          {originalPrice && originalPrice > price ? (
             <div className="text-xs text-gray-400 line-through mb-0.5">
               {originalPrice.toLocaleString('vi-VN')}₫
             </div>         
           ) : (
-            <div className="h-4"></div> /* Khung trống để các card bằng nhau */
+            <div className="h-4"></div>
           )}
+
           {/* chia đôi giá gốc trên trang sản phẩm*/}
           {/* {originalPrice && (
             <div className="text-xs text-gray-400 mb-0.5">

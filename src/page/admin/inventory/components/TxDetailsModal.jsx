@@ -47,9 +47,9 @@ export default function TxDetailsModal({
                    <th className="p-3 text-center">Số lượng</th>
                    <th className="p-3 text-right">Đơn giá</th>
                    <th className="p-3 text-right">Tổng</th>
-                   {!selectedTxGroup.orderId && !selectedTxGroup.isReverted && (
+                   {/* {!selectedTxGroup.orderId && !selectedTxGroup.isReverted && (
                      <th className="p-3 text-center">Hành động</th>
-                   )}
+                   )} */}
                  </tr>
                </thead>
                <tbody className="text-sm">
@@ -64,7 +64,7 @@ export default function TxDetailsModal({
                        <td className="p-3 text-right font-bold text-primary">{formatCurrency(tx.price * qty)}</td>
                        {!selectedTxGroup.orderId && !selectedTxGroup.isReverted && (
                          <td className="p-3 text-center">
-                           {!tx.isReverted ? (
+                           {/* {!tx.isReverted ? (
                              <button
                                onClick={() => onRevert(tx.id)}
                                className="text-[11px] px-2 py-1 bg-red-50 text-red-600 rounded hover:bg-red-100 font-bold border border-red-100"
@@ -73,7 +73,7 @@ export default function TxDetailsModal({
                              </button>
                            ) : (
                              <span className="text-[11px] text-red-400 italic font-bold">Đã hoàn tác</span>
-                           )}
+                           )} */}
                          </td>
                        )}
                      </tr>

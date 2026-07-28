@@ -123,7 +123,7 @@ export default function ProductSummaryInfo({
               <span className="text-3xl font-black text-red-600">
                 {displayDetails.price.toLocaleString('vi-VN')}₫
               </span>
-              {displayDetails.originalPrice && (
+              {displayDetails.originalPrice && displayDetails.originalPrice > displayDetails.price && (
                 <span className="text-sm text-gray-400 line-through">
                   {displayDetails.originalPrice.toLocaleString('vi-VN')}₫
                 </span>

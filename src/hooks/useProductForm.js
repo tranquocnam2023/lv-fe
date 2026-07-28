@@ -384,7 +384,7 @@ export const useProductForm = ({ productId, onBack, onSaveSuccess, searchParams,
     }));
     setFormData(prev => ({ ...prev, images: updatedImages }));
   };
-
+  // logic nhập giá bán
   const handleSave = async (keepEditing = false) => {
     if (!formData.name) return showToast("warning", "Vui lòng nhập tên sản phẩm.");
     if (!formData.categoryId) return showToast("warning", "Vui lòng chọn danh mục.");
@@ -395,6 +395,13 @@ export const useProductForm = ({ productId, onBack, onSaveSuccess, searchParams,
     if (formData.originalPrice && (formData.originalPrice < 1000 || formData.originalPrice > 500000000)) {
       return showToast("warning", "Giá gốc không hợp lệ (phải từ 1.000 đến 500.000.000 VNĐ)");
     }
+    // RÀNG BUỘC GIÁ: Giá bán thực tế (đã giảm) không được phép lớn hơn giá gốc niêm yết cũ.
+    // Nếu giá bán bằng giá gốc thì hệ thống vẫn cho phép lưu bình thường (không giảm giá).
+    if(formData.basePrice > formData.originalPrice){
+      return showToast("warning", "Giá bán không được lớn hơn giá gốc");
+    }
+    
+    
 
     for (const opt of options) {
       if (opt.name === "Màu sắc" || opt.name === "Kích thước") {
