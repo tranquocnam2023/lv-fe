@@ -60,26 +60,43 @@ const parseSpecs = (specsInput) => {
 export default function HomePage({ selectedLocation }) {
   const { stopLoading } = useLoading();
   const { brand } = useParams();
+  
+  // ── Khai báo toàn bộ các React State Hooks ở đầu component ──
   const [prevBrand, setPrevBrand] = useState(brand);
+  // selectedBrand: Lưu trữ danh mục/thương hiệu chính được map từ URL param hoặc trang chủ (ví dụ: 'điện thoại', 'Apple')
   const [selectedBrand, setSelectedBrand] = useState(brand || null);
+  // selectedQuickBrand: Bộ lọc thương hiệu phụ (ví dụ: khi đang xem Điện thoại mà bấm lọc nhanh 'Apple' thì lưu tại đây)
+  const [selectedQuickBrand, setSelectedQuickBrand] = useState(null);
+  const [categories, setCategories] = useState([]);
+  const [advancedFilters, setAdvancedFilters] = useState(null);
+  const [sortBy, setSortBy] = useState('featured');
+  const [isPriceDropdownOpen, setIsPriceDropdownOpen] = useState(false);
+  const [products, setProducts] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [visibleCount, setVisibleCount] = useState(12);
+
+  // ── Lấy các tham số tìm kiếm từ URL query string ──
   const [searchParams] = useSearchParams();
   const searchQuery = searchParams.get('search') || '';
   const priceMinParam = searchParams.get('price_min');
   const priceMaxParam = searchParams.get('price_max');
   const filterBrandParam = searchParams.get('filterBrand');
 
+  // [LOGIC PHÂN CHIA DANH MỤC & THƯƠNG HIỆU]:
+  // Kiểm tra xem selectedBrand/brand hiện tại trên URL có phải là Danh mục sản phẩm (ví dụ: Điện thoại, Tablet) hay không
+  const brandLower = selectedBrand ? selectedBrand.toLowerCase() : '';
+  const matchingCat = categories.find(c => 
+    c.name.toLowerCase() === brandLower || 
+    (c.slug && c.slug.toLowerCase() === brandLower)
+  );
+
+  // [ĐỒNG BỘ HÓA TRẠNG THÁI]: Khi người dùng click chuyển hướng sang danh mục khác trên Header
   if (brand !== prevBrand) {
     setPrevBrand(brand);
     setSelectedBrand(brand || null);
+    setSelectedQuickBrand(null); // Reset bộ lọc hãng phụ (Apple/Samsung) khi đổi danh mục chính
+    setAdvancedFilters(null); // Reset bộ lọc nâng cao chi tiết (RAM, ROM, Giá trượt)
   }
-
-  const [advancedFilters, setAdvancedFilters] = useState(null);
-  const [sortBy, setSortBy] = useState('featured');
-  const [isPriceDropdownOpen, setIsPriceDropdownOpen] = useState(false);
-  const [products, setProducts] = useState([]);
-  const [categories, setCategories] = useState([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [visibleCount, setVisibleCount] = useState(12);
 
 
   // 1. LOGIC LẤY DỮ LIỆU DANH MỤC (Categories) - Chỉ lấy 1 lần duy nhất khi component mount
@@ -102,15 +119,12 @@ export default function HomePage({ selectedLocation }) {
   useEffect(() => {
     setIsLoading(true);
 
-    const brandLower = selectedBrand ? selectedBrand.toLowerCase() : '';
-    // Kiểm tra xem selectedBrand trên URL là Danh mục (Category) hay Hãng (Brand)
-    const matchingCat = categories.find(c => 
-      c.name.toLowerCase() === brandLower || 
-      (c.slug && c.slug.toLowerCase() === brandLower)
-    );
-
     let categoryId = matchingCat ? (matchingCat.id || matchingCat.Id) : null;
-    const brandParam = (!matchingCat && selectedBrand) ? selectedBrand : null;
+    
+    // Thương hiệu gửi lên API Backend:
+    // - Nếu đang ở trang Danh mục chính, thì lấy theo bộ lọc hãng nhanh (selectedQuickBrand)
+    // - Nếu không phải trang Danh mục chính, thì lấy theo selectedBrand (chính là tên hãng)
+    const brandParam = matchingCat ? selectedQuickBrand : ((!matchingCat && selectedBrand) ? selectedBrand : null);
 
     // Nếu đang ở trang chủ (không tìm kiếm và không chọn hãng cụ thể)
     // Mặc định chúng ta lọc theo danh mục "Điện thoại" để không bị trộn lẫn phụ kiện rẻ tiền giống TGDD
@@ -176,12 +190,12 @@ export default function HomePage({ selectedLocation }) {
         setIsLoading(false);
         stopLoading();
       });
-  }, [selectedBrand, searchQuery, sortBy, categories, stopLoading]);
+  }, [brand, selectedBrand, selectedQuickBrand, searchQuery, sortBy, categories, stopLoading]);
 
   // Reset visible items count when filters change
   useEffect(() => {
     setVisibleCount(12);
-  }, [selectedBrand, searchQuery, advancedFilters]);
+  }, [brand, selectedBrand, selectedQuickBrand, searchQuery, advancedFilters]);
 
   const handleApplyFilter = (filters) => {
     setAdvancedFilters(filters);
@@ -206,17 +220,74 @@ export default function HomePage({ selectedLocation }) {
 
     // Lọc nâng cao từ FilterModal
     if (advancedFilters) {
+      // Lọc theo khoảng giá từ thanh trượt Slider
       const [min, max] = advancedFilters.priceRange;
       if (product.price < min || product.price > max) {
         return false;
       }
 
-      if (advancedFilters['RAM'] && advancedFilters['RAM'].length > 0 && product.specs) {
+      // 1. Lọc theo Loại điện thoại (Hệ điều hành Android / iPhone (iOS))
+      if (advancedFilters['Loại điện thoại'] && advancedFilters['Loại điện thoại'].length > 0) {
+        const selectedTypes = advancedFilters['Loại điện thoại'];
+        const specsLower = (product.specs || '').toLowerCase();
+        const nameLower = (product.name || '').toLowerCase();
+        const brandLower = (product.brandName || product.brand?.name || product.brand || '').toLowerCase();
+        
+        // Nhận diện iPhone/iOS
+        const isIphone = nameLower.includes('iphone') || brandLower.includes('apple') || specsLower.includes('ios');
+        // Nhận diện Android
+        const isAndroid = !isIphone && (specsLower.includes('android') || brandLower.includes('samsung') || brandLower.includes('oppo') || brandLower.includes('xiaomi') || brandLower.includes('vivo') || brandLower.includes('realme') || brandLower.includes('sony'));
+
+        const matchesType = selectedTypes.some(type => {
+          if (type === 'iPhone (iOS)') return isIphone;
+          if (type === 'Android') return isAndroid;
+          return false;
+        });
+        if (!matchesType) return false;
+      }
+
+      // 2. Lọc theo Hãng sản xuất được chọn trong modal
+      if (advancedFilters['Hãng'] && advancedFilters['Hãng'].length > 0) {
+        const selectedBrands = advancedFilters['Hãng'];
+        const brandName = (product.brandName || product.brand?.name || product.brand || '').toLowerCase();
+        const matchesBrand = selectedBrands.some(brand => brandName === brand.toLowerCase());
+        if (!matchesBrand) return false;
+      }
+
+      // 3. Lọc theo dung lượng RAM
+      if (advancedFilters['RAM'] && advancedFilters['RAM'].length > 0) {
         const specTags = parseSpecs(product.specs);
-        const matchesRam = advancedFilters['RAM'].some(ram => 
-          specTags.some(spec => spec.includes(ram))
-        );
+        const nameLower = (product.name || '').toLowerCase();
+        const matchesRam = advancedFilters['RAM'].some(ram => {
+          const cleanRam = ram.replace(/\s+/g, '').toLowerCase(); // Ví dụ: "8gb"
+          const spaceRam = ram.toLowerCase(); // Ví dụ: "8 gb"
+          
+          const inSpecs = specTags.some(spec => {
+            const cleanSpec = spec.replace(/\s+/g, '').toLowerCase();
+            return cleanSpec === cleanRam || cleanSpec.includes(spaceRam);
+          });
+          const inName = nameLower.includes(cleanRam) || nameLower.includes(spaceRam);
+          return inSpecs || inName;
+        });
         if (!matchesRam) return false;
+      }
+
+      // 4. Lọc theo Dung lượng lưu trữ bộ nhớ trong (ROM)
+      if (advancedFilters['Dung lượng lưu trữ'] && advancedFilters['Dung lượng lưu trữ'].length > 0) {
+        const specTags = parseSpecs(product.specs);
+        const nameLower = (product.name || '').toLowerCase();
+        const matchesStorage = advancedFilters['Dung lượng lưu trữ'].some(storage => {
+          const cleanStorage = storage.replace(/\s+/g, '').toLowerCase(); // Ví dụ: "128gb"
+          const spaceStorage = storage.toLowerCase(); // Ví dụ: "128 gb"
+          
+          const inSpecs = specTags.some(spec => {
+            const cleanSpec = spec.replace(/\s+/g, '').toLowerCase();
+            return cleanSpec === cleanStorage || cleanSpec.includes(spaceStorage);
+          });
+          const inName = nameLower.includes(cleanStorage) || nameLower.includes(spaceStorage);
+          return inSpecs || inName;
+        });
+        if (!matchesStorage) return false;
       }
     }
 
@@ -227,14 +298,13 @@ export default function HomePage({ selectedLocation }) {
   const featuredProducts = filteredProducts.filter(p => p.isFeatured || p.IsFeatured);
 
   const displaySelectedBrand = () => {
-    if (!selectedBrand) return '';
-    const brandLower = selectedBrand.toLowerCase();
-    const matchingCat = categories.find(c =>
-      c.name.toLowerCase() === brandLower ||
-      (c.slug && c.slug.toLowerCase() === brandLower)
-    );
-    if (matchingCat) return matchingCat.name;
-    return selectedBrand;
+    if (matchingCat) {
+      if (selectedQuickBrand) {
+        return `${matchingCat.name} - ${selectedQuickBrand}`;
+      }
+      return matchingCat.name;
+    }
+    return selectedBrand || brand || '';
   };
 
   return (
@@ -304,14 +374,21 @@ export default function HomePage({ selectedLocation }) {
       )}
 {/*Logic click chọn sản phẩm theo danh mục*/}
       <FilterBar
-        selectedBrand={selectedBrand}
-        onSelectBrand={(brand) => {
-          setSelectedBrand(brand);
+        selectedBrand={matchingCat ? selectedQuickBrand : selectedBrand}
+        onSelectBrand={(b) => {
+          if (matchingCat) {
+            // Nếu đang trong danh mục chính, gán bộ lọc thương hiệu phụ
+            setSelectedQuickBrand(b);
+          } else {
+            // Nếu ở trang thương hiệu hoặc trang chủ, đổi thương hiệu chính
+            setSelectedBrand(b);
+          }
           setAdvancedFilters(null);
         }}
         onApplyFilter={handleApplyFilter}
-        onClearAll={(selectedBrand || advancedFilters) ? () => {
-          setSelectedBrand(null);
+        onClearAll={(selectedQuickBrand || selectedBrand || advancedFilters) ? () => {
+          setSelectedQuickBrand(null);
+          setSelectedBrand(matchingCat ? brand : null); // Quay về danh mục gốc nếu có
           setAdvancedFilters(null);
         } : null}
       />

@@ -534,6 +534,15 @@ export default function Header() {
               >
                 <Link
                   to={`/danh-muc/${encodeURIComponent(cat.name.toLowerCase())}`}
+                  onClick={() => {
+                    const targetPath = `/danh-muc/${encodeURIComponent(cat.name.toLowerCase())}`;
+                    // LOGIC XỬ LÝ: So sánh đường dẫn (pathname) của trang hiện tại với link danh mục vừa bấm
+                    // Nếu trùng khớp (tức là người dùng đang đứng ở danh mục này và muốn reset/tải lại danh sách gốc)
+                    if (window.location.pathname === targetPath) {
+                      // Tiến hành ép tải lại trang (Full Reload) -> Xóa sạch toàn bộ các filter nâng cao trong state
+                      window.location.reload();
+                    }
+                  }}
                   className={`flex items-center gap-1.5 px-3 py-1.5 rounded transition-all duration-200 text-white hover:bg-white/15 ${isHovered ? 'bg-white/20' : ''}`}
                 >
                   {getCategoryIcon(cat.name, cat.iconUrl)}
@@ -945,7 +954,15 @@ export default function Header() {
                       <Link
                         key={idx}
                         to={path}
-                        onClick={() => setIsOpenMobileMenu(false)}
+                        onClick={() => {
+                          setIsOpenMobileMenu(false); // Đóng Drawer Sidebar trên mobile
+                          
+                          // LOGIC XỬ LÝ: Kiểm tra nếu bấm vào đúng đường dẫn danh mục đang hiển thị trên màn hình
+                          if (window.location.pathname === path) {
+                            // Thực hiện tải lại trang để xóa bỏ toàn bộ bộ lọc cũ và trả về danh sách gốc
+                            window.location.reload();
+                          }
+                        }}
                         className="flex items-center justify-between px-4 py-3 hover:bg-gray-50 text-sm font-semibold text-gray-700 transition"
                       >
                         <span>{cat.name}</span>

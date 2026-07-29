@@ -1,3 +1,5 @@
+// COMPONENT THỐNG KÊ KHO HÀNG & SẢN PHẨM/PHỤ KIỆN BÁN CHẠY NHẤT (INVENTORY STATS)
+// Chức năng: Tính toán tổng sản lượng tồn kho, giá trị tồn kho, thống kê sản phẩm/phụ kiện bán chạy nhất trong 30 ngày gần nhất
 import React from 'react';
 import { Package, Activity, FileText, AlertCircle, Award, ShoppingCart, TrendingUp } from 'lucide-react';
 import { useFormat } from '../../../../hooks/useFormat';
@@ -5,12 +7,20 @@ import { useFormat } from '../../../../hooks/useFormat';
 export default function InventoryStats({ products, txHistory }) {
   const { formatCurrency } = useFormat();
 
-  // 1. Tính toán các chỉ số tồn kho cơ bản
+  // ─── 1. TÍNH TOÁN CÁC CHỈ SỐ TỒN KHO CƠ BẢN ───────────────────────────
+  // Tính tổng số lượng tồn kho vật lý đang có trong hệ thống
   const totalStockQty = products.reduce((acc, p) => acc + ((p.totalStock ?? p.stock ?? p.stockQuantity ?? 0)), 0);
+  
+  // Tính tổng giá trị tồn kho (Số lượng * Giá bán lẻ cơ bản)
   const totalStockValue = products.reduce((acc, p) => acc + ((p.basePrice || p.price || 0) * (p.totalStock ?? p.stock ?? p.stockQuantity ?? 0)), 0);
+  
+  // Tổng số lượng giao dịch thành công (loại trừ các giao dịch bị hoàn tác/hủy)
   const totalTxCount = txHistory.filter(t => !t.isReverted).length;
+  
+  // Số lượng sản phẩm sắp hết hàng (tồn kho nhỏ hơn 5 cái)
   const lowStockCount = products.filter(p => (p.totalStock ?? p.stock ?? p.stockQuantity ?? 0) < 5).length;
 
+  // Cấu hình các thẻ hiển thị chỉ số (Stats Cards)
   const STATS_CONFIG = [
     { label: 'Tổng sản lượng tồn kho', value: totalStockQty, icon: Package, iconColor: 'var(--color-primary)' },
     { label: 'Tổng giá trị tồn kho', value: totalStockValue, icon: Activity, isCurrency: true, iconColor: 'var(--color-success)' },
@@ -18,25 +28,27 @@ export default function InventoryStats({ products, txHistory }) {
     { label: 'Sản phẩm sắp hết hàng', value: lowStockCount, icon: AlertCircle, iconColor: 'var(--color-admin-danger)' }
   ];
 
-  // 2. Logic xếp hạng Sản phẩm & Phụ kiện bán chạy nhất tháng gần nhất
+  // ─── 2. THUẬT TOÁN XẾP HẠNG BÁN CHẠY NHẤT TRONG THÁNG GẦN NHẤT ───────
+  
+  // Hàm kiểm tra sản phẩm có phải là phụ kiện hay không
   const isAccessoryProduct = (product) => {
     if (!product) return false;
-    return product.isAccessory === true;
+    return product.isAccessory === true || String(product.isAccessory) === 'true';
   };
 
-  // Xác định mốc thời gian 30 ngày từ thời điểm có giao dịch mới nhất để tránh dữ liệu cũ không hiển thị
+  // Xác định mốc thời gian 30 ngày tính ngược từ giao dịch mới nhất (tránh lỗi lệch ngày hệ thống)
   const times = txHistory.map(t => new Date(t.createdAt).getTime());
   const maxTime = times.length > 0 ? Math.max(...times) : new Date().getTime();
   const oneMonthAgo = maxTime - 30 * 24 * 60 * 60 * 1000;
 
-  // Lọc các giao dịch bán hàng (EXPORT_SELL) thành công trong vòng 30 ngày qua
+  // LƯỢC LỌC GIAO DỊCH XUẤT BÁN HÀNG THÀNH CÔNG (EXPORT_SELL VÀ KHÔNG BỊ HỦY) TRONG 30 NGÀY GẦN NHẤT
   const recentSales = txHistory.filter(t => 
     t.transactionType === 'EXPORT_SELL' && 
     !t.isReverted && 
     new Date(t.createdAt).getTime() >= oneMonthAgo
   );
 
-  // Gom nhóm tổng số lượng bán và doanh thu cho mỗi sản phẩm
+  // GOM NHÓM TỔNG SỐ LƯỢNG ĐÃ BÁN VÀ TỔNG DOANH THU THEO TỪNG PRODUCT ID
   const salesMap = {};
   recentSales.forEach(tx => {
     const prodId = tx.productId;
@@ -59,17 +71,18 @@ export default function InventoryStats({ products, txHistory }) {
 
   const allSales = Object.values(salesMap);
 
-  // Phân tách: Sản phẩm chính (Điện thoại, Máy tính...) vs Phụ kiện
+  // PHÂN TÁCH: LỌC TOP 5 SẢN PHẨM CHÍNH BÁN CHẠY NHẤT (ĐIỆN THOẠI...)
   const bestProducts = allSales
     .filter(item => {
       if (item.productObj) {
         return !isAccessoryProduct(item.productObj);
       }
-      return true; // Mặc định là sản phẩm chính nếu không thấy đối tượng từ API
+      return true; // Mặc định là sản phẩm chính nếu không thấy thông tin đối tượng
     })
-    .sort((a, b) => b.quantitySold - a.quantitySold)
-    .slice(0, 5);
+    .sort((a, b) => b.quantitySold - a.quantitySold) // Sắp xếp giảm dần theo số lượng bán
+    .slice(0, 5); // Lấy Top 5
 
+  // PHÂN TÁCH: LỌC TOP 5 PHỤ KIỆN BÁN CHẠY NHẤT (SẠC, TAI NGHE, CÁP...)
   const bestAccessories = allSales
     .filter(item => {
       if (item.productObj) {
@@ -77,10 +90,10 @@ export default function InventoryStats({ products, txHistory }) {
       }
       return false; // Mặc định không phải phụ kiện
     })
-    .sort((a, b) => b.quantitySold - a.quantitySold)
-    .slice(0, 5);
+    .sort((a, b) => b.quantitySold - a.quantitySold) // Sắp xếp giảm dần theo số lượng bán
+    .slice(0, 5); // Lấy Top 5
 
-  // Helper hiển thị badge thứ hạng
+  // HELPER HIỂN THỊ BADGE THỨ HẠNG TRỰC QUAN (VÀNG, BẠC, ĐỒNG...)
   const renderRankBadge = (index) => {
     const badges = [
       { bg: 'bg-amber-100 text-amber-700 border-amber-200', text: '1' },
@@ -99,7 +112,7 @@ export default function InventoryStats({ products, txHistory }) {
 
   return (
     <div className="space-y-6 w-full">
-      {/* 4 Stats Cards */}
+      {/* ─── HIỂN THỊ 4 THẺ CHỈ SỐ TỒN KHO CƠ BẢN ──────────────────────── */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
         {STATS_CONFIG.map((item, i) => {
           const Icon = item.icon;
@@ -119,9 +132,9 @@ export default function InventoryStats({ products, txHistory }) {
         })}
       </div>
 
-      {/* 2 Tables: Sản phẩm bán chạy & Phụ kiện bán chạy */}
+      {/* ─── HIỂN THỊ 2 BẢNG THỐNG KÊ TOP 5 BÁN CHẠY NHẤT (ĐÃ BỊ TẠM ẨN, KHI CẦN CHỈ CẦN GỠ BỎ KÝ HIỆU COMMENT Ở ĐÂY) ────────────────── */}
+      {/* 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Bảng Sản phẩm bán chạy */}
         <div className="bg-white rounded-lg border border-admin-border/60 p-5 shadow-sm">
           <div className="flex items-center gap-2 mb-4 pb-3 border-b border-admin-border/40">
             <Award size={18} className="text-amber-500 animate-pulse" />
@@ -165,7 +178,6 @@ export default function InventoryStats({ products, txHistory }) {
           )}
         </div>
 
-        {/* Bảng Phụ kiện bán chạy */}
         <div className="bg-white rounded-lg border border-admin-border/60 p-5 shadow-sm">
           <div className="flex items-center gap-2 mb-4 pb-3 border-b border-admin-border/40">
             <TrendingUp size={18} className="text-emerald-500 animate-pulse" />
@@ -209,6 +221,7 @@ export default function InventoryStats({ products, txHistory }) {
           )}
         </div>
       </div>
+      */}
     </div>
   );
 }

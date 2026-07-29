@@ -1,5 +1,6 @@
 // QUẢN LÝ ĐƠN HÀNG
 import React, { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { Search, Eye, Edit, CheckCircle, Truck, XCircle, Clock, ShoppingCart, RotateCcw } from 'lucide-react';
 // import { MOCK_ORDERS } from '../utils/mockData'; // Removed mock data
 import { orderService } from '../../../services/orderService';
@@ -54,9 +55,24 @@ export default function AdminOrders() {
   const [error, setError] = useState(null);
   const [cancelModal, setCancelModal] = useState({ isOpen: false, orderId: null, newStatus: null });
   const [selectedOrderDetails, setSelectedOrderDetails] = useState(null);
+  const [searchParams, setSearchParams] = useSearchParams();
+  const orderIdParam = searchParams.get('orderId');
 
   // Khởi tạo các hook
   const { formatCurrency, formatDate } = useFormat();
+
+  // TỰ ĐỘNG MỞ MODAL CHI TIẾT ĐƠN HÀNG KHI URL CÓ THAM SỐ `orderId`
+  useEffect(() => {
+    // Nếu URL có tham số orderId và danh sách đơn hàng đã được tải từ API thành công
+    if (orderIdParam && orders.length > 0) {
+      // Tìm đơn hàng có ID trùng khớp trong danh sách
+      const matchedOrder = orders.find(o => String(o.id) === String(orderIdParam));
+      if (matchedOrder) {
+        // Gán thông tin đơn hàng tìm thấy vào state để tự động mở Modal chi tiết
+        setSelectedOrderDetails(matchedOrder);
+      }
+    }
+  }, [orderIdParam, orders]);
 
   useEffect(() => {
     console.log("AdminOrders: Bắt đầu tải danh sách đơn hàng...");
@@ -655,7 +671,14 @@ export default function AdminOrders() {
       {/* Order Details Modal */}
       <OrderDetailsModal
         order={selectedOrderDetails}
-        onClose={() => setSelectedOrderDetails(null)}
+        onClose={() => {
+          setSelectedOrderDetails(null); // Đóng Modal xem chi tiết
+          // Tự động xóa tham số `orderId` khỏi URL để giữ link sạch và tránh tự động mở lại khi load lại trang
+          setSearchParams(prev => {
+            prev.delete('orderId');
+            return prev;
+          });
+        }}
         onShipWithAhamove={handleShipWithAhamove}
       />
     </div>

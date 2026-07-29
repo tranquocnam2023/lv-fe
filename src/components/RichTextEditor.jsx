@@ -1,3 +1,5 @@
+// COMPONENT TRÌNH SOẠN THẢO VĂN BẢN PHONG PHÚ (RICH TEXT EDITOR WYSIWYG)
+// Chức năng: Cho phép Admin nhập bài viết mô tả sản phẩm có định dạng (Bold, Italic, Bullet list, blockquote, link...), upload ảnh tự động lên server và sửa mã nguồn HTML.
 import React, { useEffect, useRef, useState } from 'react';
 import Quill from 'quill';
 import 'quill/dist/quill.snow.css';
@@ -13,14 +15,14 @@ export default function RichTextEditor({ value, onChange, placeholder }) {
   useEffect(() => {
     if (!wrapperRef.current) return;
 
-    // Clear any previous editor instances inside the wrapper to prevent duplicates in strict mode
+    // Xóa trắng vùng chứa cũ trước khi render để tránh lặp lại editor trong Strict Mode của React
     wrapperRef.current.innerHTML = '';
 
-    // Create a container div for Quill to attach to
+    // Tạo thẻ div tạm thời làm nơi gắn kết trình soạn thảo Quill
     const editorContainer = document.createElement('div');
     wrapperRef.current.appendChild(editorContainer);
 
-    // Initialize Quill editor
+    // Khởi tạo thư viện soạn thảo Quill
     const quill = new Quill(editorContainer, {
       theme: 'snow',
       placeholder: placeholder || 'Nhập mô tả chi tiết sản phẩm...',
@@ -40,19 +42,21 @@ export default function RichTextEditor({ value, onChange, placeholder }) {
 
     quillRef.current = quill;
 
-    // Custom Image Handler (Uploads file to backend instead of pasting URL)
+    // GHI ĐÈ BỘ XỬ LÝ ẢNH (CUSTOM IMAGE HANDLER) ĐỂ UPLOAD LÊN SERVER
     const toolbar = quill.getModule('toolbar');
     toolbar.addHandler('image', () => {
+      // Tạo một thẻ input file ẩn để mở hộp thoại chọn ảnh từ máy tính
       const input = document.createElement('input');
       input.setAttribute('type', 'file');
       input.setAttribute('accept', 'image/svg+xml,image/webp,image/png,image/jpeg,image/jpg');
       input.click();
 
+      // Sự kiện khi người dùng đã chọn tệp ảnh
       input.onchange = async () => {
         const file = input.files[0];
         if (!file) return;
 
-        // Validate size (max 2MB)
+        // KIỂM TRA CHẶN ẢNH CÓ DUNG LƯỢNG VƯỢT QUÁ 2MB
         if (file.size > 2 * 1024 * 1024) {
           alert('Kích thước ảnh quá lớn (>2MB). Vui lòng chọn ảnh nhỏ hơn.');
           return;
@@ -60,6 +64,7 @@ export default function RichTextEditor({ value, onChange, placeholder }) {
 
         setIsUploading(true);
         try {
+          // Gọi API upload ảnh của backend lên thư mục chứa ảnh sản phẩm
           const res = await productService.uploadLocalImage(file, 'products');
           if (res && res.url) {
             let finalUrl = res.url;
@@ -69,7 +74,7 @@ export default function RichTextEditor({ value, onChange, placeholder }) {
               finalUrl = `${hostBase}${finalUrl}`;
             }
 
-            // Insert image at the current selection
+            // Lấy vị trí con trỏ hiện tại trong khung soạn thảo để chèn ảnh vào
             const range = quill.getSelection(true);
             quill.insertEmbed(range.index, 'image', finalUrl);
             quill.setSelection(range.index + 1);
@@ -83,15 +88,15 @@ export default function RichTextEditor({ value, onChange, placeholder }) {
       };
     });
 
-    // Populate initial content if provided
+    // Điền dữ liệu mô tả ban đầu nếu có truyền từ cha xuống
     if (value) {
       quill.root.innerHTML = value;
     }
 
-    // Bind text-change event listener
+    // LẮNG NGHE SỰ KIỆN THAY ĐỔI VĂN BẢN ĐỂ ĐẨY DỮ LIỆU HTML VỀ CHO CHA
     quill.on('text-change', () => {
       const html = quill.root.innerHTML;
-      // Convert default empty paragraph to empty string
+      // Tránh việc Quill sinh ra các đoạn thẻ trống mặc định '<p><br></p>'
       if (html === '<p><br></p>' || html === '<p></p>') {
         onChange('');
       } else {
@@ -102,14 +107,14 @@ export default function RichTextEditor({ value, onChange, placeholder }) {
     return () => {
       quillRef.current = null;
     };
-  }, []); // Run only once on mount
+  }, []); // Chỉ chạy một lần duy nhất khi component mount
 
-  // Sync value from parent component if it changes externally
+  // ĐỒNG BỘ LẠI NỘI DUNG KHI VALUE TỪ CHA THAY ĐỔI NGOÀI Ý MUỐN (VÍ DỤ: RESET FORM)
   useEffect(() => {
     if (quillRef.current) {
       const currentHTML = quillRef.current.root.innerHTML;
       if (value !== currentHTML && value !== undefined) {
-        // Safe check to prevent cursor jumping
+        // Lưu giữ vị trí con trỏ chuột để tránh cursor bị nhảy lung tung khi nhập liệu
         const selection = quillRef.current.getSelection();
         quillRef.current.root.innerHTML = value || '';
         if (selection) {
@@ -121,7 +126,7 @@ export default function RichTextEditor({ value, onChange, placeholder }) {
 
   return (
     <div className="border border-admin-border rounded-md overflow-hidden bg-white hover:border-primary/50 focus-within:border-primary focus-within:ring-1 focus-within:ring-primary transition-all duration-200 relative">
-      {/* Header Tab Switcher */}
+      {/* THANH TAB CHUYỂN ĐỔI CHẾ ĐỘ SOẠN THẢO HOẶC XEM HTML */}
       <div className="flex justify-between items-center bg-gray-50 border-b border-admin-border px-4 py-2 flex-wrap gap-2 select-none">
         <span className="text-xs font-black text-admin-text-muted uppercase tracking-wider">Mô tả sản phẩm</span>
         <div className="flex bg-gray-200/60 p-0.5 rounded-lg">
@@ -152,7 +157,7 @@ export default function RichTextEditor({ value, onChange, placeholder }) {
         </div>
       </div>
 
-      {/* Editor Content Area */}
+      {/* KHUNG SOẠN THẢO TRỰC QUAN (QUILL EDITOR) */}
       <div className="relative" style={{ display: isHtmlMode ? 'none' : 'block' }}>
         {isUploading && (
           <div className="absolute inset-0 bg-white/70 z-50 flex items-center justify-center gap-2 animate-in fade-in duration-200">
@@ -163,6 +168,7 @@ export default function RichTextEditor({ value, onChange, placeholder }) {
         <div ref={wrapperRef} className="quill-editor-wrapper" />
       </div>
 
+      {/* KHUNG XEM MÃ HTML THÔ (TEXTAREA) */}
       {isHtmlMode && (
         <div className="relative">
           <textarea
@@ -175,6 +181,7 @@ export default function RichTextEditor({ value, onChange, placeholder }) {
         </div>
       )}
 
+      {/* Cấu hình style CSS riêng biệt cho trình soạn thảo Quill */}
       <style>{`
         .quill-editor-wrapper .ql-toolbar.ql-snow {
           border: none;
@@ -199,7 +206,6 @@ export default function RichTextEditor({ value, onChange, placeholder }) {
           color: #9ca3af;
           left: 15px;
         }
-        /* Custom styles for lists and quotes inside the editor */
         .quill-editor-wrapper .ql-editor blockquote {
           border-left: 4px solid #3b82f6;
           padding-left: 16px;

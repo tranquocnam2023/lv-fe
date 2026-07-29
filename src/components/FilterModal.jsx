@@ -5,12 +5,15 @@ import Slider from 'rc-slider';
 import 'rc-slider/assets/index.css';
 import { brandService } from '../services/brandService';
 
+// Dữ liệu cấu hình bộ lọc tĩnh phía Client
 const filterData = {
   prices: ['Dưới 2 triệu', 'Từ 2 - 4 triệu', 'Từ 4 - 7 triệu', 'Từ 7 - 13 triệu', 'Từ 13 - 20 triệu', 'Trên 20 triệu'],
-  types: ['Android', 'iPhone (iOS)', 'Điện thoại phổ thông', 'Điện thoại gập'],
-  needs: ['Chơi game / Cấu hình cao', 'Pin khủng trên 7000 mAh', 'Chụp ảnh, quay phim', 'Livestream', 'Mỏng nhẹ'],
-  ram: ['3 GB', '4 GB', '6 GB', '8 GB', '12 GB', '16 GB'],
-  storage: ['64 GB', '128 GB', '256 GB', '512 GB', '1 TB']
+  // Loại điện thoại: Chỉ giữ lại Android và iPhone (iOS) theo yêu cầu thiết kế
+  types: ['Android', 'iPhone (iOS)'],
+  // RAM: Chỉ hiển thị các mức dung lượng phổ biến từ 6 GB đến 16 GB
+  ram: ['6 GB', '8 GB', '12 GB', '16 GB'],
+  // Dung lượng bộ nhớ: Chỉ giữ lại các mức từ 128 GB trở lên (loại bỏ 64 GB lỗi thời)
+  storage: ['128 GB', '256 GB', '512 GB', '1 TB']
 };
 
 /**
@@ -256,7 +259,6 @@ export default function FilterModal({ onClose, onApply }) {
           </div>
 
           <FilterSection title="Loại điện thoại" options={filterData.types} selected={selectedFilters['Loại điện thoại'] || []} onSelect={toggleFilter} />
-          <FilterSection title="Nhu cầu" options={filterData.needs} selected={selectedFilters['Nhu cầu'] || []} onSelect={toggleFilter} />
           <FilterSection title="RAM" options={filterData.ram} selected={selectedFilters['RAM'] || []} onSelect={toggleFilter} />
           <FilterSection title="Dung lượng lưu trữ" options={filterData.storage} selected={selectedFilters['Dung lượng lưu trữ'] || []} onSelect={toggleFilter} />
         </div>

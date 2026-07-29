@@ -12,7 +12,7 @@ export default function FilterBar({ selectedBrand, onSelectBrand, onApplyFilter,
     brandService.getAll()
       .then(data => {
         if (Array.isArray(data)) {
-          // Chỉ cho hiện các hãng điện thoại đang hoạt động
+          //Tạo cứng Chỉ cho hiện các hãng điện thoại đang hoạt động
           const PHONE_BRANDS = ['Apple', 'Vivo', 'OPPO', 'Xiaomi', 'Samsung', 'Sony'];
           const activeBrands = data
             .filter(b => b.isActive !== false && PHONE_BRANDS.some(pb => pb.toLowerCase() === b.name.toLowerCase()))

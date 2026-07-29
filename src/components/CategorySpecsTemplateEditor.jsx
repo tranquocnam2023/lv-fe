@@ -1,12 +1,18 @@
+// COMPONENT THIẾT KẾ KHUNG THÔNG SỐ KỸ THUẬT MẪU CHO DANH MỤC 
+// Chức năng: Cho phép Admin tạo sẵn khung thuộc tính (VD: Màn hình -> Kích thước, Công nghệ...) cho từng Danh mục.
+// Khi tạo sản phẩm mới thuộc danh mục này, hệ thống sẽ tự động hiển thị các ô nhập theo khung mẫu đã thiết kế.
 import React, { useState, useEffect } from 'react';
 import { Plus, X, Layers } from 'lucide-react';
 
 export default function CategorySpecsTemplateEditor({ value, onChange }) {
+  // Quản lý danh sách các nhóm thông số và thuộc tính con bên trong
   const [groups, setGroups] = useState([]);
-  const [tagInputs, setTagInputs] = useState({}); // Lưu text nhập của từng group input
+  // Quản lý giá trị chữ đang gõ của từng ô nhập thuộc tính
+  const [tagInputs, setTagInputs] = useState({}); 
+  // Quản lý tab nhóm đang được chọn để chỉnh sửa
   const [activeTabIdx, setActiveTabIdx] = useState(0);
 
-  // Load ban đầu từ value JSON string
+  // ĐỌC DỮ LIỆU BAN ĐẦU TỪ CHUỖI JSON DƯỚI DATABASE LÊN (PARSE DỮ LIỆU)
   useEffect(() => {
     if (value) {
       try {
@@ -22,7 +28,7 @@ export default function CategorySpecsTemplateEditor({ value, onChange }) {
     setGroups([]);
   }, [value]);
 
-  // Kích hoạt callback khi groups thay đổi
+  // CẬP NHẬT DỮ LIỆU NGƯỢC LÊN COMPONENT CHA DƯỚI DẠNG CHUỖI JSON (STRINGIFY DỮ LIỆU)
   const triggerChange = (newGroups) => {
     setGroups(newGroups);
     if (newGroups.length === 0) {
@@ -32,15 +38,17 @@ export default function CategorySpecsTemplateEditor({ value, onChange }) {
     }
   };
 
+  // THÊM MỘT NHÓM THÔNG SỐ MẪU MỚI (VÍ DỤ: MÀN HÌNH)
   const handleAddGroup = () => {
     const newGroups = [
       ...groups,
       { groupName: '', items: [] }
     ];
     triggerChange(newGroups);
-    setActiveTabIdx(newGroups.length - 1); // Chuyển sang tab mới
+    setActiveTabIdx(newGroups.length - 1); // Chuyển ngay đến tab mới tạo
   };
 
+  // XÓA MỘT NHÓM THÔNG SỐ MẪU CÓ XÁC NHẬN
   const handleRemoveGroup = (gIdx) => {
     if (window.confirm("Bạn có chắc chắn muốn xóa nhóm thông số mẫu này?")) {
       const newGroups = groups.filter((_, idx) => idx !== gIdx);
@@ -54,6 +62,7 @@ export default function CategorySpecsTemplateEditor({ value, onChange }) {
     }
   };
 
+  // THAY ĐỔI TÊN CỦA NHÓM THÔNG SỐ MẪU
   const handleGroupNameChange = (gIdx, name) => {
     const newGroups = groups.map((g, idx) => {
       if (idx === gIdx) {
@@ -64,6 +73,7 @@ export default function CategorySpecsTemplateEditor({ value, onChange }) {
     triggerChange(newGroups);
   };
 
+  // Cập nhật state khi đang gõ tên thuộc tính mới
   const handleTagInputChange = (gIdx, text) => {
     setTagInputs(prev => ({
       ...prev,
@@ -71,11 +81,12 @@ export default function CategorySpecsTemplateEditor({ value, onChange }) {
     }));
   };
 
+  // THÊM THUỘC TÍNH CON VÀO NHÓM (VÍ DỤ: THÊM "Độ phân giải" VÀO NHÓM "Màn hình")
   const handleAddTag = (gIdx) => {
     const text = tagInputs[gIdx]?.trim();
     if (!text) return;
 
-    // Tránh trùng tag trong nhóm
+    // Chặn trùng lặp thuộc tính trong cùng một nhóm
     const currentGroup = groups[gIdx];
     if (currentGroup.items.includes(text)) {
       setTagInputs(prev => ({ ...prev, [gIdx]: '' }));
@@ -96,6 +107,7 @@ export default function CategorySpecsTemplateEditor({ value, onChange }) {
     setTagInputs(prev => ({ ...prev, [gIdx]: '' }));
   };
 
+  // PHÍM TẮT: ẤN ENTER HOẶC DẤU PHẨY ĐỂ THÊM NHANH THUỘC TÍNH
   const handleKeyDown = (gIdx, e) => {
     if (e.key === 'Enter' || e.key === ',') {
       e.preventDefault();
@@ -103,6 +115,7 @@ export default function CategorySpecsTemplateEditor({ value, onChange }) {
     }
   };
 
+  // XÓA MỘT THUỘC TÍNH CON KHỎI NHÓM
   const handleRemoveTag = (gIdx, tagToRemove) => {
     const newGroups = groups.map((g, idx) => {
       if (idx === gIdx) {
@@ -121,6 +134,7 @@ export default function CategorySpecsTemplateEditor({ value, onChange }) {
 
   return (
     <div className="space-y-4 border border-admin-border rounded-md p-4 bg-slate-50/40">
+      {/* Tiêu đề và Nút Thêm nhóm thông số mẫu */}
       <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-3">
         <div>
           <h4 className="text-sm font-bold text-admin-text-main">Khung thông số kỹ thuật mẫu (Tùy chọn)</h4>
@@ -145,7 +159,7 @@ export default function CategorySpecsTemplateEditor({ value, onChange }) {
       ) : (
         <div className="space-y-4">
           
-          {/* TABS CONTAINER (RESPONSIVE SCROLL) */}
+          {/* HIỂN THỊ DANH SÁCH CÁC TABS NHÓM ĐÃ TẠO */}
           <div className="flex flex-nowrap items-center gap-2 overflow-x-auto pb-2 no-scrollbar border-b border-admin-border">
             {groups.map((group, idx) => {
               const name = group.groupName.trim() || `Nhóm ${idx + 1}`;
@@ -173,13 +187,13 @@ export default function CategorySpecsTemplateEditor({ value, onChange }) {
             })}
           </div>
 
-          {/* ACTIVE PANEL WITH TRANSITION EFFECT */}
+          {/* VÙNG CHỈNH SỬA CỦA TAB NHÓM ĐANG ĐƯỢC CHỌN KÍCH HOẠT */}
           {activeGroup && (
             <div 
               key={safeActiveTabIdx} // Remounts panel on tab change to trigger animation
               className="bg-white border border-admin-border rounded-md p-4 space-y-4 animate-in fade-in slide-in-from-bottom-2 duration-200"
             >
-              {/* Group Name input & Remove button */}
+              {/* Nhập Tên nhóm thông số & Nút xóa nhóm */}
               <div className="flex flex-col sm:flex-row sm:items-center gap-3 justify-between border-b border-slate-100 pb-3">
                 <div className="flex-1 flex items-center gap-2">
                   <span className="text-xs font-bold text-admin-text-muted uppercase whitespace-nowrap">Tên nhóm mẫu:</span>
@@ -203,13 +217,13 @@ export default function CategorySpecsTemplateEditor({ value, onChange }) {
                 </button>
               </div>
 
-              {/* Tags Editor */}
+              {/* Soạn thảo các thuộc tính trong nhóm (Tags Editor) */}
               <div className="space-y-3">
                 <label className="block text-[11px] font-bold text-admin-text-muted uppercase">
                   Các thuộc tính mẫu (Ấn Enter hoặc Dấu phẩy để thêm)
                 </label>
                 
-                {/* Tag items */}
+                {/* Danh sách các tag thuộc tính đã thêm */}
                 {activeGroup.items.length === 0 ? (
                   <div className="text-slate-400 text-xs italic pb-1">Chưa có thuộc tính nào trong nhóm này. Hãy thêm ở dưới.</div>
                 ) : (
@@ -232,7 +246,7 @@ export default function CategorySpecsTemplateEditor({ value, onChange }) {
                   </div>
                 )}
 
-                {/* Input row */}
+                {/* Ô nhập thuộc tính mới */}
                 <div className="flex gap-2">
                   <input
                     type="text"

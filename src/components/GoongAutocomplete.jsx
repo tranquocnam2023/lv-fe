@@ -1,3 +1,5 @@
+// COMPONENT TỰ ĐỘNG GỢI Ý ĐỊA CHỈ & LẤY TỌA ĐỘ BẢN ĐỒ (GOONG MAPS AUTOCOMPLETE)
+// Chức năng: Hỗ trợ người dùng nhập địa chỉ giao hàng nhanh chóng, chính xác và trích xuất tọa độ (lat, lng) để tính phí ship Ahamove.
 import React, { useState, useEffect, useRef } from 'react';
 import { MapPin, Loader2, X } from 'lucide-react';
 import axios from 'axios';
@@ -18,6 +20,7 @@ export default function GoongAutocomplete({
   const wrapperRef = useRef(null);
   const debounceRef = useRef(null);
 
+  // Đọc API Key của Goong Maps cấu hình trong môi trường .env
   const apiKey = import.meta.env.VITE_GOONG_API_KEY || '';
 
   // Đồng bộ giá trị query khi value từ component cha thay đổi
@@ -25,7 +28,7 @@ export default function GoongAutocomplete({
     setQuery(value || '');
   }, [value]);
 
-  // Đóng dropdown khi click ra ngoài
+  // Đóng dropdown gợi ý khi click ra ngoài vùng hiển thị của component
   useEffect(() => {
     function handleClickOutside(event) {
       if (wrapperRef.current && !wrapperRef.current.contains(event.target)) {
@@ -36,11 +39,13 @@ export default function GoongAutocomplete({
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
+  // HÀM GỌI API LẤY DANH SÁCH GỢI Ý ĐỊA CHỈ TỪ GOONG MAPS
   const fetchSuggestions = async (searchQuery) => {
     if (!apiKey) {
       console.warn('Goong Maps API Key chưa được cấu hình.');
       return;
     }
+    // Chỉ tìm kiếm khi độ dài ký tự nhập vào tối thiểu từ 3 trở lên
     if (!searchQuery.trim() || searchQuery.trim().length < 3) {
       setSuggestions([]);
       return;
@@ -48,33 +53,34 @@ export default function GoongAutocomplete({
 
     setIsLoading(true);
     try {
-      // Tự động bổ sung ngữ cảnh địa chỉ (Phường/Xã, Tỉnh/Thành) để thu hẹp phạm vi tìm kiếm
+      // Tự động bổ sung ngữ cảnh địa chỉ (Phường/Xã, Tỉnh/Thành) để thu hẹp phạm vi tìm kiếm chính xác hơn
       let finalInput = searchQuery;
       if (addressContext) {
         const cleanInput = searchQuery.toLowerCase();
         const cleanContext = addressContext.toLowerCase();
-        // Chỉ append nếu người dùng chưa tự tay gõ cụm từ đó
+        // Chỉ ghép thêm ngữ cảnh nếu người dùng chưa tự tay gõ cụm từ đó
         if (!cleanInput.includes(cleanContext)) {
           finalInput = `${searchQuery}, ${addressContext}`;
         }
       }
 
+      // Gọi API Autocomplete của Goong Maps
       const response = await axios.get('https://rsapi.goong.io/Place/Autocomplete', {
         params: {
           api_key: apiKey,
           input: finalInput,
-          limit: 10 // Tăng limit lên một chút để bù trừ các kết quả bị lọc
+          limit: 10 
         }
       });
       if (response.data && response.data.predictions) {
-        // Lọc bỏ các kết quả chỉ là đơn vị hành chính (Tỉnh, Huyện, Xã) mà không phải là số nhà/đường
+        // Lọc bỏ các kết quả chỉ là đơn vị hành chính chung chung (Tỉnh, Huyện, Xã) mà không phải là số nhà/tên đường cụ thể
         let filteredPredictions = response.data.predictions.filter(p => {
           const mainText = p.structured_formatting?.main_text || p.description;
           
           // Loại bỏ nếu kết quả là Phường/Xã/Quận/Huyện/Tỉnh đơn thuần
           const isJustAdminName = /^(phường|xã|thị trấn|quận|huyện|tỉnh|thành phố)\s/i.test(mainText);
           
-          // Tuy nhiên nếu có số nhà (ví dụ: Đường Phường 1) thì giữ lại
+          // Tuy nhiên nếu có chứa số nhà (ví dụ: Đường Phường 1) thì vẫn giữ lại
           const hasNumber = /\d/.test(mainText);
           
           if (isJustAdminName && !hasNumber) {
@@ -83,7 +89,7 @@ export default function GoongAutocomplete({
           return true;
         });
 
-        // Chỉ lấy tối đa 5 kết quả sau khi lọc
+        // Chỉ lấy tối đa 5 kết quả tối ưu nhất sau khi lọc để hiển thị lên dropdown
         setSuggestions(filteredPredictions.slice(0, 5));
         setIsOpen(true);
       }
@@ -94,21 +100,24 @@ export default function GoongAutocomplete({
     }
   };
 
-
+  // HÀM XỬ LÝ KHI THAY ĐỔI Ô NHẬP LIỆU (ÁP DỤNG KỸ THUẬT DEBOUNCE)
   const handleInputChange = (e) => {
     const val = e.target.value;
     setQuery(val);
     onChange(val);
 
+    // Xóa bộ đếm cũ nếu người dùng vẫn đang gõ liên tục
     if (debounceRef.current) {
       clearTimeout(debounceRef.current);
     }
 
+    // Thiết lập bộ đếm 450ms, sau khi dừng gõ 450ms mới gọi API lấy gợi ý địa điểm
     debounceRef.current = setTimeout(() => {
       fetchSuggestions(val);
-    }, 450); // 450ms debounce
+    }, 450);
   };
 
+  // HÀM XỬ LÝ KHI CLICK CHỌN MỘT ĐỊA CHỈ TỪ DANH SÁCH GỢI Ý
   const handleSelectPrediction = async (prediction) => {
     setQuery(prediction.description);
     onChange(prediction.description);
@@ -118,6 +127,7 @@ export default function GoongAutocomplete({
 
     setIsLoading(true);
     try {
+      // Gọi API Place Detail của Goong Maps để lấy chi tiết tọa độ vĩ độ/kinh độ
       const response = await axios.get('https://rsapi.goong.io/Place/Detail', {
         params: {
           api_key: apiKey,
@@ -129,6 +139,7 @@ export default function GoongAutocomplete({
         const result = response.data.result;
         const location = result.geometry?.location;
         if (location) {
+          // Trả dữ liệu địa chỉ sạch kèm tọa độ lat, lng truyền ngược lại cho component cha quản lý
           onSelectLocation({
             formattedAddress: result.formatted_address || prediction.description,
             lat: location.lat,
@@ -144,6 +155,7 @@ export default function GoongAutocomplete({
     }
   };
 
+  // HÀM XÓA TRẮNG DỮ LIỆU ĐÃ NHẬP TRÊN Ô INPUT
   const clearInput = () => {
     setQuery('');
     onChange('');
@@ -170,6 +182,7 @@ export default function GoongAutocomplete({
           }}
           className={`${className} w-full pr-10`}
         />
+        {/* Biểu tượng Loading và nút X xóa nhanh thông tin */}
         <div className="absolute right-3 flex items-center gap-1.5">
           {isLoading && <Loader2 size={14} className="animate-spin text-gray-400" />}
           {query && (
@@ -186,7 +199,7 @@ export default function GoongAutocomplete({
 
       {error && <p className="text-red-500 text-[9px] font-medium mt-1">{error}</p>}
 
-      {/* Suggestion list */}
+      {/* HIỂN THỊ DROPDOWN DANH SÁCH GỢI Ý ĐỊA CHỈ */}
       {isOpen && suggestions.length > 0 && (
         <div className="absolute left-0 right-0 mt-1 bg-white border border-gray-200 rounded-md shadow-lg z-[9999] max-h-60 overflow-y-auto divide-y divide-gray-100 animate-in fade-in slide-in-from-top-1 duration-150">
           {suggestions.map((item) => (

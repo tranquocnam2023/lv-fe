@@ -12,6 +12,7 @@ export default function OrderTrackingPage() {
   const [order, setOrder] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const isLoggedIn = !!localStorage.getItem('token');
 
   useEffect(() => {
     stopLoading();
@@ -82,7 +83,7 @@ export default function OrderTrackingPage() {
               Tra cứu đơn hàng khác
             </button>
           </div>
-          <OrderDetailsTracker order={order} onOrderCancelled={handleRefresh} isGuest={true} />
+          <OrderDetailsTracker order={order} onOrderCancelled={handleRefresh} isGuest={!isLoggedIn} />
         </div>
       ) : (
         // Chưa tra cứu: Hiển thị Form nhập liệu tra cứu

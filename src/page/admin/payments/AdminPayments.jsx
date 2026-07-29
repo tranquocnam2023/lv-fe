@@ -1,5 +1,6 @@
 // QUẢN LÝ GIAO DỊCH & THANH TOÁN
 import React, { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { Search, CreditCard, Clock, CheckCircle2, XCircle, DollarSign, Activity, Copy, Check } from 'lucide-react';
 import { paymentService } from '../../../services/paymentService';
 import { usePagination } from '../../../hooks/usePagination';
@@ -9,6 +10,7 @@ export default function AdminPayments() {
   const [payments, setPayments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [searchParams, setSearchParams] = useSearchParams();
   
   // Filters
   const [searchTerm, setSearchTerm] = useState('');
@@ -298,9 +300,18 @@ export default function AdminPayments() {
                       #{p.id}
                     </td>
 
-                    {/* Order Link */}
+                    {/* Link liên kết sang trang đơn hàng: Khi click sẽ tự động chuyển tab sang 'orders' và đính kèm mã 'orderId' lên URL */}
                     <td className="px-6 py-4">
-                      <span className="text-primary font-bold group-hover:underline cursor-pointer">
+                      <span 
+                        onClick={() => {
+                          setSearchParams(prev => {
+                            prev.set('tab', 'orders'); // Chuyển sang Tab danh sách đơn hàng
+                            prev.set('orderId', p.orderId); // Đính kèm tham số mã đơn hàng để tự mở chi tiết
+                            return prev;
+                          });
+                        }}
+                        className="text-primary font-bold hover:underline cursor-pointer"
+                      >
                         #{p.orderId}
                       </span>
                     </td>
