@@ -86,7 +86,7 @@ export default function CartAddressModal({
                     modalFullName === addr.recipientName && 
                     modalPhone === addr.phoneNumber && 
                     modalStreetAddress === addr.addressLine && 
-                    modalWardId === addr.wardId;
+                    (modalWardId === addr.wardId || (wardName && (wardName === addr.wardName || wardName === addr.ward)));
                   
                   return (
                     <div

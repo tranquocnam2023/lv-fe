@@ -116,6 +116,7 @@ export default function CartPage() {
   const [modalLatitude, setModalLatitude] = useState(null);
   const [modalLongitude, setModalLongitude] = useState(null);
   const [pendingWardName, setPendingWardName] = useState('');
+  const [pendingWardId, setPendingWardId] = useState('');
 
   // Location list states from SQL Server
   const [provinces, setProvinces] = useState([]);
@@ -243,24 +244,27 @@ export default function CartPage() {
     }
   }, [selectedProvinceId]);
 
-  // Tự động tìm phường/xã khớp từ Goong Maps sau khi danh sách wards tải xong
+  // Tự động tìm phường/xã khớp sau khi danh sách wards tải xong
   useEffect(() => {
-    if (wards.length > 0 && pendingWardName) {
+    if (wards.length > 0 && (pendingWardId || pendingWardName)) {
       const cleanNameStr = (str) => String(str).toLowerCase().replace(/^(phường|xã|thị trấn|p\.?)\s+/i, '').trim();
       const targetName = cleanNameStr(pendingWardName);
 
-      const matchedWard = wards.find(w => {
-        const wName = cleanNameStr(w.fullName || w.name);
-        return wName === targetName || wName.includes(targetName) || targetName.includes(wName);
-      });
+      const matchedWard = (pendingWardId && wards.find(w => String(w.id) === String(pendingWardId))) ||
+        wards.find(w => {
+          if (!targetName) return false;
+          const wName = cleanNameStr(w.fullName || w.name);
+          return wName === targetName || wName.includes(targetName) || targetName.includes(wName);
+        });
 
       if (matchedWard) {
         setModalWardId(matchedWard.id);
         setModalWard(matchedWard.fullName || matchedWard.name);
       }
+      setPendingWardId('');
       setPendingWardName('');
     }
-  }, [wards, pendingWardName]);
+  }, [wards, pendingWardId, pendingWardName]);
 
   const handleSelectGoongAddress = (locationData) => {
     const { formattedAddress, lat, lng, compound } = locationData;
@@ -356,13 +360,46 @@ export default function CartPage() {
       const cleanProvinceStr = (str) => String(str).toLowerCase().replace(/^(tỉnh|thành phố|tp\.?)\s+/i, '').trim();
       const addrProvName = cleanProvinceStr(addr.provinceName || addr.province || '');
       const match = provinces.find(p => {
+        if (addr.provinceId && String(p.id) === String(addr.provinceId)) return true;
         const pName = cleanProvinceStr(p.fullName || p.name);
         return pName.includes(addrProvName) || addrProvName.includes(pName);
       });
+
       if (match) {
-        handleProvinceChange(match.id);
-        if (addr.wardName || addr.ward) {
-          setPendingWardName(addr.wardName || addr.ward);
+        setSelectedProvinceId(match.id);
+        setModalCity(match.fullName || match.name || '');
+
+        let currentWards = wards;
+        if (String(selectedProvinceId) !== String(match.id) || currentWards.length === 0) {
+          try {
+            const wardRes = await api.get(`/Location/provinces/${match.id}/wards`);
+            if (Array.isArray(wardRes)) {
+              currentWards = wardRes;
+              setWards(wardRes);
+            }
+          } catch (err) {
+            console.error("Lỗi lấy danh sách phường/xã:", err);
+          }
+        }
+
+        const targetWardId = addr.wardId || '';
+        const targetWardName = addr.wardName || addr.ward || '';
+        const cleanNameStr = (str) => String(str).toLowerCase().replace(/^(phường|xã|thị trấn|p\.?)\s+/i, '').trim();
+        const targetName = cleanNameStr(targetWardName);
+
+        const matchedWard = (targetWardId && currentWards.find(w => String(w.id) === String(targetWardId))) ||
+          currentWards.find(w => {
+            if (!targetName) return false;
+            const wName = cleanNameStr(w.fullName || w.name);
+            return wName === targetName || wName.includes(targetName) || targetName.includes(wName);
+          });
+
+        if (matchedWard) {
+          setModalWardId(matchedWard.id);
+          setModalWard(matchedWard.fullName || matchedWard.name);
+        } else {
+          setModalWardId(targetWardId);
+          setModalWard(targetWardName);
         }
       }
     }
