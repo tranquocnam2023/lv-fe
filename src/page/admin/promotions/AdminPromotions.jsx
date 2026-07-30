@@ -200,12 +200,12 @@ export default function AdminPromotions() {
                   const status = getPromoStatus(promo);
                   return (
                     <tr key={promo.id} className="hover:bg-admin-bg transition-colors group">
-                       {/* =========================================================================
+                      {/* =========================================================================
                            [MÃ KHUYẾN MÃI - FRONT-END]
                            - ID: Khóa chính tự tăng dưới CSDL, hiển thị dạng '#{promo.id}'.
                            - Code: Mã voucher do Admin nhập thủ công (Ví dụ: GIAM20K, CHAOSONG).
                            ========================================================================= */}
-                       <td className="px-6 py-4 text-admin-text-muted font-bold">#{promo.id}</td>
+                      <td className="px-6 py-4 text-admin-text-muted font-bold">#{promo.id}</td>
                       <td className="px-6 py-4">
                         <div className="flex items-center gap-2">
                           <div className="w-8 h-8 rounded-md bg-primary/5 text-primary flex items-center justify-center">
@@ -297,8 +297,8 @@ export default function AdminPromotions() {
                   </p>
                 </div>
               </div>
-              <button 
-                onClick={() => setIsModalOpen(false)} 
+              <button
+                onClick={() => setIsModalOpen(false)}
                 className="p-2 text-gray-400 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
               >
                 <X size={20} />
@@ -324,6 +324,8 @@ export default function AdminPromotions() {
                         placeholder="VD: KHUYENMAI20, SUMMER50..."
                         value={formData.code}
                         onChange={(e) => setFormData({ ...formData, code: e.target.value })}
+                        onInvalid={(e) => e.target.setCustomValidity("Vui lòng điền vào trường này.")}
+                        onInput={(e) => e.target.setCustomValidity("")}
                       />
                     </div>
                   </div>
@@ -353,10 +355,10 @@ export default function AdminPromotions() {
                     <select
                       className="w-full px-3.5 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all font-semibold text-gray-800 text-sm bg-white cursor-pointer"
                       value={formData.discountType}
-                      onChange={(e) => setFormData({ 
-                        ...formData, 
-                        discountType: e.target.value, 
-                        discountValue: e.target.value === 'PERCENTAGE' ? Math.min(100, formData.discountValue) : formData.discountValue 
+                      onChange={(e) => setFormData({
+                        ...formData,
+                        discountType: e.target.value,
+                        discountValue: e.target.value === 'PERCENTAGE' ? Math.min(100, formData.discountValue) : formData.discountValue
                       })}
                     >
                       <option value="PERCENTAGE">Giảm theo phần trăm (%)</option>
@@ -378,6 +380,20 @@ export default function AdminPromotions() {
                         placeholder={formData.discountType === 'PERCENTAGE' ? "Nhập % (1 - 100)" : "Nhập số tiền..."}
                         value={formData.discountValue}
                         onChange={(e) => setFormData({ ...formData, discountValue: Number(e.target.value) })}
+                        onInvalid={(e) => {
+                          if (e.target.validity.valueMissing) {
+                            e.target.setCustomValidity("Vui lòng điền vào trường này.");
+                          } else if (e.target.validity.rangeUnderflow) {
+                            e.target.setCustomValidity("Giá trị phải lớn hơn hoặc bằng 1.");
+                          } else if (e.target.validity.rangeOverflow) {
+                            e.target.setCustomValidity(
+                              formData.discountType === 'PERCENTAGE' 
+                                ? "Phần trăm giảm tối đa là 100%." 
+                                : "Giá trị vượt quá mức tối đa cho phép."
+                            );
+                          }
+                        }}
+                        onInput={(e) => e.target.setCustomValidity("")}
                       />
                       <span className="absolute right-3 top-2.5 text-xs font-bold text-gray-400 pointer-events-none">
                         {formData.discountType === 'PERCENTAGE' ? '%' : '₫'}
@@ -396,6 +412,12 @@ export default function AdminPromotions() {
                       placeholder="VD: 500000"
                       value={formData.minOrderAmount}
                       onChange={(e) => setFormData({ ...formData, minOrderAmount: e.target.value })}
+                      onInvalid={(e) => {
+                        if (e.target.validity.rangeUnderflow) {
+                          e.target.setCustomValidity("Giá trị tối thiểu là 0.");
+                        }
+                      }}
+                      onInput={(e) => e.target.setCustomValidity("")}
                     />
                     <p className="text-[11px] text-gray-400 mt-1">Để trống nếu không yêu cầu giá trị đơn tối thiểu</p>
                   </div>
@@ -412,6 +434,12 @@ export default function AdminPromotions() {
                       placeholder="VD: 100000"
                       value={formData.maxDiscountAmount}
                       onChange={(e) => setFormData({ ...formData, maxDiscountAmount: e.target.value })}
+                      onInvalid={(e) => {
+                        if (e.target.validity.rangeUnderflow) {
+                          e.target.setCustomValidity("Giá trị tối thiểu là 0.");
+                        }
+                      }}
+                      onInput={(e) => e.target.setCustomValidity("")}
                     />
                     <p className="text-[11px] text-gray-400 mt-1">
                       {formData.discountType === 'PERCENTAGE' ? 'Số tiền giảm tối đa khi áp dụng %' : 'Chỉ áp dụng với loại giảm theo %'}
@@ -434,6 +462,8 @@ export default function AdminPromotions() {
                       className="w-full px-3.5 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all font-semibold text-gray-800 text-sm bg-white"
                       value={formData.startDate}
                       onChange={(e) => setFormData({ ...formData, startDate: e.target.value })}
+                      onInvalid={(e) => e.target.setCustomValidity("Vui lòng chọn ngày bắt đầu.")}
+                      onInput={(e) => e.target.setCustomValidity("")}
                     />
                   </div>
 
@@ -447,6 +477,8 @@ export default function AdminPromotions() {
                       className="w-full px-3.5 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all font-semibold text-gray-800 text-sm bg-white"
                       value={formData.endDate}
                       onChange={(e) => setFormData({ ...formData, endDate: e.target.value })}
+                      onInvalid={(e) => e.target.setCustomValidity("Vui lòng chọn ngày kết thúc.")}
+                      onInput={(e) => e.target.setCustomValidity("")}
                     />
                   </div>
 
@@ -462,8 +494,16 @@ export default function AdminPromotions() {
                       placeholder="VD: 1"
                       value={formData.maxPerUser}
                       onChange={(e) => setFormData({ ...formData, maxPerUser: e.target.value })}
+                      onInvalid={(e) => {
+                        if (e.target.validity.valueMissing) {
+                          e.target.setCustomValidity("Vui lòng điền vào trường này.");
+                        } else if (e.target.validity.rangeUnderflow) {
+                          e.target.setCustomValidity("Giá trị phải lớn hơn hoặc bằng 1.");
+                        }
+                      }}
+                      onInput={(e) => e.target.setCustomValidity("")}
                     />
-                    <p className="text-[11px] text-gray-400 mt-1">Mặc định 1 lượt dùng cho mỗi khách hàng (nhập 0 hệ thống vẫn tự tính là 1)</p>
+                    <p className="text-[11px] text-gray-400 mt-1">Mặc định 1 lượt dùng cho mỗi khách hàng (không được bỏ trống hoặc nhập 0)</p>
                   </div>
 
                   <div>
@@ -477,6 +517,12 @@ export default function AdminPromotions() {
                       placeholder="VD: 200 (0 = Không giới hạn)"
                       value={formData.usageLimit}
                       onChange={(e) => setFormData({ ...formData, usageLimit: Number(e.target.value) })}
+                      onInvalid={(e) => {
+                        if (e.target.validity.rangeUnderflow) {
+                          e.target.setCustomValidity("Giá trị tối thiểu là 0.");
+                        }
+                      }}
+                      onInput={(e) => e.target.setCustomValidity("")}
                     />
                     <p className="text-[11px] text-gray-400 mt-1">Nhập 0 nếu không giới hạn tổng số lượt</p>
                   </div>
