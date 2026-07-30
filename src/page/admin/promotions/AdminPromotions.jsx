@@ -462,7 +462,7 @@ export default function AdminPromotions() {
                       value={formData.maxPerUser}
                       onChange={(e) => setFormData({ ...formData, maxPerUser: e.target.value })}
                     />
-                    <p className="text-[11px] text-gray-400 mt-1">Mặc định 1 lượt dùng cho mỗi khách hàng</p>
+                    <p className="text-[11px] text-gray-400 mt-1">Mặc định 1 lượt dùng cho mỗi khách hàng (nhập 0 hệ thống vẫn tự tính là 1)</p>
                   </div>
 
                   <div>
