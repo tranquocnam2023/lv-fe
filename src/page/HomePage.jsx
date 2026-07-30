@@ -82,12 +82,25 @@ export default function HomePage({ selectedLocation }) {
   const priceMaxParam = searchParams.get('price_max');
   const filterBrandParam = searchParams.get('filterBrand');
 
+  // Hàm chuẩn hóa chuỗi tiếng Việt để so khớp chính xác không phụ thuộc dấu, khoảng trắng hay encoding
+  const normalizeString = (str) => {
+    if (!str) return '';
+    return str
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/[đĐ]/g, 'd')
+      .replace(/\s+/g, '')
+      .replace(/[^a-z0-9]/g, '');
+  };
+
   // [LOGIC PHÂN CHIA DANH MỤC & THƯƠNG HIỆU]:
   // Kiểm tra xem selectedBrand/brand hiện tại trên URL có phải là Danh mục sản phẩm (ví dụ: Điện thoại, Tablet) hay không
   const brandLower = selectedBrand ? selectedBrand.toLowerCase() : '';
+  const normalizedBrand = normalizeString(selectedBrand);
   const matchingCat = categories.find(c => 
-    c.name.toLowerCase() === brandLower || 
-    (c.slug && c.slug.toLowerCase() === brandLower)
+    normalizeString(c.name) === normalizedBrand || 
+    (c.slug && normalizeString(c.slug) === normalizedBrand)
   );
 
   // [ĐỒNG BỘ HÓA TRẠNG THÁI]: Khi người dùng click chuyển hướng sang danh mục khác trên Header
@@ -130,8 +143,8 @@ export default function HomePage({ selectedLocation }) {
     // Mặc định chúng ta lọc theo danh mục "Điện thoại" để không bị trộn lẫn phụ kiện rẻ tiền giống TGDD
     if (!selectedBrand && !searchQuery) {
       const defaultCat = categories.find(c => {
-        const nameLower = (c.name || '').toLowerCase();
-        return nameLower === 'điện thoại' || nameLower === 'dien thoai' || nameLower === 'điện thoại di động';
+        const norm = normalizeString(c.name);
+        return norm === 'dienthoai' || norm === 'dienthoaididong';
       });
       if (defaultCat) {
         categoryId = defaultCat.id || defaultCat.Id;
