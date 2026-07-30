@@ -452,11 +452,12 @@ export default function AdminPromotions() {
 
                   <div>
                     <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1.5">
-                      Lượt dùng / 1 Khách hàng
+                      Lượt dùng / 1 Khách hàng <span className="text-red-500">*</span>
                     </label>
                     <input
                       type="number"
                       min={1}
+                      required
                       className="w-full px-3.5 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all font-bold text-gray-900 text-sm bg-white"
                       placeholder="VD: 1"
                       value={formData.maxPerUser}
