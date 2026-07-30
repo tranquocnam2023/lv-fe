@@ -405,6 +405,7 @@ function VoucherCard({ coupon, isUsed, isSelected, onSelect, subTotal, isVIP }) 
   });
 
   // Tính toán thời hạn động
+  // ── LOGIC HIỂN THỊ NGÀY / HẠN DÙNG: Tính toán hạn dùng dựa trên ngày kết thúc của Voucher ──
   const getExpiryStatus = () => {
     const end = new Date(coupon.endDate);
     const now = new Date();
@@ -432,8 +433,12 @@ function VoucherCard({ coupon, isUsed, isSelected, onSelect, subTotal, isVIP }) 
     discountDesc += ` (Tối đa ${coupon.maxDiscountAmount.toLocaleString('vi-VN')}₫)`;
   }
 
+  // ── LOGIC SỐ LƯỢNG CÓ HẠN: Kiểm tra điều kiện áp dụng & số lượt sử dụng còn lại của voucher ──
+  // 1. Kiểm tra đơn hàng tối thiểu
   const meetsMinOrder = !coupon.minOrderAmount || subTotal >= coupon.minOrderAmount;
+  // 2. Kiểm tra giới hạn số lượng (usageLimit > 0 và số lượt đã dùng usedCount đạt tới giới hạn)
   const isSoldOut = coupon.usageLimit > 0 && coupon.usedCount >= coupon.usageLimit;
+  // 3. Voucher khả dụng khi chưa từng dùng, đủ tiền đơn tối thiểu và chưa bị hết lượt (isSoldOut)
   const isAvailable = !isUsed && meetsMinOrder && !isSoldOut;
 
   const conditions = [];
@@ -509,6 +514,7 @@ function VoucherCard({ coupon, isUsed, isSelected, onSelect, subTotal, isVIP }) 
             </p>
           )}
           
+          {/* HIỂN THỊ HẠN DÙNG (expiryStatus) VÀ DÒNG CHỮ SỐ LƯỢNG CÒN LẠI DỰA TRÊN GIỚI HẠN DÙNG (usageLimit) */}
           <div className="flex items-center gap-1.5 text-[9px] text-gray-400 font-bold mt-1">
             <span>⏳ {expiryStatus}</span>
             {coupon.usageLimit > 0 && (
