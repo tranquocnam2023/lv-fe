@@ -411,7 +411,7 @@ export default function AdminInventory() {
 
       {/* Layout Grid: Sidebar Filters on the Left, Table on the Right */}
       <div className="flex flex-col lg:flex-row gap-6 items-start w-full">
-        {/* Sidebar Filters (only in STOCK mode) */}
+        {/* Sidebar Filters chỉ trong STOCK mode */}
         {viewMode === 'STOCK' && (
           <div className="w-full lg:w-64 flex-shrink-0 bg-white rounded-md border border-admin-border/50 overflow-hidden h-fit">
             <div className="px-6 py-4 border-b border-admin-border font-bold text-admin-text-main flex items-center text-md">
@@ -460,6 +460,7 @@ export default function AdminInventory() {
               <h3 className="text-lg font-bold text-admin-text-main">
                 {viewMode === 'TRANSACTIONS' ? 'Lịch sử xuất/nhập kho' : 'Tồn kho chi tiết'}
               </h3>
+              {/* nút chuyển chế độ xem */}
               <button
                 onClick={() => {
                   setViewMode(viewMode === 'TRANSACTIONS' ? 'STOCK' : 'TRANSACTIONS');
