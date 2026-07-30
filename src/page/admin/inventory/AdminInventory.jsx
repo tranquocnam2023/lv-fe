@@ -327,6 +327,7 @@ export default function AdminInventory() {
       {/* Header */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
+          {/* TIÊU ĐỀ CHÍNH CỦA TRANG: Quản lý kho hàng */}
           <h2 className="text-2xl font-bold text-admin-text-main">Quản lý kho hàng</h2>
           <p className="text-sm text-admin-text-muted font-medium mt-1">Điều chỉnh số lượng, nhập hàng nhà cung cấp và theo dõi lịch sử luân chuyển kho</p>
         </div>
@@ -455,6 +456,7 @@ export default function AdminInventory() {
         <div className="bg-white rounded-md p-6 border border-admin-border/50 flex flex-col min-h-[400px] flex-1 w-full">
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
             <div className="flex items-center gap-3">
+              {/* TIÊU ĐỀ BẢNG DỮ LIỆU ĐỘNG: Hiển thị "Lịch sử xuất/nhập kho" hoặc "Tồn kho chi tiết" dựa trên chế độ viewMode */}
               <h3 className="text-lg font-bold text-admin-text-main">
                 {viewMode === 'TRANSACTIONS' ? 'Lịch sử xuất/nhập kho' : 'Tồn kho chi tiết'}
               </h3>
