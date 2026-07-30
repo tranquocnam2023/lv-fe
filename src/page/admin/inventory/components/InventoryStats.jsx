@@ -48,11 +48,13 @@ export default function InventoryStats({ products, txHistory }) {
     new Date(t.createdAt).getTime() >= oneMonthAgo
   );
 
-  // GOM NHÓM TỔNG SỐ LƯỢNG ĐÃ BÁN VÀ TỔNG DOANH THU THEO TỪNG PRODUCT ID
+  // GOM NHÓM TỔNG SỐ LƯỢNG ĐÃ BÁN VÀ TỔNG DOANH THU THEO TỪNG PRODUCT ID TRONG 30 NGÀY
   const salesMap = {};
   recentSales.forEach(tx => {
     const prodId = tx.productId;
+    // qty: Số lượng sản phẩm bán ra trong giao dịch này (lấy trị tuyệt đối của biến động số lượng kho)
     const qty = Math.abs(tx.quantityChanged || 0);
+    // revenue: Doanh thu bán lẻ thu về từ khách hàng của giao dịch này (Số lượng * Giá bán lẻ, CHƯA trừ đi giá vốn hay chi phí nhập hàng)
     const revenue = qty * (tx.price || 0);
     const product = products.find(p => p.id === prodId);
 
@@ -61,12 +63,13 @@ export default function InventoryStats({ products, txHistory }) {
         productId: prodId,
         productName: tx.productName || (product ? product.name : 'Sản phẩm không rõ'),
         quantitySold: 0,
+        // totalRevenue: Tổng doanh thu bán lẻ cộng dồn (chưa trừ giá vốn)
         totalRevenue: 0,
         productObj: product
       };
     }
     salesMap[prodId].quantitySold += qty;
-    salesMap[prodId].totalRevenue += revenue;
+    salesMap[prodId].totalRevenue += revenue; // Cộng dồn doanh thu bán lẻ
   });
 
   const allSales = Object.values(salesMap);
