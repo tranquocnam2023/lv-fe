@@ -386,7 +386,7 @@ export default function HomePage({ selectedLocation }) {
           setAdvancedFilters(null);
         }}
         onApplyFilter={handleApplyFilter}
-        onClearAll={(selectedQuickBrand || selectedBrand || advancedFilters) ? () => {
+        onClearAll={((matchingCat ? selectedQuickBrand : selectedBrand) || advancedFilters) ? () => {
           setSelectedQuickBrand(null);
           setSelectedBrand(matchingCat ? brand : null); // Quay về danh mục gốc nếu có
           setAdvancedFilters(null);
