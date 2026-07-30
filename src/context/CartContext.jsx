@@ -80,7 +80,7 @@ export const CartProvider = ({ children }) => {
     setCartItems([]);
   };
 
-  //Logic tính toán động giá sản phẩm mua kèm và tổng tiền (ngắn gọn)
+  //Logic tính toán động giá ưu đãi sản phẩm mua kèm và tổng tiền (10%, 15%)
  // const counts = {};
  // const displayCartItems = cartItems.map(i => ({
  //   ...i,
