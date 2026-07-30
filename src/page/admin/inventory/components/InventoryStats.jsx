@@ -10,13 +10,13 @@ export default function InventoryStats({ products, txHistory }) {
   // ─── 1. TÍNH TOÁN CÁC CHỈ SỐ TỒN KHO CƠ BẢN ───────────────────────────
   // Tính tổng số lượng tồn kho vật lý đang có trong hệ thống
   const totalStockQty = products.reduce((acc, p) => acc + ((p.totalStock ?? p.stock ?? p.stockQuantity ?? 0)), 0);
-  
+
   // Tính tổng giá trị tồn kho (Số lượng * Giá bán lẻ cơ bản)
   const totalStockValue = products.reduce((acc, p) => acc + ((p.basePrice || p.price || 0) * (p.totalStock ?? p.stock ?? p.stockQuantity ?? 0)), 0);
-  
+
   // Tổng số lượng giao dịch thành công (loại trừ các giao dịch bị hoàn tác/hủy)
   const totalTxCount = txHistory.filter(t => !t.isReverted).length;
-  
+
   // Số lượng sản phẩm sắp hết hàng (tồn kho nhỏ hơn 5 cái)
   const lowStockCount = products.filter(p => (p.totalStock ?? p.stock ?? p.stockQuantity ?? 0) < 5).length;
 
@@ -29,10 +29,10 @@ export default function InventoryStats({ products, txHistory }) {
   ];
 
   // ─── 2. THUẬT TOÁN XẾP HẠNG BÁN CHẠY NHẤT TRONG THÁNG GẦN NHẤT ───────
-  
+
   // Hàm kiểm tra sản phẩm có phải là phụ kiện hay không
   const isAccessoryProduct = (product) => {
-    if (!product) return false;
+    if (!product) return false; // trả về 'true' nếu tra trong isAccessory trong DB
     return product.isAccessory === true || String(product.isAccessory) === 'true';
   };
 
@@ -42,9 +42,9 @@ export default function InventoryStats({ products, txHistory }) {
   const oneMonthAgo = maxTime - 30 * 24 * 60 * 60 * 1000;
 
   // LƯỢC LỌC GIAO DỊCH XUẤT BÁN HÀNG THÀNH CÔNG (EXPORT_SELL VÀ KHÔNG BỊ HỦY) TRONG 30 NGÀY GẦN NHẤT
-  const recentSales = txHistory.filter(t => 
-    t.transactionType === 'EXPORT_SELL' && 
-    !t.isReverted && 
+  const recentSales = txHistory.filter(t =>
+    t.transactionType === 'EXPORT_SELL' &&
+    !t.isReverted &&
     new Date(t.createdAt).getTime() >= oneMonthAgo
   );
 
@@ -54,7 +54,7 @@ export default function InventoryStats({ products, txHistory }) {
     const prodId = tx.productId;
     // qty: Số lượng sản phẩm bán ra trong giao dịch này (lấy trị tuyệt đối của biến động số lượng kho)
     const qty = Math.abs(tx.quantityChanged || 0);
-    // revenue: Doanh thu bán lẻ thu về từ khách hàng của giao dịch này (Số lượng * Giá bán lẻ, CHƯA trừ đi giá vốn hay chi phí nhập hàng)
+    // revenue: Tính doanh thu bán lẻ thu về từ khách hàng của giao dịch này (Số lượng * Giá bán lẻ, CHƯA trừ đi giá vốn hay chi phí nhập hàng)
     const revenue = qty * (tx.price || 0);
     const product = products.find(p => p.id === prodId);
 
@@ -73,7 +73,7 @@ export default function InventoryStats({ products, txHistory }) {
   });
 
   const allSales = Object.values(salesMap);
-
+  // HÀm kiểm tra xem là điện thoại
   // PHÂN TÁCH: LỌC TOP 5 SẢN PHẨM CHÍNH BÁN CHẠY NHẤT (ĐIỆN THOẠI...)
   const bestProducts = allSales
     .filter(item => {
@@ -136,7 +136,7 @@ export default function InventoryStats({ products, txHistory }) {
       </div>
 
       {/* ─── HIỂN THỊ 2 BẢNG THỐNG KÊ TOP 5 BÁN CHẠY NHẤT  ────────────────── */}
-      
+
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div className="bg-white rounded-lg border border-admin-border/60 p-5 shadow-sm">
           <div className="flex items-center gap-2 mb-4 pb-3 border-b border-admin-border/40">
@@ -145,6 +145,7 @@ export default function InventoryStats({ products, txHistory }) {
               Top 5 Sản Phẩm Bán Chạy <span className="text-[11px] text-gray-400 font-semibold lowercase">(30 ngày gần nhất)</span>
             </h4>
           </div>
+          {/*hiển thị sản phẩm điện thoại bán chạy*/}
           {bestProducts.length > 0 ? (
             <div className="overflow-x-auto">
               <table className="w-full text-left border-collapse">
@@ -153,7 +154,7 @@ export default function InventoryStats({ products, txHistory }) {
                     <th className="pb-2 text-center w-12">Hạng</th>
                     <th className="pb-2 px-3">Tên sản phẩm</th>
                     <th className="pb-2 text-center w-24">Đã bán</th>
-                    <th className="pb-2 text-right w-36">Tổng doanh thu</th>
+                    {/* <th className="pb-2 text-right w-36">Tổng doanh thu</th> */}
                   </tr>
                 </thead>
                 <tbody className="text-xs">
@@ -166,9 +167,9 @@ export default function InventoryStats({ products, txHistory }) {
                       <td className="py-2.5 text-center font-extrabold text-admin-text-main bg-slate-50/50 rounded">
                         {item.quantitySold} cái
                       </td>
-                      <td className="py-2.5 text-right font-bold text-primary">
+                      {/* <td className="py-2.5 text-right font-bold text-primary">
                         {formatCurrency(item.totalRevenue)}
-                      </td>
+                      </td> */}
                     </tr>
                   ))}
                 </tbody>
@@ -188,6 +189,7 @@ export default function InventoryStats({ products, txHistory }) {
               Top 5 Phụ Kiện Bán Chạy <span className="text-[11px] text-gray-400 font-semibold lowercase">(30 ngày gần nhất)</span>
             </h4>
           </div>
+          {/*hiển thị sản phẩm phụ kiện bán chạy*/}
           {bestAccessories.length > 0 ? (
             <div className="overflow-x-auto">
               <table className="w-full text-left border-collapse">
@@ -196,7 +198,7 @@ export default function InventoryStats({ products, txHistory }) {
                     <th className="pb-2 text-center w-12">Hạng</th>
                     <th className="pb-2 px-3">Tên phụ kiện</th>
                     <th className="pb-2 text-center w-24">Đã bán</th>
-                    <th className="pb-2 text-right w-36">Tổng doanh thu</th>
+                    {/* <th className="pb-2 text-right w-36">Tổng doanh thu</th> */}
                   </tr>
                 </thead>
                 <tbody className="text-xs">
@@ -209,9 +211,9 @@ export default function InventoryStats({ products, txHistory }) {
                       <td className="py-2.5 text-center font-extrabold text-admin-text-main bg-slate-50/50 rounded">
                         {item.quantitySold} cái
                       </td>
-                      <td className="py-2.5 text-right font-bold text-emerald-600">
+                      {/* <td className="py-2.5 text-right font-bold text-emerald-600">
                         {formatCurrency(item.totalRevenue)}
-                      </td>
+                      </td> */}
                     </tr>
                   ))}
                 </tbody>
@@ -224,7 +226,7 @@ export default function InventoryStats({ products, txHistory }) {
           )}
         </div>
       </div>
-      
+
     </div>
   );
 }
