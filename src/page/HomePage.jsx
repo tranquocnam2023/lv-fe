@@ -94,8 +94,15 @@ export default function HomePage({ selectedLocation }) {
       .replace(/[^a-z0-9]/g, '');
   };
 
-  // [LOGIC PHÂN CHIA DANH MỤC & THƯƠNG HIỆU]:
-  // Kiểm tra xem selectedBrand/brand hiện tại trên URL có phải là Danh mục sản phẩm (ví dụ: Điện thoại, Tablet) hay không
+  // =========================================================================
+  // [BỘ LỌC PHÂN CHIA DANH MỤC & THƯƠNG HIỆU - FRONT-END]
+  // - Khi người dùng truy cập link /danh-muc/:brand (ví dụ: /danh-muc/điện-thoại hoặc /danh-muc/apple):
+  // - Hệ thống so khớp từ khóa này với danh sách Categories tải từ Database về.
+  // - Nếu khớp với một Danh mục (ví dụ "Điện thoại"): matchingCat sẽ chứa thông tin danh mục đó.
+  //   Lúc này, trang web hoạt động ở chế độ [DANH MỤC] (Hiển thị sản phẩm thuộc danh mục, lọc theo hãng phụ bằng selectedQuickBrand).
+  // - Nếu không khớp danh mục nào (ví dụ "Apple"): matchingCat là undefined.
+  //   Lúc này, trang web hoạt động ở chế độ [THƯƠNG HIỆU] (Hiển thị sản phẩm thuộc hãng Apple trên toàn hệ thống).
+  // =========================================================================
   const brandLower = selectedBrand ? selectedBrand.toLowerCase() : '';
   const normalizedBrand = normalizeString(selectedBrand);
   const matchingCat = categories.find(c => 
@@ -134,9 +141,12 @@ export default function HomePage({ selectedLocation }) {
 
     let categoryId = matchingCat ? (matchingCat.id || matchingCat.Id) : null;
     
-    // Thương hiệu gửi lên API Backend:
-    // - Nếu đang ở trang Danh mục chính, thì lấy theo bộ lọc hãng nhanh (selectedQuickBrand)
-    // - Nếu không phải trang Danh mục chính, thì lấy theo selectedBrand (chính là tên hãng)
+    // =========================================================================
+    // [XỬ LÝ THAM SỐ THƯƠNG HIỆU GỬI LÊN BACKEND (brandParam)]
+    // - Nếu đang ở trang Danh mục chính (matchingCat = true): Gửi hãng phụ lọc nhanh (selectedQuickBrand) lên API.
+    // - Nếu đang ở trang Thương hiệu (matchingCat = false): Gửi selectedBrand (tên hãng chính) lên API.
+    // - Nếu không lọc gì: Trả về null.
+    // =========================================================================
     const brandParam = matchingCat ? selectedQuickBrand : ((!matchingCat && selectedBrand) ? selectedBrand : null);
 
     // Nếu đang ở trang chủ (không tìm kiếm và không chọn hãng cụ thể)
