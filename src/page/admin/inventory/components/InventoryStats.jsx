@@ -132,8 +132,8 @@ export default function InventoryStats({ products, txHistory }) {
         })}
       </div>
 
-      {/* ─── HIỂN THỊ 2 BẢNG THỐNG KÊ TOP 5 BÁN CHẠY NHẤT (ĐÃ BỊ TẠM ẨN, KHI CẦN CHỈ CẦN GỠ BỎ KÝ HIỆU COMMENT Ở ĐÂY) ────────────────── */}
-      {/* 
+      {/* ─── HIỂN THỊ 2 BẢNG THỐNG KÊ TOP 5 BÁN CHẠY NHẤT  ────────────────── */}
+      
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div className="bg-white rounded-lg border border-admin-border/60 p-5 shadow-sm">
           <div className="flex items-center gap-2 mb-4 pb-3 border-b border-admin-border/40">
@@ -221,7 +221,7 @@ export default function InventoryStats({ products, txHistory }) {
           )}
         </div>
       </div>
-      */}
+      
     </div>
   );
 }

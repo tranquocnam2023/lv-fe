@@ -514,14 +514,14 @@ function VoucherCard({ coupon, isUsed, isSelected, onSelect, subTotal, isVIP }) 
             </p>
           )}
           
-          {/* HIỂN THỊ HẠN DÙNG (expiryStatus) VÀ DÒNG CHỮ SỐ LƯỢNG CÒN LẠI DỰA TRÊN GIỚI HẠN DÙNG (usageLimit) */}
+          {/* HIỂN THỊ HẠN DÙNG (expiryStatus) VÀ DÒNG CHỮ CẢNH BÁO SỐ LƯỢNG DỰA TRÊN GIỚI HẠN DÙNG (usageLimit) */}
           <div className="flex items-center gap-1.5 text-[9px] text-gray-400 font-bold mt-1">
             <span>⏳ {expiryStatus}</span>
             {coupon.usageLimit > 0 && (
               <>
                 <span>•</span>
                 <span className="text-red-500 font-black">
-                  ⚡ {isSoldOut ? 'Hết lượt dùng' : `Chỉ còn ${coupon.usageLimit - coupon.usedCount} lượt`}
+                  ⚡ {isSoldOut ? 'Hết lượt dùng' : 'Số lượng có hạn'}
                 </span>
               </>
             )}
