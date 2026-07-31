@@ -8,7 +8,7 @@ import { orderService } from '../services/orderService';
 import api from '../services/api';
 import { authService } from '../services/authService';
 import { userService } from '../services/userService';
-import { ArrowLeft, ShoppingBag, CreditCard, Gift, ChevronRight } from 'lucide-react';
+import { ArrowLeft, ShoppingBag, CreditCard, Gift, ChevronRight, X } from 'lucide-react';
 
 // Subcomponents
 import CartItemsList from './cart/components/CartItemsList';
@@ -78,6 +78,7 @@ export default function CartPage() {
   const [inlineAuthLoading, setInlineAuthLoading] = useState(false);
   const [inlineAuthError, setInlineAuthError] = useState('');
   const [authMode, setAuthMode] = useState('register'); // 'register' | 'login'
+  const [showAuthModal, setShowAuthModal] = useState(false);
 
   // Delivery configuration states
   const [deliveryMethod, setDeliveryMethod] = useState('ship'); // 'ship' | 'store'
@@ -683,6 +684,7 @@ export default function CartPage() {
         setIsLoggedIn(true);
         setInlinePassword('');
         setInlineEmail('');
+        setShowAuthModal(false);
         alert("Đăng ký thành viên và đăng nhập thành công! Giỏ hàng vẫn được giữ nguyên.");
       }
     } catch (err) {
@@ -729,6 +731,7 @@ export default function CartPage() {
         setIsLoggedIn(true);
         setInlinePassword('');
         setInlineUsername('');
+        setShowAuthModal(false);
         alert("Đăng nhập thành công! Giỏ hàng vẫn được giữ nguyên.");
       }
     } catch (err) {
@@ -746,6 +749,15 @@ export default function CartPage() {
   // Submit Order Checkout
   const handleCheckoutSubmit = async (e) => {
     if (e) e.preventDefault();
+
+    // CƠ CHẾ CHẶN ĐẶT HÀNG KHÁCH VÃNG LAI (CELLPHONES STYLE):
+    // Phía Backend yêu cầu tài khoản người dùng thực tế (JWT Token / UserId) để xử lý giỏ hàng/đơn hàng.
+    // Thay vì tự động tạo tài khoản guest ngầm như cũ, nếu người dùng chưa đăng nhập,
+    // ta hiển thị popup gợi ý chuyển sang trang Đăng ký/Đăng nhập chuyên biệt.
+    if (!isLoggedIn) {
+      setShowAuthModal(true);
+      return;
+    }
 
     if (!addressProvided || !formData.fullName || !formData.phone) {
       alert("Vui lòng cung cấp thông tin người nhận và địa chỉ trước khi đặt hàng.");
@@ -771,36 +783,6 @@ export default function CartPage() {
     setIsSubmitting(true);
 
     try {
-      if (!isLoggedIn) {
-        const randSuffix = Math.floor(1000 + Math.random() * 9000);
-        const guestEmail = formData.email.trim() || `guest_${formData.phone}@phoneshop.com`;
-        const guestUser = `guest_${formData.phone}_${randSuffix}`;
-        const guestPass = `Guest@${formData.phone}`;
-
-        try {
-          await api.post('/Auth/register', {
-            username: guestUser,
-            email: guestEmail,
-            password: guestPass
-          });
-
-          const loginRes = await api.post('/Auth/login', {
-            username: guestUser,
-            password: guestPass
-          });
-
-          localStorage.setItem('token', loginRes.token);
-          localStorage.setItem('user', JSON.stringify({
-            id: loginRes.id,
-            username: guestUser,
-            email: guestEmail,
-            role: loginRes.role
-          }));
-        } catch (authErr) {
-          console.error("Lỗi đăng ký ngầm:", authErr);
-          throw new Error("Không thể khởi tạo phiên giao dịch cho khách vãng lai. Vui lòng đăng ký tài khoản.");
-        }
-      }
 
       const finalNote = [
         specialRequests.transferData ? "Yêu cầu: Chuyển dữ liệu qua máy mới" : "",
@@ -1046,25 +1028,6 @@ export default function CartPage() {
                 </div>
               )}
 
-              {/* Card 2: Inline Registration / Login for Guest */}
-            <CartAuthSection
-              isLoggedIn={isLoggedIn}
-              currentUser={currentUser}
-              authMode={authMode}
-              setAuthMode={setAuthMode}
-              formData={formData}
-              openAddressModal={openAddressModal}
-              inlineEmail={inlineEmail}
-              setInlineEmail={setInlineEmail}
-              inlineUsername={inlineUsername}
-              setInlineUsername={setInlineUsername}
-              inlinePassword={inlinePassword}
-              setInlinePassword={setInlinePassword}
-              inlineAuthError={inlineAuthError}
-              inlineAuthLoading={inlineAuthLoading}
-              handleInlineRegister={handleInlineRegister}
-              handleInlineLogin={handleInlineLogin}
-            />
 
             {/* Card 3: Delivery Options & Address Preview */}
             <CartDeliveryForm
@@ -1174,6 +1137,62 @@ export default function CartPage() {
         onSelectSavedAddress={handleSelectSavedAddress}
         onAddNewAddress={handleAddNewAddressClick}
       />
+
+      {/* CƠ CHẾ XÁC THỰC CELLPHONES: Hộp thoại yêu cầu đăng ký / đăng nhập dành cho khách vãng lai */}
+      {showAuthModal && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-in fade-in duration-200">
+          <div className="bg-white w-full max-w-sm rounded-2xl flex flex-col relative p-6 animate-in zoom-in-95 duration-200 shadow-2xl border border-gray-100 text-center">
+            {/* Close Button */}
+            <button
+              onClick={() => setShowAuthModal(false)}
+              className="absolute top-4 right-4 p-1 hover:bg-gray-100 text-gray-400 hover:text-gray-700 rounded-full transition cursor-pointer bg-transparent border-0"
+            >
+              <X size={18} />
+            </button>
+
+            {/* Title / Logo */}
+            <h3 className="font-extrabold text-xl text-blue-600 mb-2 mt-2">
+              PhoneMember
+            </h3>
+
+            {/* Cute Mascot / Icon */}
+            <div className="flex justify-center my-4">
+              <div className="w-16 h-16 bg-blue-50 rounded-full flex items-center justify-center text-blue-600 animate-bounce">
+                <svg className="w-9 h-9" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M12 11c0 3.517-1.009 6.799-2.753 9.571m-3.44-2.04l.054-.09A13.916 13.916 0 009 11.5a13.92 13.92 0 00-2.318-7.755m11.302 11.755a13.882 13.882 0 001.07-4.755c0-1.808-.344-3.513-.974-5.078m-2.458 10.134A13.9 13.9 0 0018 11.5c0-3.517-1.009-6.799-2.753-9.571m-3.44 2.04l-.054.09A13.916 13.916 0 0015 11.5a13.92 13.92 0 002.318 7.755M12 2a10 10 0 100 20 10 10 0 000-20z"></path>
+                </svg>
+              </div>
+            </div>
+
+            {/* Description */}
+            <p className="text-gray-600 text-xs font-semibold px-4 mb-6 leading-relaxed">
+              Vui lòng đăng nhập tài khoản PhoneMember để xem ưu đãi và thanh toán dễ dàng hơn.
+            </p>
+
+            {/* Action Buttons */}
+            <div className="grid grid-cols-2 gap-4">
+              <button
+                onClick={() => {
+                  setShowAuthModal(false);
+                  navigate('/auth?mode=register');
+                }}
+                className="w-full py-2.5 bg-white hover:bg-gray-50 text-blue-600 border border-blue-600 rounded-lg text-xs font-extrabold transition cursor-pointer"
+              >
+                Đăng ký
+              </button>
+              <button
+                onClick={() => {
+                  setShowAuthModal(false);
+                  navigate('/auth?mode=login');
+                }}
+                className="w-full py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-extrabold transition cursor-pointer border-0"
+              >
+                Đăng nhập
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
     </div>
   );

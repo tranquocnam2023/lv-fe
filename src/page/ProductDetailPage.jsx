@@ -173,9 +173,9 @@ export default function ProductDetailPage() {
       console.error("Lỗi phân tách ảnh sản phẩm:", e);
     }
 
-    while (list.length < 4 && baseImg) {
-      list.push({ type: 'image', url: baseImg });
-    }
+    // while (list.length < 4 && baseImg) {
+    //   list.push({ type: 'image', url: baseImg });
+    // }
     return list;
   };
 
@@ -343,7 +343,11 @@ export default function ProductDetailPage() {
             }
 
             // Cắt tối đa 8 sản phẩm (nếu tìm thấy 5, 6, 7 món phù hợp thì giữ đúng 5, 6, 7 món)
-            suggestions = suggestions.slice(0, 8);
+            suggestions = suggestions.slice(0, 8).map(p => ({
+              ...p,
+              image: p.image || p.thumbnailImage || p.mainImage || p.imageUrl,
+              price: p.price || p.basePrice || 0
+            }));
             setAccessorySuggestions(suggestions);
           }
         } else {

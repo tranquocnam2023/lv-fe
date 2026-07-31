@@ -71,6 +71,16 @@ export default function AuthPage() {
     if (tab && ['info', 'addresses', 'password', 'history'].includes(tab)) {
       setProfileTab(tab);
     }
+    
+    // CƠ CHẾ CHUYỂN TỰ ĐỘNG GIỮA ĐĂNG KÝ / ĐĂNG NHẬP:
+    // Nhận diện tham số 'mode' truyền vào từ đường dẫn (ví dụ: /auth?mode=register).
+    // Phục vụ luồng chuyển hướng khi khách hàng bấm Đăng ký hoặc Đăng nhập trên popup giỏ hàng.
+    const mode = searchParams.get('mode');
+    if (mode === 'register') {
+      setIsLogin(false);
+    } else if (mode === 'login') {
+      setIsLogin(true);
+    }
   }, [location.search]);
 
   const [userProfile, setUserProfile] = useState(initialUser);

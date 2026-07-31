@@ -193,35 +193,37 @@ export default function ProductGallery({ product, selectedColor, galleryImages, 
 
         {/* Dải ảnh nhỏ bên dưới */}
         <div className="w-full space-y-4">
-          <div className="flex gap-3 overflow-x-auto w-full py-2 justify-center scroll-smooth [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
-            {galleryImages.map((img, idx) => (
-              <div
-                key={idx}
-                onClick={() => handleThumbnailClick(img)}
-                className={`flex-shrink-0 w-16 h-16 rounded-md p-0.5 cursor-pointer transition-all hover:scale-105 active:scale-95 border flex items-center justify-center bg-white overflow-hidden ${
-                  activeImage?.url === img.url && activeImage?.type === img.type
-                    ? 'border-2 border-blue-600 bg-blue-50/50 opacity-100 scale-105 shadow-sm'
-                    : 'border-gray-200 opacity-60 hover:opacity-100'
-                }`}
-              >
-                {img.type === 'video' ? (
-                  <div className="w-full h-full relative flex items-center justify-center bg-black/5 rounded">
-                    <img 
-                      src={`https://img.youtube.com/vi/${getYouTubeId(img.url)}/mqdefault.jpg`} 
-                      className="w-full h-full object-cover opacity-80" 
-                      alt="Video Thumbnail" 
-                    />
-                    <div className="absolute inset-0 bg-black/30 flex flex-col items-center justify-center text-white">
-                      <Play size={16} className="text-white mb-0.5" fill="currentColor" />
-                      <span className="text-[9px] font-black uppercase tracking-tight scale-90">Video</span>
+          {galleryImages.length > 1 && (
+            <div className="flex gap-3 overflow-x-auto w-full py-2 justify-center scroll-smooth [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+              {galleryImages.map((img, idx) => (
+                <div
+                  key={idx}
+                  onClick={() => handleThumbnailClick(img)}
+                  className={`flex-shrink-0 w-16 h-16 rounded-md p-0.5 cursor-pointer transition-all hover:scale-105 active:scale-95 border flex items-center justify-center bg-white overflow-hidden ${
+                    activeImage?.url === img.url && activeImage?.type === img.type
+                      ? 'border-2 border-blue-600 bg-blue-50/50 opacity-100 scale-105 shadow-sm'
+                      : 'border-gray-200 opacity-60 hover:opacity-100'
+                  }`}
+                >
+                  {img.type === 'video' ? (
+                    <div className="w-full h-full relative flex items-center justify-center bg-black/5 rounded">
+                      <img 
+                        src={`https://img.youtube.com/vi/${getYouTubeId(img.url)}/mqdefault.jpg`} 
+                        className="w-full h-full object-cover opacity-80" 
+                        alt="Video Thumbnail" 
+                      />
+                      <div className="absolute inset-0 bg-black/30 flex flex-col items-center justify-center text-white">
+                        <Play size={16} className="text-white mb-0.5" fill="currentColor" />
+                        <span className="text-[9px] font-black uppercase tracking-tight scale-90">Video</span>
+                      </div>
                     </div>
-                  </div>
-                ) : (
-                  <img src={img.url} className="w-full h-full object-contain" alt="" />
-                )}
-              </div>
-            ))}
-          </div>
+                  ) : (
+                    <img src={img.url} className="w-full h-full object-contain" alt="" />
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
 
           {/* Nút Xem hình thực tế & Xem Video giới thiệu */}
           <div className="flex justify-center gap-3">

@@ -150,7 +150,7 @@ export default function MuaKemGiaSocModal({ isOpen, onClose, campaigns, initialT
 
                       <div className="w-full h-40 flex items-center justify-center p-4 bg-transparent relative overflow-hidden">
                         <img
-                          src={item.thumbnailImage || '/placeholder-image.png'}
+                          src={item.thumbnailImage || item.image || item.mainImage || item.imageUrl || '/placeholder-image.png'}
                           alt={item.name}
                           className="max-w-full max-h-full object-contain mix-blend-multiply group-hover:scale-110 transition-transform duration-500"
                         />

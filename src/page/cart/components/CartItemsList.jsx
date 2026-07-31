@@ -63,7 +63,7 @@ export default function CartItemsList({ cartItems, updateQuantity, removeFromCar
                           {(item.originalPrice * item.quantity).toLocaleString('vi-VN')}₫
                         </p>
                       )}
-                      
+
                       {/* cưa đôi giá gốc trên trang giỏ hàng
                       {item.originalPrice && (
                         <p className="text-[10px] text-gray-400 line-through font-semibold">
@@ -131,8 +131,8 @@ export default function CartItemsList({ cartItems, updateQuantity, removeFromCar
               {standaloneItems.map(renderItem)}
               {addonItems.length > 0 && (
                 <div className="border-2 border-dashed border-red-200 rounded-xl p-4 relative mt-6 mb-4 bg-red-50/20 ml-4">
-                  <div className="absolute -top-3.5 left-4 bg-gradient-to-r from-orange-500 to-red-500 text-white text-[11px] font-black px-3 py-1 rounded-full uppercase shadow-md flex items-center gap-1.5">
-                    <span>🔥</span> Mua kèm tiết kiệm hơn
+                  <div className="absolute -top-5 left-0 text-red-600 text-[11px] font-black px-3 py-1 uppercase flex items-center gap-1.5">
+                    Mua kèm tiết kiệm hơn
                   </div>
                   <div className="absolute -top-2.5 right-4 text-[11px] text-red-600 font-bold bg-white px-2">
                     Bạn chọn mua kèm {addonItems.length} sản phẩm
@@ -156,7 +156,7 @@ export default function CartItemsList({ cartItems, updateQuantity, removeFromCar
         )}
         <div className="flex justify-between items-center text-xs">
           <span className="text-gray-400 font-bold">Tạm tính:</span>
-          <span className="font-black text-gray-900 text-[15px]">{cartTotal.toLocaleString('vi-VN')}₫</span>         
+          <span className="font-black text-gray-900 text-[15px]">{cartTotal.toLocaleString('vi-VN')}₫</span>
         </div>
         {/*tạm tính chia đôi trong giỏ hàng*/}
         {/*

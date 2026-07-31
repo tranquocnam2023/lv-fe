@@ -99,7 +99,7 @@ export default function AccessoryVariantModal({ isOpen, onClose, productId, base
       selectedColor: colorKey ? selectedAttributes[colorKey] : null,
       selectedStorage: storageKey ? selectedAttributes[storageKey] : null,
       variantId: selectedVar?.id,
-      image: selectedVar?.imageId || product.thumbnailImage,
+      image: selectedVar?.imageId || product.thumbnailImage || product.image || product.mainImage || product.imageUrl,
       appliedCampaignId: campaignId,
       isAddon: true,
       maxQuantityAllowed: maxQuantityAllowed
@@ -129,7 +129,7 @@ export default function AccessoryVariantModal({ isOpen, onClose, productId, base
               {/* Product Info */}
               <div className="flex gap-4 mb-6">
                 <div className="w-20 h-20 bg-gray-50 rounded-xl p-2 border border-gray-100 shrink-0 flex items-center justify-center">
-                  <img src={product?.thumbnailImage} alt={product?.name} className="max-w-full max-h-full object-contain" />
+                  <img src={product?.thumbnailImage || product?.image || product?.mainImage || product?.imageUrl || '/no_image.png'} alt={product?.name} className="max-w-full max-h-full object-contain" />
                 </div>
                 <div>
                   <h4 className="font-bold text-gray-900 leading-snug">{product?.name}</h4>

@@ -62,7 +62,7 @@ const CoPurchaseRecommendation = ({ mainProduct, mainProductPrice, selectedVaria
     mixedItems.push({
       type: 'campaign',
       data: campData.campaign,
-      image: repProduct?.thumbnailImage,
+      image: repProduct?.thumbnailImage || repProduct?.image || repProduct?.mainImage || repProduct?.imageUrl,
       tabIndex: index + 1
     });
   });
@@ -135,7 +135,7 @@ const CoPurchaseRecommendation = ({ mainProduct, mainProductPrice, selectedVaria
                 <div key={`prod-${product.id}`} className="flex bg-white border border-gray-200 rounded-2xl overflow-hidden hover:border-blue-400 hover:shadow-md transition-all duration-300 p-4 gap-4 items-center">
                   <div className="w-20 h-20 shrink-0 flex items-center justify-center bg-transparent rounded-xl p-1">
                      <img 
-                       src={product.thumbnailImage || '/placeholder-image.png'} 
+                       src={product.thumbnailImage || product.image || product.mainImage || product.imageUrl || '/placeholder-image.png'} 
                        alt={product.name}
                        className="max-w-full max-h-full object-contain mix-blend-multiply hover:scale-110 transition-transform duration-300" 
                      />

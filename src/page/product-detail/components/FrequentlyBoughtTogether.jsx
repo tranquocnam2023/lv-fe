@@ -58,7 +58,7 @@ export default function FrequentlyBoughtTogether({ accessorySuggestions = [], on
                 {/* Khu vực Hình ảnh */}
                 <div className="w-full h-36 bg-gray-50/60 rounded-xl p-2.5 flex items-center justify-center relative mb-3 group-hover/card:bg-slate-50 transition-colors overflow-hidden">
                   <img
-                    src={acc.image || acc.thumbnailImage || '/no_image.png'}
+                    src={acc.image || acc.thumbnailImage || acc.mainImage || acc.imageUrl || '/no_image.png'}
                     alt={acc.name}
                     className="max-w-full max-h-full object-contain group-hover/card:scale-105 transition-transform duration-300"
                   />

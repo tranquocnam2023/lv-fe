@@ -22,7 +22,7 @@ export default function HistoryTable({
               <>
                 <th className="pb-3 px-4">ID</th>
                 <th className="pb-3 px-4">Sản phẩm</th>
-                <th className="pb-3 px-4">Thương hiệu / Danh mục</th>
+                <th className="pb-3 px-4">Thương hiệu <br /> Danh mục</th>
                 <th className="pb-3 px-4 text-center">Tổng SL Nhập</th>
                 <th className="pb-3 px-4 text-center">Tổng SL Tồn</th>
                 <th className="pb-3 px-4 text-right">Tổng giá trị tồn</th>
@@ -78,13 +78,13 @@ export default function HistoryTable({
                     }}
                     className={`border-b border-admin-border transition-colors ${hasMultipleVariants ? 'hover:bg-admin-bg/80 cursor-pointer group' : 'hover:bg-gray-50/50'}`}
                   >
-                    <td className="py-3.5 px-4 font-mono font-bold text-xs text-blue-600">#{item.productId}</td>
+                    <td className="py-3.5 px-4 font-mono font-bold text-xs text-blue-600 truncate max-w-[120px]" title={`#${item.productId}`}>#{item.productId}</td>
                     <td className="py-3.5 px-4 font-bold text-admin-text-main">
                       <div className="flex flex-col">
                         <span className={`${hasMultipleVariants ? 'group-hover:text-primary' : ''} transition-colors text-sm`}>{item.productName}</span>
                         {hasMultipleVariants && (
                           <span className="text-[11px] font-semibold text-gray-400 mt-0.5">
-                            Gồm {variantCount} biến thể & lô hàng
+                            Gồm {variantCount} biến thể
                           </span>
                         )}
                       </div>
@@ -146,7 +146,7 @@ export default function HistoryTable({
 
               return (
                 <tr key={item.batchId} className={`border-b border-admin-border hover:bg-admin-bg transition-colors ${item.isReverted ? 'opacity-50' : ''}`}>
-                  <td className="py-3.5 px-4 font-mono font-bold text-xs text-blue-600">{code}</td>
+                  <td className="py-3.5 px-4 font-mono font-bold text-xs text-blue-600 truncate max-w-[120px]" title={code}>{code}</td>
                   <td className="py-3.5 px-4 text-xs text-admin-text-muted">{formattedDate}</td>
                   <td className="py-3.5 px-4">
                     <div className="font-bold text-admin-text-main flex items-center gap-2">
