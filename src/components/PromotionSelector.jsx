@@ -270,12 +270,12 @@ export default function PromotionSelector({ subTotal, onApplyPromotion }) {
                   value={manualInputCode}
                   onChange={(e) => setManualInputCode(e.target.value)}
                   placeholder="Nhập mã giảm giá khác..."
-                  className="flex-1 px-3 py-2 border border-gray-300 rounded focus:border-yellow-500 outline-none text-xs font-extrabold uppercase text-gray-800 bg-gray-50 placeholder:text-gray-400"
+                  className="flex-1 px-3 py-2 border border-gray-300 rounded focus:border-blue-500 outline-none text-xs font-extrabold uppercase text-gray-800 bg-gray-50 placeholder:text-gray-400"
                 />
                 <button
                   type="button"
                   onClick={handleApplyManualCode}
-                  className="px-4 py-2 bg-yellow-500 hover:bg-yellow-600 text-white text-xs font-black rounded transition-colors cursor-pointer"
+                  className="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white text-xs font-black rounded transition-colors cursor-pointer"
                 >
                   Áp dụng
                 </button>
@@ -375,7 +375,7 @@ export default function PromotionSelector({ subTotal, onApplyPromotion }) {
               <button
                 type="button"
                 onClick={handleConfirmSelection}
-                className="px-6 py-2 bg-yellow-500 hover:bg-yellow-600 text-white text-xs font-black rounded transition-colors cursor-pointer shadow-sm shadow-yellow-100"
+                className="px-6 py-2 bg-blue-500 hover:bg-blue-600 text-white text-xs font-black rounded transition-colors cursor-pointer shadow-sm shadow-blue-100"
               >
                 Đồng ý
               </button>

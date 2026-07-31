@@ -1,4 +1,4 @@
-// 
+// Bảng tồn kho chi tiết-Lịch sử xuất/nhập kho- Quản lý kho hàng
 import React from 'react';
 import { X, Package, PlusCircle, ArrowUpRight } from 'lucide-react';
 
@@ -10,27 +10,18 @@ export default function StockProductDetailModal({
 }) {
   if (!selectedStockProduct) return null;
 
-  // ── LOGIC PHÂN RÃ (DESTRUCTURING) ĐỐI TƯỢNG selectedStockProduct ──
+  
   // Trích xuất các trường dữ liệu để sử dụng hiển thị trong giao diện Modal:
-  // - productId: Mã ID sản phẩm -> Hiển thị dạng mã tag ở Tiêu đề Modal (Dòng 41)
-  // - productName: Tên sản phẩm -> Hiển thị ở Tiêu đề Modal (Dòng 42)
-  // - productImage: Ảnh sản phẩm -> Hiển thị ở góc trái tiêu đề Modal (Dòng 34)
-  // - brandName: Tên hãng -> Hiển thị ở dòng phụ thương hiệu (Dòng 45)
-  // - categoryName: Tên danh mục -> Hiển thị ở dòng phụ danh mục (Dòng 47)
-  // - totalQuantityIn: Tổng số lượng đã nhập -> Hiển thị ở ô Stats 1 "Tổng SL nhập" (Dòng 64)
-  // - totalQuantityRemaining: Tổng số lượng còn tồn -> Hiển thị ở ô Stats 2 "Tổng tồn kho" (Dòng 69)
-  // - totalStockValue: Tổng giá trị hàng tồn -> Hiển thị ở ô Stats 3 "Tổng giá trị tồn" (Dòng 74)
-  // - variants: Mảng danh sách biến thể -> Hiển thị số lượng (Dòng 82) và duyệt vòng lặp hiển thị bảng chi tiết (Dòng 111)
   const {
-    productId,
-    productName,
-    productImage,
-    brandName,
-    categoryName,
-    totalQuantityIn,
-    totalQuantityRemaining,
-    totalStockValue,
-    variants = []
+    productId, // - productId: Mã ID sản phẩm -> Hiển thị dạng mã tag ở Tiêu đề Modal (Dòng 41)
+    productName,// - productName: Tên sản phẩm -> Hiển thị ở Tiêu đề Modal (Dòng 42)
+    productImage, // - productImage: Ảnh sản phẩm -> Hiển thị ở góc trái tiêu đề Modal (Dòng 34)
+    brandName,// - brandName: Tên hãng -> Hiển thị ở dòng phụ thương hiệu (Dòng 45)
+    categoryName, // - categoryName: Tên danh mục -> Hiển thị ở dòng phụ danh mục (Dòng 47)
+    totalQuantityIn,// - totalQuantityIn: Tổng số lượng đã nhập -> Hiển thị ở ô Stats 1 "Tổng SL nhập" (Dòng 64)
+    totalQuantityRemaining,// - totalQuantityRemaining: Tổng số lượng còn tồn -> Hiển thị ở ô Stats 2 "Tổng tồn kho" (Dòng 69)
+    totalStockValue, // - totalStockValue: Tổng giá trị hàng tồn -> Hiển thị ở ô Stats 3 "Tổng giá trị tồn" (Dòng 74)
+    variants = [] // - variants: Mảng danh sách biến thể -> Hiển thị số lượng (Dòng 82) và duyệt vòng lặp hiển thị bảng chi tiết (Dòng 111)
   } = selectedStockProduct;
 
   return (

@@ -87,7 +87,7 @@ export const CartProvider = ({ children }) => {
  //   price: (i.originalBasePrice || i.price) * (i.isAddon && i.parentCartItemId ? ((counts[i.parentCartItemId] = (counts[i.parentCartItemId] || 0) + 1) === 1 ? 0.9 : 0.85) : 1)
  // }));
 
-  //  logic tính tổng tiền
+  //  logic tính tổng tiền trong giỏ
   const cartTotal = cartItems.reduce(
     (total, item) => total + item.price * item.quantity,
     0

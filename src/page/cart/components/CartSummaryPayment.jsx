@@ -117,14 +117,13 @@ export default function CartSummaryPayment({
             <span className="text-xs font-black text-gray-900">Tổng tiền</span>
             <span className="text-lg font-black text-red-600 tracking-tight">{finalTotalPay.toLocaleString('vi-VN')}₫</span>
           </div>
-          {/* LOGIC TÍNH ĐIỂM TÍCH LŨY QUÀ TẶNG VIP: 0.2% trên tổng giá trị thanh toán thực tế (finalTotalPay * 0.002) */}
+          {/* LOGIC TÍNH ĐIỂM TÍCH LŨY QUÀ TẶNG VIP: 0.2% (0.002) trên tổng giá trị thanh toán thực tế (finalTotalPay * 0.002) */}
           <div className="flex justify-between items-center text-xs text-gray-500 pt-1">
             <span>Điểm tích lũy Quà Tặng VIP</span>
             <span className="font-bold text-gray-700">{(Math.floor(finalTotalPay * 0.002)).toLocaleString('vi-VN')} điểm</span>
           </div>
         </div>
-
-        {/* Submit Button */}
+        {/* nút đặt hàng */}
         <button
           type="button"
           onClick={handleCheckoutSubmit}

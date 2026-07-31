@@ -96,7 +96,7 @@ export default function InventoryStats({ products, txHistory }) {
     .sort((a, b) => b.quantitySold - a.quantitySold) // Sắp xếp giảm dần theo số lượng bán
     .slice(0, 5); // Lấy Top 5
 
-  // HELPER HIỂN THỊ BADGE THỨ HẠNG TRỰC QUAN (VÀNG, BẠC, ĐỒNG...)
+  // HELPER HIỂN THỊ BADGE - MÀU SẮC THỨ HẠNG TRỰC QUAN (VÀNG, BẠC, ĐỒNG...)
   const renderRankBadge = (index) => {
     const badges = [
       { bg: 'bg-amber-100 text-amber-700 border-amber-200', text: '1' },
