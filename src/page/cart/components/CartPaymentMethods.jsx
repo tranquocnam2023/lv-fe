@@ -76,41 +76,39 @@ export default function CartPaymentMethods({
           </label>
 
           {/* MoMo */}
-          <label className={`flex items-center gap-3 p-3 border rounded-md transition cursor-pointer select-none ${
-            paymentMethod === 'momo' ? 'border-blue-500 bg-blue-50/20' : 'border-gray-200 hover:border-gray-300'
-          }`}>
+          <label className="flex items-center gap-3 p-3 border border-gray-100 bg-gray-50/50 opacity-50 rounded-md select-none cursor-not-allowed">
             <input
               type="radio"
               name="paymentMethod"
+              disabled
               value="momo"
               checked={paymentMethod === 'momo'}
               onChange={() => setPaymentMethod('momo')}
-              className="w-4 h-4 text-blue-600 border-gray-300 focus:ring-0 cursor-pointer"
+              className="w-4 h-4 text-blue-600 border-gray-300 focus:ring-0 cursor-not-allowed"
             />
             <div className="text-xs flex-1">
-              <p className="font-bold text-gray-800">Thanh toán qua ví điện tử MoMo</p>
+              <p className="font-bold text-gray-400">Thanh toán qua ví điện tử MoMo (Đang bảo trì)</p>
               <p className="text-[10px] text-gray-400">Quét mã QR thanh toán nhanh chóng bằng ví MoMo</p>
             </div>
-            <span className="w-6 h-6 bg-[#A50064] text-white text-[8px] font-black rounded flex items-center justify-center select-none shrink-0">MoMo</span>
+            <span className="w-6 h-6 bg-[#A50064]/50 text-white text-[8px] font-black rounded flex items-center justify-center select-none shrink-0">MoMo</span>
           </label>
 
           {/* Bank transfer */}
-          <label className={`flex items-center gap-3 p-3 border rounded-md transition cursor-pointer select-none ${
-            paymentMethod === 'transfer' ? 'border-blue-500 bg-blue-50/20' : 'border-gray-200 hover:border-gray-300'
-          }`}>
+          <label className="flex items-center gap-3 p-3 border border-gray-100 bg-gray-50/50 opacity-50 rounded-md select-none cursor-not-allowed">
             <input
               type="radio"
               name="paymentMethod"
+              disabled
               value="transfer"
               checked={paymentMethod === 'transfer'}
               onChange={() => setPaymentMethod('transfer')}
-              className="w-4 h-4 text-blue-600 border-gray-300 focus:ring-0 cursor-pointer"
+              className="w-4 h-4 text-blue-600 border-gray-300 focus:ring-0 cursor-not-allowed"
             />
             <div className="text-xs flex-1">
-              <p className="font-bold text-gray-800">Chuyển khoản ngân hàng trực tuyến</p>
+              <p className="font-bold text-gray-400">Chuyển khoản ngân hàng trực tuyến (Đang bảo trì)</p>
               <p className="text-[10px] text-gray-400">Đăng ký duyệt nhanh, giảm thêm 100,000₫</p>
             </div>
-            <CreditCard size={16} className="text-gray-400" />
+            <CreditCard size={16} className="text-gray-300" />
           </label>
 
           {/* COD (requires login) */}

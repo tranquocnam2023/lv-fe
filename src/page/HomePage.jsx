@@ -12,7 +12,7 @@
  * ============================================================================
  */
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useParams, useSearchParams } from 'react-router-dom';
 import { useLoading } from '../context/LoadingContext';
 import BannerSkeleton from '../components/common/skeletons/BannerSkeleton';
@@ -60,7 +60,7 @@ const parseSpecs = (specsInput) => {
 export default function HomePage({ selectedLocation }) {
   const { stopLoading } = useLoading();
   const { brand } = useParams();
-  
+
   // ── Khai báo toàn bộ các React State Hooks ở đầu component ──
   const [prevBrand, setPrevBrand] = useState(brand);
   // selectedBrand: Lưu trữ danh mục/thương hiệu chính được map từ URL param hoặc trang chủ (ví dụ: 'điện thoại', 'Apple')
@@ -73,7 +73,17 @@ export default function HomePage({ selectedLocation }) {
   const [isPriceDropdownOpen, setIsPriceDropdownOpen] = useState(false);
   const [products, setProducts] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [visibleCount, setVisibleCount] = useState(12);
+  const [currentPage, setCurrentPage] = useState(1);
+  const PRODUCTS_PER_PAGE = 12;
+  const productListRef = useRef(null);
+
+  const scrollToProductList = () => {
+    if (productListRef.current) {
+      const yOffset = -80; // Trừ đi khoảng 80px chiều cao của sticky header để không bị che khuất
+      const y = productListRef.current.getBoundingClientRect().top + window.pageYOffset + yOffset;
+      window.scrollTo({ top: y, behavior: 'smooth' });
+    }
+  };
 
   // ── Lấy các tham số tìm kiếm từ URL query string ──
   const [searchParams] = useSearchParams();
@@ -105,8 +115,8 @@ export default function HomePage({ selectedLocation }) {
   // =========================================================================
   const brandLower = selectedBrand ? selectedBrand.toLowerCase() : '';
   const normalizedBrand = normalizeString(selectedBrand);
-  const matchingCat = categories.find(c => 
-    normalizeString(c.name) === normalizedBrand || 
+  const matchingCat = categories.find(c =>
+    normalizeString(c.name) === normalizedBrand ||
     (c.slug && normalizeString(c.slug) === normalizedBrand)
   );
 
@@ -140,7 +150,7 @@ export default function HomePage({ selectedLocation }) {
     setIsLoading(true);
 
     let categoryId = matchingCat ? (matchingCat.id || matchingCat.Id) : null;
-    
+
     // =========================================================================
     // [XỬ LÝ THAM SỐ THƯƠNG HIỆU GỬI LÊN BACKEND (brandParam)]
     // - Nếu đang ở trang Danh mục chính (matchingCat = true): Gửi hãng phụ lọc nhanh (selectedQuickBrand) lên API.
@@ -151,6 +161,8 @@ export default function HomePage({ selectedLocation }) {
 
     // Nếu đang ở trang chủ (không tìm kiếm và không chọn hãng cụ thể)
     // Mặc định chúng ta lọc theo danh mục "Điện thoại" để không bị trộn lẫn phụ kiện rẻ tiền giống TGDD
+    // (Bình luận lại để hiển thị đầy đủ cả điện thoại và phụ kiện ở trang chủ, chỉ khi nào click chọn danh mục Điện thoại mới lọc riêng)
+    /*
     if (!selectedBrand && !searchQuery) {
       const defaultCat = categories.find(c => {
         const norm = normalizeString(c.name);
@@ -160,13 +172,14 @@ export default function HomePage({ selectedLocation }) {
         categoryId = defaultCat.id || defaultCat.Id;
       }
     }
+    */
 
     // Ánh xạ các tiêu chí sắp xếp từ tăng giảm frontend sang tham số API của Backend
     // - featured (Sản phẩm nổi bật): Sắp xếp dựa theo trạng thái tick IsFeatured của Admin ở trang quản trị.
     // - best_seller (Sản phẩm bán chạy): Sắp xếp dựa theo tổng số lượng Reviews không bị ẩn trong DB.
     let apiSortBy = 'featured';
     let apiSortOrder = 'desc';
-//nếu người dùng chọn giá tăng dần
+    //nếu người dùng chọn giá tăng dần
     if (sortBy === 'price_asc') {
       apiSortBy = 'price';
       apiSortOrder = 'asc';
@@ -215,10 +228,24 @@ export default function HomePage({ selectedLocation }) {
       });
   }, [brand, selectedBrand, selectedQuickBrand, searchQuery, sortBy, categories, stopLoading]);
 
-  // Reset visible items count when filters change
+  // Reset current page when filters change
   useEffect(() => {
-    setVisibleCount(12);
+    setCurrentPage(1);
   }, [brand, selectedBrand, selectedQuickBrand, searchQuery, advancedFilters]);
+
+  const isFirstMount = useRef(true);
+
+  // Cuộn mượt mà lên đầu danh sách sản phẩm khi đổi trang (sau khi DOM đã render xong)
+  useEffect(() => {
+    if (isFirstMount.current) {
+      isFirstMount.current = false;
+      return;
+    }
+    const timer = setTimeout(() => {
+      scrollToProductList();
+    }, 50);
+    return () => clearTimeout(timer);
+  }, [currentPage]);
 
   const handleApplyFilter = (filters) => {
     setAdvancedFilters(filters);
@@ -255,7 +282,7 @@ export default function HomePage({ selectedLocation }) {
         const specsLower = (product.specs || '').toLowerCase();
         const nameLower = (product.name || '').toLowerCase();
         const brandLower = (product.brandName || product.brand?.name || product.brand || '').toLowerCase();
-        
+
         // Nhận diện iPhone/iOS
         const isIphone = nameLower.includes('iphone') || brandLower.includes('apple') || specsLower.includes('ios');
         // Nhận diện Android
@@ -284,7 +311,7 @@ export default function HomePage({ selectedLocation }) {
         const matchesRam = advancedFilters['RAM'].some(ram => {
           const cleanRam = ram.replace(/\s+/g, '').toLowerCase(); // Ví dụ: "8gb"
           const spaceRam = ram.toLowerCase(); // Ví dụ: "8 gb"
-          
+
           const inSpecs = specTags.some(spec => {
             const cleanSpec = spec.replace(/\s+/g, '').toLowerCase();
             return cleanSpec === cleanRam || cleanSpec.includes(spaceRam);
@@ -302,7 +329,7 @@ export default function HomePage({ selectedLocation }) {
         const matchesStorage = advancedFilters['Dung lượng lưu trữ'].some(storage => {
           const cleanStorage = storage.replace(/\s+/g, '').toLowerCase(); // Ví dụ: "128gb"
           const spaceStorage = storage.toLowerCase(); // Ví dụ: "128 gb"
-          
+
           const inSpecs = specTags.some(spec => {
             const cleanSpec = spec.replace(/\s+/g, '').toLowerCase();
             return cleanSpec === cleanStorage || cleanSpec.includes(spaceStorage);
@@ -317,8 +344,10 @@ export default function HomePage({ selectedLocation }) {
     return true;
   });
 
-  // Tách riêng sản phẩm nổi bật
-  const featuredProducts = filteredProducts.filter(p => p.isFeatured || p.IsFeatured);
+  // Tách riêng sản phẩm bán chạy nhất (lấy tối đa 4 sản phẩm có số đánh giá cao nhất)
+  const bestSellingProducts = [...filteredProducts]
+    .sort((a, b) => (b.reviewCount || 0) - (a.reviewCount || 0))
+    .slice(0, 4);
 
   const displaySelectedBrand = () => {
     if (matchingCat) {
@@ -353,25 +382,25 @@ export default function HomePage({ selectedLocation }) {
       {!selectedBrand && !searchQuery && !advancedFilters && (
         <>
           <div
-            className="p-4 rounded mb-6 border bg-primary/5 text-secondary border-primary/20"
+            className="p-4 rounded mb-6 mt-6 border bg-primary/5 text-secondary border-primary/20"
           >
             Khám phá các sản phẩm điện thoại, phụ kiện và nhiều ưu đãi Mùa hè hấp dẫn.
           </div>
         </>
       )}
 
-      {/* SECTION SẢN PHẨM NỔI BẬT (Điện Máy Xanh Style) */}
-      {!selectedBrand && !searchQuery && !advancedFilters && featuredProducts.length > 0 && (
+      {/* SECTION SẢN PHẨM BÁN CHẠY NHẤT (Điện Máy Xanh Style) */}
+      {!selectedBrand && !searchQuery && !advancedFilters && bestSellingProducts.length > 0 && (
         <div className="w-full bg-white rounded-md p-6 mb-8 border border-gray-200 animate-in fade-in zoom-in-95 duration-500">
           <div className="flex items-center justify-between mb-5 border-b border-gray-100 pb-3">
             <h3 className="text-lg font-black flex items-center gap-2" style={{ color: THEME.secondary }}>
-              <span>SẢN PHẨM NỔI BẬT NHẤT</span>
+              <span>SẢN PHẨM BÁN CHẠY NHẤT</span>
             </h3>
           </div>
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-            {featuredProducts.map((product) => (
+            {bestSellingProducts.map((product) => (
               <ProductCard
-                key={`featured-${product.id}`}
+                key={`bestseller-${product.id}`}
                 id={product.id}
                 name={product.name}
                 price={product.price}
@@ -380,7 +409,7 @@ export default function HomePage({ selectedLocation }) {
                 specs={product.specs || []}
                 image={product.image}
                 stockQuantity={product.stockQuantity}
-                isFeatured={true}
+                isFeatured={product.isFeatured}
                 averageRating={product.averageRating}
                 reviewCount={product.reviewCount}
               />
@@ -395,7 +424,7 @@ export default function HomePage({ selectedLocation }) {
           <BannerSection showTopBanner={false} showSideBanners={false} />
         </div>
       )}
-{/*Logic click chọn sản phẩm theo danh mục*/}
+      {/*Logic click chọn sản phẩm theo danh mục*/}
       <FilterBar
         selectedBrand={matchingCat ? selectedQuickBrand : selectedBrand}
         onSelectBrand={(b) => {
@@ -533,42 +562,96 @@ export default function HomePage({ selectedLocation }) {
         <>
           {filteredProducts.length > 0 ? (
             <>
-              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 animate-fade-in">
-                {filteredProducts.slice(0, visibleCount).map((product) => (
-                  <ProductCard
-                    key={product.id}
-                    id={product.id}
-                    name={product.name}
-                    price={product.price}
-                    originalPrice={product.originalPrice}
-                    discount={product.discount}
-                    specs={product.specs || []}
-                    image={product.image}
-                    stockQuantity={product.stockQuantity}
-                    isFeatured={product.isFeatured}
-                    averageRating={product.averageRating}
-                    reviewCount={product.reviewCount}
-                  />
-                ))}
-              </div>
+              {/* Calculate sliced products for pagination */}
+              {(() => {
+                const totalPages = Math.ceil(filteredProducts.length / PRODUCTS_PER_PAGE);
+                const startIndex = (currentPage - 1) * PRODUCTS_PER_PAGE;
+                const endIndex = startIndex + PRODUCTS_PER_PAGE;
+                const productsToShow = filteredProducts.slice(startIndex, endIndex);
 
-              {/* Nút Xem thêm sản phẩm (Batch Loading) */}
-              {filteredProducts.length > visibleCount && (
-                <div className="flex flex-col items-center justify-center my-8">
-                  <button
-                    onClick={() => setVisibleCount(prev => prev + 12)}
-                    className="px-8 py-3 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 hover:border-blue-500 text-slate-800 dark:text-slate-100 font-bold rounded-xl shadow-sm hover:shadow-md transition-all duration-200 flex items-center gap-2 group cursor-pointer"
-                  >
-                    <span>Xem thêm {filteredProducts.length - visibleCount} sản phẩm</span>
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4 group-hover:translate-y-0.5 transition-transform">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
-                    </svg>
-                  </button>
-                  <p className="text-xs text-slate-400 mt-2">
-                    Đang hiển thị {Math.min(visibleCount, filteredProducts.length)} trên tổng số {filteredProducts.length} sản phẩm
-                  </p>
-                </div>
-              )}
+                return (
+                  <>
+                    <div ref={productListRef} key={`grid-page-${currentPage}`} className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 animate-in fade-in duration-350">
+                      {productsToShow.map((product) => (
+                        <ProductCard
+                          key={product.id}
+                          id={product.id}
+                          name={product.name}
+                          price={product.price}
+                          originalPrice={product.originalPrice}
+                          discount={product.discount}
+                          specs={product.specs || []}
+                          image={product.image}
+                          stockQuantity={product.stockQuantity}
+                          isFeatured={product.isFeatured}
+                          averageRating={product.averageRating}
+                          reviewCount={product.reviewCount}
+                        />
+                      ))}
+                    </div>
+
+                    {/* Pagination Controls */}
+                    {totalPages > 1 && (
+                      <div className="flex items-center justify-center gap-2 my-10 select-none">
+                        {/* Prev Button */}
+                        <button
+                          disabled={currentPage === 1}
+                          onClick={() => {
+                            setCurrentPage(prev => Math.max(prev - 1, 1));
+                          }}
+                          className={`w-9 h-9 rounded-lg border flex items-center justify-center text-sm font-bold transition-all ${
+                            currentPage === 1
+                              ? 'bg-gray-50 border-gray-200 text-gray-300 cursor-not-allowed'
+                              : 'bg-white border-gray-200 hover:border-blue-500 hover:text-blue-600 text-gray-700 cursor-pointer shadow-sm'
+                          }`}
+                        >
+                          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-4 h-4">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5 8.25 12l7.5-7.5" />
+                          </svg>
+                        </button>
+
+                        {/* Page Numbers */}
+                        {Array.from({ length: totalPages }).map((_, idx) => {
+                          const pageNum = idx + 1;
+                          const isActive = pageNum === currentPage;
+                          return (
+                            <button
+                              key={pageNum}
+                              onClick={() => {
+                                setCurrentPage(pageNum);
+                              }}
+                              className={`w-9 h-9 rounded-lg border flex items-center justify-center text-sm font-bold transition-all cursor-pointer ${
+                                isActive
+                                  ? 'bg-blue-600 border-blue-600 text-white shadow-md shadow-blue-100'
+                                  : 'bg-white border-gray-200 hover:border-blue-500 hover:text-blue-600 text-gray-700 shadow-sm'
+                              }`}
+                            >
+                              {pageNum}
+                            </button>
+                          );
+                        })}
+
+                        {/* Next Button */}
+                        <button
+                          disabled={currentPage === totalPages}
+                          onClick={() => {
+                            setCurrentPage(prev => Math.min(prev + 1, totalPages));
+                          }}
+                          className={`w-9 h-9 rounded-lg border flex items-center justify-center text-sm font-bold transition-all ${
+                            currentPage === totalPages
+                              ? 'bg-gray-50 border-gray-200 text-gray-300 cursor-not-allowed'
+                              : 'bg-white border-gray-200 hover:border-blue-500 hover:text-blue-600 text-gray-700 cursor-pointer shadow-sm'
+                          }`}
+                        >
+                          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-4 h-4">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5" />
+                          </svg>
+                        </button>
+                      </div>
+                    )}
+                  </>
+                );
+              })()}
             </>
           ) : (
             <div className="text-center py-10 text-gray-500 bg-slate-50 rounded-md border border-dashed border-admin-border">
