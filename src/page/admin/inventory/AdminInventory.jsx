@@ -179,13 +179,14 @@ export default function AdminInventory() {
     return match;
   });
 
-  // Group stock list by Product and aggregate stock by ProductVariant
+  // Group stock list by Product and aggregate stock by ProductVariant (including all DB products)
   const groupedProductStock = useMemo(() => {
-    if (!stockHistory || stockHistory.length === 0) return [];
+    if ((!stockHistory || stockHistory.length === 0) && (!products || products.length === 0)) return [];
 
     const productMap = {};
 
-    stockHistory.forEach(item => {
+    // 1. Map existing stock batches from stockHistory (Lô hàng nhập kho)
+    (stockHistory || []).forEach(item => {
       const pId = item.productId;
       const productInfo = products.find(p => p.id === pId);
       const brandInfo = brands.find(b => b.id === (productInfo?.brandId || item.brandId));
@@ -227,6 +228,62 @@ export default function AdminInventory() {
       }
       grp.variantMap[vKey].quantityIn += (item.quantityIn || 0);
       grp.variantMap[vKey].quantityRemaining += (item.quantityRemaining || 0);
+    });
+
+    // 2. Include all products from products list (Sản phẩm từ DB chưa có lô nhập kho riêng)
+    (products || []).forEach(prod => {
+      const pId = prod.id;
+      const brandInfo = brands.find(b => b.id === prod.brandId);
+      const categoryInfo = categories.find(c => c.id === prod.categoryId);
+
+      if (!productMap[pId]) {
+        const totalQty = prod.totalStock ?? prod.stock ?? prod.stockQuantity ?? 0;
+        const price = prod.basePrice || prod.price || 0;
+        const variants = prod.variants || prod.productVariants || [];
+
+        const variantMap = {};
+        if (variants.length > 0) {
+          variants.forEach(v => {
+            const vKey = v.id;
+            const vQty = v.totalStock ?? v.stock ?? v.stockQuantity ?? totalQty;
+            const vPrice = v.price || price;
+            variantMap[vKey] = {
+              variantId: v.id,
+              variantName: v.name || v.color || 'Mặc định',
+              unit: 'Cái',
+              price: vPrice,
+              quantityIn: vQty,
+              quantityRemaining: vQty
+            };
+          });
+        } else {
+          variantMap[0] = {
+            variantId: null,
+            variantName: 'Mặc định',
+            unit: 'Cái',
+            price: price,
+            quantityIn: totalQty,
+            quantityRemaining: totalQty
+          };
+        }
+
+        const sumQtyRem = Object.values(variantMap).reduce((sum, v) => sum + v.quantityRemaining, 0);
+        const sumVal = Object.values(variantMap).reduce((sum, v) => sum + (v.quantityRemaining * v.price), 0);
+
+        productMap[pId] = {
+          productId: pId,
+          productName: prod.name,
+          productImage: prod.image || prod.thumbnailImage || prod.mainImage,
+          brandName: brandInfo?.name || prod.brandName || '---',
+          categoryName: categoryInfo?.name || prod.categoryName || '---',
+          brandId: prod.brandId,
+          categoryId: prod.categoryId,
+          totalQuantityIn: sumQtyRem,
+          totalQuantityRemaining: sumQtyRem,
+          totalStockValue: sumVal,
+          variantMap: variantMap
+        };
+      }
     });
 
     return Object.values(productMap).map(p => ({
