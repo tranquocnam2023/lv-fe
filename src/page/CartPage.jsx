@@ -8,7 +8,7 @@ import { orderService } from '../services/orderService';
 import api from '../services/api';
 import { authService } from '../services/authService';
 import { userService } from '../services/userService';
-import { ArrowLeft, ShoppingBag, CreditCard, Gift, ChevronRight, X } from 'lucide-react';
+import { ArrowLeft, ShoppingBag, CreditCard, Gift, ChevronRight, X, AlertTriangle } from 'lucide-react';
 
 // Subcomponents
 import CartItemsList from './cart/components/CartItemsList';
@@ -127,6 +127,7 @@ export default function CartPage() {
 
   // Modal toggle states
   const [showAddressModal, setShowAddressModal] = useState(false);
+  const [showCodLimitModal, setShowCodLimitModal] = useState(false);
 
   // Special Request configuration
   const [specialRequests, setSpecialRequests] = useState({
@@ -776,7 +777,7 @@ export default function CartPage() {
     // Kiểm tra giới hạn thu hộ (COD) của Ahamove (Tối đa 10.000.000đ)
     const finalTotalPay = cartTotal + (deliveryMethod === 'ship' ? shippingFee : 0) - discountAmount - (usePoints ? pointsDiscount : 0);
     if (deliveryMethod === 'ship' && paymentMethod === 'cod' && shippingCarrier && shippingCarrier.toLowerCase().includes('ahamove') && finalTotalPay > 10000000) {
-      alert("Ahamove chỉ hỗ trợ giao hàng thu hộ (COD) tối đa 10.000.000₫ cho mỗi đơn hàng để đảm bảo an toàn. Vui lòng chuyển sang hình thức thanh toán trực tuyến (Stripe, MoMo, Chuyển khoản) hoặc đổi phương thức sang Giao Hàng Tiêu Chuẩn.");
+      setShowCodLimitModal(true);
       return;
     }
 
@@ -1188,6 +1189,70 @@ export default function CartPage() {
                 className="w-full py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-extrabold transition cursor-pointer border-0"
               >
                 Đăng nhập
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Ahamove COD Limit Warning Modal */}
+      {showCodLimitModal && (
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6 relative border border-gray-100 text-center animate-in zoom-in-95 duration-200">
+            {/* Close Button */}
+            <button
+              onClick={() => setShowCodLimitModal(false)}
+              className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition bg-transparent border-0 cursor-pointer p-1 rounded-full hover:bg-gray-100"
+            >
+              <X size={18} />
+            </button>
+
+            {/* Warning Icon */}
+            <div className="flex justify-center my-4">
+              <div className="w-16 h-16 bg-red-50 rounded-full flex items-center justify-center text-red-500 animate-pulse">
+                <AlertTriangle size={36} />
+              </div>
+            </div>
+
+            {/* Title */}
+            <h3 className="font-extrabold text-lg text-gray-800 mb-2">
+              Giới Hạn Thu Hộ (COD) Ahamove
+            </h3>
+
+            {/* Description */}
+            <div className="text-gray-655 text-xs font-semibold px-2 mb-6 leading-relaxed space-y-2 text-left bg-gray-50 p-4 rounded-xl border border-gray-200/50">
+              <p className="text-gray-700">
+                Để đảm bảo an toàn giao dịch, dịch vụ vận chuyển hỏa tốc <strong className="text-red-600">Ahamove</strong> chỉ hỗ trợ giao hàng thu hộ (COD) tối đa <strong className="text-red-600 text-sm">10.000.000₫</strong> cho mỗi đơn hàng.
+              </p>
+              <p className="text-gray-500 font-medium">
+                Vui lòng lựa chọn một trong các phương án xử lý sau để tiếp tục đặt hàng:
+              </p>
+              <ul className="list-disc pl-4 space-y-1 text-gray-500 font-medium text-[11px]">
+                <li>Chuyển sang thanh toán trực tuyến qua cổng <strong className="text-gray-700">Stripe</strong>.</li>
+                <li>Đổi phương thức giao hàng sang <strong className="text-gray-700">Giao Hàng Tiêu Chuẩn</strong> (Không giới hạn COD).</li>
+              </ul>
+            </div>
+
+            {/* Action Buttons */}
+            <div className="grid grid-cols-2 gap-4">
+              <button
+                onClick={() => {
+                  setShowCodLimitModal(false);
+                }}
+                className="w-full py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg text-xs font-extrabold transition cursor-pointer border-0"
+              >
+                Đóng lại
+              </button>
+              <button
+                onClick={() => {
+                  setShowCodLimitModal(false);
+                  // Tự động cuộn mượt xuống khu vực thanh toán/giao hàng để đổi
+                  const el = document.getElementById('payment-section') || document.querySelector('.sticky');
+                  if (el) el.scrollIntoView({ behavior: 'smooth' });
+                }}
+                className="w-full py-2.5 bg-red-600 hover:bg-red-700 text-white rounded-lg text-xs font-extrabold transition cursor-pointer border-0 shadow-md shadow-red-100"
+              >
+                Thay đổi thông tin
               </button>
             </div>
           </div>
