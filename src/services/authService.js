@@ -64,8 +64,12 @@ export const authService = {
     localStorage.removeItem('cart');
   },
 
-  forgotPassword: (data) => {
-    return api.post('/Auth/forgot-password', data);
+  sendForgotPasswordOtp: (email) => {
+    return api.post('/Auth/forgot-password', { email });
+  },
+
+  resetPassword: (data) => {
+    return api.post('/Auth/reset-password', data);
   },
 
   googleLogin: (idToken) => {

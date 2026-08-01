@@ -39,6 +39,7 @@ export default function AuthPage() {
   const [resetConfirmPassword, setResetConfirmPassword] = useState('');
   const [forgotPasswordStep, setForgotPasswordStep] = useState(1);
   const [forgotPasswordOtp, setForgotPasswordOtp] = useState('');
+  const [enteredOtp, setEnteredOtp] = useState('');
   const [forgotPasswordError, setForgotPasswordError] = useState('');
 
   // Check login state
@@ -285,110 +286,116 @@ export default function AuthPage() {
     }
   }, [isLoggedIn, isLogin]);
 
-  // Handle Login / Register
+  // Handle Authentication (Login / Register)
   const handleAuth = async (e) => {
     e.preventDefault();
     setLoading(true);
     setError('');
 
+    if (!isLogin && password !== confirmPassword) {
+      setError('Mật khẩu nhập lại không khớp!');
+      setLoading(false);
+      return;
+    }
+
     try {
       if (isLogin) {
-        const data = await authService.login({
-          username: username,
-          password: password
-        });
+        const res = await authService.login({ username, password });
+        const token = res?.token || res?.accessToken || res?.data?.token;
+        const id = res?.id || res?.data?.id;
+        const role = res?.role || res?.data?.role;
 
-        const userToken = data.token || data.accessToken || (data.data && data.data.token);
-        if (userToken) {
-          data.username = username;
-          localStorage.setItem('token', userToken);
-          localStorage.setItem('user', JSON.stringify(data));
-          
-          if (data.role === 'Admin') {
-            window.location.href = '/admin';
-          } else {
-            window.location.href = '/';
+        if (!token) {
+          setError('Tên đăng nhập hoặc mật khẩu không chính xác.');
+          return;
+        }
+
+        localStorage.setItem('token', token);
+        localStorage.setItem('user', JSON.stringify({ id, username, role }));
+
+        try {
+          const cartRes = await cartService.getCart();
+          const cartData = cartRes?.data || cartRes;
+          if (cartData) {
+            localStorage.setItem('cart', JSON.stringify(cartData));
           }
-        } else {
-          setError('Không nhận được token từ server!');
-          setLoading(false);
-          return;
+        } catch (cErr) {
+          console.log('Chưa có giỏ hàng cũ:', cErr);
         }
-      } else {
-        if (password !== confirmPassword) {
-          setError('Mật khẩu xác nhận không khớp.');
-          setLoading(false);
-          return;
-        }
-        await authService.register({
-          username: username,
-          email: email,
-          password: password
-        });
 
+        window.dispatchEvent(new Event('auth-change'));
+        navigate('/');
+      } else {
+        await authService.register({ username, email, password });
         alert('Đăng ký thành công! Vui lòng đăng nhập.');
         setIsLogin(true);
+        setPassword('');
         setConfirmPassword('');
       }
     } catch (err) {
-      if (err.response && err.response.data) {
-        setError(typeof err.response.data === 'string' ? err.response.data : 'Lỗi từ server');
-      } else {
-        setError(err.message || (isLogin ? 'Đăng nhập thất bại. Vui lòng kiểm tra lại.' : 'Đăng ký thất bại.'));
-      }
+      const msg = typeof err === 'string' ? err : (err?.message || err?.response?.data || 'Đăng nhập thất bại. Vui lòng kiểm tra lại.');
+      setError(msg);
     } finally {
       setLoading(false);
     }
   };
 
-  // Helper to generate 6-digit OTP
-  const generateOtp = () => {
-    return Math.floor(100000 + Math.random() * 900000).toString();
-  };
-
-  // Step 1: Send Reset OTP
-  const handleSendResetOtp = (e) => {
+  // Step 1: Send Reset OTP via SMTP API
+  const handleSendResetOtp = async (e) => {
     if (e) e.preventDefault();
-    if (!resetUsername.trim() || !resetEmail.trim()) {
-      setError('Vui lòng điền đầy đủ tên đăng nhập và email.');
+    const targetInput = resetEmail.trim() || resetUsername.trim();
+    if (!targetInput) {
+      setError('Vui lòng nhập Email hoặc Tên đăng nhập.');
       return;
     }
     setLoading(true);
     setError('');
     
-    // Simulate API delay
-    setTimeout(() => {
-      const code = generateOtp();
-      setForgotPasswordOtp(code);
+    try {
+      const res = await authService.sendForgotPasswordOtp(targetInput);
+      const emailRes = res?.email || res?.data?.email;
+      if (emailRes) {
+        setResetEmail(emailRes);
+      }
+      setForgotPasswordOtp(''); // Set rỗng để ẨN Trình giả lập Email (Demo)
       setForgotPasswordStep(2);
+    } catch (err) {
+      const msg = typeof err === 'string' ? err : (err?.message || err?.response?.data || 'Không thể gửi mã OTP qua Email.');
+      setError(msg);
+    } finally {
       setLoading(false);
-    }, 800);
+    }
   };
 
-  // Step 2: Verify Reset OTP
+  // Step 2: Verify Reset OTP (Nhận mã OTP thực tế từ email của user)
   const handleVerifyResetOtp = (otpCode) => {
-    setLoading(true);
+    if (!otpCode || otpCode.length < 6) {
+      setForgotPasswordError('Vui lòng nhập đủ 6 chữ số OTP.');
+      return;
+    }
+    setEnteredOtp(otpCode);
+    setForgotPasswordStep(3);
     setForgotPasswordError('');
-    
-    setTimeout(() => {
-      if (otpCode === forgotPasswordOtp) {
-        setForgotPasswordStep(3);
-        setForgotPasswordError('');
-      } else {
-        setForgotPasswordError('Mã OTP không chính xác. Vui lòng nhập lại!');
-      }
-      setLoading(false);
-    }, 600);
   };
 
   // Resend OTP
-  const handleResendResetOtp = () => {
-    const code = generateOtp();
-    setForgotPasswordOtp(code);
+  const handleResendResetOtp = async () => {
+    const targetInput = resetEmail.trim() || resetUsername.trim();
+    if (!targetInput) return;
+    setLoading(true);
     setForgotPasswordError('');
+    try {
+      await authService.sendForgotPasswordOtp(targetInput);
+      setForgotPasswordOtp('');
+      alert('Đã gửi lại mã OTP đến email của bạn.');
+    } catch (err) {
+      setForgotPasswordError('Không thể gửi lại mã OTP. Vui lòng thử lại sau.');
+    } finally {
+      setLoading(false);
+    }
   };
 
-  // Step 3: Handle Forgot Password Submit
+  // Step 3: Handle Forgot Password Submit (Gửi OTP và mật khẩu mới lên Backend)
   const handleForgotPasswordSubmit = async (e) => {
     e.preventDefault();
     if (resetNewPassword !== resetConfirmPassword) {
@@ -398,16 +405,17 @@ export default function AuthPage() {
     setLoading(true);
     setError('');
     try {
-      await authService.forgotPassword({
-        username: resetUsername,
-        email: resetEmail,
+      await authService.resetPassword({
+        email: resetEmail.trim() || resetUsername.trim(),
+        otp: enteredOtp,
         newPassword: resetNewPassword
       });
       alert('Đặt lại mật khẩu thành công! Vui lòng đăng nhập bằng mật khẩu mới.');
       setIsForgotPassword(false);
       setForgotPasswordStep(1);
       setForgotPasswordOtp('');
-      setUsername(resetUsername);
+      setEnteredOtp('');
+      if (resetUsername) setUsername(resetUsername);
       setIsLogin(true);
       // Clear fields
       setResetUsername('');
@@ -415,11 +423,8 @@ export default function AuthPage() {
       setResetNewPassword('');
       setResetConfirmPassword('');
     } catch (err) {
-      if (err.response && err.response.data) {
-        setError(typeof err.response.data === 'string' ? err.response.data : 'Đặt lại mật khẩu thất bại.');
-      } else {
-        setError(err.message || 'Đặt lại mật khẩu thất bại.');
-      }
+      const msg = typeof err === 'string' ? err : (err?.message || err?.response?.data || 'Đặt lại mật khẩu thất bại.');
+      setError(msg);
     } finally {
       setLoading(false);
     }
