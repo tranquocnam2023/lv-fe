@@ -33,6 +33,20 @@ export default function CartSummaryPayment({
     0
   );
 
+  // 1. Giá tiền của điện thoại (sản phẩm chính không phải addon)
+  const phoneTotal = cartItems
+    .filter(item => !item.isAddon)
+    .reduce((sum, item) => sum + item.price * item.quantity, 0);
+
+  // 2. Giá của bảo hiểm (gói bảo hành bảo hiểm)
+  const insuranceTotal = cartItems
+    .reduce((sum, item) => sum + (item.warrantyPrice || 0) * item.quantity, 0);
+
+  // 3. Giá của phụ kiện (sản phẩm addon mua kèm)
+  const accessoryTotal = cartItems
+    .filter(item => item.isAddon)
+    .reduce((sum, item) => sum + item.price * item.quantity, 0);
+
   return (
     <div className="space-y-4 animate-in fade-in duration-300">
 
@@ -116,6 +130,18 @@ export default function CartSummaryPayment({
           <div className="flex justify-between pt-3 border-t border-dashed border-gray-100 items-center">
             <span className="text-xs font-black text-gray-900">Tổng tiền</span>
             <span className="text-lg font-black text-red-600 tracking-tight">{finalTotalPay.toLocaleString('vi-VN')}₫</span>
+          </div>
+
+          {/* 
+            GIÁ CỦA TỪNG MẶT HÀNG CHI TIẾT THEO YÊU CẦU:
+            - phoneTotal: giá tiền của điện thoại máy chính
+            - insuranceTotal: giá của bảo hiểm bảo hành
+            - accessoryTotal: giá của phụ kiện mua kèm
+          */}
+          <div className="text-[10px] text-gray-400 font-bold normal-case text-right space-y-0.5 mt-1 border-t border-gray-50 pt-2 select-none">
+            <div>Giá máy chính: <span className="text-gray-700">{phoneTotal.toLocaleString('vi-VN')}₫</span></div>
+            <div>Giá bảo hiểm: <span className="text-gray-700">{insuranceTotal.toLocaleString('vi-VN')}₫</span></div>
+            <div>Giá phụ kiện: <span className="text-gray-700">{accessoryTotal.toLocaleString('vi-VN')}₫</span></div>
           </div>
           {/* LOGIC TÍNH ĐIỂM TÍCH LŨY QUÀ TẶNG VIP: 0.2% (0.002) trên tổng giá trị thanh toán thực tế (finalTotalPay * 0.002) */}
           <div className="flex justify-between items-center text-xs text-gray-500 pt-1">

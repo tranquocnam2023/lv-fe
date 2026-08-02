@@ -35,6 +35,31 @@ export const CartProvider = ({ children }) => {
   // Xóa logic load combos cũ
 
   useEffect(() => {
+    // Kiểm tra xem có sản phẩm chính (máy điện thoại/máy tính bảng...) nào trong giỏ không
+    const hasMainProduct = cartItems.some(item => !item.isAddon);
+    
+    // Nếu KHÔNG có sản phẩm chính, nhưng lại CÓ phụ kiện mua kèm (isAddon = true)
+    if (!hasMainProduct && cartItems.some(item => item.isAddon)) {
+      setCartItems((prevItems) =>
+        prevItems.map((item) => {
+          if (item.isAddon) {
+            // Khôi phục giá gốc của phụ kiện khi mua lẻ độc lập
+            const normalPrice = item.originalBasePrice || item.price;
+            // Tạo lại mã định danh giỏ hàng tiêu chuẩn (không có tiền tố addon-)
+            const normalCartId = `${item.id}-${item.selectedStorage || ''}-${item.selectedColor || ''}${item.selectedWarranty ? `-${item.selectedWarranty.id}` : ''}`;
+            return {
+              ...item,
+              isAddon: false,
+              price: normalPrice,
+              cartId: normalCartId
+            };
+          }
+          return item;
+        })
+      );
+      return;
+    }
+    
     localStorage.setItem('cart', JSON.stringify(cartItems));
   }, [cartItems]);
 

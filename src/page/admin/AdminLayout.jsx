@@ -29,7 +29,7 @@ const ADMIN_FUNCTIONS = [
   { label: 'Quản lý đánh giá', tab: 'reviews', keywords: ['danh gia', 'binh luan', 'reviews'] },
   { label: 'Cài đặt hệ thống', tab: 'settings', keywords: ['cai dat', 'settings', 'cau hinh'] },
   { label: 'Nhật ký hoạt động', tab: 'audit_logs', keywords: ['nhat ky', 'kiem toan', 'audit', 'logs', 'hoat dong'] },
-  { label: 'Thẩm định bảo hành', tab: 'inspections', keywords: ['tham dinh', 'bao hanh', 'inspections', 'imei', 'ktv'] },
+  { label: 'Quản lý bảo hành', tab: 'inspections', keywords: ['quan ly bao hanh', 'tham dinh', 'bao hanh', 'inspections', 'imei', 'ktv'] },
 ];
 
 // ─── Map tab → tiêu đề breadcrumb ────────────────────────────────────────────
@@ -49,7 +49,7 @@ const TAB_TITLES = {
   update_product: 'Cập nhật sản phẩm',
   audit_logs: 'Nhật ký hoạt động',
   settings: 'Cài đặt hệ thống',
-  inspections: 'Thẩm định thiết bị bảo hành',
+  inspections: 'Quản lý bảo hành',
 };
 
 // ─── AdminLayout ──────────────────────────────────────────────────────────────

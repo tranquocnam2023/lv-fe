@@ -782,6 +782,17 @@ export default function Header() {
               </div>
             );
           })}
+          
+          {/* Mua lẻ gói bảo hành (Máy cũ cần thẩm định) */}
+          <Link
+            to="/dich-vu-bao-hanh"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded transition-all duration-200 text-white hover:bg-white/15 shrink-0"
+          >
+            <div className="w-6 h-6 rounded flex items-center justify-center shrink-0 text-blue-600 dark:text-blue-400">
+              <Shield className="w-4 h-4 shrink-0" />
+            </div>
+            <span>Dịch vụ bảo hành</span>
+          </Link>
         </div>
       </div>
 

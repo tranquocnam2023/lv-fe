@@ -41,7 +41,7 @@ export default function OrderDetailsModal({ order, onClose, onShipWithAhamove })
 
   if (!order) return null;
 
-  const subTotal = order.items?.reduce((sum, i) => sum + (i.quantity * i.priceAtPurchase), 0) || 0;
+  const subTotal = order.items?.reduce((sum, i) => sum + (i.quantity * (i.priceAtPurchase + (i.warrantyPrice || 0))), 0) || 0;
   const discountFromPoints = order.discountFromPoints || 0;
   const totalPaid = order.amount || 0;
   const diff = totalPaid - subTotal + discountFromPoints;
@@ -194,13 +194,23 @@ export default function OrderDetailsModal({ order, onClose, onShipWithAhamove })
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-admin-border text-xs">
-                  {order.items?.map((item, index) => (
+                   {order.items?.map((item, index) => (
                     <tr key={index} className="hover:bg-admin-bg/30">
                       <td className="px-4 py-3">
                         <div className="flex flex-col">
                           <span className="font-bold text-admin-text-main">{item.productName}</span>
                           {item.variantName && item.variantName !== 'Mặc định' && (
                             <span className="text-[11px] text-admin-text-muted font-medium mt-0.5">Biến thể: {item.variantName}</span>
+                          )}
+                          {item.warrantyId && (
+                            <span className="text-[11px] text-blue-600 font-extrabold mt-1">
+                              🛡️ Bảo hành mở rộng: {item.warrantyName} (+{formatCurrency(item.warrantyPrice)})
+                            </span>
+                          )}
+                          {item.imeiOrSerial && (
+                            <span className="text-[10px] text-gray-500 font-bold mt-0.5">
+                              IMEI/Serial: {item.imeiOrSerial} ({item.inspectionStatus === 'WAITING_CHECK' ? 'Chờ kiểm tra' : item.inspectionStatus === 'PASSED' ? 'Đã duyệt' : 'Từ chối'})
+                            </span>
                           )}
                         </div>
                       </td>
@@ -211,7 +221,7 @@ export default function OrderDetailsModal({ order, onClose, onShipWithAhamove })
                         {item.quantity}
                       </td>
                       <td className="px-4 py-3 text-right font-bold text-admin-text-main">
-                        {formatCurrency(item.quantity * item.priceAtPurchase)}
+                        {formatCurrency(item.quantity * (item.priceAtPurchase + (item.warrantyPrice || 0)))}
                       </td>
                     </tr>
                   ))}
