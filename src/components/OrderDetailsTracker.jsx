@@ -26,6 +26,10 @@ export default function OrderDetailsTracker({ order, onOrderCancelled, isGuest =
 
   if (!order) return null;
 
+  // Trích xuất gói bảo hành (nếu có) từ chi tiết đơn hàng
+  const warrantyItem = order.items?.find(item => item.warrantyId);
+  const inspectionStatus = warrantyItem?.inspectionStatus;
+
   const cancelReasons = [
     "Tôi muốn đổi địa chỉ / thông tin nhận hàng",
     "Tôi muốn chọn mua sản phẩm khác",
@@ -203,8 +207,8 @@ export default function OrderDetailsTracker({ order, onOrderCancelled, isGuest =
           }`}>
             {getStatusText(statusId)}
           </span>
-          {/* PHÂN QUYỀN: Ẩn nút "Thanh toán ngay" nếu đây là giao diện tra cứu của khách vãng lai (!isGuest) */}
-          {!isGuest && statusId === 1 && (order.paymentMethod?.toLowerCase() === 'stripe' || order.paymentMethod?.toLowerCase() === 'momo') && (
+          {/* PHÂN QUYỀN: Cho phép cả Khách vãng lai thanh toán khi đơn hàng chứa bảo hành đã qua thẩm định hoặc đơn hàng thường */}
+          {statusId === 1 && (order.paymentMethod?.toLowerCase() === 'stripe' || order.paymentMethod?.toLowerCase() === 'momo') && (!warrantyItem || inspectionStatus === 'PASSED') && (
             <button
               onClick={handlePaymentRetry}
               className="px-4 py-1.5 bg-blue-600 border border-blue-600 text-white hover:bg-blue-700 text-xs font-black uppercase tracking-wider rounded-full transition-all active:scale-95 flex items-center gap-1.5 cursor-pointer"
@@ -223,6 +227,40 @@ export default function OrderDetailsTracker({ order, onOrderCancelled, isGuest =
           )}
         </div>
       </div>
+
+      {/* TRẠNG THÁI THẨM ĐỊNH BẢO HÀNH */}
+      {warrantyItem && (
+        <div className={`p-5 rounded-md border animate-in zoom-in-95 space-y-2 ${
+          inspectionStatus === 'WAITING_CHECK'
+            ? 'bg-yellow-50 border-yellow-200 text-yellow-800'
+            : inspectionStatus === 'PASSED'
+            ? 'bg-green-50 border-green-200 text-green-800'
+            : inspectionStatus === 'FAILED'
+            ? 'bg-red-50 border-red-200 text-red-800'
+            : 'bg-gray-50 border-gray-250 text-gray-800'
+        }`}>
+          <div className="flex items-center gap-2">
+            <span className="text-base">🛡️</span>
+            <h4 className="text-xs font-black uppercase tracking-wider">
+              Trạng thái thẩm định thiết bị bảo hành
+            </h4>
+          </div>
+          <p className="text-xs font-bold leading-relaxed">
+            {inspectionStatus === 'WAITING_CHECK' && (
+              <span>🟡 Cần thẩm định tại cửa hàng: Vui lòng mang thiết bị đến cửa hàng gần nhất và đọc mã đơn #PS{order.id} cho Kỹ thuật viên kiểm tra máy.</span>
+            )}
+            {inspectionStatus === 'PASSED' && (
+              <span>🟢 Máy đủ điều kiện bảo hành: Thẩm định thành công! Vui lòng tiến hành thanh toán để kích hoạt gói bảo hành.</span>
+            )}
+            {inspectionStatus === 'FAILED' && (
+              <span>🔴 Thẩm định thất bại: Thiết bị không đủ điều kiện tham gia gói bảo hành (Cấn móp/Nứt vỡ/Trầy xước nặng). Đơn hàng đã bị hủy.</span>
+            )}
+            {inspectionStatus === 'NOT_REQUIRED' && (
+              <span>🟢 Máy mua mới tại cửa hàng: Gói bảo hành được áp dụng trực tiếp mà không cần qua thẩm định lại.</span>
+            )}
+          </p>
+        </div>
+      )}
 
       {/* TIMELINE / STEPPER TRẠNG THÁI */}
       {statusId === 5 ? (
@@ -266,10 +304,16 @@ export default function OrderDetailsTracker({ order, onOrderCancelled, isGuest =
                 <p className="text-[9px] text-gray-400 font-bold uppercase tracking-widest mt-0.5 italic">
                   {item.variantName} | Số lượng: {item.quantity}
                 </p>
+                {item.warrantyId && (
+                  <div className="mt-1.5 flex flex-wrap items-center gap-1.5 bg-blue-50/75 text-blue-700 border border-blue-100 px-2 py-0.5 rounded text-[10px] font-bold w-fit">
+                    <span>🛡️ Gói bảo hành: {item.warrantyName} (+{item.warrantyPrice?.toLocaleString('vi-VN')}₫)</span>
+                    {item.imeiOrSerial && <span className="bg-blue-100 px-1 py-0.2 rounded text-[9px] text-blue-800">IMEI: {item.imeiOrSerial}</span>}
+                  </div>
+                )}
               </div>
               <div className="text-right shrink-0">
                 <span className="text-xs font-black text-blue-600">
-                  {(item.priceAtPurchase * item.quantity).toLocaleString('vi-VN')}₫
+                  {((item.priceAtPurchase + (item.warrantyPrice || 0)) * item.quantity).toLocaleString('vi-VN')}₫
                 </span>
               </div>
             </div>

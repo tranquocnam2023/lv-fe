@@ -40,8 +40,8 @@ export default function OrderTrackingPage() {
     } catch (err) {
       console.error('Lỗi tra cứu đơn hàng:', err);
       setError(
-        typeof err === 'string' 
-          ? err 
+        typeof err === 'string'
+          ? err
           : err.message || 'Mã đơn hàng không tồn tại hoặc số điện thoại không khớp.'
       );
     } finally {
@@ -75,7 +75,7 @@ export default function OrderTrackingPage() {
         // Đã tìm thấy đơn hàng: Hiển thị giao diện Theo dõi chi tiết
         <div className="space-y-4">
           <div className="flex justify-start">
-            <button 
+            <button
               onClick={handleReset}
               className="flex items-center gap-1.5 text-xs font-bold text-primary hover:underline transition-colors uppercase"
             >
@@ -94,7 +94,7 @@ export default function OrderTrackingPage() {
             </div>
             <h2 className="text-2xl font-bold text-primary mb-2 text-center">Tra cứu trạng thái đơn hàng</h2>
             <p className="text-xs text-gray-500 font-semibold max-w-xs mx-auto text-center">
-              Dành cho khách hàng vãng lai không có mật khẩu. Vui lòng nhập Mã đơn hàng và Số điện thoại để tra cứu nhanh.
+              Vui lòng nhập Mã đơn hàng và Số điện thoại để tra cứu đơn hàng nhanh.
             </p>
           </div>
 
@@ -108,7 +108,7 @@ export default function OrderTrackingPage() {
           <form onSubmit={handleTrack} className="space-y-4">
             <div>
               <label className="block text-sm font-medium mb-1">Mã đơn hàng *</label>
-              <input 
+              <input
                 type="text"
                 value={orderId}
                 onChange={(e) => setOrderId(e.target.value)}
@@ -119,7 +119,7 @@ export default function OrderTrackingPage() {
 
             <div>
               <label className="block text-sm font-medium mb-1">Số điện thoại mua hàng *</label>
-              <input 
+              <input
                 type="tel"
                 value={phone}
                 onChange={(e) => setPhone(e.target.value)}

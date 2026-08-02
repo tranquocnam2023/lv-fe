@@ -1,5 +1,6 @@
 import React from 'react';
 import { Check, X } from 'lucide-react';
+import WarrantySelector from '../../../components/product/WarrantySelector';
 
 const getHexForColor = (colorName) => {
   const c = colorName.toLowerCase();
@@ -24,7 +25,10 @@ export default function ProductSummaryInfo({
   onBuyNow,
   accessorySuggestions = [],
   selectedAccessories = [],
-  onToggleAccessory
+  onToggleAccessory,
+  variantId,
+  selectedWarranty,
+  onSelectWarranty
 }) {
   const promotions = [
     "Thu cũ Đổi mới: Trợ giá lên đến 2.000.000₫",
@@ -160,6 +164,15 @@ export default function ProductSummaryInfo({
               ))}
             </div>
           </div>
+ 
+          {/* Chọn gói bảo hành mở rộng */}
+          {displayDetails.stock > 0 && product.isAvailable !== false && (
+            <WarrantySelector
+              variantId={variantId}
+              selectedWarranty={selectedWarranty}
+              onSelectWarranty={onSelectWarranty}
+            />
+          )}
 
           {/* CTAs */}
           <div className="space-y-4 pt-2">

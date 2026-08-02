@@ -54,22 +54,15 @@ export default function CartItemsList({ cartItems, updateQuantity, removeFromCar
                     >
                       {item.name}
                     </Link>
-                    <div className="text-right shrink-0">
+                     <div className="text-right shrink-0">
                       <span className="font-black text-red-600 text-xs">
-                        {(item.price * item.quantity).toLocaleString('vi-VN')}₫
+                        {((item.price + (item.warrantyPrice || 0)) * item.quantity).toLocaleString('vi-VN')}₫
                       </span>
                       {item.originalPrice && item.originalPrice > item.price && (
                         <p className="text-[10px] text-gray-400 line-through font-semibold">
-                          {(item.originalPrice * item.quantity).toLocaleString('vi-VN')}₫
+                          {((item.originalPrice + (item.warrantyPrice || 0)) * item.quantity).toLocaleString('vi-VN')}₫
                         </p>
                       )}
-
-                      {/* cưa đôi giá gốc trên trang giỏ hàng
-                      {item.originalPrice && (
-                        <p className="text-[10px] text-gray-400 line-through font-semibold">
-                          {((item.originalPrice/2) * item.quantity).toLocaleString('vi-VN')}₫
-                        </p>
-                      )}*/}
                     </div>
                   </div>
                   {item.selectedAttributes && Object.keys(item.selectedAttributes).length > 0 ? (
@@ -87,6 +80,12 @@ export default function CartItemsList({ cartItems, updateQuantity, removeFromCar
                         {item.selectedColor ? `Màu: ${item.selectedColor}` : ''}
                       </span>
                     ) : null
+                  )}
+
+                  {item.warrantyId && (
+                    <div className="mt-2 flex items-center gap-1.5 text-[10px] text-blue-700 font-bold bg-blue-50/75 border border-blue-100 px-2 py-0.5 rounded w-fit select-none">
+                      <span>🛡️ Bảo hành mở rộng: {item.warrantyName} (+{item.warrantyPrice?.toLocaleString('vi-VN')}₫ / sản phẩm)</span>
+                    </div>
                   )}
                 </div>
 

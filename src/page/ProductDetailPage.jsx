@@ -102,10 +102,15 @@ export default function ProductDetailPage() {
   const [loading, setLoading] = useState(true);
   const [isSpecsModalOpen, setIsSpecsModalOpen] = useState(false);
 
-  // States chọn biến thể
   const [selectedAttributes, setSelectedAttributes] = useState({});
   const [variants, setVariants] = useState([]);
   const [categories, setCategories] = useState([]);
+  const [selectedWarranty, setSelectedWarranty] = useState(null);
+
+  // Tự động hủy chọn bảo hành cũ khi đổi biến thể sản phẩm
+  useEffect(() => {
+    setSelectedWarranty(null);
+  }, [selectedAttributes]);
 
   // States gợi ý mua kèm phụ kiện
   const [accessorySuggestions, setAccessorySuggestions] = useState([]);
@@ -733,7 +738,8 @@ export default function ProductDetailPage() {
         price: displayDetails.price,
         selectedAttributes: { ...selectedAttributes },
         selectedColor: selectedAttributes["Màu sắc"] || Object.entries(selectedAttributes).find(([k]) => k.toLowerCase().includes('màu'))?.[1] || null,
-        selectedStorage: selectedAttributes["Dung lượng RAM - ROM"] || selectedAttributes["Dung Lượng RAM - ROM"] || Object.entries(selectedAttributes).find(([k]) => k.toLowerCase().includes('dung lượng') || k.toLowerCase().includes('bộ nhớ') || k.toLowerCase().includes('ram') || k.toLowerCase().includes('rom'))?.[1] || null
+        selectedStorage: selectedAttributes["Dung lượng RAM - ROM"] || selectedAttributes["Dung Lượng RAM - ROM"] || Object.entries(selectedAttributes).find(([k]) => k.toLowerCase().includes('dung lượng') || k.toLowerCase().includes('bộ nhớ') || k.toLowerCase().includes('ram') || k.toLowerCase().includes('rom'))?.[1] || null,
+        selectedWarranty: selectedWarranty
       });
       // Alert removed to rely on custom toast
     }
@@ -753,7 +759,8 @@ export default function ProductDetailPage() {
         price: displayDetails.price,
         selectedAttributes: { ...selectedAttributes },
         selectedColor: selectedAttributes["Màu sắc"] || Object.entries(selectedAttributes).find(([k]) => k.toLowerCase().includes('màu'))?.[1] || null,
-        selectedStorage: selectedAttributes["Dung lượng RAM - ROM"] || selectedAttributes["Dung Lượng RAM - ROM"] || Object.entries(selectedAttributes).find(([k]) => k.toLowerCase().includes('dung lượng') || k.toLowerCase().includes('bộ nhớ') || k.toLowerCase().includes('ram') || k.toLowerCase().includes('rom'))?.[1] || null
+        selectedStorage: selectedAttributes["Dung lượng RAM - ROM"] || selectedAttributes["Dung Lượng RAM - ROM"] || Object.entries(selectedAttributes).find(([k]) => k.toLowerCase().includes('dung lượng') || k.toLowerCase().includes('bộ nhớ') || k.toLowerCase().includes('ram') || k.toLowerCase().includes('rom'))?.[1] || null,
+        selectedWarranty: selectedWarranty
       });
 
       navigate('/cart');
@@ -864,6 +871,9 @@ export default function ProductDetailPage() {
             onAttributeClick={handleAttributeClick}
             onAddToCart={handleAddToCart}
             onBuyNow={handleBuyNow}
+            variantId={matchedVariant?.id || selectedVariant?.id}
+            selectedWarranty={selectedWarranty}
+            onSelectWarranty={setSelectedWarranty}
           />
         </div>
 

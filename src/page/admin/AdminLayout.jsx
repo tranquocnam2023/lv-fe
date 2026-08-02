@@ -8,7 +8,8 @@ import { userService } from '../../services/userService';
 import {
   Layout, Package, Users, ShoppingCart, Settings, LogOut,
   Bell, FolderTree, Star, LayoutGrid, Ticket, Boxes,
-  MessageSquare, History, Sun, Moon, CreditCard, PackagePlus
+  MessageSquare, History, Sun, Moon, CreditCard, PackagePlus,
+  ShieldAlert
 } from 'lucide-react';
 import { useTheme } from '../../context/ThemeContext';
 
@@ -28,6 +29,7 @@ const ADMIN_FUNCTIONS = [
   { label: 'Quản lý đánh giá', tab: 'reviews', keywords: ['danh gia', 'binh luan', 'reviews'] },
   { label: 'Cài đặt hệ thống', tab: 'settings', keywords: ['cai dat', 'settings', 'cau hinh'] },
   { label: 'Nhật ký hoạt động', tab: 'audit_logs', keywords: ['nhat ky', 'kiem toan', 'audit', 'logs', 'hoat dong'] },
+  { label: 'Thẩm định bảo hành', tab: 'inspections', keywords: ['tham dinh', 'bao hanh', 'inspections', 'imei', 'ktv'] },
 ];
 
 // ─── Map tab → tiêu đề breadcrumb ────────────────────────────────────────────
@@ -47,6 +49,7 @@ const TAB_TITLES = {
   update_product: 'Cập nhật sản phẩm',
   audit_logs: 'Nhật ký hoạt động',
   settings: 'Cài đặt hệ thống',
+  inspections: 'Thẩm định thiết bị bảo hành',
 };
 
 // ─── AdminLayout ──────────────────────────────────────────────────────────────
@@ -311,6 +314,7 @@ export default function AdminLayout({ activeAdminTab, onTabChange, setSearchPara
           <SidebarItem id="promotions" Icon={Ticket} label="Khuyến mãi" />
           <SidebarItem id="combos" Icon={PackagePlus} label="Quản lý Combo" />
           <SidebarItem id="reviews" Icon={MessageSquare} label="Đánh giá" />
+          <SidebarItem id="inspections" Icon={ShieldAlert} label="Thẩm định bảo hành" />
 
           <div className="pt-6">
             <p className="px-4 text-[12px] font-bold text-admin-sidebar-text/60 uppercase tracking-widest mb-4">Hệ thống</p>

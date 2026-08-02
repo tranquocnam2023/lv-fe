@@ -876,7 +876,8 @@ export default function CartPage() {
               variantId: matchedVariant.id,
               quantity: item.quantity,
               appliedCampaignId: item.appliedCampaignId,
-              isAddon: item.isAddon || false
+              isAddon: item.isAddon || false,
+              warrantyId: item.warrantyId || null
             });
           }
         } catch (err) {

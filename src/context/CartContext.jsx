@@ -42,7 +42,7 @@ export const CartProvider = ({ children }) => {
     setCartItems((prevItems) => {
       const cartId = product.isAddon && product.appliedCampaignId
         ? `addon-${product.appliedCampaignId}-${product.id}-${product.selectedStorage || ''}-${product.selectedColor || ''}`
-        : `${product.id}-${product.selectedStorage || ''}-${product.selectedColor || ''}`;
+        : `${product.id}-${product.selectedStorage || ''}-${product.selectedColor || ''}${product.selectedWarranty ? `-${product.selectedWarranty.id}` : ''}`;
 
       const existingItemIndex = prevItems.findIndex(item => item.cartId === cartId);
 
@@ -56,7 +56,10 @@ export const CartProvider = ({ children }) => {
         ...product,
         quantity,
         cartId,
-        originalBasePrice: product.originalBasePrice || product.price
+        originalBasePrice: product.originalBasePrice || product.price,
+        warrantyId: product.selectedWarranty?.id || null,
+        warrantyName: product.selectedWarranty?.name || null,
+        warrantyPrice: product.selectedWarranty?.basePrice || 0
       }];
     });
 
@@ -80,16 +83,9 @@ export const CartProvider = ({ children }) => {
     setCartItems([]);
   };
 
-  //Logic tính toán động giá ưu đãi sản phẩm mua kèm và tổng tiền (10%, 15%)
- // const counts = {};
- // const displayCartItems = cartItems.map(i => ({
- //   ...i,
- //   price: (i.originalBasePrice || i.price) * (i.isAddon && i.parentCartItemId ? ((counts[i.parentCartItemId] = (counts[i.parentCartItemId] || 0) + 1) === 1 ? 0.9 : 0.85) : 1)
- // }));
-
-  //  logic tính tổng tiền trong giỏ
+  // logic tính tổng tiền trong giỏ (bao gồm cả giá gói bảo hành đi kèm)
   const cartTotal = cartItems.reduce(
-    (total, item) => total + item.price * item.quantity,
+    (total, item) => total + (item.price + (item.warrantyPrice || 0)) * item.quantity,
     0
   );
 
