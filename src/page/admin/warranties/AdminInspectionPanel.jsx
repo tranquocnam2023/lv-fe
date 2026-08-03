@@ -1,6 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { orderService } from '../../../services/orderService';
 import { warrantyService } from '../../../services/warrantyService';
+import { brandService } from '../../../services/brandService';
+import { categoryService } from '../../../services/categoryService';
+import { productService } from '../../../services/productService';
 import { Search, ShieldAlert, CheckCircle2, XCircle, Clock, Eye, AlertCircle, Plus, Pencil, Trash2, HelpCircle } from 'lucide-react';
 
 /**
@@ -50,9 +53,21 @@ export default function AdminInspectionPanel() {
     durationMonths: 12,
     basePrice: 0,
     requiresInspection: false,
-    isActive: true
+    isActive: true,
+    rules: {
+      brandId: '',
+      categoryId: '',
+      productId: '',
+      minPrice: 0,
+      maxPrice: ''
+    }
   });
   const [crudSubmitting, setCrudSubmitting] = useState(false);
+
+  // States các danh mục ràng buộc
+  const [brands, setBrands] = useState([]);
+  const [categories, setCategories] = useState([]);
+  const [products, setProducts] = useState([]);
 
   // State thông báo chung
   const [message, setMessage] = useState(null);
@@ -108,6 +123,11 @@ export default function AdminInspectionPanel() {
       loadPackages();
       setSelectedPackage(null);
       setIsAddingNew(false);
+
+      // Tải các hãng, danh mục và sản phẩm cho rules
+      brandService.getAll().then(data => setBrands(Array.isArray(data) ? data : [])).catch(err => console.error(err));
+      categoryService.getAll().then(data => setCategories(Array.isArray(data) ? data : [])).catch(err => console.error(err));
+      productService.getAll().then(data => setProducts(Array.isArray(data) ? data : [])).catch(err => console.error(err));
     }
     setMessage(null);
   }, [viewMode]);
@@ -256,22 +276,40 @@ export default function AdminInspectionPanel() {
       durationMonths: 12,
       basePrice: 0,
       requiresInspection: false,
-      isActive: true
+      isActive: true,
+      rules: {
+        brandId: '',
+        categoryId: '',
+        productId: '',
+        minPrice: 0,
+        maxPrice: ''
+      }
     });
   };
 
   const handleOpenEditForm = (pkg) => {
     setIsAddingNew(false);
     setSelectedPackage(pkg);
+    
+    // Đảm bảo tương thích cả chữ hoa/chữ thường (PascalCase vs camelCase) từ API trả về
+    const rulesObj = pkg.rules || pkg.Rules || {};
+    
     setPackageFormData({
-      code: pkg.code,
-      name: pkg.name,
-      description: pkg.description || '',
-      termsHtml: pkg.termsHtml || '',
-      durationMonths: pkg.durationMonths,
-      basePrice: pkg.basePrice,
-      requiresInspection: pkg.requiresInspection,
-      isActive: pkg.isActive
+      code: pkg.code || pkg.Code,
+      name: pkg.name || pkg.Name,
+      description: pkg.description || pkg.Description || '',
+      termsHtml: pkg.termsHtml || pkg.TermsHtml || '',
+      durationMonths: pkg.durationMonths || pkg.DurationMonths,
+      basePrice: pkg.basePrice || pkg.BasePrice,
+      requiresInspection: pkg.requiresInspection !== undefined ? pkg.requiresInspection : pkg.RequiresInspection,
+      isActive: pkg.isActive !== undefined ? pkg.isActive : pkg.IsActive,
+      rules: {
+        brandId: rulesObj.brandId || rulesObj.BrandId || '',
+        categoryId: rulesObj.categoryId || rulesObj.CategoryId || '',
+        productId: rulesObj.productId || rulesObj.ProductId || '',
+        minPrice: rulesObj.minPrice !== undefined ? rulesObj.minPrice : (rulesObj.MinPrice !== undefined ? rulesObj.MinPrice : 0),
+        maxPrice: rulesObj.maxPrice !== undefined ? rulesObj.maxPrice : (rulesObj.MaxPrice !== undefined ? rulesObj.MaxPrice : '')
+      }
     });
   };
 
@@ -293,6 +331,49 @@ export default function AdminInspectionPanel() {
     }
   };
 
+  const generateWarrantyCode = (name) => {
+    if (!name) return 'BH_' + Math.random().toString(36).substring(2, 10).toUpperCase();
+    const cleanName = name
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/[^a-zA-Z0-9]/g, '_')
+      .replace(/_+/g, '_')
+      .toUpperCase();
+    const truncated = cleanName.substring(0, 35).replace(/(^_+|_+$)/g, '');
+    const randomHex = Math.random().toString(36).substring(2, 8).toUpperCase();
+    return `${truncated}_${randomHex}`.substring(0, 50);
+  };
+
+  const formatMoneyInput = (val) => {
+    if (val === '' || val === null || val === undefined) return '';
+    return Number(val).toLocaleString('vi-VN').replace(/,/g, '.');
+  };
+
+  const handleMoneyChange = (rawVal, fieldPath) => {
+    const stringWithoutDots = rawVal.replace(/\./g, '');
+    if (stringWithoutDots === '') {
+      if (fieldPath === 'basePrice') {
+        setPackageFormData(prev => ({ ...prev, basePrice: 0 }));
+      } else if (fieldPath === 'minPrice') {
+        setPackageFormData(prev => ({ ...prev, rules: { ...prev.rules, minPrice: 0 } }));
+      } else if (fieldPath === 'maxPrice') {
+        setPackageFormData(prev => ({ ...prev, rules: { ...prev.rules, maxPrice: '' } }));
+      }
+      return;
+    }
+
+    if (/^\d+$/.test(stringWithoutDots)) {
+      const parsed = parseInt(stringWithoutDots, 10);
+      if (fieldPath === 'basePrice') {
+        setPackageFormData(prev => ({ ...prev, basePrice: parsed }));
+      } else if (fieldPath === 'minPrice') {
+        setPackageFormData(prev => ({ ...prev, rules: { ...prev.rules, minPrice: parsed } }));
+      } else if (fieldPath === 'maxPrice') {
+        setPackageFormData(prev => ({ ...prev, rules: { ...prev.rules, maxPrice: parsed } }));
+      }
+    }
+  };
+
   const handleSavePackage = async (e) => {
     e.preventDefault();
     if (!packageFormData.name.trim()) {
@@ -301,20 +382,52 @@ export default function AdminInspectionPanel() {
     }
 
     setCrudSubmitting(true);
+
+    // Đóng gói data gửi đi kèm rules định dạng số/null chuẩn xác
+    const brandIdVal = packageFormData.rules.brandId ? parseInt(packageFormData.rules.brandId) : null;
+    const categoryIdVal = packageFormData.rules.categoryId ? parseInt(packageFormData.rules.categoryId) : null;
+    const productIdVal = packageFormData.rules.productId ? parseInt(packageFormData.rules.productId) : null;
+    const minPriceVal = parseFloat(packageFormData.rules.minPrice) || 0;
+    const maxPriceVal = packageFormData.rules.maxPrice ? parseFloat(packageFormData.rules.maxPrice) : null;
+
+    const rulesPayload = {
+      brandId: brandIdVal,
+      categoryId: categoryIdVal,
+      productId: productIdVal,
+      minPrice: minPriceVal,
+      maxPrice: maxPriceVal,
+
+      // Fallbacks PascalCase để tương thích tuyệt đối cấu trúc C#
+      BrandId: brandIdVal,
+      CategoryId: categoryIdVal,
+      ProductId: productIdVal,
+      MinPrice: minPriceVal,
+      MaxPrice: maxPriceVal
+    };
+
+    const submitData = {
+      name: packageFormData.name,
+      description: packageFormData.description,
+      termsHtml: packageFormData.termsHtml,
+      durationMonths: packageFormData.durationMonths,
+      basePrice: packageFormData.basePrice,
+      requiresInspection: packageFormData.requiresInspection,
+      isActive: packageFormData.isActive,
+      rules: rulesPayload,
+      Rules: rulesPayload
+    };
+
     try {
       if (isAddingNew) {
-        // Tạo mới gói bảo hành
-        if (!packageFormData.code.trim()) {
-          alert('Vui lòng nhập mã gói bảo hành!');
-          setCrudSubmitting(false);
-          return;
-        }
-        await warrantyService.createPackage(packageFormData);
+        // Tạo mới gói bảo hành - Tự sinh Mã gói duy nhất
+        const generatedCode = generateWarrantyCode(packageFormData.name);
+        submitData.code = generatedCode;
+        await warrantyService.createPackage(submitData);
         setMessage({ type: 'success', text: 'Tạo gói bảo hành mới thành công!' });
         setIsAddingNew(false);
       } else {
         // Cập nhật gói cũ
-        await warrantyService.updatePackage(selectedPackage.id, packageFormData);
+        await warrantyService.updatePackage(selectedPackage.id, submitData);
         setMessage({ type: 'success', text: 'Cập nhật gói bảo hành thành công!' });
         setSelectedPackage(null);
       }
@@ -664,7 +777,6 @@ export default function AdminInspectionPanel() {
                 <table className="w-full border-collapse text-left">
                   <thead>
                     <tr className="bg-gray-50 border-b border-gray-100 text-[10px] font-black uppercase tracking-wider text-gray-500">
-                      <th className="p-4">Mã gói</th>
                       <th className="p-4">Tên gói bảo hành</th>
                       <th className="p-4">Thời hạn</th>
                       <th className="p-4">Giá gói</th>
@@ -689,9 +801,6 @@ export default function AdminInspectionPanel() {
                     ) : (
                       packages.map((pkg) => (
                         <tr key={pkg.id} className="hover:bg-gray-50/50 transition-colors">
-                          <td className="p-4">
-                            <span className="font-bold text-gray-900">{pkg.code}</span>
-                          </td>
                           <td className="p-4">
                             <span className="block text-gray-800 font-extrabold">{pkg.name}</span>
                             <span className="block text-[10px] text-gray-400 truncate max-w-[200px]" title={pkg.description}>
@@ -748,7 +857,7 @@ export default function AdminInspectionPanel() {
             <div className="lg:col-span-5 bg-white rounded-lg border border-gray-100 p-5 space-y-4 animate-in slide-in-from-right-5 duration-350">
               <div className="flex justify-between items-center border-b border-gray-100 pb-3">
                 <h3 className="text-sm font-black text-gray-900 uppercase">
-                  {isAddingNew ? 'Thêm gói bảo hành mới' : `Sửa gói: ${selectedPackage?.code}`}
+                  {isAddingNew ? 'Thêm gói bảo hành mới' : `Sửa gói: ${selectedPackage?.name}`}
                 </h3>
                 <button
                   onClick={() => {
@@ -762,19 +871,6 @@ export default function AdminInspectionPanel() {
               </div>
 
               <form onSubmit={handleSavePackage} className="space-y-4 text-xs font-semibold text-gray-700">
-                {/* Mã gói (Chỉ cho nhập khi tạo mới) */}
-                <div className="space-y-1.5">
-                  <label className="block text-gray-500 uppercase tracking-widest text-[10px] font-black">Mã gói bảo hành (Code):</label>
-                  <input
-                    type="text"
-                    disabled={!isAddingNew}
-                    placeholder="Ví dụ: BH_VIP_12M"
-                    value={packageFormData.code}
-                    onChange={(e) => setPackageFormData(prev => ({ ...prev, code: e.target.value }))}
-                    className="w-full p-2.5 border border-gray-250 rounded focus:border-primary transition-all outline-none disabled:bg-gray-100 disabled:text-gray-400 font-bold uppercase"
-                  />
-                </div>
-
                 {/* Tên gói */}
                 <div className="space-y-1.5">
                   <label className="block text-gray-500 uppercase tracking-widest text-[10px] font-black">Tên gói hiển thị:</label>
@@ -802,10 +898,10 @@ export default function AdminInspectionPanel() {
                   <div className="space-y-1.5">
                     <label className="block text-gray-500 uppercase tracking-widest text-[10px] font-black">Giá gói (₫):</label>
                     <input
-                      type="number"
-                      min="0"
-                      value={packageFormData.basePrice}
-                      onChange={(e) => setPackageFormData(prev => ({ ...prev, basePrice: parseFloat(e.target.value) || 0 }))}
+                      type="text"
+                      placeholder="Ví dụ: 1.500.000"
+                      value={formatMoneyInput(packageFormData.basePrice)}
+                      onChange={(e) => handleMoneyChange(e.target.value, 'basePrice')}
                       className="w-full p-2.5 border border-gray-250 rounded focus:border-primary transition-all outline-none font-bold text-red-600"
                     />
                   </div>
@@ -833,6 +929,94 @@ export default function AdminInspectionPanel() {
                     onChange={(e) => setPackageFormData(prev => ({ ...prev, termsHtml: e.target.value }))}
                     className="w-full p-2.5 border border-gray-250 rounded focus:border-primary transition-all outline-none font-mono text-[11px]"
                   />
+                </div>
+
+                {/* 🛠️ QUY TẮC RÀNG BUỘC (RULES) */}
+                <div className="space-y-3.5 p-4 bg-gray-50/70 border border-gray-200 rounded-lg">
+                  <h4 className="text-xs font-black text-gray-900 uppercase tracking-wider flex items-center gap-1.5 border-b border-gray-200 pb-2">
+                    🛠️ Quy tắc ràng buộc (Rules)
+                  </h4>
+                  
+                  {/* Thương hiệu áp dụng */}
+                  <div className="space-y-1">
+                    <label className="block text-[10px] text-gray-500 uppercase tracking-widest font-bold">1. Thương hiệu áp dụng (Brand):</label>
+                    <select
+                      value={packageFormData.rules.brandId}
+                      onChange={(e) => setPackageFormData(prev => ({
+                        ...prev,
+                        rules: { ...prev.rules, brandId: e.target.value }
+                      }))}
+                      className="w-full p-2.5 bg-white border border-gray-250 rounded focus:border-primary transition-all outline-none font-medium"
+                    >
+                      <option value="">Tất cả thương hiệu (Không ràng buộc)</option>
+                      {brands.map(b => (
+                        <option key={b.id} value={b.id}>{b.name}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {/* Danh mục áp dụng */}
+                  <div className="space-y-1">
+                    <label className="block text-[10px] text-gray-500 uppercase tracking-widest font-bold">2. Danh mục áp dụng (Category):</label>
+                    <select
+                      value={packageFormData.rules.categoryId}
+                      onChange={(e) => setPackageFormData(prev => ({
+                        ...prev,
+                        rules: { ...prev.rules, categoryId: e.target.value }
+                      }))}
+                      className="w-full p-2.5 bg-white border border-gray-250 rounded focus:border-primary transition-all outline-none font-medium"
+                    >
+                      <option value="">Tất cả danh mục (Không ràng buộc)</option>
+                      {categories.map(c => (
+                        <option key={c.id} value={c.id}>{c.name}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {/* Sản phẩm áp dụng (Chọn sản phẩm cụ thể như S24+ hoặc iPhone 15) */}
+                  <div className="space-y-1">
+                    <label className="block text-[10px] text-gray-500 uppercase tracking-widest font-bold">3. Sản phẩm cụ thể (Product - Tuỳ chọn):</label>
+                    <select
+                      value={packageFormData.rules.productId}
+                      onChange={(e) => setPackageFormData(prev => ({
+                        ...prev,
+                        rules: { ...prev.rules, productId: e.target.value }
+                      }))}
+                      className="w-full p-2.5 bg-white border border-gray-250 rounded focus:border-primary transition-all outline-none font-medium"
+                    >
+                      <option value="">Tất cả sản phẩm (Không ràng buộc)</option>
+                      {products.map(p => (
+                        <option key={p.id} value={p.id}>{p.name}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {/* Khoảng giá máy áp dụng */}
+                  <div className="space-y-1">
+                    <label className="block text-[10px] text-gray-500 uppercase tracking-widest font-bold">4. Khoảng giá máy áp dụng (VNĐ):</label>
+                    <div className="flex items-center gap-2">
+                      <div className="flex-1 flex items-center gap-1.5">
+                        <span className="text-[10px] text-gray-400 font-bold shrink-0">Từ:</span>
+                        <input
+                          type="text"
+                          placeholder="0"
+                          value={formatMoneyInput(packageFormData.rules.minPrice)}
+                          onChange={(e) => handleMoneyChange(e.target.value, 'minPrice')}
+                          className="w-full p-2 bg-white border border-gray-250 rounded text-center focus:border-primary transition-all outline-none font-bold"
+                        />
+                      </div>
+                      <div className="flex-1 flex items-center gap-1.5">
+                        <span className="text-[10px] text-gray-400 font-bold shrink-0">Đến:</span>
+                        <input
+                          type="text"
+                          placeholder="Không giới hạn"
+                          value={formatMoneyInput(packageFormData.rules.maxPrice)}
+                          onChange={(e) => handleMoneyChange(e.target.value, 'maxPrice')}
+                          className="w-full p-2 bg-white border border-gray-250 rounded text-center focus:border-primary transition-all outline-none font-bold"
+                        />
+                      </div>
+                    </div>
+                  </div>
                 </div>
 
                 {/* Options toggle */}

@@ -13,7 +13,7 @@ export default function PaymentCallbackPage() {
   const [message, setMessage] = useState('');
   const [orderId, setOrderId] = useState(null);
 
-  const sessionId = searchParams.get('session_id');
+  const sessionId = searchParams.get('session_id') || searchParams.get('vnp_TxnRef');
   const provider = searchParams.get('provider') || 'stripe';
   const isCancel = searchParams.get('cancel') === 'true';
 
@@ -51,7 +51,12 @@ export default function PaymentCallbackPage() {
 
     const verifyPayment = async () => {
       try {
-        const res = await api.get(`/Payment/verify-session?session_id=${sessionId}&provider=${provider}`);
+        const query = new URLSearchParams(searchParams);
+        if (!query.get('session_id') && sessionId) {
+          query.set('session_id', sessionId);
+        }
+        query.set('provider', provider);
+        const res = await api.get(`/Payment/verify-session?${query.toString()}`);
         if (res) {
           setStatus('success');
           setMessage(res.message || 'Thanh toán đơn hàng thành công!');
@@ -73,7 +78,7 @@ export default function PaymentCallbackPage() {
     };
 
     verifyPayment();
-  }, [sessionId, provider, isCancel]);
+  }, [sessionId, provider, isCancel, searchParams]);
 
   return (
     <div className="w-full min-h-screen bg-bg flex items-center justify-center p-4">

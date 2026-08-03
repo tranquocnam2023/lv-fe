@@ -1,5 +1,5 @@
 import React from 'react';
-import { CreditCard, Truck, Info } from 'lucide-react';
+import { CreditCard, Truck, Info, ShieldCheck } from 'lucide-react';
 
 export default function CartPaymentMethods({
   isLoggedIn,
@@ -75,23 +75,85 @@ export default function CartPaymentMethods({
             <CreditCard size={16} className="text-gray-400" />
           </label>
 
-          {/* MoMo */}
-          <label className="flex items-center gap-3 p-3 border border-gray-100 bg-gray-50/50 opacity-50 rounded-md select-none cursor-not-allowed">
+          {/* VNPAY Standard */}
+          <label className={`flex items-center gap-3 p-3 border rounded-md transition cursor-pointer select-none ${
+            paymentMethod === 'vnpay' ? 'border-blue-500 bg-blue-50/20' : 'border-gray-200 hover:border-gray-300'
+          }`}>
             <input
               type="radio"
               name="paymentMethod"
-              disabled
-              value="momo"
-              checked={paymentMethod === 'momo'}
-              onChange={() => setPaymentMethod('momo')}
-              className="w-4 h-4 text-blue-600 border-gray-300 focus:ring-0 cursor-not-allowed"
+              value="vnpay"
+              checked={paymentMethod === 'vnpay'}
+              onChange={() => setPaymentMethod('vnpay')}
+              className="w-4 h-4 text-blue-600 border-gray-300 focus:ring-0 cursor-pointer"
             />
             <div className="text-xs flex-1">
-              <p className="font-bold text-gray-400">Thanh toán qua ví điện tử MoMo (Đang bảo trì)</p>
-              <p className="text-[10px] text-gray-400">Quét mã QR thanh toán nhanh chóng bằng ví MoMo</p>
+              <p className="font-bold text-gray-800">Thanh toán qua VNPAY (Trả thẳng)</p>
+              <p className="text-[10px] text-gray-400">ATM nội địa, QR Pay, Visa, Mastercard, JCB qua VNPAY</p>
             </div>
-            <span className="w-6 h-6 bg-[#A50064]/50 text-white text-[8px] font-black rounded flex items-center justify-center select-none shrink-0">MoMo</span>
+            <span className="px-2 py-1 bg-[#005baa] text-white text-[9px] font-black rounded shrink-0">VNPAY</span>
           </label>
+
+          {/* VNPAY Installment (Trả góp 0%) */}
+          <label className={`flex items-center gap-3 p-3 border rounded-md transition cursor-pointer select-none ${
+            paymentMethod === 'vnpay_installment' ? 'border-amber-500 bg-amber-50/20' : 'border-gray-200 hover:border-gray-300'
+          }`}>
+            <input
+              type="radio"
+              name="paymentMethod"
+              value="vnpay_installment"
+              checked={paymentMethod === 'vnpay_installment'}
+              onChange={() => setPaymentMethod('vnpay_installment')}
+              className="w-4 h-4 text-amber-600 border-gray-300 focus:ring-0 cursor-pointer"
+            />
+            <div className="text-xs flex-1">
+              <div className="flex items-center gap-2">
+                <p className="font-bold text-gray-800">Trả góp 0% qua VNPAY / Thẻ tín dụng</p>
+                <span className="px-1.5 py-0.5 bg-red-600 text-white text-[9px] font-black rounded-full uppercase tracking-widest animate-pulse">Lãi suất 0%</span>
+              </div>
+              <p className="text-[10px] text-gray-400">Duyệt nhanh qua thẻ Visa, Mastercard, JCB của hơn 25 ngân hàng</p>
+            </div>
+            <CreditCard size={16} className="text-amber-600 shrink-0" />
+          </label>
+
+          {/* Trả góp 0% details widget */}
+          {paymentMethod === 'vnpay_installment' && (
+            <div className="p-4 bg-amber-50/60 border border-amber-200 rounded-md text-xs space-y-3 animate-in slide-in-from-top-2 duration-200">
+              <div className="flex items-center justify-between border-b border-amber-200/60 pb-2">
+                <p className="font-black text-amber-800 uppercase tracking-wider text-[10px]">Lịch trả góp dự kiến (Lãi suất 0%)</p>
+                <span className="text-[10px] font-bold text-amber-700">Miễn phí thủ tục</span>
+              </div>
+
+              <div className="grid grid-cols-4 gap-2 text-center">
+                {[3, 6, 9, 12].map((months) => {
+                  const monthlyAmount = Math.round(finalTotalPay / months);
+                  return (
+                    <div key={months} className="bg-white p-2 border border-amber-200 rounded-md shadow-xs flex flex-col justify-between">
+                      <p className="font-extrabold text-amber-900 text-[11px]">{months} tháng</p>
+                      <p className="font-black text-red-600 text-[11px] mt-1">{monthlyAmount.toLocaleString('vi-VN')}₫</p>
+                      <p className="text-[9px] text-gray-400 font-medium">/ tháng</p>
+                    </div>
+                  );
+                })}
+              </div>
+
+              <div className="p-2.5 bg-white border border-amber-200/80 rounded-md text-[10px] space-y-1 text-gray-600">
+                <div className="flex items-center gap-1.5 text-amber-900 font-bold">
+                  <ShieldCheck size={13} className="text-emerald-600 shrink-0" />
+                  <span>Cam kết minh bạch 100% từ PhoneShop:</span>
+                </div>
+                <p className="pl-4">✅ <strong>Lãi suất 0%:</strong> Ngân hàng không thu bất kỳ tiền lãi hàng tháng nào trên dư nợ thẻ.</p>
+                <p className="pl-4">✅ <strong>Không phụ phí ẩn:</strong> PhoneShop tuyệt đối không thu thêm bất kỳ phí hồ sơ/bảo hiểm nào.</p>
+                <p className="pl-4 text-gray-500 font-medium leading-normal pt-0.5 border-t border-dashed border-gray-100">
+                  (*) Phí chuyển đổi trả góp (nếu có) được ngân hàng phát hành thẻ liệt kê minh bạch 100% ngay tại cổng VNPAY trước khi quý khách bấm xác nhận thanh toán.
+                </p>
+              </div>
+
+              <p className="text-[9px] text-amber-800/80 font-medium leading-relaxed">
+                💡 Ngân hàng hỗ trợ: <strong>Techcombank, VPBank, Sacombank, Shinhan Bank, HSBC, MB Bank, VIB, TPBank, BIDV, Vietinbank...</strong> (Khách hàng sẽ chọn Ngân hàng tại trang cổng VNPAY).
+              </p>
+            </div>
+          )}
 
           {/* Bank transfer */}
           <label className="flex items-center gap-3 p-3 border border-gray-100 bg-gray-50/50 opacity-50 rounded-md select-none cursor-not-allowed">

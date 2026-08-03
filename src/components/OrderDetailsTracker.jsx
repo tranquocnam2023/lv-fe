@@ -11,7 +11,7 @@ const getPaymentMethodLabel = (method) => {
   switch (method.toLowerCase()) {
     case 'cod': return 'Thanh toán khi nhận hàng (COD)';
     case 'transfer': return 'Chuyển khoản ngân hàng trực tuyến';
-    case 'momo': return 'Ví điện tử MoMo';
+    case 'vnpay': return 'Thanh toán qua VNPAY';
     case 'stripe': return 'Thanh toán qua Stripe';
     default: return method;
   }
@@ -207,8 +207,8 @@ export default function OrderDetailsTracker({ order, onOrderCancelled, isGuest =
           }`}>
             {getStatusText(statusId)}
           </span>
-          {/* PHÂN QUYỀN: Cho phép cả Khách vãng lai thanh toán khi đơn hàng chứa bảo hành đã qua thẩm định hoặc đơn hàng thường */}
-          {statusId === 1 && (order.paymentMethod?.toLowerCase() === 'stripe' || order.paymentMethod?.toLowerCase() === 'momo') && (!warrantyItem || inspectionStatus === 'PASSED') && (
+          {/* PHÂN QUYỀN: Cho phép thanh toán khi đơn hàng ở trạng thái 1 */}
+          {statusId === 1 && (order.paymentMethod?.toLowerCase() === 'stripe' || order.paymentMethod?.toLowerCase() === 'vnpay' || order.paymentMethod?.toLowerCase() === 'momo') && (!warrantyItem || inspectionStatus === 'PASSED') && (
             <button
               onClick={handlePaymentRetry}
               className="px-4 py-1.5 bg-blue-600 border border-blue-600 text-white hover:bg-blue-700 text-xs font-black uppercase tracking-wider rounded-full transition-all active:scale-95 flex items-center gap-1.5 cursor-pointer"

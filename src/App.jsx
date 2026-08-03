@@ -10,6 +10,7 @@ import Header from './components/Header';
 import Footer from './components/Footer';
 import ProductComparison from './components/ProductComparison';
 import BottomNav from './components/common/BottomNav';
+import ChatbotWidget from './components/ChatbotWidget';
 
 // A tiny, premium loading bar at the very top of the page shown only during chunk downloads (like CellphoneS / TGDĐ)
 const TopBarProgress = () => (
@@ -150,6 +151,8 @@ function App() {
         
         {/* Floating comparison drawer and details modal */}
         <ProductComparison />
+
+        <ChatbotWidget />
 
         {/* Mobile Bottom Navigation Bar */}
         <BottomNav />

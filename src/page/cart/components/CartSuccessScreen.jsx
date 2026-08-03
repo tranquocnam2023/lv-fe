@@ -47,31 +47,18 @@ export default function CartSuccessScreen({
         </div>
       )}
        
-      {paymentMethod === 'momo' && (
+      {paymentMethod === 'vnpay' && (
         <div className="w-full bg-gray-50 rounded-md p-5 border border-gray-150 mb-8 text-left space-y-3">
-          <p className="text-xs font-bold text-[#A50064] uppercase tracking-widest flex items-center gap-1.5">
-            <span className="w-4 h-4 bg-[#A50064] text-white text-[7px] font-black rounded flex items-center justify-center">M</span>
-            Thanh toán qua ví điện tử MoMo
+          <p className="text-xs font-bold text-blue-600 uppercase tracking-widest flex items-center gap-1.5">
+            <CreditCard size={14} />
+            Thanh toán trực tuyến qua VNPAY
           </p>
-          <div className="text-xs text-gray-700 space-y-1.5 font-semibold flex flex-col sm:flex-row gap-4 items-center justify-between">
-            <div className="flex-grow w-full">
-              <p>Số tài khoản MoMo: <strong className="text-gray-900">098 7654 3210</strong></p>
-              <p>Chủ tài khoản: <strong className="text-gray-900 uppercase">PHONESHOP OFFICIAL</strong></p>
-              <p>Số tiền: <strong className="text-red-600 font-extrabold text-sm">{finalTotalPay.toLocaleString('vi-VN')}₫</strong></p>
-              <p className="text-[10px] text-gray-400 italic font-medium pt-1">Vui lòng quét mã QR bên cạnh để hoàn tất thanh toán.</p>
-            </div>
-            <div className="flex flex-col items-center justify-center p-2 bg-white border border-gray-250 rounded-md shrink-0">
-              <div className="w-16 h-16 bg-gray-50 rounded-md flex items-center justify-center text-gray-300">
-                <svg className="w-10 h-10 text-[#A50064]" fill="currentColor" viewBox="0 0 24 24">
-                  <path d="M3 3h6v6H3V3zm1 1v4h4V4H4zm1 1h2v2H5V5zM3 15h6v6H3v-6zm1 1v4h4v-4H4zm1 1h2v2H5v-2zM15 3h6v6h-6V3zm1 1v4h4V4h-4zm1 1h2v2h-2V5zM15 15h2v2h-2v-2zm2 2h2v2h-2v-2zm2-2h2v2h-2v-2zm-2 2v2h-2v-2zm2 0h2v2h-2v-2zM10 3h4v2h-4V3zm0 4h4v2h-4V7zm0 8h2v2h-2v-2zm2 2h2v2h-2v-2zm2-2h2v2h-2v-2z" />
-                </svg>
-              </div>
-              <span className="text-[8px] text-[#A50064] font-bold uppercase tracking-wider mt-1">QR MOMO</span>
-            </div>
+          <div className="text-xs text-gray-700 space-y-1.5 font-semibold">
+            <p>Số tiền thanh toán: <strong className="text-red-600 font-extrabold text-sm">{finalTotalPay.toLocaleString('vi-VN')}₫</strong></p>
+            <p className="text-[10px] text-gray-400 italic font-medium pt-1">Hệ thống đang chuyển hướng bạn tới cổng thanh toán VNPAY...</p>
           </div>
         </div>
       )}
-
       <button
         onClick={() => navigate('/')}
         className="w-full py-4 bg-orange-500 hover:bg-orange-600 text-white rounded-md font-black transition active:scale-95 uppercase tracking-wider text-sm cursor-pointer border-0"

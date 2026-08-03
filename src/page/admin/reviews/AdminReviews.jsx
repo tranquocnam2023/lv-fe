@@ -4,6 +4,13 @@ import { Search, Trash2, Star, Calendar, MessageSquare, Filter, Eye, EyeOff, Cor
 // import { MOCK_REVIEWS } from '../utils/mockData'; // Removed mock data
 import { reviewService } from '../../../services/reviewService';
 
+const decodeHtml = (html) => {
+  if (!html) return '';
+  const txt = document.createElement('textarea');
+  txt.innerHTML = html;
+  return txt.value;
+};
+
 
 export default function AdminReviews() {
   const [reviews, setReviews] = useState([]);
@@ -65,7 +72,7 @@ export default function AdminReviews() {
 
   const filteredReviews = reviews.filter(rev =>
     String(rev.username || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-    String(rev.comment || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+    String(decodeHtml(rev.comment) || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
     String(rev.productName || '').toLowerCase().includes(searchTerm.toLowerCase())
   );
 
@@ -166,13 +173,13 @@ export default function AdminReviews() {
                       </td>
                       <td className="px-6 py-4">
                         <div className="space-y-1">
-                          <p className="text-sm font-medium text-admin-text-main max-w-[250px] break-words" title={rev.comment}>
-                            {rev.comment}
+                          <p className="text-sm font-medium text-admin-text-main max-w-[250px] break-words" title={decodeHtml(rev.comment)}>
+                            {decodeHtml(rev.comment)}
                           </p>
                           {rev.adminReply && (
                             <div className="text-xs text-blue-600 bg-blue-50/50 border border-blue-100 rounded p-2 flex gap-1 mt-1">
                               <span className="font-bold shrink-0">QTV:</span>
-                              <span className="font-medium break-words">{rev.adminReply}</span>
+                              <span className="font-medium break-words">{decodeHtml(rev.adminReply)}</span>
                             </div>
                           )}
                         </div>
@@ -225,7 +232,7 @@ export default function AdminReviews() {
                                 setReplyText('');
                               } else {
                                 setReplyingId(rev.id);
-                                setReplyText(rev.adminReply || '');
+                                setReplyText(decodeHtml(rev.adminReply) || '');
                               }
                             }}
                             className={`px-3 py-1.5 rounded-md border transition-all active:scale-95 flex items-center gap-1 font-bold text-[11px] cursor-pointer ${

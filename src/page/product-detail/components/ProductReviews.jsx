@@ -2,6 +2,13 @@ import React, { useState } from 'react';
 import { Star, Check, AlertCircle, ThumbsUp, MessageSquare } from 'lucide-react';
 import { reviewService } from '../../../services/reviewService';
 
+const decodeHtml = (html) => {
+  if (!html) return '';
+  const txt = document.createElement('textarea');
+  txt.innerHTML = html;
+  return txt.value;
+};
+
 export default function ProductReviews({ productId, reviews, currentUser, stats, onReviewSubmitted, productName }) {
   const [writeRating, setWriteRating] = useState(5);
   const [writeComment, setWriteComment] = useState('');
@@ -218,7 +225,7 @@ export default function ProductReviews({ productId, reviews, currentUser, stats,
               </div>
 
               <p className="text-gray-700 text-xs font-medium leading-relaxed">
-                {rev.comment}
+                {decodeHtml(rev.comment)}
               </p>
 
               <div className="flex items-center gap-4 text-[10px] text-gray-400 font-bold">
@@ -237,7 +244,7 @@ export default function ProductReviews({ productId, reviews, currentUser, stats,
                     <span>Phản hồi của QTV</span>
                   </p>
                   <p className="text-xs text-gray-700 font-semibold leading-relaxed">
-                    {rev.adminReply}
+                    {decodeHtml(rev.adminReply)}
                   </p>
                   {rev.repliedAt && (
                     <p className="text-[9px] text-gray-400 font-bold tracking-tight">
