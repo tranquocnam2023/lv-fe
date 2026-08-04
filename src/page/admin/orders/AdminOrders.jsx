@@ -194,10 +194,10 @@ export default function AdminOrders() {
   const getShippingStatus = (status) => {
     switch (status) {
       case 'pending':
-        return { label: '-', style: 'text-gray-400 font-bold text-center w-full block' };
+        return { label: 'Chờ xác nhận', style: 'bg-orange-50 text-orange-600 font-bold border border-orange-100' };
       case 'confirmed':
       case 'preparing':
-        return { label: 'Chờ lấy hàng', style: 'bg-blue-50 text-blue-600' };
+        return { label: 'Chờ lấy hàng', style: 'bg-blue-50 text-blue-600 font-bold border border-blue-100' };
       case 'shipping':
         return { label: 'Đang giao hàng', style: 'bg-primary/10 text-primary' };
       case 'delivered':
@@ -218,7 +218,7 @@ export default function AdminOrders() {
     if (currentStatus === 'cancelled' || currentStatus === 'refunded') return false;
 
     if (currentStatus === 'pending') {
-      return newStatus === 'confirmed' || newStatus === 'cancelled';
+      return newStatus === 'confirmed' || newStatus === 'shipping' || newStatus === 'cancelled';
     }
     if (currentStatus === 'confirmed' || currentStatus === 'preparing') {
       // Đã xác nhận có thể bàn giao vận chuyển (shipping), hoàn tiền hoặc hủy
@@ -454,8 +454,7 @@ export default function AdminOrders() {
                 <th className="px-6 py-4 text-[12px] font-bold text-admin-text-muted">Trạng thái TT</th>
                 <th className="px-6 py-4 text-[12px] font-bold text-admin-text-muted">Hình thức TT</th>
                 <th className="px-6 py-4 text-[12px] font-bold text-admin-text-muted">Tổng cộng</th>
-                <th className="px-6 py-4 text-[12px] font-bold text-admin-text-muted">Tình trạng đơn hàng</th>
-                <th className="px-6 py-4 text-[12px] font-bold text-admin-text-muted text-center">Trạng thái đơn hàng</th>
+                <th className="px-6 py-4 text-[12px] font-bold text-admin-text-muted text-center">Trạng thái & Thao tác</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-admin-border text-sm">
@@ -468,10 +467,6 @@ export default function AdminOrders() {
                           onClick={() => setSelectedOrderDetails(order)}
                           className="text-primary font-bold hover:underline flex items-center gap-1 cursor-pointer"
                         >
-                          {/* =========================================================================
-                               [HIỂN THỊ MÃ ĐƠN HÀNG - FRONT-END]
-                               - Mã đơn hàng được hiển thị bằng cách thêm tiền tố '#' trước ID tự tăng của Database (Ví dụ: #10).
-                               ========================================================================= */}
                           <span>#{order.id}</span>
                         </button>
                         <button
@@ -504,40 +499,43 @@ export default function AdminOrders() {
                     <td className="px-6 py-4 font-bold text-admin-text-main">
                       {formatCurrency(order.amount)}
                     </td>
-                    {/* Cột 1: Trạng thái đơn hàng (Order Status) */}
-                    <td className="px-6 py-4">
-                      <div className="flex items-center">
-                        <select
-                          className="text-xs font-bold bg-admin-bg text-admin-text-main rounded-md px-3 py-2 border-none focus:outline-none focus:ring-1 focus:ring-primary cursor-pointer hover:bg-admin-border transition-all disabled:opacity-75 disabled:cursor-not-allowed"
-                          value={getOrderStatus(order.status)}
-                          disabled={order.status === 'shipping' || order.status === 'shipping_failed' || order.status === 'refunded' || order.status === 'cancelled'}
-                          onChange={(e) => handleStatusChange(order.id, e.target.value)}
-                        >
-                          <option value="pending" disabled={order.status !== 'pending'}>Chờ xác nhận</option>
-                          <option value="confirmed" disabled={!isTransitionAllowed(order.status, 'confirmed', order.failedDeliveryCount)}>Đã xác nhận</option>
-                          <option value="delivered" disabled={!isTransitionAllowed(order.status, 'delivered', order.failedDeliveryCount)}>Đã hoàn thành</option>
-                          <option value="refunded" disabled={!isTransitionAllowed(order.status, 'refunded', order.failedDeliveryCount)}>Đã hoàn tiền</option>
-                          <option value="cancelled" disabled={!isTransitionAllowed(order.status, 'cancelled', order.failedDeliveryCount)}>Đã hủy</option>
-                        </select>
-                      </div>
-                    </td>
 
-                    {/* Cột 2: Trạng thái vận chuyển (Shipping Status) */}
+                    {/* CỘT THỐNG NHẤT QUY TRÌNH: TRẠNG THÁI & THAO TÁC */}
                     <td className="px-6 py-4">
-                      <div className="flex items-center justify-center flex-wrap gap-1">
+                      <div className="flex flex-col items-center justify-center gap-1.5">
+                        {/* Nhãn trạng thái hình Oval / Pill Badge (Nguyên bản) */}
                         <span className={`px-4 py-1.5 rounded-full text-[11px] font-bold inline-block ${getShippingStatus(order.status).style}`}>
                           {order.status === 'shipping_failed'
                             ? `Giao thất bại (${order.failedDeliveryCount}/3 lần)`
                             : getShippingStatus(order.status).label}
                         </span>
 
-                        {/* Nút hành động vận chuyển */}
+                        {/* Nút thao tác trực tiếp bên dưới với thiết kế mẫu chuẩn */}
+                        {order.status === 'pending' && (
+                          <div className="flex gap-1.5 items-center">
+                            <button
+                              onClick={() => handleStatusChange(order.id, 'shipping')}
+                              className="text-[10px] font-extrabold text-primary hover:underline px-2.5 py-1 bg-primary/5 rounded-md border border-primary/10 transition-all hover:bg-primary/10 active:scale-95 whitespace-nowrap cursor-pointer"
+                              title="1-Click: Duyệt đơn hàng và chuyển ngay sang Đang giao"
+                            >
+                              Duyệt & Giao hàng (Manual)
+                            </button>
+                            <button
+                              onClick={() => handleStatusChange(order.id, 'cancelled')}
+                              className="text-[10px] font-extrabold text-admin-danger hover:underline px-2 py-1 bg-admin-danger/5 rounded-md border border-admin-danger/10 transition-all hover:bg-admin-danger/10 active:scale-95 whitespace-nowrap cursor-pointer"
+                              title="Hủy đơn hàng"
+                            >
+                              Hủy đơn
+                            </button>
+                          </div>
+                        )}
+
                         {(order.status === 'confirmed' || order.status === 'preparing') && (
                           <div className="flex gap-1.5 items-center">
                             {order.deliveryLatitude && order.deliveryLongitude && order.shippingCarrier && order.shippingCarrier.toLowerCase().includes('ahamove') ? (
                               <button
                                 onClick={() => handleShipWithAhamove(order.id)}
-                                className="text-[10px] font-extrabold text-white bg-primary hover:bg-primary/90 px-2 py-1 rounded-md transition-all active:scale-95 whitespace-nowrap shadow-sm"
+                                className="text-[10px] font-extrabold text-white bg-primary hover:bg-primary/90 px-2.5 py-1 rounded-md transition-all active:scale-95 whitespace-nowrap shadow-xs cursor-pointer"
                                 title="Gửi đơn hàng sang hệ thống Ahamove"
                               >
                                 Giao Ahamove
@@ -545,44 +543,57 @@ export default function AdminOrders() {
                             ) : null}
                             <button
                               onClick={() => handleStatusChange(order.id, 'shipping')}
-                              className="text-[10px] font-extrabold text-primary hover:underline px-2 py-1 bg-primary/5 rounded-md border border-primary/10 transition-all hover:bg-primary/10 active:scale-95 whitespace-nowrap"
-                              title=" Bên vận chuyển đến lấy hàng và bắt đầu giao"
+                              className="text-[10px] font-extrabold text-primary hover:underline px-2.5 py-1 bg-primary/5 rounded-md border border-primary/10 transition-all hover:bg-primary/10 active:scale-95 whitespace-nowrap cursor-pointer"
+                              title="Bên vận chuyển đến lấy hàng và bắt đầu giao"
                             >
                               Giao hàng (Manual)
                             </button>
                           </div>
                         )}
+
                         {order.status === 'shipping' && (
-                          <>
+                          <div className="flex gap-1.5 items-center">
                             <button
                               onClick={() => handleStatusChange(order.id, 'delivered')}
-                              className="text-[10px] font-extrabold text-success hover:underline px-2 py-1 bg-success/5 rounded-md border border-success/10 transition-all hover:bg-success/10 active:scale-95 whitespace-nowrap"
-                              title=" Bên vận chuyển cập nhật giao hàng thành công"
+                              className="text-[10px] font-extrabold text-success hover:underline px-2.5 py-1 bg-success/5 rounded-md border border-success/10 transition-all hover:bg-success/10 active:scale-95 whitespace-nowrap cursor-pointer"
+                              title="Xác nhận khách đã nhận hàng thành công"
                             >
                               Xác nhận đã giao
                             </button>
                             <button
                               onClick={() => handleStatusChange(order.id, 'shipping_failed')}
-                              className="text-[10px] font-extrabold text-admin-danger hover:underline px-2 py-1 bg-admin-danger/5 rounded-md border border-admin-danger/10 transition-all hover:bg-admin-danger/10 active:scale-95 whitespace-nowrap ml-1"
-                              title=" Giao hàng thất bại"
+                              className="text-[10px] font-extrabold text-admin-danger hover:underline px-2 py-1 bg-admin-danger/5 rounded-md border border-admin-danger/10 transition-all hover:bg-admin-danger/10 active:scale-95 whitespace-nowrap cursor-pointer"
+                              title="Báo giao hàng thất bại"
                             >
                               Giao thất bại
                             </button>
-                          </>
+                          </div>
+                        )}
+
+                        {order.status === 'delivered' && (
+                          <div className="flex gap-1.5 items-center">
+                            <button
+                              onClick={() => handleStatusChange(order.id, 'refunded')}
+                              className="text-[10px] font-extrabold text-purple-700 hover:underline px-2.5 py-1 bg-purple-50 rounded-md border border-purple-200 transition-all hover:bg-purple-100 active:scale-95 whitespace-nowrap cursor-pointer"
+                              title="Yêu cầu đổi trả hoặc hoàn tiền cho khách"
+                            >
+                              Đổi trả / Hoàn tiền
+                            </button>
+                          </div>
                         )}
 
                         {order.status === 'shipping_failed' && (
                           <div className="flex gap-1.5 items-center">
                             <button
                               onClick={() => handleStatusChange(order.id, 'shipping')}
-                              className="text-[10px] font-extrabold text-info hover:underline px-2 py-1 bg-info/5 rounded-md border border-info/10 transition-all hover:bg-info/10 active:scale-95 whitespace-nowrap"
-                              title=" Giao hàng lại lần tiếp theo"
+                              className="text-[10px] font-extrabold text-info hover:underline px-2.5 py-1 bg-info/5 rounded-md border border-info/10 transition-all hover:bg-info/10 active:scale-95 whitespace-nowrap cursor-pointer"
+                              title="Giao hàng lại lần tiếp theo"
                             >
                               Giao lại
                             </button>
                             <button
                               onClick={() => handleStatusChange(order.id, 'cancelled')}
-                              className="text-[10px] font-extrabold px-2 py-1 rounded-md border transition-all whitespace-nowrap text-admin-danger hover:underline bg-admin-danger/5 border-admin-danger/10 hover:bg-admin-danger/10 active:scale-95"
+                              className="text-[10px] font-extrabold px-2 py-1 rounded-md border transition-all whitespace-nowrap text-admin-danger hover:underline bg-admin-danger/5 border-admin-danger/10 hover:bg-admin-danger/10 active:scale-95 cursor-pointer"
                               title="Hủy đơn hàng"
                             >
                               Hủy đơn

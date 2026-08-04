@@ -99,14 +99,7 @@ export default function ChatbotWidget() {
                 <p className="text-[11px] text-slate-300">Sẵn sàng tư vấn cho bạn</p>
               </div>
             </div>
-            <button
-              type="button"
-              onClick={() => setIsOpen(false)}
-              className="rounded-lg p-2 text-slate-300 transition hover:bg-white/10 hover:text-white"
-              aria-label="Đóng chat"
-            >
-              <X size={18} />
-            </button>
+
           </header>
 
           {/* Messages Body */}

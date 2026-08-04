@@ -10,17 +10,30 @@ const decodeHtml = (html) => {
 };
 
 export default function ProductReviews({ productId, reviews, currentUser, stats, onReviewSubmitted, productName }) {
-  const [writeRating, setWriteRating] = useState(5);
+  const [writeRating, setWriteRating] = useState(0);
+  const [hoverRating, setHoverRating] = useState(0);
   const [writeComment, setWriteComment] = useState('');
   const [isSubmittingReview, setIsSubmittingReview] = useState(false);
   const [reviewError, setReviewError] = useState('');
   const [reviewSuccess, setReviewSuccess] = useState('');
   const [showReviewForm, setShowReviewForm] = useState(false);
 
+  const starLabels = {
+    1: 'Rất tệ',
+    2: 'Tệ / Không hài lòng',
+    3: 'Bình thường',
+    4: 'Hài lòng / Tốt',
+    5: 'Rất hài lòng / Tuyệt vời'
+  };
+
   const handleSubmitReview = async (e) => {
     e.preventDefault();
     if (!currentUser) {
       setReviewError("Vui lòng đăng nhập để gửi đánh giá.");
+      return;
+    }
+    if (!writeRating || writeRating < 1) {
+      setReviewError("Vui lòng chọn số sao đánh giá (từ 1 đến 5 sao).");
       return;
     }
     if (!writeComment || writeComment.trim().length < 10) {
@@ -40,7 +53,7 @@ export default function ProductReviews({ productId, reviews, currentUser, stats,
       });
       setReviewSuccess("Cảm ơn bạn đã gửi đánh giá! Đánh giá của bạn đã được ghi nhận.");
       setWriteComment('');
-      setWriteRating(5);
+      setWriteRating(0);
       setShowReviewForm(false);
       if (onReviewSubmitted) onReviewSubmitted();
     } catch (err) {
@@ -131,24 +144,40 @@ export default function ProductReviews({ productId, reviews, currentUser, stats,
             <h4 className="font-black text-gray-800 text-sm">Đánh giá sản phẩm {productName}</h4>
             
             {/* Chọn sao */}
-            <div className="space-y-1">
-              <label className="block text-[10px] text-gray-400 font-black uppercase tracking-wider">Số sao của bạn *</label>
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <label className="block text-[10px] text-gray-400 font-black uppercase tracking-wider">Số sao của bạn *</label>
+                {(hoverRating || writeRating) > 0 && (
+                  <span className="text-xs font-bold text-orange-600 bg-orange-50 px-2 py-0.5 rounded border border-orange-100 animate-in fade-in">
+                    {starLabels[hoverRating || writeRating]}
+                  </span>
+                )}
+              </div>
               <div className="flex gap-2 text-gray-300">
-                {[1, 2, 3, 4, 5].map((star) => (
-                  <button
-                    type="button"
-                    key={star}
-                    onClick={() => setWriteRating(star)}
-                    className="transition-transform hover:scale-110 focus:outline-none cursor-pointer"
-                  >
-                    <Star
-                      size={24}
-                      fill={star <= writeRating ? "currentColor" : "none"}
-                      stroke="currentColor"
-                      className={star <= writeRating ? "text-yellow-400" : "text-gray-300"}
-                    />
-                  </button>
-                ))}
+                {[1, 2, 3, 4, 5].map((star) => {
+                  const isActive = star <= (hoverRating || writeRating);
+                  return (
+                    <button
+                      type="button"
+                      key={star}
+                      onClick={() => {
+                        setWriteRating(star);
+                        setReviewError('');
+                      }}
+                      onMouseEnter={() => setHoverRating(star)}
+                      onMouseLeave={() => setHoverRating(0)}
+                      className="transition-transform hover:scale-125 active:scale-95 focus:outline-none cursor-pointer p-1"
+                      title={`${star} sao - ${starLabels[star]}`}
+                    >
+                      <Star
+                        size={28}
+                        fill={isActive ? "currentColor" : "none"}
+                        stroke="currentColor"
+                        className={isActive ? "text-yellow-400 drop-shadow-sm" : "text-gray-300"}
+                      />
+                    </button>
+                  );
+                })}
               </div>
             </div>
 
