@@ -34,7 +34,7 @@ export default function ChatbotWidget() {
     () =>
       messages
         .filter((item) => item.role === 'user' || item.role === 'assistant')
-        .slice(-8),
+        .slice(-12),
     [messages]
   );
 
