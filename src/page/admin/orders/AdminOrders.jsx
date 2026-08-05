@@ -353,7 +353,12 @@ export default function AdminOrders() {
       .catch(err => {
         console.error("Lỗi gửi đơn hàng sang Ahamove:", err);
         const errorMsg = err.response?.data?.message || err.response?.data || err.message;
-        alert(`Gửi đơn hàng sang Ahamove thất bại: ${errorMsg}`);
+        const confirmManual = window.confirm(
+          `⚠️ Gửi đơn hàng sang Ahamove thất bại!\n\nLỗi: ${errorMsg}\n\n👉 Bạn có muốn chuyển đơn hàng này sang Giao hàng thủ công (Manual) không?`
+        );
+        if (confirmManual) {
+          handleStatusChange(orderId, 'shipping');
+        }
       });
   };
 
@@ -532,7 +537,7 @@ export default function AdminOrders() {
 
                         {(order.status === 'confirmed' || order.status === 'preparing') && (
                           <div className="flex gap-1.5 items-center">
-                            {order.deliveryLatitude && order.deliveryLongitude && order.shippingCarrier && order.shippingCarrier.toLowerCase().includes('ahamove') ? (
+                            {order.shippingCarrier && order.shippingCarrier.toLowerCase().includes('ahamove') ? (
                               <button
                                 onClick={() => handleShipWithAhamove(order.id)}
                                 className="text-[10px] font-extrabold text-white bg-primary hover:bg-primary/90 px-2.5 py-1 rounded-md transition-all active:scale-95 whitespace-nowrap shadow-xs cursor-pointer"
@@ -540,14 +545,15 @@ export default function AdminOrders() {
                               >
                                 Giao Ahamove
                               </button>
-                            ) : null}
-                            <button
-                              onClick={() => handleStatusChange(order.id, 'shipping')}
-                              className="text-[10px] font-extrabold text-primary hover:underline px-2.5 py-1 bg-primary/5 rounded-md border border-primary/10 transition-all hover:bg-primary/10 active:scale-95 whitespace-nowrap cursor-pointer"
-                              title="Bên vận chuyển đến lấy hàng và bắt đầu giao"
-                            >
-                              Giao hàng (Manual)
-                            </button>
+                            ) : (
+                              <button
+                                onClick={() => handleStatusChange(order.id, 'shipping')}
+                                className="text-[10px] font-extrabold text-primary hover:underline px-2.5 py-1 bg-primary/5 rounded-md border border-primary/10 transition-all hover:bg-primary/10 active:scale-95 whitespace-nowrap cursor-pointer"
+                                title="Bên vận chuyển đến lấy hàng và bắt đầu giao"
+                              >
+                                Giao hàng (Manual)
+                              </button>
+                            )}
                           </div>
                         )}
 
