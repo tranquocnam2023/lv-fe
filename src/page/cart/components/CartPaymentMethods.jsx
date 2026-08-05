@@ -173,38 +173,26 @@ export default function CartPaymentMethods({
             <CreditCard size={16} className="text-gray-300" />
           </label>
 
-          {/* COD (requires login) */}
-          <label className={`flex items-center gap-3 p-3 border rounded-md transition select-none ${
-            !isLoggedIn
-              ? 'opacity-50 bg-gray-50 border-gray-100 cursor-not-allowed'
-              : paymentMethod === 'cod'
-              ? 'border-blue-500 bg-blue-50/20 cursor-pointer'
-              : 'border-gray-200 hover:border-gray-300 cursor-pointer'
+          {/* COD */}
+          <label className={`flex items-center gap-3 p-3 border rounded-md transition cursor-pointer select-none ${
+            paymentMethod === 'cod'
+              ? 'border-blue-500 bg-blue-50/20'
+              : 'border-gray-200 hover:border-gray-300'
           }`}>
             <input
               type="radio"
               name="paymentMethod"
               value="cod"
-              disabled={!isLoggedIn}
               checked={paymentMethod === 'cod'}
               onChange={() => setPaymentMethod('cod')}
-              className="w-4 h-4 text-blue-600 border-gray-300 focus:ring-0 cursor-pointer disabled:cursor-not-allowed"
+              className="w-4 h-4 text-blue-600 border-gray-300 focus:ring-0 cursor-pointer"
             />
             <div className="text-xs flex-1">
               <p className="font-bold text-gray-800">Thanh toán tiền mặt khi nhận hàng (COD)</p>
-              <p className="text-[10px] text-gray-400">Chỉ áp dụng cho thành viên PhoneShop VIP</p>
+              <p className="text-[10px] text-gray-400">Thanh toán bằng tiền mặt khi nhận được hàng</p>
             </div>
             <Truck size={16} className="text-gray-400" />
           </label>
-
-          {!isLoggedIn && (
-            <div className="p-3 bg-amber-50 border border-amber-100 rounded-md flex gap-2 text-amber-800 text-[10px] font-medium leading-relaxed">
-              <Info size={14} className="text-amber-500 shrink-0 mt-0.5" />
-              <p>
-                Hình thức <strong>Thanh toán tiền mặt (COD)</strong> bị khóa vì quý khách đang đặt dưới dạng khách vãng lai. Vui lòng đăng ký/đăng nhập VIP để kích hoạt.
-              </p>
-            </div>
-          )}
         </div>
 
         {/* Bank Transfer QR details */}

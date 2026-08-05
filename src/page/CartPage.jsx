@@ -324,22 +324,24 @@ export default function CartPage() {
   };
 
   const handleSelectSavedAddress = async (addr) => {
-    setModalFullName(addr.recipientName || '');
-    setModalPhone(addr.phoneNumber || '');
-    setModalStreetAddress(addr.addressLine || '');
+    const recipient = addr.recipientName || '';
+    const phoneNum = addr.phoneNumber || '';
+    const street = addr.addressLine || '';
+    let lat = addr.latitude || null;
+    let lng = addr.longitude || null;
 
-    // Nếu địa chỉ đã có tọa độ trong DB → dùng luôn
-    if (addr.latitude && addr.longitude) {
-      setModalLatitude(addr.latitude);
-      setModalLongitude(addr.longitude);
-    } else {
-      // Không có tọa độ → tự động geocode bằng Goong Maps
+    setModalFullName(recipient);
+    setModalPhone(phoneNum);
+    setModalStreetAddress(street);
+
+    // Nếu địa chỉ chưa có tọa độ trong DB → tự động geocode bằng Goong Maps
+    if (!lat || !lng) {
       setModalLatitude(null);
       setModalLongitude(null);
       const goongApiKey = import.meta.env.VITE_GOONG_API_KEY || '';
-      if (goongApiKey && addr.addressLine) {
+      if (goongApiKey && street) {
         try {
-          const fullAddr = [addr.addressLine, addr.wardName || addr.ward || '', addr.provinceName || addr.province || ''].filter(Boolean).join(', ');
+          const fullAddr = [street, addr.wardName || addr.ward || '', addr.provinceName || addr.province || ''].filter(Boolean).join(', ');
           const searchRes = await fetch(`https://rsapi.goong.io/Place/Autocomplete?input=${encodeURIComponent(fullAddr)}&api_key=${goongApiKey}&limit=1`);
           const searchData = await searchRes.json();
           const placeId = searchData?.predictions?.[0]?.place_id;
@@ -348,8 +350,8 @@ export default function CartPage() {
             const detailData = await detailRes.json();
             const location = detailData?.result?.geometry?.location;
             if (location?.lat && location?.lng) {
-              setModalLatitude(location.lat);
-              setModalLongitude(location.lng);
+              lat = location.lat;
+              lng = location.lng;
             }
           }
         } catch (geoErr) {
@@ -358,9 +360,16 @@ export default function CartPage() {
       }
     }
 
+    setModalLatitude(lat);
+    setModalLongitude(lng);
+
+    let cityVal = addr.provinceName || addr.province || 'Hồ Chí Minh';
+    let wardVal = addr.wardName || addr.ward || '';
+    let wardIdVal = addr.wardId || '';
+
     if (provinces && provinces.length > 0) {
       const cleanProvinceStr = (str) => String(str).toLowerCase().replace(/^(tỉnh|thành phố|tp\.?)\s+/i, '').trim();
-      const addrProvName = cleanProvinceStr(addr.provinceName || addr.province || '');
+      const addrProvName = cleanProvinceStr(cityVal);
       const match = provinces.find(p => {
         if (addr.provinceId && String(p.id) === String(addr.provinceId)) return true;
         const pName = cleanProvinceStr(p.fullName || p.name);
@@ -369,7 +378,8 @@ export default function CartPage() {
 
       if (match) {
         setSelectedProvinceId(match.id);
-        setModalCity(match.fullName || match.name || '');
+        cityVal = match.fullName || match.name || cityVal;
+        setModalCity(cityVal);
 
         let currentWards = wards;
         if (String(selectedProvinceId) !== String(match.id) || currentWards.length === 0) {
@@ -384,12 +394,10 @@ export default function CartPage() {
           }
         }
 
-        const targetWardId = addr.wardId || '';
-        const targetWardName = addr.wardName || addr.ward || '';
         const cleanNameStr = (str) => String(str).toLowerCase().replace(/^(phường|xã|thị trấn|p\.?)\s+/i, '').trim();
-        const targetName = cleanNameStr(targetWardName);
+        const targetName = cleanNameStr(wardVal);
 
-        const matchedWard = (targetWardId && currentWards.find(w => String(w.id) === String(targetWardId))) ||
+        const matchedWard = (wardIdVal && currentWards.find(w => String(w.id) === String(wardIdVal))) ||
           currentWards.find(w => {
             if (!targetName) return false;
             const wName = cleanNameStr(w.fullName || w.name);
@@ -397,14 +405,34 @@ export default function CartPage() {
           });
 
         if (matchedWard) {
+          wardIdVal = matchedWard.id;
+          wardVal = matchedWard.fullName || matchedWard.name;
           setModalWardId(matchedWard.id);
-          setModalWard(matchedWard.fullName || matchedWard.name);
+          setModalWard(wardVal);
         } else {
-          setModalWardId(targetWardId);
-          setModalWard(targetWardName);
+          setModalWardId(wardIdVal);
+          setModalWard(wardVal);
         }
       }
     }
+
+    const fullAddrString = [street, wardVal, cityVal].filter(Boolean).join(', ');
+
+    // CẬP NHẬT FORM DATA CHÍNH DÙNG CHO CHECKOUT & VẬN CHUYỂN
+    setFormData(prev => ({
+      ...prev,
+      fullName: recipient,
+      phone: phoneNum,
+      address: fullAddrString,
+      city: cityVal,
+      ward: wardVal,
+      streetAddress: street,
+      wardId: wardIdVal,
+      deliveryLatitude: lat,
+      deliveryLongitude: lng
+    }));
+
+    setAddressProvided(true);
   };
 
   const handleAddNewAddressClick = () => {
@@ -1039,6 +1067,9 @@ export default function CartPage() {
               addressProvided={addressProvided}
               formData={formData}
               openAddressModal={openAddressModal}
+              isLoggedIn={isLoggedIn}
+              userAddresses={userAddresses}
+              onSelectSavedAddress={handleSelectSavedAddress}
             />
 
             {/* Card 4: Support Request Checklist */}
@@ -1177,7 +1208,7 @@ export default function CartPage() {
               <button
                 onClick={() => {
                   setShowAuthModal(false);
-                  navigate('/auth?mode=register');
+                  navigate('/auth?mode=register&redirect=/cart');
                 }}
                 className="w-full py-2.5 bg-white hover:bg-gray-50 text-blue-600 border border-blue-600 rounded-lg text-xs font-extrabold transition cursor-pointer"
               >
@@ -1186,7 +1217,7 @@ export default function CartPage() {
               <button
                 onClick={() => {
                   setShowAuthModal(false);
-                  navigate('/auth?mode=login');
+                  navigate('/auth?mode=login&redirect=/cart');
                 }}
                 className="w-full py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-extrabold transition cursor-pointer border-0"
               >

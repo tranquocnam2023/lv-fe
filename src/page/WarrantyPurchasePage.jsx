@@ -67,6 +67,10 @@ export default function WarrantyPurchasePage() {
       .then(res => {
         const data = Array.isArray(res) ? res : res?.data || [];
         setVariants(data);
+        // Tự động chọn ngay biến thể nếu sản phẩm chỉ có 1 cấu hình duy nhất
+        if (data.length === 1) {
+          setSelectedVariantId(data[0].id.toString());
+        }
       })
       .catch(err => {
         console.error(err);
@@ -327,17 +331,14 @@ export default function WarrantyPurchasePage() {
           )}
 
           {/* Chọn biến thể (Color / Storage) */}
-          {selectedProduct && (
+          {/* Chọn biến thể (Nếu sản phẩm có nhiều biến thể để chọn) */}
+          {selectedProduct && variants.length > 1 && (
             <div className="space-y-2 animate-in slide-in-from-top-1 duration-200">
               <label className="block text-[10px] uppercase font-black text-gray-400">Chọn biến thể (Màu sắc / Bộ nhớ):</label>
               {variantsLoading ? (
                 <div className="p-3 text-xs font-bold text-gray-400 flex items-center gap-1.5 bg-gray-50 border border-gray-250 rounded-lg">
                   <RefreshCw className="animate-spin text-primary" size={13} />
                   <span>Đang tải danh sách biến thể...</span>
-                </div>
-              ) : variants.length === 0 ? (
-                <div className="p-3 text-xs font-bold text-red-500 bg-red-50 border border-red-200 rounded-lg">
-                  Sản phẩm này chưa được cấu hình biến thể nào!
                 </div>
               ) : (
                 <select
