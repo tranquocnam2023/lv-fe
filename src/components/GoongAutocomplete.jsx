@@ -45,8 +45,8 @@ export default function GoongAutocomplete({
       console.warn('Goong Maps API Key chưa được cấu hình.');
       return;
     }
-    // Chỉ tìm kiếm khi độ dài ký tự nhập vào tối thiểu từ 3 trở lên
-    if (!searchQuery.trim() || searchQuery.trim().length < 3) {
+    // Chỉ tìm kiếm khi độ dài ký tự nhập vào tối thiểu từ 2 trở lên
+    if (!searchQuery.trim() || searchQuery.trim().length < 2) {
       setSuggestions([]);
       return;
     }
@@ -89,8 +89,9 @@ export default function GoongAutocomplete({
           return true;
         });
 
+        const listToUse = filteredPredictions.length > 0 ? filteredPredictions : response.data.predictions;
         // Chỉ lấy tối đa 5 kết quả tối ưu nhất sau khi lọc để hiển thị lên dropdown
-        setSuggestions(filteredPredictions.slice(0, 5));
+        setSuggestions(listToUse.slice(0, 5));
         setIsOpen(true);
       }
     } catch (error) {
@@ -144,6 +145,8 @@ export default function GoongAutocomplete({
             formattedAddress: result.formatted_address || prediction.description,
             lat: location.lat,
             lng: location.lng,
+            latitude: location.lat,
+            longitude: location.lng,
             compound: result.compound || null
           });
         }

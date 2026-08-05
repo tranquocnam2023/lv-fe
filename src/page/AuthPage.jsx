@@ -1,6 +1,5 @@
-// src/page/AuthPage.jsx
 import React, { useState, useEffect } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { useLoading } from '../context/LoadingContext';
 import Breadcrumb from '../components/Breadcrumb';
 import { authService } from '../services/authService';
@@ -21,6 +20,7 @@ import ProfilePasswordTab from './auth/components/ProfilePasswordTab';
 export default function AuthPage() {
   const { stopLoading } = useLoading();
   const location = useLocation();
+  const navigate = useNavigate();
 
   // Auth state
   const [isLogin, setIsLogin] = useState(true);
@@ -68,13 +68,19 @@ export default function AuthPage() {
 
   useEffect(() => {
     const searchParams = new URLSearchParams(location.search);
+    const redirectUrl = searchParams.get('redirect');
+    if (isLoggedIn && redirectUrl) {
+      navigate(redirectUrl);
+      return;
+    }
+
     const tab = searchParams.get('tab');
     if (tab && ['info', 'addresses', 'password', 'history'].includes(tab)) {
       setProfileTab(tab);
     }
     
     // CƠ CHẾ CHUYỂN TỰ ĐỘNG GIỮA ĐĂNG KÝ / ĐĂNG NHẬP:
-    // Nhận diện tham số 'mode' truyền vào từ đường dẫn (ví dụ: /auth?mode=register).
+    // Nhận diện tham số 'mode' truyền vào từ đường dẫn (ví dụ: /auth?mode=register&redirect=/cart).
     // Phục vụ luồng chuyển hướng khi khách hàng bấm Đăng ký hoặc Đăng nhập trên popup giỏ hàng.
     const mode = searchParams.get('mode');
     if (mode === 'register') {
@@ -82,7 +88,7 @@ export default function AuthPage() {
     } else if (mode === 'login') {
       setIsLogin(true);
     }
-  }, [location.search]);
+  }, [location.search, isLoggedIn, navigate]);
 
   const [userProfile, setUserProfile] = useState(initialUser);
   const [shippingInfos, setShippingInfos] = useState([]);
@@ -314,7 +320,7 @@ export default function AuthPage() {
         localStorage.setItem('user', JSON.stringify({ id, username, role }));
 
         try {
-          const cartRes = await cartService.getCart();
+          const cartRes = await api.get('/Cart');
           const cartData = cartRes?.data || cartRes;
           if (cartData) {
             localStorage.setItem('cart', JSON.stringify(cartData));
@@ -324,7 +330,16 @@ export default function AuthPage() {
         }
 
         window.dispatchEvent(new Event('auth-change'));
-        navigate('/');
+
+        const searchParams = new URLSearchParams(location.search);
+        const redirectUrl = searchParams.get('redirect');
+        if (redirectUrl) {
+          navigate(redirectUrl);
+        } else if (role === 'Admin') {
+          navigate('/admin');
+        } else {
+          navigate('/');
+        }
       } else {
         await authService.register({ username, email, password });
         alert('Đăng ký thành công! Vui lòng đăng nhập.');

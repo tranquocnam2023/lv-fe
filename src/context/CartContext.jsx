@@ -16,8 +16,17 @@ export const useCart = () => {
 //Lưu dữ liệu vào LocalStorage
 export const CartProvider = ({ children }) => {
   const [cartItems, setCartItems] = useState(() => {
-    const savedCart = localStorage.getItem('cart');
-    return savedCart ? JSON.parse(savedCart) : [];
+    try {
+      const savedCart = localStorage.getItem('cart');
+      if (!savedCart) return [];
+      const parsed = JSON.parse(savedCart);
+      if (Array.isArray(parsed)) return parsed;
+      if (parsed && Array.isArray(parsed.items)) return parsed.items;
+      if (parsed && Array.isArray(parsed.data)) return parsed.data;
+      return [];
+    } catch {
+      return [];
+    }
   });
   const [toast, setToast] = useState(null);
 
@@ -32,16 +41,17 @@ export const CartProvider = ({ children }) => {
     setToast({ message });
   };
 
-  // Xóa logic load combos cũ
+  const safeCartItems = Array.isArray(cartItems) ? cartItems : [];
 
   useEffect(() => {
     // Kiểm tra xem có sản phẩm chính (máy điện thoại/máy tính bảng...) nào trong giỏ không
-    const hasMainProduct = cartItems.some(item => !item.isAddon);
+    const hasMainProduct = safeCartItems.some(item => !item.isAddon);
     
     // Nếu KHÔNG có sản phẩm chính, nhưng lại CÓ phụ kiện mua kèm (isAddon = true)
-    if (!hasMainProduct && cartItems.some(item => item.isAddon)) {
-      setCartItems((prevItems) =>
-        prevItems.map((item) => {
+    if (!hasMainProduct && safeCartItems.some(item => item.isAddon)) {
+      setCartItems((prevItems) => {
+        const currentArr = Array.isArray(prevItems) ? prevItems : [];
+        return currentArr.map((item) => {
           if (item.isAddon) {
             // Khôi phục giá gốc của phụ kiện khi mua lẻ độc lập
             const normalPrice = item.originalBasePrice || item.price;
@@ -55,29 +65,30 @@ export const CartProvider = ({ children }) => {
             };
           }
           return item;
-        })
-      );
+        });
+      });
       return;
     }
     
-    localStorage.setItem('cart', JSON.stringify(cartItems));
-  }, [cartItems]);
+    localStorage.setItem('cart', JSON.stringify(safeCartItems));
+  }, [safeCartItems]);
 
   const addToCart = (product, quantity = 1) => {
     setCartItems((prevItems) => {
+      const currentArr = Array.isArray(prevItems) ? prevItems : [];
       const cartId = product.isAddon && product.appliedCampaignId
         ? `addon-${product.appliedCampaignId}-${product.id}-${product.selectedStorage || ''}-${product.selectedColor || ''}`
         : `${product.id}-${product.selectedStorage || ''}-${product.selectedColor || ''}${product.selectedWarranty ? `-${product.selectedWarranty.id}` : ''}`;
 
-      const existingItemIndex = prevItems.findIndex(item => item.cartId === cartId);
+      const existingItemIndex = currentArr.findIndex(item => item.cartId === cartId);
 
       if (existingItemIndex >= 0) {
-        const newItems = [...prevItems];
+        const newItems = [...currentArr];
         newItems[existingItemIndex].quantity += quantity;
         return newItems;
       }
 
-      return [...prevItems, {
+      return [...currentArr, {
         ...product,
         quantity,
         cartId,
@@ -92,13 +103,17 @@ export const CartProvider = ({ children }) => {
   };
 
   const removeFromCart = (cartId) => {
-    setCartItems((prevItems) => prevItems.filter((item) => item.cartId !== cartId));
+    setCartItems((prevItems) => {
+      const currentArr = Array.isArray(prevItems) ? prevItems : [];
+      return currentArr.filter((item) => item.cartId !== cartId);
+    });
   };
 
   const updateQuantity = (cartId, quantity) => {
     if (quantity < 1) return;
     setCartItems((prevItems) => {
-      return prevItems.map((item) =>
+      const currentArr = Array.isArray(prevItems) ? prevItems : [];
+      return currentArr.map((item) =>
         item.cartId === cartId ? { ...item, quantity } : item
       );
     });
@@ -109,12 +124,12 @@ export const CartProvider = ({ children }) => {
   };
 
   // logic tính tổng tiền trong giỏ (bao gồm cả giá gói bảo hành đi kèm)
-  const cartTotal = cartItems.reduce(
+  const cartTotal = safeCartItems.reduce(
     (total, item) => total + (item.price + (item.warrantyPrice || 0)) * item.quantity,
     0
   );
 
-  const cartCount = cartItems.reduce((count, item) => count + item.quantity, 0);
+  const cartCount = safeCartItems.reduce((count, item) => count + (item.quantity || 1), 0);
 
   return (
     <CartContext.Provider

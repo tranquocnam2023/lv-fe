@@ -1,6 +1,7 @@
 import React from 'react';
 import { Plus, Check, Edit2, Trash2, MapPin } from 'lucide-react';
 import SearchableSelect from '../../../components/SearchableSelect';
+import GoongAutocomplete from '../../../components/GoongAutocomplete';
 
 export default function ProfileAddressTab({
   shippingInfos,
@@ -20,6 +21,14 @@ export default function ProfileAddressTab({
   handleSaveAddress,
   loading
 }) {
+  const selectedProvince = provinces?.find(p => p.id === selectedProvinceId);
+  const provinceName = selectedProvince ? (selectedProvince.fullName || selectedProvince.name) : '';
+
+  const selectedWard = wards?.find(w => w.id === addressForm.wardId);
+  const wardName = selectedWard ? (selectedWard.fullName || selectedWard.name) : '';
+
+  const addressContext = [wardName, provinceName].filter(Boolean).join(', ');
+
   return (
     <div className="space-y-6 animate-in fade-in duration-200">
       <div className="flex justify-between items-center border-b border-gray-100 pb-3">
@@ -68,17 +77,6 @@ export default function ProfileAddressTab({
               />
             </div>
             <div className="sm:col-span-2">
-              <label className="block text-[10px] font-bold text-gray-400 uppercase mb-1">Địa chỉ chi tiết (Số nhà, tên đường)</label>
-              <input
-                type="text"
-                required
-                placeholder="Ví dụ: 120/5 Nguyễn Văn Cừ..."
-                className="w-full border border-gray-300 p-2.5 rounded-md text-xs font-bold text-gray-855 focus:outline-none focus:border-primary"
-                value={addressForm.addressLine}
-                onChange={(e) => setAddressForm({ ...addressForm, addressLine: e.target.value })}
-              />
-            </div>
-            <div className="sm:col-span-2">
               <label className="block text-[10px] font-bold text-gray-400 uppercase mb-1">Tỉnh / Thành phố *</label>
               <SearchableSelect
                 placeholder="Chọn Tỉnh/Thành phố"
@@ -102,7 +100,31 @@ export default function ProfileAddressTab({
               />
             </div>
           </div>
-
+          <div className="sm:col-span-2">
+            <div className="flex items-center justify-between mb-1">
+              <label className="block text-[10px] font-bold text-gray-400 uppercase">Địa chỉ chi tiết (Số nhà, tên đường)</label>
+              {addressForm.latitude && addressForm.longitude && (
+                <span className="text-[9px] text-green-600 bg-green-50 border border-green-200 px-1.5 py-0.5 rounded font-black flex items-center gap-0.5">
+                  📍 Đã định vị Goong Maps
+                </span>
+              )}
+            </div>
+            <GoongAutocomplete
+              value={addressForm.addressLine || ''}
+              onChange={(val) => setAddressForm(prev => ({ ...prev, addressLine: val }))}
+              onSelectLocation={(locData) => {
+                setAddressForm(prev => ({
+                  ...prev,
+                  addressLine: locData.address || locData.formattedAddress || prev.addressLine,
+                  latitude: locData.latitude || prev.latitude,
+                  longitude: locData.longitude || prev.longitude
+                }));
+              }}
+              placeholder="Tìm kiếm số nhà, tên đường bằng Goong Maps..."
+              addressContext={addressContext}
+              className="w-full border border-gray-300 p-2.5 rounded-md text-xs font-bold text-gray-855 focus:outline-none focus:border-primary"
+            />
+          </div>
           <div className="flex items-center gap-2 pt-2">
             <input
               type="checkbox"
@@ -143,11 +165,10 @@ export default function ProfileAddressTab({
             shippingInfos.map((item) => (
               <div
                 key={item.id}
-                className={`p-5 rounded-md border flex justify-between items-start transition-all ${
-                  item.isDefault
+                className={`p-5 rounded-md border flex justify-between items-start transition-all ${item.isDefault
                     ? 'border-primary bg-primary/5 shadow-sm'
                     : 'border-gray-200 hover:border-gray-300'
-                }`}
+                  }`}
               >
                 <div className="space-y-1 text-sm">
                   <div className="flex items-center gap-2">

@@ -20,7 +20,7 @@ import { Search, ShieldAlert, CheckCircle2, XCircle, Clock, Eye, AlertCircle, Pl
  */
 export default function AdminInspectionPanel() {
   // Chế độ xem: 'inspection' (thẩm định) hoặc 'crud' (quản lý gói) - mặc định hiện Quản lý gói bảo hành (crud) lên trước
-  const [viewMode, setViewMode] = useState('crud'); 
+  const [viewMode, setViewMode] = useState('crud');
 
   // ================= STATE TAB 1: THẨM ĐỊNH THIẾT BỊ =================
   const [orders, setOrders] = useState([]);
@@ -33,11 +33,11 @@ export default function AdminInspectionPanel() {
 
   // State các Modal nâng cao theo thiết kế
   const [imeiModal, setImeiModal] = useState({ isOpen: false, item: null, imei: '' });
-  const [rejectModal, setRejectModal] = useState({ 
-    isOpen: false, 
-    item: null, 
-    reason: 'Màn hình nứt vỡ', 
-    customReason: '' 
+  const [rejectModal, setRejectModal] = useState({
+    isOpen: false,
+    item: null,
+    reason: 'Màn hình nứt vỡ',
+    customReason: ''
   });
 
   // ================= STATE TAB 2: CRUD GÓI BẢO HÀNH =================
@@ -156,7 +156,7 @@ export default function AdminInspectionPanel() {
 
     return list.filter(item => {
       const cleanQuery = orderSearchQuery.replace('#', '').trim().toLowerCase();
-      
+
       const matchesSearch =
         String(item.orderId).includes(cleanQuery) ||
         (item.phoneNumber && item.phoneNumber.includes(cleanQuery)) ||
@@ -204,7 +204,7 @@ export default function AdminInspectionPanel() {
   const handleApproveClick = (item) => {
     const cleanImei = (item.imeiOrSerial || '').trim();
     const hasImei = cleanImei && cleanImei.toLowerCase() !== 'chưa cung cấp';
-    
+
     if (hasImei) {
       if (window.confirm(`Xác nhận duyệt Đạt (PASSED) đơn hàng #PS${item.orderId}?`)) {
         handleUpdateInspectionDirect(item, 'PASSED', 'Thiết bị ngoại quan đạt chuẩn bảo hành.', null);
@@ -242,10 +242,10 @@ export default function AdminInspectionPanel() {
 
   const handleRejectSubmit = async (e) => {
     e.preventDefault();
-    const finalReason = rejectModal.reason === 'Lý do khác' 
-      ? rejectModal.customReason.trim() 
+    const finalReason = rejectModal.reason === 'Lý do khác'
+      ? rejectModal.customReason.trim()
       : rejectModal.reason;
-      
+
     if (!finalReason) {
       alert('Vui lòng nhập hoặc chọn lý do từ chối cụ thể!');
       return;
@@ -290,10 +290,10 @@ export default function AdminInspectionPanel() {
   const handleOpenEditForm = (pkg) => {
     setIsAddingNew(false);
     setSelectedPackage(pkg);
-    
+
     // Đảm bảo tương thích cả chữ hoa/chữ thường (PascalCase vs camelCase) từ API trả về
     const rulesObj = pkg.rules || pkg.Rules || {};
-    
+
     setPackageFormData({
       code: pkg.code || pkg.Code,
       name: pkg.name || pkg.Name,
@@ -461,21 +461,19 @@ export default function AdminInspectionPanel() {
         <div className="flex gap-1.5 bg-gray-100 p-1 rounded select-none border border-gray-200">
           <button
             onClick={() => setViewMode('inspection')}
-            className={`px-4 py-2 rounded text-xs font-black uppercase tracking-wider transition-all cursor-pointer ${
-              viewMode === 'inspection'
+            className={`px-4 py-2 rounded text-xs font-black uppercase tracking-wider transition-all cursor-pointer ${viewMode === 'inspection'
                 ? 'bg-white text-primary shadow-sm scale-[1.01]'
                 : 'text-gray-500 hover:text-gray-800'
-            }`}
+              }`}
           >
             Thẩm định thiết bị
           </button>
           <button
             onClick={() => setViewMode('crud')}
-            className={`px-4 py-2 rounded text-xs font-black uppercase tracking-wider transition-all cursor-pointer ${
-              viewMode === 'crud'
+            className={`px-4 py-2 rounded text-xs font-black uppercase tracking-wider transition-all cursor-pointer ${viewMode === 'crud'
                 ? 'bg-white text-primary shadow-sm scale-[1.01]'
                 : 'text-gray-500 hover:text-gray-800'
-            }`}
+              }`}
           >
             Quản lý gói bảo hành
           </button>
@@ -484,9 +482,8 @@ export default function AdminInspectionPanel() {
 
       {/* Thông báo Alert */}
       {message && (
-        <div className={`p-4 rounded-md text-xs font-bold flex items-center gap-2 animate-in fade-in duration-350 border ${
-          message.type === 'success' ? 'bg-green-50 text-green-700 border-green-200' : 'bg-red-50 text-red-700 border-red-200'
-        }`}>
+        <div className={`p-4 rounded-md text-xs font-bold flex items-center gap-2 animate-in fade-in duration-350 border ${message.type === 'success' ? 'bg-green-50 text-green-700 border-green-200' : 'bg-red-50 text-red-700 border-red-200'
+          }`}>
           <AlertCircle size={16} />
           <span>{message.text}</span>
         </div>
@@ -523,11 +520,10 @@ export default function AdminInspectionPanel() {
                     setOrderStatusFilter(tab.key);
                     setSelectedInspectionItem(null);
                   }}
-                  className={`px-4 py-1.5 rounded text-[11px] font-black uppercase tracking-wider transition-all cursor-pointer ${
-                    orderStatusFilter === tab.key
+                  className={`px-4 py-1.5 rounded text-[11px] font-black uppercase tracking-wider transition-all cursor-pointer ${orderStatusFilter === tab.key
                       ? 'bg-white text-primary shadow-sm'
                       : 'text-gray-500 hover:text-gray-700'
-                  }`}
+                    }`}
                 >
                   {tab.label}
                 </button>
@@ -590,26 +586,25 @@ export default function AdminInspectionPanel() {
                               </span>
                             </td>
                             <td className="p-4">
-                              <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider ${
-                                item.inspectionStatus === 'WAITING_CHECK'
+                              <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider ${item.inspectionStatus === 'WAITING_CHECK'
                                   ? 'bg-yellow-50 text-yellow-600'
                                   : item.inspectionStatus === 'PASSED'
-                                  ? 'bg-green-50 text-green-600'
-                                  : item.inspectionStatus === 'NOT_REQUIRED'
-                                  ? 'bg-blue-50 text-blue-600'
-                                  : 'bg-red-50 text-red-600'
-                              }`}>
+                                    ? 'bg-green-50 text-green-600'
+                                    : item.inspectionStatus === 'NOT_REQUIRED'
+                                      ? 'bg-blue-50 text-blue-600'
+                                      : 'bg-red-50 text-red-600'
+                                }`}>
                                 {item.inspectionStatus === 'WAITING_CHECK' && <Clock size={11} />}
                                 {item.inspectionStatus === 'PASSED' && <CheckCircle2 size={11} />}
                                 {item.inspectionStatus === 'NOT_REQUIRED' && <CheckCircle2 size={11} />}
                                 {item.inspectionStatus === 'FAILED' && <XCircle size={11} />}
-                                {item.inspectionStatus === 'WAITING_CHECK' 
-                                  ? 'Chờ kiểm tra' 
-                                  : item.inspectionStatus === 'PASSED' 
-                                  ? 'Đã duyệt' 
-                                  : item.inspectionStatus === 'NOT_REQUIRED'
-                                  ? 'Tự động duyệt'
-                                  : 'Từ chối'}
+                                {item.inspectionStatus === 'WAITING_CHECK'
+                                  ? 'Chờ kiểm tra'
+                                  : item.inspectionStatus === 'PASSED'
+                                    ? 'Đã duyệt'
+                                    : item.inspectionStatus === 'NOT_REQUIRED'
+                                      ? 'Tự động duyệt'
+                                      : 'Từ chối'}
                               </span>
                             </td>
                             <td className="p-4 text-right">
@@ -638,9 +633,8 @@ export default function AdminInspectionPanel() {
                                       setSelectedInspectionItem(item);
                                       setInspectionNote(item.note || '');
                                     }}
-                                    className={`p-1.5 hover:bg-gray-100 rounded text-gray-500 hover:text-primary transition-all cursor-pointer ${
-                                      selectedInspectionItem && selectedInspectionItem.id === item.id ? 'bg-primary/10 text-primary' : ''
-                                    }`}
+                                    className={`p-1.5 hover:bg-gray-100 rounded text-gray-500 hover:text-primary transition-all cursor-pointer ${selectedInspectionItem && selectedInspectionItem.id === item.id ? 'bg-primary/10 text-primary' : ''
+                                      }`}
                                     title="Xem chi tiết thẩm định"
                                   >
                                     <Eye size={14} />
@@ -814,16 +808,14 @@ export default function AdminInspectionPanel() {
                             <span className="text-red-600 font-black">{pkg.basePrice?.toLocaleString('vi-VN')}₫</span>
                           </td>
                           <td className="p-4">
-                            <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${
-                              pkg.requiresInspection ? 'bg-orange-50 text-orange-600 border border-orange-100' : 'bg-gray-100 text-gray-600'
-                            }`}>
+                            <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${pkg.requiresInspection ? 'bg-orange-50 text-orange-600 border border-orange-100' : 'bg-gray-100 text-gray-600'
+                              }`}>
                               {pkg.requiresInspection ? 'Bắt buộc' : 'Không cần'}
                             </span>
                           </td>
                           <td className="p-4">
-                            <span className={`inline-flex items-center gap-0.5 px-2 py-0.5 rounded text-[10px] font-bold ${
-                              pkg.isActive ? 'bg-green-50 text-green-600' : 'bg-red-50 text-red-600'
-                            }`}>
+                            <span className={`inline-flex items-center gap-0.5 px-2 py-0.5 rounded text-[10px] font-bold ${pkg.isActive ? 'bg-green-50 text-green-600' : 'bg-red-50 text-red-600'
+                              }`}>
                               {pkg.isActive ? 'Hoạt động' : 'Tạm khóa'}
                             </span>
                           </td>
@@ -931,21 +923,29 @@ export default function AdminInspectionPanel() {
                   />
                 </div>
 
-                {/* 🛠️ QUY TẮC RÀNG BUỘC (RULES) */}
+                {/* Chi Tiết Áp Dụng */}
                 <div className="space-y-3.5 p-4 bg-gray-50/70 border border-gray-200 rounded-lg">
                   <h4 className="text-xs font-black text-gray-900 uppercase tracking-wider flex items-center gap-1.5 border-b border-gray-200 pb-2">
-                    🛠️ Quy tắc ràng buộc (Rules)
+                    Chi Tiết Áp Dụng
                   </h4>
-                  
+
                   {/* Thương hiệu áp dụng */}
                   <div className="space-y-1">
                     <label className="block text-[10px] text-gray-500 uppercase tracking-widest font-bold">1. Thương hiệu áp dụng (Brand):</label>
                     <select
                       value={packageFormData.rules.brandId}
-                      onChange={(e) => setPackageFormData(prev => ({
-                        ...prev,
-                        rules: { ...prev.rules, brandId: e.target.value }
-                      }))}
+                      onChange={(e) => {
+                        const newBrandId = e.target.value;
+                        setPackageFormData(prev => ({
+                          ...prev,
+                          rules: {
+                            ...prev.rules,
+                            brandId: newBrandId,
+                            categoryId: '', // Reset danh mục khi chọn lại thương hiệu
+                            productId: ''   // Reset sản phẩm khi chọn lại thương hiệu
+                          }
+                        }));
+                      }}
                       className="w-full p-2.5 bg-white border border-gray-250 rounded focus:border-primary transition-all outline-none font-medium"
                     >
                       <option value="">Tất cả thương hiệu (Không ràng buộc)</option>
@@ -955,27 +955,62 @@ export default function AdminInspectionPanel() {
                     </select>
                   </div>
 
-                  {/* Danh mục áp dụng */}
+                  {/* Danh mục áp dụng (Lọc động theo Thương hiệu đã chọn) */}
                   <div className="space-y-1">
-                    <label className="block text-[10px] text-gray-500 uppercase tracking-widest font-bold">2. Danh mục áp dụng (Category):</label>
+                    <div className="flex justify-between items-center">
+                      <label className="block text-[10px] text-gray-500 uppercase tracking-widest font-bold">2. Danh mục áp dụng (Category):</label>
+                      {packageFormData.rules.brandId && (
+                        <span className="text-[10px] text-blue-600 font-bold">
+                          Đã lọc theo {brands.find(b => String(b.id) === String(packageFormData.rules.brandId))?.name}
+                        </span>
+                      )}
+                    </div>
                     <select
                       value={packageFormData.rules.categoryId}
-                      onChange={(e) => setPackageFormData(prev => ({
-                        ...prev,
-                        rules: { ...prev.rules, categoryId: e.target.value }
-                      }))}
+                      onChange={(e) => {
+                        const newCatId = e.target.value;
+                        setPackageFormData(prev => ({
+                          ...prev,
+                          rules: {
+                            ...prev.rules,
+                            categoryId: newCatId,
+                            productId: '' // Reset sản phẩm khi chọn lại danh mục
+                          }
+                        }));
+                      }}
                       className="w-full p-2.5 bg-white border border-gray-250 rounded focus:border-primary transition-all outline-none font-medium"
                     >
                       <option value="">Tất cả danh mục (Không ràng buộc)</option>
-                      {categories.map(c => (
-                        <option key={c.id} value={c.id}>{c.name}</option>
-                      ))}
+                      {categories
+                        .filter(c => {
+                          if (!packageFormData.rules.brandId) return true;
+                          const prodsInBrand = products.filter(p => String(p.brandId || p.BrandId) === String(packageFormData.rules.brandId));
+                          const validCatIds = new Set(prodsInBrand.map(p => p.categoryId || p.CategoryId));
+                          return validCatIds.has(c.id);
+                        })
+                        .map(c => (
+                          <option key={c.id} value={c.id}>{c.name}</option>
+                        ))
+                      }
                     </select>
                   </div>
 
-                  {/* Sản phẩm áp dụng (Chọn sản phẩm cụ thể như S24+ hoặc iPhone 15) */}
+                  {/* Sản phẩm áp dụng (Lọc động theo Thương hiệu & Danh mục đã chọn) */}
                   <div className="space-y-1">
-                    <label className="block text-[10px] text-gray-500 uppercase tracking-widest font-bold">3. Sản phẩm cụ thể (Product - Tuỳ chọn):</label>
+                    <div className="flex justify-between items-center">
+                      <label className="block text-[10px] text-gray-500 uppercase tracking-widest font-bold">3. Sản phẩm cụ thể (Product - Tuỳ chọn):</label>
+                      {(packageFormData.rules.brandId || packageFormData.rules.categoryId) && (
+                        <span className="text-[10px] text-emerald-600 font-bold">
+                          {products.filter(p => {
+                            const pBrandId = p.brandId || p.BrandId;
+                            const pCatId = p.categoryId || p.CategoryId;
+                            if (packageFormData.rules.brandId && String(pBrandId) !== String(packageFormData.rules.brandId)) return false;
+                            if (packageFormData.rules.categoryId && String(pCatId) !== String(packageFormData.rules.categoryId)) return false;
+                            return true;
+                          }).length} sản phẩm phù hợp
+                        </span>
+                      )}
+                    </div>
                     <select
                       value={packageFormData.rules.productId}
                       onChange={(e) => setPackageFormData(prev => ({
@@ -985,9 +1020,23 @@ export default function AdminInspectionPanel() {
                       className="w-full p-2.5 bg-white border border-gray-250 rounded focus:border-primary transition-all outline-none font-medium"
                     >
                       <option value="">Tất cả sản phẩm (Không ràng buộc)</option>
-                      {products.map(p => (
-                        <option key={p.id} value={p.id}>{p.name}</option>
-                      ))}
+                      {products
+                        .filter(p => {
+                          const pBrandId = p.brandId || p.BrandId;
+                          const pCatId = p.categoryId || p.CategoryId;
+
+                          if (packageFormData.rules.brandId && String(pBrandId) !== String(packageFormData.rules.brandId)) {
+                            return false;
+                          }
+                          if (packageFormData.rules.categoryId && String(pCatId) !== String(packageFormData.rules.categoryId)) {
+                            return false;
+                          }
+                          return true;
+                        })
+                        .map(p => (
+                          <option key={p.id} value={p.id}>{p.name}</option>
+                        ))
+                      }
                     </select>
                   </div>
 
@@ -1121,7 +1170,7 @@ export default function AdminInspectionPanel() {
                   <option value="Lý do khác">Lý do khác...</option>
                 </select>
               </div>
-              
+
               {rejectModal.reason === 'Lý do khác' && (
                 <div className="space-y-1.5 animate-in slide-in-from-top-1 duration-200">
                   <label className="block text-[10px] uppercase font-black text-gray-400">Lý do cụ thể:</label>
@@ -1135,7 +1184,7 @@ export default function AdminInspectionPanel() {
                   />
                 </div>
               )}
-              
+
               <div className="flex justify-end gap-2 font-black uppercase">
                 <button
                   type="button"
