@@ -92,7 +92,11 @@ export default function AdminAuditLogs() {
   const formatTimestamp = (dateStr) => {
     if (!dateStr) return '---';
     try {
-      const date = new Date(dateStr);
+      let str = String(dateStr).trim();
+      if (!str.endsWith('Z') && !str.includes('+') && !str.includes('Z')) {
+        str += 'Z';
+      }
+      const date = new Date(str);
       const hours = String(date.getHours()).padStart(2, '0');
       const minutes = String(date.getMinutes()).padStart(2, '0');
       const seconds = String(date.getSeconds()).padStart(2, '0');
@@ -103,6 +107,40 @@ export default function AdminAuditLogs() {
     } catch {
       return dateStr;
     }
+  };
+
+  const formatTargetTable = (table) => {
+    if (!table) return '---';
+    const map = {
+      Users: 'Tài khoản người dùng (Users)',
+      Products: 'Sản phẩm (Products)',
+      ProductVariants: 'Biến thể sản phẩm (ProductVariants)',
+      Warranties: 'Gói bảo hành (Warranties)',
+      WarrantyPackageRules: 'Quy tắc bảo hành (WarrantyPackageRules)',
+      Orders: 'Đơn hàng (Orders)',
+      OrderItems: 'Chi tiết đơn hàng (OrderItems)',
+      CustomerDevices: 'Thiết bị khách hàng (CustomerDevices)',
+      RefreshTokens: 'Phiên đăng nhập (RefreshTokens)',
+      Reviews: 'Đánh giá sản phẩm (Reviews)',
+      Promotions: 'Mã giảm giá (Promotions)',
+      PromotionCampaigns: 'Chiến dịch KM (PromotionCampaigns)',
+      Banners: 'Banner quảng cáo (Banners)',
+      Categories: 'Danh mục (Categories)',
+      Brands: 'Thương hiệu (Brands)',
+      InventoryTransactions: 'Giao dịch kho (InventoryTransactions)',
+      CartItems: 'Giỏ hàng (CartItems)',
+      Carts: 'Giỏ hàng (Carts)'
+    };
+    return map[table] || table;
+  };
+
+  const formatTargetId = (id) => {
+    if (!id) return '---';
+    const str = String(id);
+    if (str.length > 20) {
+      return `${str.slice(0, 8)}...${str.slice(-6)}`;
+    }
+    return `#${str}`;
   };
 
   const getActionBadgeClass = (action) => {
@@ -252,7 +290,7 @@ export default function AdminAuditLogs() {
                 <th className="px-5 py-3.5">Thời Gian</th>
                 <th className="px-5 py-3.5">Người Thực Hiện (Admin)</th>
                 <th className="px-5 py-3.5 text-center">Hành Động</th>
-                <th className="px-5 py-3.5">Bảng Tác Động</th>
+                <th className="px-5 py-3.5">Ở</th>
                 <th className="px-5 py-3.5 text-center">Mã Bản Ghi</th>
                 <th className="px-5 py-3.5 text-center">Giá Trị Cũ</th>
                 <th className="px-5 py-3.5 text-center">Giá Trị Mới</th>
@@ -277,8 +315,10 @@ export default function AdminAuditLogs() {
                         {log.action}
                       </span>
                     </td>
-                    <td className="px-5 py-4 font-bold text-primary">{log.targetTable}</td>
-                    <td className="px-5 py-4 text-center font-semibold text-admin-text-muted">#{log.targetId}</td>
+                    <td className="px-5 py-4 font-bold text-primary">{formatTargetTable(log.targetTable)}</td>
+                    <td className="px-5 py-4 text-center font-semibold text-admin-text-muted" title={log.targetId}>
+                      {log.targetName ? <span className="font-extrabold text-gray-900">{log.targetName}</span> : formatTargetId(log.targetId)}
+                    </td>
                     <td className="px-5 py-4 text-center">
                       <button
                         type="button"
@@ -349,11 +389,10 @@ export default function AdminAuditLogs() {
                     key={pageNum}
                     type="button"
                     onClick={() => setCurrentPage(pageNum)}
-                    className={`px-3 py-1 text-xs font-bold rounded cursor-pointer transition ${
-                      currentPage === pageNum
+                    className={`px-3 py-1 text-xs font-bold rounded cursor-pointer transition ${currentPage === pageNum
                         ? 'bg-primary text-white'
                         : 'bg-white hover:bg-gray-50 text-admin-text-main border border-admin-border'
-                    }`}
+                      }`}
                   >
                     {pageNum}
                   </button>
@@ -404,8 +443,11 @@ export default function AdminAuditLogs() {
                   <span className="text-admin-text-main font-bold">{selectedLog.action}</span>
                 </div>
                 <div>
-                  <span className="text-admin-text-muted block text-[10px] uppercase">Bảng tác động</span>
-                  <span className="text-primary font-bold">{selectedLog.targetTable} (ID: #{selectedLog.targetId})</span>
+                  <span className="text-admin-text-muted block text-[10px] uppercase font-bold">Ở</span>
+                  <span className="text-primary font-bold">
+                    {formatTargetTable(selectedLog.targetTable)}
+                    {selectedLog.targetName ? <span className="text-gray-900 font-black ml-1">({selectedLog.targetName})</span> : ` (${formatTargetId(selectedLog.targetId)})`}
+                  </span>
                 </div>
               </div>
 
