@@ -127,7 +127,7 @@ export default function AdminCombos({ onCreate, onEdit }) {
         </div>
         <button
           onClick={onCreate}
-          className="bg-red-600 hover:bg-red-700 active:bg-red-800 text-white px-6 py-3 rounded-xl font-bold shadow-lg shadow-red-500/30 transition-all flex items-center gap-2 cursor-pointer"
+          className="bg-admin-primary-hover hover:opacity-90 active:scale-95 text-white px-6 py-3 rounded-xl font-bold shadow-lg shadow-indigo-500/20 transition-all flex items-center gap-2 cursor-pointer"
         >
           <Plus size={20} strokeWidth={3} />
           <span>Tạo Chiến dịch</span>
@@ -256,26 +256,27 @@ export default function AdminCombos({ onCreate, onEdit }) {
                     </td>
 
                     <td className="px-6 py-4 text-center">
-                      <div className="flex flex-col items-center justify-center gap-1.5">
+                      <div className="flex flex-col items-center justify-center gap-1.5 w-[110px] mx-auto">
                          {/* Toggle Switch */}
                          <button 
                            onClick={() => handleToggleStatus(campaign)}
                            disabled={actionLoading === campaign.id + '_toggle'}
-                           className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none ${campaign.isActive ? 'bg-red-600' : 'bg-gray-300'}`}
+                           className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none cursor-pointer ${campaign.isActive ? 'bg-success' : 'bg-gray-300'}`}
                          >
                            <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${campaign.isActive ? 'translate-x-6' : 'translate-x-1'}`} />
                          </button>
                          
                          {/* Text Status */}
-                         <span className={`text-[10px] font-black uppercase tracking-wider ${
-                           status === 'ACTIVE' ? 'text-red-600' :
+                         <span className={`text-[10px] font-black uppercase tracking-wider block text-center w-full whitespace-nowrap ${
+                           status === 'ACTIVE' ? 'text-success' :
                            status === 'UPCOMING' ? 'text-amber-500' :
                            status === 'ENDED' ? 'text-gray-500' :
                            'text-gray-400'
                          }`}>
-                           {status === 'ACTIVE' ? 'Đang chạy' :
-                            status === 'UPCOMING' ? 'Sắp diễn ra' :
-                            status === 'ENDED' ? 'Đã kết thúc' : 'Tạm dừng'}
+                           {status === 'ACTIVE' ? 'ĐANG CHẠY' :
+                            status === 'UPCOMING' ? 'SẮP DIỄN RA' :
+                            status === 'ENDED' ? 'ĐÃ KẾT THÚC' :
+                            'ĐÃ TẮT'}
                          </span>
                       </div>
                     </td>
