@@ -11,7 +11,7 @@ export default function AdminPayments() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [searchParams, setSearchParams] = useSearchParams();
-  
+
   // Filters
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
@@ -52,9 +52,9 @@ export default function AdminPayments() {
   const filteredPayments = payments.filter((p) => {
     const matchesStatus = statusFilter === 'all' || p.status?.toLowerCase() === statusFilter.toLowerCase();
     const matchesProvider = providerFilter === 'all' || p.provider?.toLowerCase() === providerFilter.toLowerCase();
-    
+
     const term = searchTerm.trim().toLowerCase();
-    const matchesSearch = 
+    const matchesSearch =
       !term ||
       String(p.orderId).includes(term) ||
       (p.customerName && p.customerName.toLowerCase().includes(term)) ||
@@ -105,6 +105,10 @@ export default function AdminPayments() {
         return 'bg-warning/10 text-warning border border-warning/20';
       case 'failed':
         return 'bg-danger/10 text-danger border border-danger/20';
+      case 'refunded':
+        return 'bg-purple-100 text-purple-700 border border-purple-200 dark:bg-purple-900/30 dark:text-purple-300 dark:border-purple-800/30';
+      case 'cancelled':
+        return 'bg-gray-100 text-gray-600 border border-gray-200 dark:bg-gray-800/30 dark:text-gray-400 dark:border-gray-700/30';
       default:
         return 'bg-gray-100 text-gray-500 border border-gray-200';
     }
@@ -115,6 +119,8 @@ export default function AdminPayments() {
       case 'succeeded': return 'Thành công';
       case 'pending': return 'Chờ xử lý';
       case 'failed': return 'Thất bại';
+      case 'refunded': return 'Đã hoàn tiền';
+      case 'cancelled': return 'Đã hủy';
       default: return status;
     }
   };
@@ -149,7 +155,7 @@ export default function AdminPayments() {
           <h2 className="text-2xl font-bold text-admin-text-main">Nhật ký giao dịch thanh toán</h2>
           <p className="text-sm text-admin-text-muted font-medium mt-1">Theo dõi, kiểm tra trạng thái và lịch sử thanh toán của khách hàng</p>
         </div>
-        
+
         <div className="relative w-full md:w-96 group">
           <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-admin-text-muted group-focus-within:text-primary transition-colors">
             <Search size={18} />
@@ -302,7 +308,7 @@ export default function AdminPayments() {
 
                     {/* Link liên kết sang trang đơn hàng: Khi click sẽ tự động chuyển tab sang 'orders' và đính kèm mã 'orderId' lên URL */}
                     <td className="px-6 py-4">
-                      <span 
+                      <span
                         onClick={() => {
                           setSearchParams(prev => {
                             prev.set('tab', 'orders'); // Chuyển sang Tab danh sách đơn hàng
@@ -407,7 +413,7 @@ export default function AdminPayments() {
             <span className="text-xs font-bold text-admin-text-muted">
               Hiển thị {startIndex}-{endIndex} trên {totalItems} giao dịch
             </span>
-            
+
             <div className="flex gap-1.5">
               <button
                 onClick={prevPage}
@@ -416,7 +422,7 @@ export default function AdminPayments() {
               >
                 Trước
               </button>
-              
+
               {[...Array(totalPages)].map((_, i) => (
                 <button
                   key={i}
@@ -426,7 +432,7 @@ export default function AdminPayments() {
                   {i + 1}
                 </button>
               ))}
-              
+
               <button
                 onClick={nextPage}
                 disabled={currentPage === totalPages}
