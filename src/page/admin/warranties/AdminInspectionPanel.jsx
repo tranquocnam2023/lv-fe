@@ -760,7 +760,7 @@ export default function AdminInspectionPanel() {
                 </h3>
                 <button
                   onClick={handleOpenAddForm}
-                  className="px-3.5 py-1.5 bg-green-600 text-white hover:bg-green-700 rounded text-xs font-black uppercase tracking-wider flex items-center gap-1 cursor-pointer transition-all active:scale-95 shadow-sm"
+                  className="px-3.5 py-1.5 bg-admin-primary-hover text-white hover:opacity-90 rounded text-xs font-black uppercase tracking-wider flex items-center gap-1 cursor-pointer transition-all active:scale-95 shadow-sm"
                 >
                   <Plus size={13} />
                   Thêm gói mới

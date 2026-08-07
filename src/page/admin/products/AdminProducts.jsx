@@ -368,9 +368,9 @@ export default function AdminProducts({ onCreate, onEdit, defaultBrandFilter, cl
                             return stock;
                           })()}
                         </td>
-                        <td className="py-4 px-2 text-center">
-                          <div className="flex flex-col items-center justify-center gap-1">
-                            <label className="relative inline-flex items-center cursor-pointer">
+                        <td className="py-4 px-2 text-center" onClick={(e) => e.stopPropagation()}>
+                          <div className="flex flex-col items-center justify-center gap-1 w-[110px] mx-auto">
+                            <label className="relative inline-flex items-center cursor-pointer" onClick={(e) => e.stopPropagation()}>
                               <input
                                 type="checkbox"
                                 className="sr-only peer"
@@ -379,7 +379,7 @@ export default function AdminProducts({ onCreate, onEdit, defaultBrandFilter, cl
                               />
                               <div className="w-9 h-5 bg-admin-border peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-success"></div>
                             </label>
-                            <span className={`text-[10px] font-bold ${product.isActive !== false ? 'text-success' : 'text-admin-text-muted'}`}>
+                            <span className={`text-[10px] font-bold text-center block w-full whitespace-nowrap ${product.isActive !== false ? 'text-success' : 'text-admin-text-muted'}`}>
                               {product.isActive !== false ? 'Đang bán' : 'Ngừng kinh doanh'}
                             </span>
                           </div>
