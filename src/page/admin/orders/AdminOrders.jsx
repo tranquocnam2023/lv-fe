@@ -100,9 +100,13 @@ export default function AdminOrders() {
                 customer: order.receiverName || 'Khách hàng',
                 phone: order.receiverPhone || 'N/A',
                 date: order.createdAt,
-                payment: (order.paymentMethod || 'cod').toLowerCase() === 'cod'
-                  ? (order.statusId === 4 ? 'Đã thanh toán' : 'Chờ thanh toán')
-                  : (order.statusId === 2 || order.statusId === 3 || order.statusId === 4 ? 'Đã thanh toán' : 'Chờ thanh toán'),
+                payment: order.statusId === 7
+                  ? 'Đã hoàn tiền'
+                  : order.statusId === 5
+                    ? 'Đã hủy'
+                    : (order.paymentMethod || 'cod').toLowerCase() === 'cod'
+                      ? (order.statusId === 4 ? 'Đã thanh toán' : 'Chờ thanh toán')
+                      : (order.statusId === 2 || order.statusId === 3 || order.statusId === 4 ? 'Đã thanh toán' : 'Chờ thanh toán'),
                 amount: order.totalPrice,
                 status: statusStr,
                 paymentMethod: order.paymentMethod || order.PaymentMethod || 'cod',
@@ -491,7 +495,10 @@ export default function AdminOrders() {
                     </td>
                     <td className="px-6 py-4 font-bold text-admin-text-main">{formatDate(order.date)}</td>
                     <td className="px-6 py-4">
-                      <span className={`text-[11px] font-bold px-3 py-1 rounded-full ${order.payment === 'Đã thanh toán' ? 'bg-success/10 text-success' : 'bg-admin-bg text-admin-text-muted'
+                      <span className={`text-[11px] font-bold px-3 py-1 rounded-full ${order.payment === 'Đã thanh toán' ? 'bg-success/10 text-success' :
+                          order.payment === 'Đã hoàn tiền' ? 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300' :
+                            order.payment === 'Đã hủy' ? 'bg-admin-danger/10 text-admin-danger' :
+                              'bg-admin-bg text-admin-text-muted'
                         }`}>
                         {order.payment}
                       </span>
