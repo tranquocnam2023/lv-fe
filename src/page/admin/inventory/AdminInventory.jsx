@@ -50,6 +50,8 @@ export default function AdminInventory() {
 
   // Filter states
   const [searchQuery, setSearchQuery] = useState('');
+  const [txStartDate, setTxStartDate] = useState('');
+  const [txEndDate, setTxEndDate] = useState('');
   const [typeFilter, setTypeFilter] = useState('ALL');
   const [selectedTxGroup, setSelectedTxGroup] = useState(null);
   const [selectedStockProduct, setSelectedStockProduct] = useState(null);
@@ -160,6 +162,22 @@ export default function AdminInventory() {
   const filteredHistory = groupedHistory.filter(group => {
     let match = true;
     if (typeFilter !== 'ALL' && group.transactionType !== typeFilter) match = false;
+    
+    // Lọc theo khoảng ngày (Từ ngày - Đến ngày)
+    if (txStartDate) {
+      const start = new Date(txStartDate);
+      start.setHours(0, 0, 0, 0);
+      const groupDate = new Date(group.createdAt);
+      if (groupDate < start) match = false;
+    }
+
+    if (txEndDate) {
+      const end = new Date(txEndDate);
+      end.setHours(23, 59, 59, 999);
+      const groupDate = new Date(group.createdAt);
+      if (groupDate > end) match = false;
+    }
+
     if (searchQuery) {
       const query = searchQuery.toLowerCase();
       const matchNote = group.note?.toLowerCase().includes(query);
@@ -580,6 +598,64 @@ export default function AdminInventory() {
               </div>
             )}
           </div>
+
+          {/* // Thanh tìm kiếm ở Lịch sử xuất/nhập kho */}
+          {viewMode === 'TRANSACTIONS' && (
+            <div className="bg-gray-50/70 p-3.5 rounded-lg border border-admin-border mb-4 flex flex-wrap items-center justify-between gap-3">
+              <div className="flex flex-wrap items-center gap-3 flex-1">
+                {/* Tìm kiếm từ khóa */}
+                <div className="relative min-w-[240px] flex-1 sm:flex-initial">
+                  <Search className="absolute left-3 top-2.5 text-gray-400" size={15} />
+                  <input
+                    type="text"
+                    placeholder="Tìm mã GD, tên SP, người làm, ghi chú..."
+                    value={searchQuery}
+                    onChange={(e) => { setSearchQuery(e.target.value); goToPage(1); }}
+                    className="w-full pl-9 pr-3 py-1.5 bg-white border border-admin-border text-admin-text-main rounded-md text-xs font-semibold focus:border-primary focus:ring-1 focus:ring-primary outline-none"
+                  />
+                </div>
+
+                {/* Lọc Từ ngày */}
+                <div className="flex items-center gap-1.5 text-xs font-bold text-admin-text-muted">
+                  <span>Từ ngày:</span>
+                  <input
+                    type="date"
+                    value={txStartDate}
+                    onChange={(e) => { setTxStartDate(e.target.value); goToPage(1); }}
+                    className="px-2.5 py-1.5 bg-white border border-admin-border text-admin-text-main rounded-md text-xs font-semibold focus:border-primary focus:ring-1 focus:ring-primary outline-none cursor-pointer"
+                  />
+                </div>
+
+                {/* Lọc Đến ngày */}
+                <div className="flex items-center gap-1.5 text-xs font-bold text-admin-text-muted">
+                  <span>Đến ngày:</span>
+                  <input
+                    type="date"
+                    value={txEndDate}
+                    onChange={(e) => { setTxEndDate(e.target.value); goToPage(1); }}
+                    className="px-2.5 py-1.5 bg-white border border-admin-border text-admin-text-main rounded-md text-xs font-semibold focus:border-primary focus:ring-1 focus:ring-primary outline-none cursor-pointer"
+                  />
+                </div>
+              </div>
+
+              {/* Nút xóa lọc */}
+              {(searchQuery || txStartDate || txEndDate || typeFilter !== 'ALL') && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSearchQuery('');
+                    setTxStartDate('');
+                    setTxEndDate('');
+                    setTypeFilter('ALL');
+                    goToPage(1);
+                  }}
+                  className="px-3 py-1.5 text-xs font-bold text-admin-danger hover:bg-admin-danger/10 border border-admin-danger/30 rounded-md transition-all cursor-pointer whitespace-nowrap"
+                >
+                  Xóa bộ lọc
+                </button>
+              )}
+            </div>
+          )}
 
           {/* History Table */}
           <HistoryTable

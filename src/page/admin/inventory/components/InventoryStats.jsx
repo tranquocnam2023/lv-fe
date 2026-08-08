@@ -82,7 +82,7 @@ export default function InventoryStats({ products, txHistory }) {
       }
       return true; // Mặc định là sản phẩm chính nếu không thấy thông tin đối tượng
     })
-    .sort((a, b) => b.quantitySold - a.quantitySold) // Sắp xếp giảm dần theo số lượng bán
+    .sort((a, b) => b.quantitySold - a.quantitySold) // Sắp xếp giảm dần theo số lượng bán, đổi lại thành (b, a) thì ra 5 sản phẩm BÁN Ế NHẤT
     .slice(0, 5); // Lấy Top 5
 
   // PHÂN TÁCH: LỌC TOP 5 PHỤ KIỆN BÁN CHẠY NHẤT (SẠC, TAI NGHE, CÁP...)
@@ -95,6 +95,9 @@ export default function InventoryStats({ products, txHistory }) {
     })
     .sort((a, b) => b.quantitySold - a.quantitySold) // Sắp xếp giảm dần theo số lượng bán
     .slice(0, 5); // Lấy Top 5
+
+  // PHÂN TÁCH: DỮ LIỆU TOÀN BỘ SẢN PHẨM & PHỤ KIỆN BÁN CHẠY (KHÔNG GIỚI HẠN TOP 5)
+  const allBestSellers = [...allSales].sort((a, b) => b.quantitySold - a.quantitySold);
 
   // HELPER HIỂN THỊ BADGE - MÀU SẮC THỨ HẠNG TRỰC QUAN (VÀNG, BẠC, ĐỒNG...)
   const renderRankBadge = (index) => {
@@ -115,6 +118,7 @@ export default function InventoryStats({ products, txHistory }) {
 
   return (
     <div className="space-y-6 w-full">
+
       {/* ─── HIỂN THỊ 4 THẺ CHỈ SỐ TỒN KHO CƠ BẢN ──────────────────────── */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
         {STATS_CONFIG.map((item, i) => {
@@ -181,7 +185,6 @@ export default function InventoryStats({ products, txHistory }) {
             </div>
           )}
         </div>
-
         <div className="bg-white rounded-lg border border-admin-border/60 p-5 shadow-sm">
           <div className="flex items-center gap-2 mb-4 pb-3 border-b border-admin-border/40">
             <TrendingUp size={18} className="text-emerald-500 animate-pulse" />
@@ -189,7 +192,7 @@ export default function InventoryStats({ products, txHistory }) {
               Top 5 Phụ Kiện Bán Chạy <span className="text-[11px] text-gray-400 font-semibold lowercase">(30 ngày gần nhất)</span>
             </h4>
           </div>
-          {/*hiển thị sản phẩm phụ kiện bán chạy*/}
+          {/* Hiển thị sản phẩm phụ kiện bán chạy */}
           {bestAccessories.length > 0 ? (
             <div className="overflow-x-auto">
               <table className="w-full text-left border-collapse">
@@ -227,6 +230,48 @@ export default function InventoryStats({ products, txHistory }) {
         </div>
       </div>
 
+         {/*BẢNG HIỂN THỊ TOÀN BỘ SẢN PHẨM & PHỤ KIỆN BÁN CHẠY*/}
+      {/* 
+        {allBestSellers.length > 0 && (
+          <div className="bg-white rounded-lg border border-admin-border/60 p-5 shadow-sm mt-6">
+            <div className="flex items-center justify-between mb-4 pb-3 border-b border-admin-border/40">
+              <div className="flex items-center gap-2">
+                <TrendingUp size={18} className="text-primary animate-pulse" />
+                <h4 className="font-extrabold text-sm text-admin-text-main uppercase tracking-wider">
+                  Toàn Bộ Sản Phẩm & Phụ Kiện Bán Chạy <span className="text-[11px] text-gray-400 font-semibold lowercase">(30 ngày gần nhất)</span>
+                </h4>
+              </div>
+              <span className="text-xs font-bold text-admin-text-muted bg-slate-100 px-3 py-1 rounded-full">
+                Tổng: {allBestSellers.length} mặt hàng
+              </span>
+            </div>
+            <div className="overflow-x-auto max-h-[400px]">
+              <table className="w-full text-left border-collapse">
+                <thead className="sticky top-0 bg-white shadow-sm">
+                  <tr className="text-[10px] text-admin-text-muted font-bold uppercase tracking-wider border-b border-admin-border/30">
+                    <th className="pb-2 text-center w-12">Hạng</th>
+                    <th className="pb-2 px-3">Tên sản phẩm / Phụ kiện</th>
+                    <th className="pb-2 text-center w-24">Số lượng đã bán</th>
+                  </tr>
+                </thead>
+                <tbody className="text-xs">
+                  {allBestSellers.map((item, idx) => (
+                    <tr key={item.productId} className="border-b border-admin-border/20 last:border-0 hover:bg-slate-50/50 transition-colors">
+                      <td className="py-2.5 text-center flex justify-center">{renderRankBadge(idx)}</td>
+                      <td className="py-2.5 px-3 font-bold text-admin-text-main truncate max-w-[300px]" title={item.productName}>
+                        {item.productName}
+                      </td>
+                      <td className="py-2.5 text-center font-extrabold text-admin-text-main bg-slate-50/50 rounded">
+                        {item.quantitySold} cái
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+      */}
     </div>
   );
 }
