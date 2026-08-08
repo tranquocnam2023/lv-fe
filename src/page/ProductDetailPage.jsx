@@ -19,6 +19,7 @@ import ProductReviews from './product-detail/components/ProductReviews';
 import CoPurchaseRecommendation from './product-detail/components/CoPurchaseRecommendation';
 import FrequentlyBoughtTogether from './product-detail/components/FrequentlyBoughtTogether';
 import AccessoryVariantModal from './product-detail/components/AccessoryVariantModal';
+import InstallmentModal from './product-detail/components/InstallmentModal';
 
 const getMergedSpecs = (baseSpecsStr, specsOverrideStr) => {
   if (!baseSpecsStr) return null;
@@ -101,6 +102,8 @@ export default function ProductDetailPage() {
   const [activeTab, setActiveTab] = useState('specs');
   const [loading, setLoading] = useState(true);
   const [isSpecsModalOpen, setIsSpecsModalOpen] = useState(false);
+  const [isInstallmentModalOpen, setIsInstallmentModalOpen] = useState(false);
+  const [installmentModalType, setInstallmentModalType] = useState('company');
 
   const [selectedAttributes, setSelectedAttributes] = useState({});
   const [variants, setVariants] = useState([]);
@@ -767,6 +770,21 @@ export default function ProductDetailPage() {
     }
   };
 
+  // Xác nhận đăng ký mua trả góp
+  const handleConfirmInstallment = (installmentDetails) => {
+    setIsInstallmentModalOpen(false);
+    if (product) {
+      addToCart({
+        ...product,
+        price: displayDetails.price,
+        selectedAttributes: { ...selectedAttributes },
+        selectedWarranty: selectedWarranty,
+        installmentInfo: installmentDetails
+      });
+      navigate('/cart');
+    }
+  };
+
   const breadcrumbItems = useMemo(() => {
     if (!product) return [];
 
@@ -805,12 +823,29 @@ export default function ProductDetailPage() {
       <div className="max-w-7xl mx-auto px-4 w-full">
         <Breadcrumb items={breadcrumbItems} />
 
-        {/* Tiêu đề sản phẩm - MOBILE: text-2xl, DESKTOP: text-3xl */}
-        <div className="flex flex-col md:flex-row md:items-center justify-between pb-6 mb-8 mt-4 gap-4">
-          <div>
-            <h1 className="text-2xl md:text-3xl font-black text-gray-900 tracking-tight">{displayProductName || product.name}</h1>
-            <div className="flex items-center gap-4 mt-2">
-              <div className="flex text-yellow-400">
+        {/* Tiêu đề sản phẩm & Badges thương hiệu */}
+        <div className="pb-4 mb-6 border-b border-gray-150 mt-2 space-y-3">
+          <div className="flex flex-wrap items-center gap-2 text-xs">
+            <span className="bg-red-600 text-white font-black px-2.5 py-0.5 rounded-md uppercase tracking-wider">
+              {product.brand?.name || product.brandName || product.BrandName || 'Chính hãng'}
+            </span>
+            <span className="bg-blue-50 text-blue-700 font-bold px-2.5 py-0.5 rounded-md border border-blue-200 flex items-center gap-1">
+              <Check size={12} className="stroke-[3]" />
+              Hàng chính hãng VN/A
+            </span>
+            <span className="bg-emerald-50 text-emerald-700 font-bold px-2.5 py-0.5 rounded-md border border-emerald-200">
+              Mã SP: PS-{product.id}
+            </span>
+          </div>
+
+          <h1 className="text-2xl md:text-3xl font-black text-gray-900 tracking-tight leading-tight">
+            {displayProductName || product.name}
+          </h1>
+
+          <div className="flex items-center flex-wrap gap-4 text-xs font-bold text-gray-600">
+            <div className="flex items-center gap-1">
+              <span className="text-amber-500 font-black text-sm mr-0.5">{stats.average}</span>
+              <div className="flex text-amber-400">
                 {[...Array(5)].map((_, i) => {
                   const ratingVal = i + 1;
                   const isFilled = ratingVal <= Math.round(stats.average);
@@ -822,34 +857,34 @@ export default function ProductDetailPage() {
                       fill={isFilled ? "currentColor" : "none"}
                       stroke="currentColor"
                       strokeWidth={1.5}
-                      className="w-4 h-4 text-yellow-400"
+                      className="w-4 h-4 text-amber-400"
                     >
                       <path fillRule="evenodd" d="M10.788 3.21c.448-1.077 1.976-1.077 2.424 0l2.082 5.006 5.404.434c1.164.093 1.636 1.545.749 2.305l-4.117 3.527 1.257 5.273c.271 1.136-.964 2.033-1.96 1.425L12 18.354 7.373 21.18c-.996.608-2.231-.29-1.96-1.425l1.257-5.273-4.117-3.527c-.887-.76-.415-2.212.749-2.305l5.404-.434 2.082-5.005Z" clipRule="evenodd" />
                     </svg>
                   );
                 })}
               </div>
-              <button
-                type="button"
-                onClick={() => {
-                  setActiveTab('reviews');
-                  const el = document.getElementById('product-tabs-container');
-                  if (el) el.scrollIntoView({ behavior: 'smooth' });
-                }}
-                className="text-sm text-blue-600 font-bold hover:underline focus:outline-none"
-              >
-                {stats.total} đánh giá
-              </button>
-              <span className="text-sm text-gray-400">|</span>
-              <span className={`text-sm font-bold ${displayDetails.stock > 0 ? 'text-green-600' : 'text-red-500'}`}>
-                {displayDetails.stock > 0 ? `Còn ${displayDetails.stock} sản phẩm` : 'Hết hàng'}
-              </span>
             </div>
+            <button
+              type="button"
+              onClick={() => {
+                setActiveTab('reviews');
+                const el = document.getElementById('product-tabs-container');
+                if (el) el.scrollIntoView({ behavior: 'smooth' });
+              }}
+              className="text-blue-600 hover:underline cursor-pointer"
+            >
+              {stats.total} đánh giá
+            </button>
+            <span className="text-gray-300">|</span>
+            <span className={displayDetails.stock > 0 ? 'text-emerald-700' : 'text-red-500'}>
+              {displayDetails.stock > 0 ? `Tình trạng: Còn ${displayDetails.stock} máy` : 'Tình trạng: Tạm hết hàng'}
+            </span>
           </div>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-start">
-          {/* CỘT TRÁI: THƯ VIỆN ẢNH ĐỘNG & GỢI Ý MUA KÈM PHỤ KIỆN */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+          {/* CỘT TRÁI: THƯ VIỆN ẢNH ĐỘNG & CAM KẾT CỬA HÀNG */}
           <div className="lg:col-span-7 space-y-6">
             <ProductGallery
               product={product}
@@ -859,7 +894,49 @@ export default function ProductDetailPage() {
               setActiveImage={setActiveImage}
             />
 
+            {/* 4 CAM KẾT DỊCH VỤ CỦA CỬA HÀNG */}
+            <div className="grid grid-cols-2 gap-3 pt-2">
+              <div className="bg-gray-50/80 p-3.5 rounded-2xl border border-gray-200/80 flex items-start gap-3">
+                <div className="w-8 h-8 rounded-xl bg-blue-100/80 text-blue-700 flex items-center justify-center shrink-0">
+                  <Check size={18} className="stroke-[3]" />
+                </div>
+                <div>
+                  <h5 className="font-black text-xs text-gray-900">Bảo hành 12 tháng</h5>
+                  <p className="text-[11px] text-gray-500 mt-0.5">Chính hãng tại trung tâm ủy quyền toàn quốc</p>
+                </div>
+              </div>
+
+              <div className="bg-gray-50/80 p-3.5 rounded-2xl border border-gray-200/80 flex items-start gap-3">
+                <div className="w-8 h-8 rounded-xl bg-emerald-100/80 text-emerald-700 flex items-center justify-center shrink-0">
+                  <Check size={18} className="stroke-[3]" />
+                </div>
+                <div>
+                  <h5 className="font-black text-xs text-gray-900">1 đổi 1 trong 30 ngày</h5>
+                  <p className="text-[11px] text-gray-500 mt-0.5">Nếu phát sinh lỗi phần cứng từ nhà sản xuất</p>
+                </div>
+              </div>
+
+              <div className="bg-gray-50/80 p-3.5 rounded-2xl border border-gray-200/80 flex items-start gap-3">
+                <div className="w-8 h-8 rounded-xl bg-orange-100/80 text-orange-700 flex items-center justify-center shrink-0">
+                  <Check size={18} className="stroke-[3]" />
+                </div>
+                <div>
+                  <h5 className="font-black text-xs text-gray-900">Giao hàng miễn phí</h5>
+                  <p className="text-[11px] text-gray-500 mt-0.5">Miễn phí vận chuyển tận nhà trên toàn quốc</p>
+                </div>
+              </div>
+
+              <div className="bg-gray-50/80 p-3.5 rounded-2xl border border-gray-200/80 flex items-start gap-3">
+                <div className="w-8 h-8 rounded-xl bg-purple-100/80 text-purple-700 flex items-center justify-center shrink-0">
+                  <Check size={18} className="stroke-[3]" />
+                </div>
+                <div>
+                  <h5 className="font-black text-xs text-gray-900">Trả góp 0% lãi suất</h5>
+                  <p className="text-[11px] text-gray-500 mt-0.5">Duyệt hồ sơ nhanh qua thẻ hoặc CCCD</p>
+                </div>
+              </div>
             </div>
+          </div>
 
           {/* CỘT PHẢI: KHU VỰC CHỌN BIẾN THỂ & ĐẶT MUA */}
           <ProductSummaryInfo
@@ -871,6 +948,10 @@ export default function ProductDetailPage() {
             onAttributeClick={handleAttributeClick}
             onAddToCart={handleAddToCart}
             onBuyNow={handleBuyNow}
+            onOpenInstallmentModal={(type) => {
+              setInstallmentModalType(type);
+              setIsInstallmentModalOpen(true);
+            }}
             variantId={matchedVariant?.id || selectedVariant?.id}
             selectedWarranty={selectedWarranty}
             onSelectWarranty={setSelectedWarranty}
@@ -998,6 +1079,18 @@ export default function ProductDetailPage() {
         onClose={() => setIsSpecsModalOpen(false)}
         mergedSpecs={mergedSpecs}
         productName={displayProductName || product.name}
+      />
+
+      {/* MODAL TÍNH TIỀN VÀ ĐẶT HÀNG TRẢ GÓP */}
+      <InstallmentModal
+        isOpen={isInstallmentModalOpen}
+        onClose={() => setIsInstallmentModalOpen(false)}
+        product={product}
+        displayPrice={displayDetails.price}
+        selectedAttributes={selectedAttributes}
+        selectedWarranty={selectedWarranty}
+        initialType={installmentModalType}
+        onConfirmInstallment={handleConfirmInstallment}
       />
     </div>
   );

@@ -226,6 +226,31 @@ const getMegaMenuData = (cat, subcategories, allProducts, dbBrands, allCategorie
   };
 };
 
+const getUserFromStorage = () => {
+  try {
+    const userJson = localStorage.getItem('user');
+    if (userJson && userJson !== 'undefined' && userJson !== 'null') {
+      const user = JSON.parse(userJson);
+      const token = localStorage.getItem('token');
+      if (!user.username && token) {
+        try {
+          const payloadBase64 = token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/');
+          const payloadJson = decodeURIComponent(atob(payloadBase64).split('').map(c => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)).join(''));
+          const payload = JSON.parse(payloadJson);
+          user.username = payload['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name'] || payload.unique_name || payload.name || payload.sub;
+        } catch (e) {
+          console.error("Lỗi decode token:", e);
+        }
+      }
+      return user;
+    }
+  } catch (err) {
+    console.error("Lỗi parse user từ localStorage:", err);
+    localStorage.removeItem('user');
+  }
+  return null;
+};
+
 export default function Header() {
   const { cartCount } = useCart();
   const navigate = useNavigate();
@@ -329,34 +354,26 @@ export default function Header() {
 
   const shouldShowDropdown = showDropdown && searchQuery.trim().length > 0;
 
-  // Lấy thông tin user từ localStorage an toàn hơn
-  let user = null;
-  try {
-    const userJson = localStorage.getItem('user');
-    if (userJson && userJson !== 'undefined' && userJson !== 'null') {
-      user = JSON.parse(userJson);
+  // State thông tin người dùng được lắng nghe phản xạ tức thì
+  const [user, setUser] = useState(() => getUserFromStorage());
 
-      // Thử lấy username từ token nếu chưa có trong user object
-      const token = localStorage.getItem('token');
-      if (!user.username && token) {
-        try {
-          const payloadBase64 = token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/');
-          const payloadJson = decodeURIComponent(atob(payloadBase64).split('').map(function (c) {
-            return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
-          }).join(''));
-          const payload = JSON.parse(payloadJson);
-          user.username = payload['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name'] || payload.unique_name || payload.name || payload.sub;
-        } catch (e) {
-          console.error("Lỗi decode token:", e);
-        }
-      }
-    }
-  } catch (err) {
-    console.error("Lỗi parse user từ localStorage:", err);
-    localStorage.removeItem('user'); // Xóa nếu hỏng
-  }
+  useEffect(() => {
+    const handleAuthSync = () => {
+      setUser(getUserFromStorage());
+    };
 
-  // Kiểm tra đăng nhập cực kỳ nghiêm ngặt
+    window.addEventListener('auth-change', handleAuthSync);
+    window.addEventListener('storage', handleAuthSync);
+    window.addEventListener('user-login-change', handleAuthSync);
+
+    return () => {
+      window.removeEventListener('auth-change', handleAuthSync);
+      window.removeEventListener('storage', handleAuthSync);
+      window.removeEventListener('user-login-change', handleAuthSync);
+    };
+  }, []);
+
+  // Kiểm tra đăng nhập
   const isLoggedIn = !!(user && (user.id || user.Id));
   const userRole = user?.role || user?.Role || '';
 
@@ -364,7 +381,9 @@ export default function Header() {
     localStorage.removeItem('user');
     localStorage.removeItem('token');
     localStorage.removeItem('cart');
-    window.location.href = '/'; // Reload để xóa state
+    setUser(null);
+    window.dispatchEvent(new Event('auth-change'));
+    window.location.href = '/';
   };
 
   return (

@@ -64,6 +64,58 @@ export default function AdminInspectionPanel() {
   });
   const [crudSubmitting, setCrudSubmitting] = useState(false);
 
+  // ================= STATE TAB 3: BẢO HÀNH KHÁCH HÀNG & IMEI =================
+  const [customerWarranties, setCustomerWarranties] = useState([]);
+  const [customersLoading, setCustomersLoading] = useState(false);
+  const [customerSearch, setCustomerSearch] = useState('');
+  const [customerStatusFilter, setCustomerStatusFilter] = useState('ALL');
+  const [editCustomerModal, setEditCustomerModal] = useState({ isOpen: false, item: null, imei: '', note: '' });
+  const [customerSubmitting, setCustomerSubmitting] = useState(false);
+
+  const loadCustomerWarranties = async () => {
+    setCustomersLoading(true);
+    try {
+      const res = await warrantyService.getCustomerWarranties({
+        search: customerSearch || undefined,
+        status: customerStatusFilter !== 'ALL' ? customerStatusFilter : undefined
+      });
+      const data = res?.data || res;
+      setCustomerWarranties(Array.isArray(data) ? data : []);
+    } catch (err) {
+      console.error("Lỗi tải danh sách bảo hành khách hàng:", err);
+    } finally {
+      setCustomersLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (viewMode === 'customers') {
+      loadCustomerWarranties();
+    }
+  }, [viewMode, customerSearch, customerStatusFilter]);
+
+  const handleUpdateCustomerImeiSubmit = async (e) => {
+    e.preventDefault();
+    if (!editCustomerModal.item) return;
+
+    setCustomerSubmitting(true);
+    try {
+      await warrantyService.updateDeviceImei({
+        orderItemId: editCustomerModal.item.orderItemId,
+        imei: editCustomerModal.imei.trim(),
+        note: editCustomerModal.note.trim()
+      });
+      setMessage({ type: 'success', text: 'Cập nhật IMEI & Ghi chú tiếp cận sửa chữa thành công!' });
+      setEditCustomerModal({ isOpen: false, item: null, imei: '', note: '' });
+      loadCustomerWarranties();
+    } catch (err) {
+      console.error(err);
+      setMessage({ type: 'error', text: err.response?.data?.message || 'Không thể cập nhật thông tin.' });
+    } finally {
+      setCustomerSubmitting(false);
+    }
+  };
+
   // States các danh mục ràng buộc
   const [brands, setBrands] = useState([]);
   const [categories, setCategories] = useState([]);
@@ -476,6 +528,16 @@ export default function AdminInspectionPanel() {
               }`}
           >
             Quản lý gói bảo hành
+          </button>
+          <button
+            onClick={() => setViewMode('customers')}
+            className={`px-4 py-2 rounded text-xs font-black uppercase tracking-wider transition-all cursor-pointer ${
+              viewMode === 'customers'
+                ? 'bg-white text-primary shadow-sm scale-[1.01]'
+                : 'text-gray-500 hover:text-gray-800'
+            }`}
+          >
+            Khách hàng &amp; IMEI Bảo hành
           </button>
         </div>
       </div>
@@ -1200,6 +1262,195 @@ export default function AdminInspectionPanel() {
                   Xác nhận Từ chối
                 </button>
               </div>
+      {/* =======================================================================
+          TAB CHẾ ĐỘ 3: BẢO HÀNH KHÁCH HÀNG & IMEI (QUẢN TRỊ & TIẾP CẬN SỬA CHỮA)
+          ======================================================================= */}
+      {viewMode === 'customers' && (
+        <div className="space-y-4 animate-in fade-in duration-200">
+          <div className="bg-white rounded-lg border border-gray-150 p-4 flex flex-col md:flex-row justify-between items-stretch md:items-center gap-4">
+            <div className="relative w-full md:w-[360px]">
+              <input
+                type="text"
+                placeholder="Tìm Tên Khách, Email, SĐT, IMEI, Tên Máy..."
+                value={customerSearch}
+                onChange={(e) => setCustomerSearch(e.target.value)}
+                className="w-full pl-9 pr-4 py-2 border border-gray-250 rounded text-xs font-medium focus:border-primary outline-none"
+              />
+              <Search className="absolute left-3 top-2.5 text-gray-400" size={15} />
+            </div>
+
+            <div className="flex gap-1 bg-gray-50 p-1 rounded border border-gray-150 shrink-0">
+              {[
+                { key: 'ALL', label: 'Tất cả' },
+                { key: 'ACTIVATED', label: 'Đã kích hoạt IMEI' },
+                { key: 'PENDING', label: 'Chưa kích hoạt IMEI' }
+              ].map((tab) => (
+                <button
+                  key={tab.key}
+                  onClick={() => setCustomerStatusFilter(tab.key)}
+                  className={`px-3 py-1.5 rounded text-xs font-bold transition-all cursor-pointer border-0 ${
+                    customerStatusFilter === tab.key
+                      ? 'bg-primary text-white shadow-xs'
+                      : 'text-gray-600 hover:bg-gray-200 bg-transparent'
+                  }`}
+                >
+                  {tab.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="bg-white rounded-xl border border-gray-200 overflow-hidden shadow-xs">
+            {customersLoading ? (
+              <div className="p-10 text-center flex items-center justify-center gap-2 text-xs font-bold text-gray-400">
+                <RefreshCw className="animate-spin text-primary" size={16} />
+                <span>Đang nạp danh sách bảo hành khách hàng...</span>
+              </div>
+            ) : customerWarranties.length === 0 ? (
+              <div className="p-10 text-center text-xs font-bold text-gray-400 bg-gray-50">
+                Không tìm thấy dữ liệu bảo hành nào phù hợp.
+              </div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full text-left border-collapse text-xs font-semibold text-gray-700">
+                  <thead className="bg-gray-50 text-[10px] uppercase font-black text-gray-400 border-b border-gray-200 tracking-wider">
+                    <tr>
+                      <th className="p-3.5">Mã đơn</th>
+                      <th className="p-3.5">Khách hàng</th>
+                      <th className="p-3.5">Gói bảo hành</th>
+                      <th className="p-3.5">Thiết bị &amp; Mã IMEI</th>
+                      <th className="p-3.5">Thời hạn bảo hành</th>
+                      <th className="p-3.5">Tiếp cận &amp; Ghi chú sửa</th>
+                      <th className="p-3.5 text-right">Thao tác</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-150">
+                    {customerWarranties.map(item => (
+                      <tr key={item.orderItemId} className="hover:bg-gray-50/80 transition-colors">
+                        <td className="p-3.5 font-bold text-gray-900 whitespace-nowrap">
+                          #PS{item.orderId}
+                        </td>
+                        <td className="p-3.5 space-y-0.5">
+                          <span className="block font-bold text-gray-900">{item.userName || item.receiverName}</span>
+                          <span className="block text-[10px] text-gray-400">SĐT: {item.receiverPhone}</span>
+                          {item.userEmail && <span className="block text-[10px] text-gray-400">{item.userEmail}</span>}
+                        </td>
+                        <td className="p-3.5 space-y-0.5">
+                          <span className="block font-bold text-blue-600">{item.warrantyName}</span>
+                          <span className="block text-[10px] text-gray-400">Hạn: {item.durationMonths} Tháng &bull; Phí: {item.warrantyPrice?.toLocaleString('vi-VN')}₫</span>
+                        </td>
+                        <td className="p-3.5 space-y-0.5">
+                          <span className="block font-bold text-gray-800">{item.productName}</span>
+                          {item.isActivated ? (
+                            <span className="inline-block font-mono text-[11px] text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200 font-bold">
+                              IMEI: {item.imei}
+                            </span>
+                          ) : (
+                            <span className="inline-block text-[10px] font-bold text-amber-700 bg-amber-50 px-2 py-0.5 rounded border border-amber-200">
+                              Chưa kích hoạt IMEI
+                            </span>
+                          )}
+                        </td>
+                        <td className="p-3.5 space-y-0.5 whitespace-nowrap">
+                          <span className="block text-[10px] text-gray-400">Từ: {new Date(item.orderDate).toLocaleDateString('vi-VN')}</span>
+                          <span className="block font-bold text-gray-800">Đến: {new Date(item.expireDate).toLocaleDateString('vi-VN')}</span>
+                          {item.isExpired ? (
+                            <span className="inline-block text-[9px] font-black uppercase text-red-600 bg-red-50 px-1.5 py-0.5 rounded border border-red-200">Hết hạn</span>
+                          ) : (
+                            <span className="inline-block text-[9px] font-black uppercase text-green-600 bg-green-50 px-1.5 py-0.5 rounded border border-green-200">Còn hiệu lực</span>
+                          )}
+                        </td>
+                        <td className="p-3.5">
+                          <p className="text-[11px] font-medium text-gray-600 line-clamp-2 max-w-xs">
+                            {item.orderNote || <span className="text-gray-400 italic">Chưa có ghi chú tiếp cận sửa chữa</span>}
+                          </p>
+                        </td>
+                        <td className="p-3.5 text-right whitespace-nowrap">
+                          <button
+                            onClick={() => setEditCustomerModal({
+                              isOpen: true,
+                              item,
+                              imei: item.isActivated ? item.imei : '',
+                              note: item.orderNote || ''
+                            })}
+                            className="px-3 py-1.5 bg-primary/10 hover:bg-primary/20 text-primary rounded-lg text-xs font-bold transition cursor-pointer border-0"
+                          >
+                            Cập nhật IMEI / Tiếp cận sửa
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* MODAL 3: CẬP NHẬT IMEI KHÁCH HÀNG & GHI CHÚ TIẾP CẬN SỬA CHỮA */}
+      {editCustomerModal.isOpen && (
+        <div className="fixed inset-0 bg-gray-900/40 backdrop-blur-sm flex items-center justify-center z-[9999] animate-in fade-in duration-200">
+          <div className="bg-white rounded-xl border border-gray-100 w-full max-w-md p-6 space-y-4 shadow-2xl text-left font-sans">
+            <h3 className="text-sm font-black text-gray-900 uppercase border-b border-gray-100 pb-2">
+              Tiếp cận bảo hành #PS{editCustomerModal.item?.orderId}
+            </h3>
+            
+            <form onSubmit={handleUpdateCustomerImeiSubmit} className="space-y-4 text-xs font-semibold text-gray-700">
+              <div className="p-3 bg-gray-50 rounded-lg space-y-1 text-[11px]">
+                <div className="flex justify-between">
+                  <span>Khách hàng:</span>
+                  <span className="font-bold text-gray-900">{editCustomerModal.item?.userName || editCustomerModal.item?.receiverName}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>SĐT liên hệ:</span>
+                  <span className="font-bold text-blue-600">{editCustomerModal.item?.receiverPhone}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>Gói bảo hành:</span>
+                  <span className="font-bold text-gray-900">{editCustomerModal.item?.warrantyName}</span>
+                </div>
+              </div>
+
+              <div className="space-y-1">
+                <label className="block text-[10px] uppercase font-black text-gray-400">Mã IMEI thiết bị (15 chữ số):</label>
+                <input
+                  type="text"
+                  maxLength={15}
+                  placeholder="Nhập 15 chữ số IMEI"
+                  value={editCustomerModal.imei}
+                  onChange={(e) => setEditCustomerModal(prev => ({ ...prev, imei: e.target.value.replace(/\D/g, '') }))}
+                  className="w-full p-2.5 border border-gray-250 rounded-lg text-xs font-mono outline-none focus:border-primary"
+                />
+              </div>
+
+              <div className="space-y-1">
+                <label className="block text-[10px] uppercase font-black text-gray-400">Ghi chú tiếp cận / Tình trạng sửa chữa:</label>
+                <textarea
+                  rows={3}
+                  placeholder="Ví dụ: Đã gọi điện hỗ trợ khách hàng. Khách báo màn hình bị sọc, hẹn mang máy đến chi nhánh Hàng Bài ngày 10/08..."
+                  value={editCustomerModal.note}
+                  onChange={(e) => setEditCustomerModal(prev => ({ ...prev, note: e.target.value }))}
+                  className="w-full p-2.5 border border-gray-250 rounded-lg text-xs outline-none focus:border-primary font-medium"
+                />
+              </div>
+
+              <div className="flex justify-end gap-2 font-black uppercase pt-2">
+                <button
+                  type="button"
+                  onClick={() => setEditCustomerModal({ isOpen: false, item: null, imei: '', note: '' })}
+                  className="px-4 py-2 border border-gray-200 text-gray-500 rounded-lg hover:bg-gray-50 cursor-pointer font-bold"
+                >
+                  Hủy
+                </button>
+                <button
+                  type="submit"
+                  disabled={customerSubmitting}
+                  className="px-4 py-2 bg-primary hover:bg-secondary text-white rounded-lg cursor-pointer shadow font-bold border-0"
+                >
+                  {customerSubmitting ? 'Đang lưu...' : 'Lưu Thay Đổi'}
+                </button>
+              </div>
             </form>
           </div>
         </div>
@@ -1207,3 +1458,4 @@ export default function AdminInspectionPanel() {
     </div>
   );
 }
+

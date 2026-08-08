@@ -16,6 +16,7 @@ import ProfileInfoTab from './auth/components/ProfileInfoTab';
 import ProfileAddressTab from './auth/components/ProfileAddressTab';
 import ProfileOrderHistoryTab from './auth/components/ProfileOrderHistoryTab';
 import ProfilePasswordTab from './auth/components/ProfilePasswordTab';
+import ProfileWarrantyDevicesTab from './auth/components/ProfileWarrantyDevicesTab';
 
 export default function AuthPage() {
   const { stopLoading } = useLoading();
@@ -130,9 +131,10 @@ export default function AuthPage() {
         if (res) {
           setUserProfile(res);
           setEditProfileData({ username: res.username, email: res.email });
-          // Đồng bộ lại localStorage
+          // Đồng bộ lại localStorage và phát sự kiện cập nhật Header
           const localUser = JSON.parse(localStorage.getItem('user') || '{}');
           localStorage.setItem('user', JSON.stringify({ ...localUser, ...res }));
+          window.dispatchEvent(new Event('auth-change'));
         }
       })
       .catch(err => console.error("Lỗi đồng bộ profile:", err));
@@ -239,6 +241,8 @@ export default function AuthPage() {
           email: googlePayload.email || '',
           role: loginData.role
         }));
+
+        window.dispatchEvent(new Event('auth-change'));
 
         if (loginData.role === 'Admin') {
           window.location.href = '/admin';
@@ -630,6 +634,10 @@ export default function AuthPage() {
                 handleSaveAddress={handleSaveAddress}
                 loading={loading}
               />
+            )}
+
+            {profileTab === 'warranties' && (
+              <ProfileWarrantyDevicesTab />
             )}
 
             {profileTab === 'password' && (
