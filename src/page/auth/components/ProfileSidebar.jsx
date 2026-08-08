@@ -1,5 +1,5 @@
 import React from 'react';
-import { User, MapPin, ClipboardList, Key, LogOut } from 'lucide-react';
+import { User, MapPin, ClipboardList, Key, LogOut, ShieldCheck } from 'lucide-react';
 
 export default function ProfileSidebar({
   userProfile,
@@ -9,7 +9,7 @@ export default function ProfileSidebar({
   handleLogout
 }) {
   return (
-    <aside className="w-full md:w-64 shrink-0 bg-white rounded-md border border-gray-200 p-4 h-fit">
+    <aside className="w-full md:w-64 shrink-0 bg-white rounded-md border border-gray-200 p-4 h-fit font-sans">
       <div className="flex items-center space-x-3 pb-4 mb-4 border-b border-gray-100">
         <div className="w-12 h-12 rounded-full bg-primary flex items-center justify-center font-bold text-white text-lg select-none">
           {(userProfile?.username || 'U')[0].toUpperCase()}
@@ -32,6 +32,18 @@ export default function ProfileSidebar({
         >
           <User size={18} />
           <span>Thông tin tài khoản</span>
+        </button>
+
+        <button
+          onClick={() => setProfileTab('warranties')}
+          className={`flex items-center space-x-3 px-4 py-3 rounded-md text-sm font-bold transition-all text-left cursor-pointer border-0 ${
+            profileTab === 'warranties'
+              ? 'bg-primary/10 text-primary'
+              : 'text-gray-600 hover:bg-gray-50 bg-transparent'
+          }`}
+        >
+          <ShieldCheck size={18} />
+          <span>Thiết bị &amp; Bảo hành</span>
         </button>
 
         <button

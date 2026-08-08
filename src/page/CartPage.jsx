@@ -201,6 +201,7 @@ export default function CartPage() {
 
   // Form submission state
   const [paymentMethod, setPaymentMethod] = useState('stripe'); // default 'stripe'
+  const [installmentMonths, setInstallmentMonths] = useState(6);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Order Success screen state
@@ -814,6 +815,9 @@ export default function CartPage() {
     try {
 
       const finalNote = [
+        paymentMethod === 'vnpay_installment'
+          ? `[ĐƠN TRẢ GÓP 0%] Kỳ hạn: ${installmentMonths} tháng (${Math.round(finalTotalPay / (installmentMonths || 6)).toLocaleString('vi-VN')}₫/tháng)`
+          : "",
         specialRequests.transferData ? "Yêu cầu: Chuyển dữ liệu qua máy mới" : "",
         specialRequests.companyInvoice
           ? `Xuất HĐ Cty: ${companyInvoiceDetails.companyName}, MST: ${companyInvoiceDetails.taxCode}, ĐC: ${companyInvoiceDetails.companyAddress}`
@@ -1095,6 +1099,8 @@ export default function CartPage() {
               paymentMethod={paymentMethod}
               setPaymentMethod={setPaymentMethod}
               finalTotalPay={finalTotalPay}
+              installmentMonths={installmentMonths}
+              setInstallmentMonths={setInstallmentMonths}
             />
 
             </div>
