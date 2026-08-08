@@ -933,10 +933,9 @@ export default function CartPage() {
       clearCart();
 
       // Xử lý chuyển hướng cổng thanh toán online
-      if (paymentMethod === 'stripe' || paymentMethod === 'vnpay' || paymentMethod === 'vnpay_installment') {
+      if (paymentMethod === 'stripe' || paymentMethod === 'vnpay') {
         try {
-          const providerToUse = paymentMethod === 'vnpay_installment' ? 'vnpay' : paymentMethod;
-          const paymentRes = await api.post(`/Payment/create-checkout-session/${newOrderId}?provider=${providerToUse}`);
+          const paymentRes = await api.post(`/Payment/create-checkout-session/${newOrderId}?provider=${paymentMethod}`);
           const paymentUrl = paymentRes?.url || paymentRes?.Url;
           if (paymentUrl) {
             window.location.href = paymentUrl;
