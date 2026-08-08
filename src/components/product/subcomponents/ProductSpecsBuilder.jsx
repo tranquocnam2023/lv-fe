@@ -37,7 +37,7 @@ export default function ProductSpecsBuilder() {
     const nextSpecs = [
       ...specsGroups,
       //{ groupName: '', items: [{ key: '', value: '' }] }
-      // ràng buộc thông só kĩ thuật
+      // ràng buộc thông số kỹ thuật
       //{
       // groupName: 'Cấu hình chi tiết', 
       //  items: [
