@@ -1271,19 +1271,20 @@ export default function AdminInspectionPanel() {
           ======================================================================= */}
       {viewMode === 'customers' && (
         <div className="space-y-4 animate-in fade-in duration-200">
-          <div className="bg-white rounded-lg border border-gray-150 p-4 flex flex-col md:flex-row justify-between items-stretch md:items-center gap-4">
-            <div className="relative w-full md:w-[360px]">
+          {/* Lọc & Tìm kiếm Khách hàng & IMEI */}
+          <div className="bg-white rounded-lg border border-gray-100 p-4 flex flex-col md:flex-row justify-between items-stretch md:items-center gap-4">
+            <div className="relative w-full md:w-[320px] md:mr-auto">
               <input
                 type="text"
                 placeholder="Tìm Tên Khách, Email, SĐT, IMEI, Tên Máy..."
                 value={customerSearch}
                 onChange={(e) => setCustomerSearch(e.target.value)}
-                className="w-full pl-9 pr-4 py-2 border border-gray-250 rounded text-xs font-medium focus:border-primary outline-none"
+                className="w-full pl-9 pr-4 py-2 border border-gray-250 rounded text-xs font-medium focus:border-primary focus:ring-1 focus:ring-primary/20 transition-all outline-none"
               />
               <Search className="absolute left-3 top-2.5 text-gray-400" size={15} />
             </div>
 
-            <div className="flex gap-1 bg-gray-50 p-1 rounded border border-gray-150 shrink-0">
+            <div className="flex gap-1 bg-gray-50 p-1 rounded border border-gray-100 shrink-0">
               {[
                 { key: 'ALL', label: 'Tất cả' },
                 { key: 'ACTIVATED', label: 'Đã kích hoạt IMEI' },
@@ -1292,10 +1293,10 @@ export default function AdminInspectionPanel() {
                 <button
                   key={tab.key}
                   onClick={() => setCustomerStatusFilter(tab.key)}
-                  className={`px-3 py-1.5 rounded text-xs font-bold transition-all cursor-pointer border-0 ${
+                  className={`px-4 py-1.5 rounded text-[11px] font-black uppercase tracking-wider transition-all cursor-pointer border-0 ${
                     customerStatusFilter === tab.key
-                      ? 'bg-primary text-white shadow-xs'
-                      : 'text-gray-600 hover:bg-gray-200 bg-transparent'
+                      ? 'bg-white text-primary shadow-sm'
+                      : 'text-gray-500 hover:text-gray-700 bg-transparent'
                   }`}
                 >
                   {tab.label}
