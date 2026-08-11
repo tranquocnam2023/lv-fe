@@ -53,6 +53,7 @@ export default function Footer() {
         {/* Col 3 */}
         <div className="flex flex-col space-y-3 text-gray-700">
           <h3 className="font-bold text-gray-800 uppercase mb-2">Thông tin khác</h3>
+          <Link to="/dieu-khoan-dich-vu" className="hover:text-primary transition">Điều khoản dịch vụ</Link> 
           <Link to="#" className="hover:text-primary transition">Tích điểm Quà tặng VIP</Link>
           <Link to={isLoggedIn ? "/profile?tab=history" : "/track"} className="hover:text-primary transition">Lịch sử mua hàng</Link>
           <Link to="#" className="hover:text-primary transition">Đăng ký bán hàng CTV chiết khấu cao</Link>
@@ -73,6 +74,7 @@ export default function Footer() {
               <Link to="/chinh-sach/giao-hang" className="hover:text-primary transition">Giao hàng & Thanh toán</Link>
               <Link to="/chinh-sach/mua-online" className="hover:text-primary transition">Hướng dẫn mua online</Link>
               <Link to="/donate" className="hover:text-primary transition">Donate cho thằng thiết kế Frontend</Link>
+              <Link to="/dieu-khoan-dich-vu" className="hover:text-primary transition">Điều khoản dịch vụ</Link>
 
               <button
                 onClick={() => setIsExpanded(false)}

@@ -170,7 +170,7 @@ export default function WarrantyPurchasePage() {
         </div>
         <h1 className="text-2xl sm:text-3xl font-black uppercase tracking-tight">Dịch Vụ Bảo Hành Mở Rộng Chính Hãng</h1>
         <p className="text-xs sm:text-sm text-blue-100 max-w-2xl mx-auto font-medium leading-relaxed">
-          Bảo vệ toàn diện cho điện thoại, laptop &amp; thiết bị công nghệ của bạn. Chọn mua gói bảo hành trực tiếp và kích hoạt IMEI bất kỳ lúc nào!
+          Bảo vệ toàn diện cho điện thoại, thiết bị công nghệ của bạn. Chọn mua gói bảo hành trực tiếp và kích hoạt IMEI bất kỳ lúc nào!
         </p>
         <div className="inline-flex items-center gap-2 bg-white/15 px-3.5 py-1.5 rounded-full text-[11px] font-bold text-yellow-200 border border-white/20">
           <Sparkles size={13} />
