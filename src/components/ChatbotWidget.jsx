@@ -1,7 +1,9 @@
+// COMPONENT GIAO DIỆN CỬA SỔ VÀ NÚT BẤM CHATBOT AI TRỢ LÝ TƯ VẤN (PHONESHOP)
 import { useMemo, useRef, useState, useEffect } from 'react';
 import { Bot, MessageCircle, Send, X, Sparkles, RefreshCw } from 'lucide-react';
 import { chatbotService } from '../services/chatbotService';
 
+// Tin nhắn chào mừng ban đầu khi mở khung chat
 const initialMessages = [
   {
     role: 'assistant',
@@ -9,27 +11,36 @@ const initialMessages = [
   },
 ];
 
+// Danh sách các câu hỏi gợi ý nhanh (Quick Prompts)
 const quickPrompts = [
   'Gợi ý iPhone hot nhất?',
   'Điện thoại dưới 10 triệu',
-  'Chính sách bảo hành',
-  'Khuyến mãi hôm nay'
+  'Phụ kiện điện thoại',
+  'Tai nghe dành cho điện thoại'
 ];
 
 export default function ChatbotWidget() {
+  // State ẩn/hiện cửa sổ chat
   const [isOpen, setIsOpen] = useState(false);
+  // State lưu danh sách hội thoại tin nhắn ({ role: 'user' | 'assistant', content: string })
   const [messages, setMessages] = useState(initialMessages);
+  // State lưu nội dung tin nhắn người dùng đang nhập ở ô Input
   const [message, setMessage] = useState('');
+  // State trạng thái đang gửi yêu cầu và đợi AI phản hồi
   const [isSending, setIsSending] = useState(false);
+  // State lưu thông báo lỗi nếu gọi API thất bại
   const [error, setError] = useState('');
+  // Ref quản lý phần tử cuối danh sách tin nhắn để tự động cuộn (Auto Scroll)
   const messagesEndRef = useRef(null);
 
+  // Tự động cuộn xuống tin nhắn mới nhất khi danh sách tin nhắn thay đổi hoặc khi bật khung chat
   useEffect(() => {
     if (isOpen) {
       messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     }
   }, [messages, isOpen]);
 
+  // Cắt lấy tối đa 12 tin nhắn gần nhất để Tạo bộ nhớ ngữ cảnh trò chuyện (Context Window) gửi lên Backend
   const chatHistory = useMemo(
     () =>
       messages
@@ -38,10 +49,12 @@ export default function ChatbotWidget() {
     [messages]
   );
 
+  // Hàm xử lý gửi tin nhắn của người dùng tới Backend AI Service
   const sendQuery = async (queryText) => {
     const trimmedMessage = queryText.trim();
     if (!trimmedMessage || isSending) return;
 
+    // 1. Thêm tin nhắn của người dùng vào giao diện ngay lập tức
     const nextMessages = [...messages, { role: 'user', content: trimmedMessage }];
     setMessages(nextMessages);
     setMessage('');
@@ -49,15 +62,19 @@ export default function ChatbotWidget() {
     setIsSending(true);
 
     try {
+      // 2. Gọi API chatbotService gửi tin nhắn và lịch sử trò chuyện
       const response = await chatbotService.sendMessage({
         message: trimmedMessage,
         history: chatHistory,
       });
+
+      // 3. Nhận câu trả lời từ AI và thêm vào mảng tin nhắn
       setMessages((currentMessages) => [
         ...currentMessages,
         { role: 'assistant', content: response.reply || 'Mình chưa có câu trả lời phù hợp.' },
       ]);
     } catch (err) {
+      // 4. Xử lý khi gặp lỗi kết nối hoặc API bị gián đoạn
       const errorMessage = err?.message || err || 'Chatbot đang tạm thời không khả dụng.';
       setError(errorMessage);
       setMessages((currentMessages) => [
@@ -69,6 +86,7 @@ export default function ChatbotWidget() {
     }
   };
 
+  // Hàm xử lý khi người dùng submit Form (nhấn Enter hoặc bấm nút Gửi)
   const handleSubmit = (event) => {
     event.preventDefault();
     sendQuery(message);
@@ -76,10 +94,10 @@ export default function ChatbotWidget() {
 
   return (
     <div className="fixed bottom-20 right-4 z-[9991] md:bottom-6 md:right-6">
-      {/* Chat Window Popup */}
+      {/* ─── KHUNG CỬA SỔ TRÒ CHUYỆN CHATBOT (POPUP WINDOW) ──────────────── */}
       {isOpen && (
         <section className="mb-3 w-[calc(100vw-2rem)] max-w-sm overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-2xl animate-in slide-in-from-bottom-5 duration-200">
-          {/* Header */}
+          {/* Header Cửa Sổ Chat */}
           <header className="flex h-14 items-center justify-between border-b border-slate-100 bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 px-4 text-white">
             <div className="flex items-center gap-3">
               <div className="relative">
@@ -99,10 +117,9 @@ export default function ChatbotWidget() {
                 <p className="text-[11px] text-slate-300">Sẵn sàng tư vấn cho bạn</p>
               </div>
             </div>
-
           </header>
 
-          {/* Messages Body */}
+          {/* Thân Cửa Sổ Chứa Danh Sách Tin Nhắn (Messages Body) */}
           <div className="h-80 space-y-3 overflow-y-auto bg-slate-50/60 px-4 py-4">
             {messages.map((item, index) => (
               <div
@@ -115,17 +132,17 @@ export default function ChatbotWidget() {
                   </div>
                 )}
                 <div
-                  className={`max-w-[85%] rounded-2xl px-3.5 py-2.5 text-xs font-medium leading-relaxed shadow-sm break-words [word-break:break-word] overflow-hidden whitespace-pre-wrap ${
-                    item.role === 'user'
+                  className={`max-w-[85%] rounded-2xl px-3.5 py-2.5 text-xs font-medium leading-relaxed shadow-sm break-words [word-break:break-word] overflow-hidden whitespace-pre-wrap ${item.role === 'user'
                       ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-br-none'
                       : 'border border-slate-200/80 bg-white text-slate-800 rounded-bl-none'
-                  }`}
+                    }`}
                 >
                   {item.content}
                 </div>
               </div>
             ))}
-            
+
+            {/* Hiển thị hiệu ứng AI đang soạn câu trả lời */}
             {isSending && (
               <div className="flex items-center gap-2 text-slate-500">
                 <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-indigo-100 text-indigo-600">
@@ -137,10 +154,11 @@ export default function ChatbotWidget() {
                 </div>
               </div>
             )}
+            {/* Thẻ ghim đáy để cuộn tự động */}
             <div ref={messagesEndRef} />
           </div>
 
-          {/* Quick suggestions */}
+          {/* Thanh Gợi Ý Nhanh (Quick Suggestions / Prompts) */}
           {messages.length <= 2 && (
             <div className="flex flex-wrap gap-1.5 border-t border-slate-100 bg-white px-3 py-2">
               {quickPrompts.map((prompt, idx) => (
@@ -156,9 +174,10 @@ export default function ChatbotWidget() {
             </div>
           )}
 
+          {/* Khối Hiển Thị Thông Báo Lỗi (Nếu có) */}
           {error && <div className="border-t border-amber-100 bg-amber-50 px-4 py-2 text-xs font-semibold text-amber-700">{error}</div>}
 
-          {/* Input Form */}
+          {/* Form Nhập Tin Nhắn (Input Form) */}
           <form onSubmit={handleSubmit} className="flex items-center gap-2 border-t border-slate-100 bg-white p-3">
             <input
               value={message}
@@ -179,7 +198,7 @@ export default function ChatbotWidget() {
         </section>
       )}
 
-      {/* Floating Trigger Button */}
+      {/* ─── NÚT TRÒN BONG BÓNG CHAT NỔI (FLOATING TRIGGER BUTTON) ────────── */}
       <div className="flex items-center gap-2.5 group">
         {!isOpen && (
           <div className="hidden sm:flex items-center gap-1.5 rounded-full border border-slate-200/80 bg-white/90 px-3 py-1.5 text-xs font-bold text-slate-700 shadow-lg backdrop-blur-md transition-all group-hover:scale-105 animate-in fade-in slide-in-from-right-3 duration-300">
@@ -207,3 +226,4 @@ export default function ChatbotWidget() {
     </div>
   );
 }
+

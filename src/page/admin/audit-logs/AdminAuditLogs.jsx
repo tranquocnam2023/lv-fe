@@ -4,7 +4,7 @@ import { Search, Calendar, Clock, Filter, Eye, X, ArrowLeft, ArrowRight, Refresh
 import { auditLogService } from '../../../services/auditLogService';
 
 export default function AdminAuditLogs() {
-  // State for logs and pagination
+  // State lưu danh sách nhật ký và phân trang
   const [logs, setLogs] = useState([]);
   const [loading, setLoading] = useState(false);
   const [totalCount, setTotalCount] = useState(0);
@@ -12,13 +12,15 @@ export default function AdminAuditLogs() {
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize] = useState(10);
 
-  // Filters state
+  // State lưu các điều kiện lọc
   const [search, setSearch] = useState('');
   const [actionType, setActionType] = useState('');
+  // Setup state ngày bắt đầu (mặc định để rỗng '' để ô input hiển thị chữ mờ placeholder dd/mm/yyyy)
   const [startDate, setStartDate] = useState('');
+  // Setup state ngày kết thúc (mặc định để rỗng '' để ô input hiển thị chữ mờ placeholder dd/mm/yyyy)
   const [endDate, setEndDate] = useState('');
 
-  // Active filters applied to request
+  // Điều kiện lọc đang được áp dụng khi gửi API
   const [appliedFilters, setAppliedFilters] = useState({
     search: '',
     actionType: '',
@@ -26,9 +28,9 @@ export default function AdminAuditLogs() {
     endDate: ''
   });
 
-  // Modal state for viewing JSON values
+  // State quản lý Modal xem dữ liệu JSON cũ / mới
   const [selectedLog, setSelectedLog] = useState(null);
-  const [modalType, setModalType] = useState(''); // 'old' or 'new' or 'diff'
+  const [modalType, setModalType] = useState(''); // 'old' (cũ) hoặc 'new' (mới)
 
   const fetchLogs = () => {
     setLoading(true);
@@ -58,7 +60,7 @@ export default function AdminAuditLogs() {
       });
   };
 
-  // Re-fetch when page or applied filters change
+  // Tự động tải lại dữ liệu khi đổi trang hoặc bấm nút lọc
   useEffect(() => {
     fetchLogs();
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -66,7 +68,7 @@ export default function AdminAuditLogs() {
 
   const handleApplyFilters = (e) => {
     e.preventDefault();
-    setCurrentPage(1); // Reset to page 1
+    setCurrentPage(1); // Trở về trang 1 khi bấm lọc
     setAppliedFilters({
       search,
       actionType,
@@ -174,7 +176,7 @@ export default function AdminAuditLogs() {
 
   return (
     <div className="animate-in fade-in duration-500 space-y-6">
-      {/* Header */}
+      {/* Tiêu đề trang */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
           <h2 className="text-2xl font-bold text-admin-text-main flex items-center gap-2">
@@ -195,10 +197,10 @@ export default function AdminAuditLogs() {
         </button>
       </div>
 
-      {/* Filter Section */}
+      {/* Khu vực bộ lọc */}
       <form onSubmit={handleApplyFilters} className="bg-white p-6 rounded-lg border border-admin-border shadow-sm space-y-4">
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 items-end">
-          {/* Admin Email Search */}
+          {/* Tìm kiếm theo Email hoặc ID Admin */}
           <div className="space-y-1.5">
             <label className="text-[11px] font-black text-admin-text-muted uppercase tracking-wider ml-0.5">Tìm kiếm quản trị viên</label>
             <div className="relative">
@@ -215,7 +217,7 @@ export default function AdminAuditLogs() {
             </div>
           </div>
 
-          {/* Action type */}
+          {/* Chọn loại hành động */}
           <div className="space-y-1.5">
             <label className="text-[11px] font-black text-admin-text-muted uppercase tracking-wider ml-0.5">Loại hành động</label>
             <select
@@ -230,22 +232,28 @@ export default function AdminAuditLogs() {
             </select>
           </div>
 
-          {/* Start date */}
+          {/* Setup ô chọn Từ Ngày: Khi chưa chọn (rỗng) hiện placeholder dd/mm/yyyy, khi focus/chọn đổi sang type="date" */}
           <div className="space-y-1.5">
             <label className="text-[11px] font-black text-admin-text-muted uppercase tracking-wider ml-0.5">Từ ngày</label>
             <input
-              type="date"
+              type={startDate ? "date" : "text"}
+              placeholder="dd/mm/yyyy"
+              onFocus={(e) => (e.target.type = "date")}
+              onBlur={(e) => { if (!e.target.value) e.target.type = "text"; }}
               value={startDate}
               onChange={(e) => setStartDate(e.target.value)}
               className="w-full px-3 py-2 bg-white border border-admin-border rounded-md text-xs font-semibold focus:outline-none focus:border-primary transition-all text-admin-text-main cursor-pointer"
             />
           </div>
 
-          {/* End date */}
+          {/* Setup ô chọn Đến Ngày: Khi chưa chọn (rỗng) hiện placeholder dd/mm/yyyy, khi focus/chọn đổi sang type="date" */}
           <div className="space-y-1.5">
             <label className="text-[11px] font-black text-admin-text-muted uppercase tracking-wider ml-0.5">Đến ngày</label>
             <input
-              type="date"
+              type={endDate ? "date" : "text"}
+              placeholder="dd/mm/yyyy"
+              onFocus={(e) => (e.target.type = "date")}
+              onBlur={(e) => { if (!e.target.value) e.target.type = "text"; }}
               value={endDate}
               onChange={(e) => setEndDate(e.target.value)}
               className="w-full px-3 py-2 bg-white border border-admin-border rounded-md text-xs font-semibold focus:outline-none focus:border-primary transition-all text-admin-text-main cursor-pointer"
@@ -253,7 +261,7 @@ export default function AdminAuditLogs() {
           </div>
         </div>
 
-        {/* Filter Buttons */}
+        {/* Các nút thao tác lọc */}
         <div className="flex gap-3 justify-end pt-2">
           <button
             type="button"
@@ -272,7 +280,7 @@ export default function AdminAuditLogs() {
         </div>
       </form>
 
-      {/* Logs Table Area */}
+      {/* Bảng hiển thị danh sách nhật ký */}
       <div className="bg-white rounded-lg border border-admin-border shadow-sm overflow-hidden">
         <div className="px-6 py-4 border-b border-admin-border bg-gray-50/30 flex justify-between items-center">
           <h3 className="text-sm font-bold text-admin-text-main flex items-center gap-2">
@@ -285,12 +293,12 @@ export default function AdminAuditLogs() {
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead>
-              <tr className="border-b border-admin-border text-xs font-bold text-admin-text-muted bg-gray-50/20 uppercase tracking-wider">
+              <tr className="border-b border-admin-border text-xs font-bold text-black bg-gray-50/20 uppercase tracking-wider">
                 <th className="px-5 py-3.5">Mã Log</th>
                 <th className="px-5 py-3.5">Thời Gian</th>
-                <th className="px-5 py-3.5">Người Thực Hiện (Admin)</th>
+                <th className="px-5 py-3.5">Người Thực Hiện</th>
                 <th className="px-5 py-3.5 text-center">Hành Động</th>
-                <th className="px-5 py-3.5">Ở</th>
+                <th className="px-5 py-3.5 text-center">Ở</th>
                 <th className="px-5 py-3.5 text-center">Mã Bản Ghi</th>
                 <th className="px-5 py-3.5 text-center">Giá Trị Cũ</th>
                 <th className="px-5 py-3.5 text-center">Giá Trị Mới</th>
@@ -315,8 +323,8 @@ export default function AdminAuditLogs() {
                         {log.action}
                       </span>
                     </td>
-                    <td className="px-5 py-4 font-bold text-primary">{formatTargetTable(log.targetTable)}</td>
-                    <td className="px-5 py-4 text-center font-semibold text-admin-text-muted" title={log.targetId}>
+                    <td className="px-5 py-4 text-center font-bold text-primary">{formatTargetTable(log.targetTable)}</td>
+                    <td className="px-5 py-4 text-center font-semibold text-blue-700" title={log.targetId}>
                       {log.targetName ? <span className="font-extrabold text-gray-900">{log.targetName}</span> : formatTargetId(log.targetId)}
                     </td>
                     <td className="px-5 py-4 text-center">
@@ -358,7 +366,7 @@ export default function AdminAuditLogs() {
           </table>
         </div>
 
-        {/* Server-side Pagination controls */}
+        {/* Thanh phân trang */}
         {totalPages > 1 && (
           <div className="px-6 py-4 border-t border-admin-border bg-gray-50/20 flex items-center justify-between">
             <span className="text-xs text-admin-text-muted font-medium">
@@ -374,10 +382,10 @@ export default function AdminAuditLogs() {
                 <ArrowLeft size={14} />
               </button>
 
-              {/* Page numbers */}
+              {/* Các nút số trang */}
               {Array.from({ length: totalPages }).map((_, i) => {
                 const pageNum = i + 1;
-                // Only show a window of pages to avoid overcrowding
+                // Chỉ hiển thị một số trang nhất định để tránh tràn giao diện
                 if (totalPages > 6 && Math.abs(currentPage - pageNum) > 2 && pageNum !== 1 && pageNum !== totalPages) {
                   if (pageNum === 2 || pageNum === totalPages - 1) {
                     return <span key={pageNum} className="text-admin-text-muted px-1">...</span>;
@@ -390,8 +398,8 @@ export default function AdminAuditLogs() {
                     type="button"
                     onClick={() => setCurrentPage(pageNum)}
                     className={`px-3 py-1 text-xs font-bold rounded cursor-pointer transition ${currentPage === pageNum
-                        ? 'bg-primary text-white'
-                        : 'bg-white hover:bg-gray-50 text-admin-text-main border border-admin-border'
+                      ? 'bg-primary text-white'
+                      : 'bg-white hover:bg-gray-50 text-admin-text-main border border-admin-border'
                       }`}
                   >
                     {pageNum}
@@ -412,11 +420,11 @@ export default function AdminAuditLogs() {
         )}
       </div>
 
-      {/* JSON Details Modal */}
+      {/* Modal xem chi tiết dữ liệu JSON */}
       {selectedLog && modalType && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-xs z-[9999] flex items-center justify-center p-4">
           <div className="bg-white rounded-lg border border-admin-border shadow-2xl max-w-xl w-full flex flex-col animate-in zoom-in-95 duration-200 overflow-hidden">
-            {/* Modal Header */}
+            {/* Đầu Modal */}
             <div className="px-6 py-4 border-b border-admin-border bg-gray-50/50 flex justify-between items-center">
               <div className="flex items-center gap-2">
                 <Info className="text-primary w-5 h-5" />
@@ -435,7 +443,7 @@ export default function AdminAuditLogs() {
               </button>
             </div>
 
-            {/* Modal Body */}
+            {/* Thân Modal */}
             <div className="p-6 space-y-4">
               <div className="grid grid-cols-2 gap-4 text-xs font-semibold bg-gray-50/50 p-3 rounded border border-admin-border">
                 <div>
@@ -457,7 +465,7 @@ export default function AdminAuditLogs() {
               </div>
             </div>
 
-            {/* Modal Footer */}
+            {/* Chân Modal */}
             <div className="px-6 py-3 border-t border-admin-border bg-gray-50/30 flex justify-end">
               <button
                 type="button"

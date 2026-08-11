@@ -4,6 +4,15 @@ import { Link } from 'react-router-dom';
 
 import { THEME } from '../utils/theme';
 
+import topzoneLogo from '../assets/mwg-logos/topzone.svg';
+import dienmayxanhLogo from '../assets/mwg-logos/dienmayxanh.svg';
+import bachhoaxanhLogo from '../assets/mwg-logos/bachhoaxanh.svg';
+import ankhangLogo from '../assets/mwg-logos/ankhang.svg';
+import avakidsLogo from '../assets/mwg-logos/avakids.svg';
+import vieclamLogo from '../assets/mwg-logos/vieclam.svg';
+import erablueLogo from '../assets/mwg-logos/erablue.svg';
+import thodmxLogo from '../assets/mwg-logos/thodmx.svg';
+
 export default function Footer() {
   const [isExpanded, setIsExpanded] = useState(false);
 
@@ -78,83 +87,146 @@ export default function Footer() {
 
         {/* Col 4 */}
         <div className="flex flex-col space-y-4">
-          <h3 className="font-bold text-gray-800 uppercase mb-2">Website cùng tập đoàn</h3>
+          <h3 className="font-bold text-gray-900 uppercase text-xs tracking-wider">Website cùng tập đoàn</h3>
           
-          {/* Grid logo tập đoàn */}
-          <div className="grid grid-cols-2 gap-2 w-fit font-sans text-white text-[10px] font-black select-none">
-            {/* TopZone */}
-            <a href="https://www.topzone.vn" target="_blank" rel="noopener noreferrer" className="bg-[#1a1a1a] border border-gray-800 rounded px-2 py-1.5 flex items-center justify-center gap-1 w-28 h-8 transition-transform hover:scale-105 active:scale-95">
-              <span className="text-white">top</span>
-              <span className="bg-gradient-to-r from-pink-500 via-purple-500 to-indigo-500 bg-clip-text text-transparent">zone</span>
+          {/* Grid logo tập đoàn chuẩn MWG Thế Giới Di Động */}
+          <div className="grid grid-cols-2 gap-2.5 max-w-xs font-sans select-none">
+            {/* 1. TopZone */}
+            <a 
+              href="https://www.topzone.vn" 
+              target="_blank" 
+              rel="noopener noreferrer" 
+              className="h-10 rounded-xl flex items-center justify-center transition-transform hover:scale-102 active:scale-95 shadow-xs overflow-hidden"
+            >
+              <img src={topzoneLogo} alt="TopZone" className="w-full h-full object-contain" />
             </a>
             
-            {/* Điện Máy Xanh */}
-            <a href="https://www.dienmayxanh.com" target="_blank" rel="noopener noreferrer" className="bg-[#00a6e5] rounded px-2 py-1.5 flex items-center justify-center gap-1 w-28 h-8 transition-transform hover:scale-105 active:scale-95">
-              <span className="w-2.5 h-2.5 bg-yellow-450 rounded-full flex items-center justify-center text-[5px] text-blue-600">⚡</span>
-              <span className="text-white text-[9px]">Điện máy</span>
-              <span className="text-yellow-300 text-[9px] uppercase">XANH</span>
+            {/* 2. Điện Máy XANH */}
+            <a 
+              href="https://www.dienmayxanh.com" 
+              target="_blank" 
+              rel="noopener noreferrer" 
+              className="h-10 rounded-xl flex items-center justify-center transition-transform hover:scale-102 active:scale-95 shadow-xs overflow-hidden"
+            >
+              <img src={dienmayxanhLogo} alt="Điện máy XANH" className="w-full h-full object-contain" />
             </a>
 
-            {/* Bách Hóa Xanh */}
-            <a href="https://www.bachhoaxanh.com" target="_blank" rel="noopener noreferrer" className="bg-[#008f4c] rounded px-2 py-1.5 flex items-center justify-center gap-1 w-28 h-8 transition-transform hover:scale-105 active:scale-95">
-              <span className="w-2.5 h-2.5 bg-yellow-450 rounded-full flex items-center justify-center text-[5px] text-green-800">❖</span>
-              <span className="text-white text-[9px]">Bách hóa</span>
-              <span className="text-yellow-300 text-[9px] uppercase">XANH</span>
+            {/* 3. Bách Hóa XANH */}
+            <a 
+              href="https://www.bachhoaxanh.com" 
+              target="_blank" 
+              rel="noopener noreferrer" 
+              className="h-10 rounded-xl flex items-center justify-center transition-transform hover:scale-102 active:scale-95 shadow-xs overflow-hidden"
+            >
+              <img src={bachhoaxanhLogo} alt="Bách hóa XANH" className="w-full h-full object-contain" />
             </a>
 
-            {/* Nhà Thuốc An Khang */}
-            <a href="https://www.nhathuocankhang.com" target="_blank" rel="noopener noreferrer" className="bg-[#2daf52] rounded px-2 py-1.5 flex items-center justify-center gap-1 w-28 h-8 transition-transform hover:scale-105 active:scale-95">
-              <span className="w-2.5 h-2.5 bg-white rounded-full flex items-center justify-center text-[6px] text-green-600 font-bold">+</span>
-              <span className="text-white text-[9px]">nhà thuốc</span>
-              <span className="text-white text-[9px] font-extrabold uppercase">An Khang</span>
+            {/* 4. Nhà Thuốc An Khang */}
+            <a 
+              href="https://www.nhathuocankhang.com" 
+              target="_blank" 
+              rel="noopener noreferrer" 
+              className="h-10 rounded-xl flex items-center justify-center transition-transform hover:scale-102 active:scale-95 shadow-xs overflow-hidden"
+            >
+              <img src={ankhangLogo} alt="Nhà Thuốc An Khang" className="w-full h-full object-contain" />
             </a>
 
-            {/* AVAKids */}
-            <a href="https://www.avakids.com" target="_blank" rel="noopener noreferrer" className="bg-[#e71a74] rounded px-2 py-1.5 flex items-center justify-center gap-0.5 w-28 h-8 transition-transform hover:scale-105 active:scale-95">
-              <span className="text-white">AVA</span>
-              <span className="text-white font-light">Kids</span>
+            {/* 5. AVAKids */}
+            <a 
+              href="https://www.avakids.com" 
+              target="_blank" 
+              rel="noopener noreferrer" 
+              className="h-10 rounded-xl flex items-center justify-center transition-transform hover:scale-102 active:scale-95 shadow-xs overflow-hidden"
+            >
+              <img src={avakidsLogo} alt="AVAKids" className="w-full h-full object-contain" />
             </a>
 
-            {/* Việc Làm */}
-            <a href="https://vieclam.thegioididong.com" target="_blank" rel="noopener noreferrer" className="bg-[#ffc500] text-black rounded px-2 py-1.5 flex items-center justify-center gap-1 w-28 h-8 transition-transform hover:scale-105 active:scale-95">
-              <span className="w-2 h-2.5 bg-black rounded flex items-center justify-center text-[5px] text-white">🚹</span>
-              <span className="font-extrabold uppercase">VIỆC LÀM</span>
+            {/* 6. VIỆC LÀM */}
+            <a 
+              href="https://vieclam.thegioididong.com" 
+              target="_blank" 
+              rel="noopener noreferrer" 
+              className="h-10 rounded-xl flex items-center justify-center transition-transform hover:scale-102 active:scale-95 shadow-xs overflow-hidden"
+            >
+              <img src={vieclamLogo} alt="Việc Làm" className="w-full h-full object-contain" />
             </a>
 
-            {/* EraBlue */}
-            <a href="https://www.erablue.com" target="_blank" rel="noopener noreferrer" className="bg-[#f8a307] text-[#0f2d59] rounded px-2 py-1.5 flex items-center justify-center gap-0.5 w-28 h-8 transition-transform hover:scale-105 active:scale-95">
-              <span className="font-extrabold">era</span>
-              <span className="font-light">blue</span>
+            {/* 7. EraBlue */}
+            <a 
+              href="https://www.erablue.com" 
+              target="_blank" 
+              rel="noopener noreferrer" 
+              className="h-10 rounded-xl flex items-center justify-center transition-transform hover:scale-102 active:scale-95 shadow-xs overflow-hidden"
+            >
+              <img src={erablueLogo} alt="EraBlue" className="w-full h-full object-contain" />
             </a>
 
-            {/* Thợ Điện Máy Xanh */}
-            <a href="#" className="bg-[#1c355e] rounded px-2 py-1.5 flex items-center justify-center gap-0.5 w-28 h-8 transition-transform hover:scale-105 active:scale-95">
-              <span className="text-yellow-400 font-black">Thợ</span>
-              <span className="text-white font-bold">ĐMX</span>
+            {/* 8. Thợ Điện Máy Xanh */}
+            <a 
+              href="#" 
+              className="h-10 rounded-xl flex items-center justify-center transition-transform hover:scale-102 active:scale-95 shadow-xs overflow-hidden"
+            >
+              <img src={thodmxLogo} alt="Thợ Điện Máy Xanh" className="w-full h-full object-contain" />
             </a>
           </div>
 
-          {/* Mạng xã hội theo phong cách TGDD */}
-          <div className="pt-2 flex flex-col space-y-2">
-            <div className="flex items-center gap-4">
-              <a href="https://www.facebook.com/thegioididongcom" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 hover:text-blue-600 transition-colors">
-                <span className="w-6 h-6 rounded-full bg-[#3b5998] flex items-center justify-center text-white font-bold text-xs shrink-0 select-none">f</span>
-                <span className="text-xs font-bold text-blue-600">3886.8k Fan TGDĐ</span>
+          {/* Mạng xã hội theo đúng thiết kế Thế Giới Di Động */}
+          <div className="pt-3 flex flex-col space-y-3 select-none">
+            <div className="flex items-center gap-5">
+              {/* Facebook Fanpage */}
+              <a 
+                href="https://www.facebook.com/thegioididongcom" 
+                target="_blank" 
+                rel="noopener noreferrer" 
+                className="flex items-center gap-2.5 hover:opacity-90 transition-opacity group"
+              >
+                <div className="w-8 h-8 rounded-full bg-[#3b5998] flex items-center justify-center text-white shadow-xs shrink-0 group-hover:scale-105 transition-transform">
+                  <svg className="w-4 h-4 fill-white" viewBox="0 0 24 24">
+                    <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C20.478 23.47 24 18.063 24 12.073z"/>
+                  </svg>
+                </div>
+                <div className="flex flex-col text-left leading-tight">
+                  <span className="text-xs font-bold text-blue-600">3886.8k Fan</span>
+                  <span className="text-xs font-bold text-blue-600">TGDĐ</span>
+                </div>
               </a>
-              <a href="https://www.youtube.com/user/TGDDVideoReviews" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 hover:text-red-600 transition-colors">
-                <span className="w-6 h-6 rounded-full bg-[#dd4b39] flex items-center justify-center text-white text-[10px] shrink-0 select-none">▶</span>
-                <span className="text-xs font-bold text-red-600">678.9k Đăng ký</span>
+
+              {/* Youtube Channel (Đỏ Tròn Play chuẩn TGDĐ) */}
+              <a 
+                href="https://www.youtube.com/user/TGDDVideoReviews" 
+                target="_blank" 
+                rel="noopener noreferrer" 
+                className="flex items-center gap-2.5 hover:opacity-90 transition-opacity group"
+              >
+                <div className="w-8 h-8 rounded-full bg-[#d0021b] flex items-center justify-center text-white shadow-xs shrink-0 group-hover:scale-105 transition-transform">
+                  <svg className="w-4.5 h-4.5 fill-white ml-0.5" viewBox="0 0 24 24">
+                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 14.5v-9l6 4.5-6 4.5z"/>
+                  </svg>
+                </div>
+                <div className="flex flex-col text-left leading-tight">
+                  <span className="text-xs font-bold text-red-600">678.9k Đăng</span>
+                  <span className="text-xs font-bold text-red-600">ký</span>
+                </div>
               </a>
             </div>
+
+            {/* Zalo Page */}
             <div>
-              <a href="https://zalo.me" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 hover:text-blue-500 transition-colors">
-                <span className="w-6 h-6 rounded-full bg-[#0088cc] flex items-center justify-center text-white text-[8px] font-black shrink-0 select-none">Zalo</span>
+              <a 
+                href="https://zalo.me" 
+                target="_blank" 
+                rel="noopener noreferrer" 
+                className="flex items-center gap-2.5 hover:opacity-90 transition-opacity w-fit group"
+              >
+                <div className="w-8 h-8 rounded-full bg-[#0088cc] flex items-center justify-center text-white font-black text-[9px] shadow-xs shrink-0 group-hover:scale-105 transition-transform tracking-tighter">
+                  Zalo
+                </div>
                 <span className="text-xs font-bold text-blue-500">Zalo</span>
               </a>
             </div>
           </div>
 
-          {/* Chứng nhận */}
+          {/* Chứng nhận Bộ Công Thương & DMCA */}
           <div className="pt-2 flex items-center gap-3">
             <a href="#" target="_blank" rel="noopener noreferrer" className="transition-opacity hover:opacity-85">
               <img src="https://cdn.tgdd.vn/mwgcart/mwg-site/Content/images/logo-da-thong-bao.png" alt="Đã thông báo bộ công thương" className="h-7 object-contain" />

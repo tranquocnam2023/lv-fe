@@ -25,11 +25,10 @@ export default function CartPaymentMethods({
               const fee = Number(option.fee || option.Fee || 0);
               const isSelected = shippingCarrier === carrier;
               const estimatedDays = option.estimatedDeliveryDays || option.EstimatedDeliveryDays;
-              
+
               return (
-                <label key={idx} className={`flex items-center gap-3 p-3 border rounded-md transition cursor-pointer select-none ${
-                  isSelected ? 'border-blue-500 bg-blue-50/20' : 'border-gray-200 hover:border-gray-300'
-                }`}>
+                <label key={idx} className={`flex items-center gap-3 p-3 border rounded-md transition cursor-pointer select-none ${isSelected ? 'border-blue-500 bg-blue-50/20' : 'border-gray-200 hover:border-gray-300'
+                  }`}>
                   <input
                     type="radio"
                     name="shippingOption"
@@ -59,9 +58,8 @@ export default function CartPaymentMethods({
         <div className="space-y-2">
 
           {/* Stripe */}
-          <label className={`flex items-center gap-3 p-3 border rounded-md transition cursor-pointer select-none ${
-            paymentMethod === 'stripe' ? 'border-blue-500 bg-blue-50/20' : 'border-gray-200 hover:border-gray-300'
-          }`}>
+          <label className={`flex items-center gap-3 p-3 border rounded-md transition cursor-pointer select-none ${paymentMethod === 'stripe' ? 'border-blue-500 bg-blue-50/20' : 'border-gray-200 hover:border-gray-300'
+            }`}>
             <input
               type="radio"
               name="paymentMethod"
@@ -78,9 +76,8 @@ export default function CartPaymentMethods({
           </label>
 
           {/* VNPAY Standard */}
-          <label className={`flex items-center gap-3 p-3 border rounded-md transition cursor-pointer select-none ${
-            paymentMethod === 'vnpay' ? 'border-blue-500 bg-blue-50/20' : 'border-gray-200 hover:border-gray-300'
-          }`}>
+          <label className={`flex items-center gap-3 p-3 border rounded-md transition cursor-pointer select-none ${paymentMethod === 'vnpay' ? 'border-blue-500 bg-blue-50/20' : 'border-gray-200 hover:border-gray-300'
+            }`}>
             <input
               type="radio"
               name="paymentMethod"
@@ -90,12 +87,11 @@ export default function CartPaymentMethods({
               className="w-4 h-4 text-blue-600 border-gray-300 focus:ring-0 cursor-pointer"
             />
             <div className="text-xs flex-1">
-              <p className="font-bold text-gray-800">Thanh toán qua VNPAY (Trả thẳng)</p>
+              <p className="font-bold text-gray-800">Thanh toán qua VNPAY</p>
               <p className="text-[10px] text-gray-400">ATM nội địa, QR Pay, Visa, Mastercard, JCB qua VNPAY</p>
             </div>
             <span className="px-2 py-1 bg-[#005baa] text-white text-[9px] font-black rounded shrink-0">VNPAY</span>
           </label>
-
 
           {/* VNPAY Installment (Trả góp 0%) */}
           <label className={`flex items-center gap-3 p-3 border rounded-md transition cursor-pointer select-none ${
@@ -172,7 +168,6 @@ export default function CartPaymentMethods({
               </p>
             </div>
           )}
-
           {/* Bank transfer */}
           <label className="flex items-center gap-3 p-3 border border-gray-100 bg-gray-50/50 opacity-50 rounded-md select-none cursor-not-allowed">
             <input
@@ -192,11 +187,10 @@ export default function CartPaymentMethods({
           </label>
 
           {/* COD */}
-          <label className={`flex items-center gap-3 p-3 border rounded-md transition cursor-pointer select-none ${
-            paymentMethod === 'cod'
+          <label className={`flex items-center gap-3 p-3 border rounded-md transition cursor-pointer select-none ${paymentMethod === 'cod'
               ? 'border-blue-500 bg-blue-50/20'
               : 'border-gray-200 hover:border-gray-300'
-          }`}>
+            }`}>
             <input
               type="radio"
               name="paymentMethod"

@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 60" width="240" height="60">
+    <rect width="240" height="60" rx="12" fill="#161616"/>
+    <text x="50" y="38" font-family="system-ui, sans-serif" font-weight="400" font-size="26" fill="#ffffff">top</text>
+    <text x="95" y="38" font-family="system-ui, sans-serif" font-weight="900" font-size="26" fill="#e052a0" letter-spacing="0.5">ZONE</text>
+  </svg>
