@@ -13,7 +13,7 @@
  */
 
 import { useState, useEffect, useRef } from 'react';
-import { useParams, useSearchParams } from 'react-router-dom';
+import { useParams, useSearchParams, useNavigate } from 'react-router-dom';
 import { useLoading } from '../context/LoadingContext';
 import BannerSkeleton from '../components/common/skeletons/BannerSkeleton';
 import ProductCardSkeleton from '../components/common/skeletons/ProductCardSkeleton';
@@ -25,6 +25,7 @@ import BannerSection from '../components/BannerSection';
 import { Sliders } from 'lucide-react';
 import { productService } from '../services/productService';
 import { categoryService } from '../services/categoryService';
+import api from '../services/api';
 import { THEME } from '../utils/theme';
 
 const parseSpecs = (specsInput) => {
@@ -60,6 +61,7 @@ const parseSpecs = (specsInput) => {
 export default function HomePage({ selectedLocation }) {
   const { stopLoading } = useLoading();
   const { brand } = useParams();
+  const navigate = useNavigate();
 
   // ── Khai báo toàn bộ các React State Hooks ở đầu component ──
   const [prevBrand, setPrevBrand] = useState(brand);
@@ -76,6 +78,51 @@ export default function HomePage({ selectedLocation }) {
   const [currentPage, setCurrentPage] = useState(1);
   const PRODUCTS_PER_PAGE = 12;
   const productListRef = useRef(null);
+
+  // Tin tức Blog State & Phân trang
+  const [blogs, setBlogs] = useState([]);
+  const [loadingBlogs, setLoadingBlogs] = useState(true);
+  const [currentBlogPage, setCurrentBlogPage] = useState(1);
+  const [selectedBlog, setSelectedBlog] = useState(null);
+  const BLOGS_PER_PAGE = 4;
+  const blogListRef = useRef(null);
+
+  const scrollToBlogList = () => {
+    if (blogListRef.current) {
+      const yOffset = -80;
+      const y = blogListRef.current.getBoundingClientRect().top + window.pageYOffset + yOffset;
+      window.scrollTo({ top: y, behavior: 'smooth' });
+    }
+  };
+
+  const getMediaUrl = (url) => {
+    if (!url) return '';
+    if (url.startsWith('data:') || url.startsWith('blob:') || url.startsWith('http://') || url.startsWith('https://')) {
+      return url;
+    }
+    const backendOrigin = (import.meta.env.VITE_API_URL || api.defaults?.baseURL || 'https://localhost:7279/api')
+      .replace(/\/api\/?$/, '');
+    
+    const cleanPath = url.startsWith('/') ? url : `/${url}`;
+    return `${backendOrigin}${cleanPath}`;
+  };
+
+  useEffect(() => {
+    const fetchBlogs = async () => {
+      try {
+        setLoadingBlogs(true);
+        const res = await api.get('/blog?isPublished=true');
+        const data = res.data || res;
+        const list = Array.isArray(data) ? data : (data.items || []);
+        setBlogs(list);
+      } catch (err) {
+        console.error("Lỗi tải tin tức blog:", err);
+      } finally {
+        setLoadingBlogs(false);
+      }
+    };
+    fetchBlogs();
+  }, []);
 
   const scrollToProductList = () => {
     if (productListRef.current) {
@@ -418,6 +465,8 @@ export default function HomePage({ selectedLocation }) {
         </div>
       )}
 
+      
+
       {/* Banner Quảng cáo chạy (Nằm trên bộ lọc, dưới mục sản phẩm nổi bật) */}
       {!selectedBrand && !searchQuery && !advancedFilters && (
         <div className="mb-6">
@@ -571,6 +620,9 @@ export default function HomePage({ selectedLocation }) {
 
                 return (
                   <>
+                    {/* ========================================================================= */}
+                    {/* 🛒 [THẺ SẢN PHẨM] SECTION DANH SÁCH SẢN PHẨM (PRODUCT CARDS GRID) */}
+                    {/* ========================================================================= */}
                     <div ref={productListRef} key={`grid-page-${currentPage}`} className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 animate-in fade-in duration-350">
                       {productsToShow.map((product) => (
                         <ProductCard
@@ -598,6 +650,7 @@ export default function HomePage({ selectedLocation }) {
                           disabled={currentPage === 1}
                           onClick={() => {
                             setCurrentPage(prev => Math.max(prev - 1, 1));
+                            scrollToProductList();
                           }}
                           className={`w-9 h-9 rounded-lg border flex items-center justify-center text-sm font-bold transition-all ${
                             currentPage === 1
@@ -613,17 +666,17 @@ export default function HomePage({ selectedLocation }) {
                         {/* Page Numbers */}
                         {Array.from({ length: totalPages }).map((_, idx) => {
                           const pageNum = idx + 1;
-                          const isActive = pageNum === currentPage;
                           return (
                             <button
-                              key={pageNum}
+                              key={`page-${pageNum}`}
                               onClick={() => {
                                 setCurrentPage(pageNum);
+                                scrollToProductList();
                               }}
-                              className={`w-9 h-9 rounded-lg border flex items-center justify-center text-sm font-bold transition-all cursor-pointer ${
-                                isActive
-                                  ? 'bg-blue-600 border-blue-600 text-white shadow-md shadow-blue-100'
-                                  : 'bg-white border-gray-200 hover:border-blue-500 hover:text-blue-600 text-gray-700 shadow-sm'
+                              className={`w-9 h-9 rounded-lg border text-sm font-bold transition-all ${
+                                currentPage === pageNum
+                                  ? 'bg-blue-600 border-blue-600 text-white shadow-md shadow-blue-500/20'
+                                  : 'bg-white border-gray-200 hover:border-blue-500 hover:text-blue-600 text-gray-700 cursor-pointer'
                               }`}
                             >
                               {pageNum}
@@ -636,6 +689,7 @@ export default function HomePage({ selectedLocation }) {
                           disabled={currentPage === totalPages}
                           onClick={() => {
                             setCurrentPage(prev => Math.min(prev + 1, totalPages));
+                            scrollToProductList();
                           }}
                           className={`w-9 h-9 rounded-lg border flex items-center justify-center text-sm font-bold transition-all ${
                             currentPage === totalPages
@@ -658,8 +712,167 @@ export default function HomePage({ selectedLocation }) {
               <p className="text-sm font-semibold text-admin-text-muted">Sản phẩm hiện tạm hết hàng.</p>
             </div>
           )}
+
+           {/* ========================================================================= */}
+           {/* 📰 [THẺ BÀI ĐĂNG / TIN TỨC] SECTION TIN TỨC - BLOG CÔNG NGHỆ (BLOG CARDS GRID) */}
+           {/* ========================================================================= */}
+           <div className="w-full bg-white rounded-2xl p-6 mb-8 border border-gray-200 shadow-sm animate-in fade-in zoom-in-95 duration-500">
+             <div className="flex items-center justify-between mb-5 border-b border-gray-100 pb-3">
+               <h3 className="text-lg font-black flex items-center gap-2" style={{ color: THEME.secondary }}>
+                 <span>TIN TỨC - BLOG CÔNG NGHỆ</span>
+               </h3>
+               <span className="text-xs font-bold text-gray-400">Cập nhật tin mới nhất</span>
+             </div>
+
+             {loadingBlogs ? (
+               <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                 {[1, 2, 3, 4].map(i => (
+                   <div key={i} className="animate-pulse space-y-2 bg-gray-50 p-3 rounded-xl border border-gray-100">
+                     <div className="h-32 bg-gray-200 rounded-lg" />
+                     <div className="h-4 bg-gray-200 rounded w-3/4" />
+                     <div className="h-3 bg-gray-200 rounded w-full" />
+                   </div>
+                 ))}
+               </div>
+             ) : blogs.length === 0 ? (
+               <div className="py-10 text-center text-gray-400 font-medium text-sm">
+                 Chưa có bài viết tin tức nào được xuất bản.
+               </div>
+             ) : (
+                /* Tính toán Phân trang cho Thẻ Bài đăng */
+                (() => {
+                  const totalBlogPages = Math.ceil(blogs.length / BLOGS_PER_PAGE);
+                  const blogStartIndex = (currentBlogPage - 1) * BLOGS_PER_PAGE;
+                  const blogEndIndex = blogStartIndex + BLOGS_PER_PAGE;
+                  const blogsToShow = blogs.slice(blogStartIndex, blogEndIndex);
+
+                  return (
+                    <>
+                      {/* Lưới 4 cột nhỏ gọn tương tự Lưới Thẻ Sản Phẩm (grid-cols-2 md:grid-cols-3 lg:grid-cols-4) */}
+                      <div ref={blogListRef} className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 animate-in fade-in duration-350">
+                        {blogsToShow.map(item => (
+                   /* ── [THẺ BÀI ĐĂNG CÁ NHÂN (BLOG CARD ITEM)] ── */
+                   <div
+                     key={item.id}
+                     onClick={() => navigate(`/blog/${item.id}`)}
+                     className="group flex flex-col bg-white border border-gray-200 hover:border-blue-500 rounded-xl p-3 hover:shadow-md transition-all duration-300 relative cursor-pointer h-full overflow-hidden active:scale-98"
+                   >
+                     {/* Ảnh bìa Thẻ Bài Đăng (Thu nhỏ chiều cao h-32 sm:h-36 vừa bằng ảnh thẻ sản phẩm) */}
+                     <div className="relative w-full h-32 sm:h-36 rounded-lg overflow-hidden bg-gray-100 shrink-0 mb-2">
+                       {item.thumbnailUrl ? (
+                         <img
+                           src={getMediaUrl(item.thumbnailUrl)}
+                           alt={item.title}
+                           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                           onError={(e) => {
+                             e.target.onerror = null;
+                             e.target.src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="300" height="200" viewBox="0 0 300 200"%3E%3Crect width="300" height="200" fill="%23f1f5f9"/%3E%3Ctext x="50%25" y="50%25" dominant-baseline="middle" text-anchor="middle" fill="%2394a3b8" font-family="sans-serif" font-size="14" font-weight="bold"%3ETin+T%E1%BB%A9c+PhoneShop%3C/text%3E%3C/svg%3E';
+                           }}
+                         />
+                       ) : (
+                         <div className="w-full h-full flex items-center justify-center text-gray-400 bg-slate-100 font-bold text-xs">
+                           PhoneShop Blog
+                         </div>
+                       )}
+                       {item.category && (
+                         <span className="absolute top-2 left-2 bg-blue-600/90 backdrop-blur-md text-white text-[9px] font-black px-2 py-0.5 rounded uppercase tracking-wider shadow-sm">
+                           {item.category}
+                         </span>
+                       )}
+                     </div>
+
+                     {/* Content */}
+                     <div className="p-2 flex-1 flex flex-col justify-between">
+                       <div>
+                         <h4 className="font-bold text-gray-900 group-hover:text-blue-600 transition-colors line-clamp-2 text-xs sm:text-sm leading-snug mb-1">
+                           {item.title}
+                         </h4>
+                         {item.summary && (
+                           <p className="text-[11px] text-gray-500 line-clamp-2 leading-relaxed mb-2">
+                             {item.summary}
+                           </p>
+                         )}
+                       </div>
+
+                       <div className="flex items-center justify-between text-[10px] text-gray-400 pt-2 border-t border-gray-100 font-medium">
+                         <span>{item.authorName || item.author || 'Ban Biên Tập'}</span>
+                         <span>{item.createdAt ? new Date(item.createdAt).toLocaleDateString('vi-VN') : ''}</span>
+                       </div>
+                     </div>
+                   </div>
+                 ))}
+               </div>
+
+                      {/* Pagination Controls Cho Phân Trang Bài Viết / Blog */}
+                      {totalBlogPages > 1 && (
+                        <div className="flex items-center justify-center gap-2 mt-8 mb-2 select-none">
+                          {/* Prev Button */}
+                          <button
+                            disabled={currentBlogPage === 1}
+                            onClick={() => {
+                              setCurrentBlogPage(prev => Math.max(prev - 1, 1));
+                              scrollToBlogList();
+                            }}
+                            className={`w-9 h-9 rounded-lg border flex items-center justify-center text-sm font-bold transition-all ${
+                              currentBlogPage === 1
+                                ? 'bg-gray-50 border-gray-200 text-gray-300 cursor-not-allowed'
+                                : 'bg-white border-gray-200 hover:border-blue-500 hover:text-blue-600 text-gray-700 cursor-pointer shadow-sm'
+                            }`}
+                          >
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-4 h-4">
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5 8.25 12l7.5-7.5" />
+                            </svg>
+                          </button>
+
+                          {/* Page Numbers */}
+                          {Array.from({ length: totalBlogPages }).map((_, idx) => {
+                            const pageNum = idx + 1;
+                            return (
+                              <button
+                                key={`blog-page-${pageNum}`}
+                                onClick={() => {
+                                  setCurrentBlogPage(pageNum);
+                                  scrollToBlogList();
+                                }}
+                                className={`w-9 h-9 rounded-lg border text-sm font-bold transition-all ${
+                                  currentBlogPage === pageNum
+                                    ? 'bg-blue-600 border-blue-600 text-white shadow-md shadow-blue-500/20'
+                                    : 'bg-white border-gray-200 hover:border-blue-500 hover:text-blue-600 text-gray-700 cursor-pointer'
+                                }`}
+                              >
+                                {pageNum}
+                              </button>
+                            );
+                          })}
+
+                          {/* Next Button */}
+                          <button
+                            disabled={currentBlogPage === totalBlogPages}
+                            onClick={() => {
+                              setCurrentBlogPage(prev => Math.min(prev + 1, totalBlogPages));
+                              scrollToBlogList();
+                            }}
+                            className={`w-9 h-9 rounded-lg border flex items-center justify-center text-sm font-bold transition-all ${
+                              currentBlogPage === totalBlogPages
+                                ? 'bg-gray-50 border-gray-200 text-gray-300 cursor-not-allowed'
+                                : 'bg-white border-gray-200 hover:border-blue-500 hover:text-blue-600 text-gray-700 cursor-pointer shadow-sm'
+                            }`}
+                          >
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-4 h-4">
+                              <path strokeLinecap="round" strokeLinejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5" />
+                            </svg>
+                          </button>
+                        </div>
+                      )}
+                    </>
+                  );
+                })()
+              )}
+            </div> 
+      
         </>
       )}
     </>
   );
+  
 }

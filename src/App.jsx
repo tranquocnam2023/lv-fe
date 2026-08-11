@@ -31,6 +31,7 @@ const CheckoutPage = React.lazy(() => import('./page/CheckoutPage'));
 const OrderTrackingPage = React.lazy(() => import('./page/OrderTrackingPage'));
 const PaymentCallbackPage = React.lazy(() => import('./page/PaymentCallbackPage'));
 const WarrantyPurchasePage = React.lazy(() => import('./page/WarrantyPurchasePage'));
+const BlogDetailPage = React.lazy(() => import('./page/blogdetail/BlogDetail'));
 
 function App() {
   const location = useLocation();
@@ -140,6 +141,7 @@ function App() {
                   <Route path="/product/:id" element={<ProductDetailPage />} />
                   <Route path="/chinh-sach/:type" element={<PolicyPage />} />
                   <Route path="/danh-muc/:brand" element={<HomePage selectedLocation={selectedLocation} />} />
+                  <Route path="/blog/:id" element={<BlogDetailPage />} />
                   <Route path="/track" element={<OrderTrackingPage />} />
                   <Route path="/dich-vu-bao-hanh" element={<WarrantyPurchasePage />} />
                   <Route path="/dieu-khoan-dich-vu" element={<TermsOfServicePage />} />

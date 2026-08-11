@@ -24,6 +24,9 @@ const BannerManager      = React.lazy(() => import('./settings/BannerManager'));
 const AdminPayments      = React.lazy(() => import('./payments/AdminPayments'));
 const AdminInspectionPanel = React.lazy(() => import('./warranties/AdminInspectionPanel'));
 
+const AdminBlog          = React.lazy(() => import('./news/AdminBlog'));
+const AdminBlogForm      = React.lazy(() => import('./news/AdminBlogForm'));
+
 // ─── Loading fallback ─────────────────────────────────────────────────────────
 const TabSpinner = () => (
   <div className="flex items-center justify-center h-64">
@@ -39,6 +42,7 @@ export default function AdminPage() {
   const activeAdminTab = searchParams.get('tab') || 'dashboard';
   const editProductId  = searchParams.get('productId');
   const editComboId    = searchParams.get('comboId');
+  const editBlogId     = searchParams.get('blogId');
 
   const [selectedBrandId, setSelectedBrandId] = React.useState(null);
 
@@ -56,6 +60,9 @@ export default function AdminPage() {
       }
       if (tab !== 'update_combo') {
         prev.delete('comboId');
+      }
+      if (tab !== 'update_blog') {
+        prev.delete('blogId');
       }
       return prev;
     });
@@ -135,6 +142,32 @@ export default function AdminPage() {
             onBack={() => handleTabChange('combos')}
           />
         );
+
+      case 'blog':
+        return (
+          <AdminBlog
+            onCreate={() => handleTabChange('create_blog')}
+            onEdit={(id) => setSearchParams(prev => {
+              prev.set('tab', 'update_blog');
+              prev.set('blogId', id);
+              return prev;
+            })}
+          />
+        );
+
+      case 'create_blog':
+        return (
+          <AdminBlogForm onBack={() => handleTabChange('blog')} />
+        );
+
+      case 'update_blog':
+        return (
+          <AdminBlogForm
+            blogId={editBlogId}
+            onBack={() => handleTabChange('blog')}
+          />
+        );
+
       case 'reviews':     return <AdminReviews />;
       case 'dashboard':   return <AdminDashboard onTabChange={handleTabChange} />;
       case 'audit_logs':  return <AdminAuditLogs />;

@@ -53,13 +53,14 @@ export default function Footer() {
         {/* Col 3 */}
         <div className="flex flex-col space-y-3 text-gray-700">
           <h3 className="font-bold text-gray-800 uppercase mb-2">Thông tin khác</h3>
-          <Link to="/dieu-khoan-dich-vu" className="hover:text-primary transition">Điều khoản dịch vụ</Link> 
+          
           <Link to="#" className="hover:text-primary transition">Tích điểm Quà tặng VIP</Link>
           <Link to={isLoggedIn ? "/profile?tab=history" : "/track"} className="hover:text-primary transition">Lịch sử mua hàng</Link>
           <Link to="#" className="hover:text-primary transition">Đăng ký bán hàng CTV chiết khấu cao</Link>
           <Link to="/chinh-sach/tra-gop" className="hover:text-primary transition">Tìm hiểu về mua trả chậm</Link>
           <Link to="/chinh-sach/bao-hanh" className="hover:text-primary transition">Chính sách bảo hành</Link>
-
+          
+          {/* nút thu gọn/mở rộng */}
           {!isExpanded ? (
             <button
               onClick={() => setIsExpanded(true)}
