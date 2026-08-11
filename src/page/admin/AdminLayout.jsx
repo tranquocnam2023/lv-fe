@@ -9,7 +9,8 @@ import {
   Layout, Package, Users, ShoppingCart, Settings, LogOut,
   Bell, FolderTree, Star, LayoutGrid, Ticket, Boxes,
   MessageSquare, History, Sun, Moon, CreditCard, PackagePlus,
-  ShieldAlert
+  ShieldAlert,
+  Newspaper
 } from 'lucide-react';
 import { useTheme } from '../../context/ThemeContext';
 
@@ -26,6 +27,7 @@ const ADMIN_FUNCTIONS = [
   { label: 'Quản lý khách hàng', tab: 'customers', keywords: ['khach hang', 'nguoi dung', 'users', 'customers', 'tai khoan'] },
   { label: 'Quản lý khuyến mãi', tab: 'promotions', keywords: ['khuyen mai', 'ma giam gia', 'voucher', 'promotions'] },
   { label: 'Quản lý Combo', tab: 'combos', keywords: ['combo', 'mua kem', 'ban cheo', 'combos'] },
+  { label: 'Quản lý Tin tức-Blog', tab: 'blog', keywords: ['blog', 'blog', 'bai viet', 'tin tuc'] },
   { label: 'Quản lý đánh giá', tab: 'reviews', keywords: ['danh gia', 'binh luan', 'reviews'] },
   { label: 'Cài đặt hệ thống', tab: 'settings', keywords: ['cai dat', 'settings', 'cau hinh'] },
   { label: 'Nhật ký hoạt động', tab: 'audit_logs', keywords: ['nhat ky', 'kiem toan', 'audit', 'logs', 'hoat dong'] },
@@ -50,6 +52,7 @@ const TAB_TITLES = {
   audit_logs: 'Nhật ký hoạt động',
   settings: 'Cài đặt hệ thống',
   inspections: 'Quản lý bảo hành',
+  blog: 'Quản lý Tin tức-Blog',
 };
 
 // ─── AdminLayout ──────────────────────────────────────────────────────────────
@@ -315,6 +318,7 @@ export default function AdminLayout({ activeAdminTab, onTabChange, setSearchPara
           <SidebarItem id="combos" Icon={PackagePlus} label="Quản lý Combo" />
           <SidebarItem id="reviews" Icon={MessageSquare} label="Đánh giá" />
           <SidebarItem id="inspections" Icon={ShieldAlert} label="Thẩm định bảo hành" />
+          <SidebarItem id="blog" Icon={Newspaper} label="Quản lý tin tức-blog" />
 
           <div className="pt-6">
             <p className="px-4 text-[12px] font-bold text-admin-sidebar-text/60 uppercase tracking-widest mb-4">Hệ thống</p>

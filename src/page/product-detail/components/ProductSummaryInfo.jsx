@@ -23,7 +23,6 @@ export default function ProductSummaryInfo({
   onAttributeClick,
   onAddToCart,
   onBuyNow,
-  onOpenInstallmentModal,
   variantId,
   selectedWarranty,
   onSelectWarranty
@@ -239,28 +238,7 @@ export default function ProductSummaryInfo({
             </span>
           </button>
 
-          {/* Grid 2 nút Trả góp */}
-          <div className="grid grid-cols-2 gap-2">
-            <button
-              type="button"
-              onClick={() => onOpenInstallmentModal && onOpenInstallmentModal('company')}
-              disabled={displayDetails.stock === 0 || product.isAvailable === false}
-              className="bg-slate-900 hover:bg-slate-800 text-white rounded-xl py-2.5 px-3 flex flex-col items-center justify-center border-0 cursor-pointer select-none transition-all"
-            >
-              <span className="text-xs font-bold uppercase tracking-wider">TRẢ GÓP 0%</span>
-              <span className="text-[10px] text-slate-300">Duyệt nhanh 5 phút</span>
-            </button>
 
-            <button
-              type="button"
-              onClick={() => onOpenInstallmentModal && onOpenInstallmentModal('card')}
-              disabled={displayDetails.stock === 0 || product.isAvailable === false}
-              className="bg-slate-100 hover:bg-slate-200 text-slate-800 rounded-xl py-2.5 px-3 flex flex-col items-center justify-center border border-slate-300 cursor-pointer select-none transition-all"
-            >
-              <span className="text-xs font-bold uppercase tracking-wider">TRẢ GÓP THẺ</span>
-              <span className="text-[10px] text-slate-500">Visa, Master, JCB</span>
-            </button>
-          </div>
 
           {/* Nút THÊM VÀO GIỎ HÀNG */}
           <button
