@@ -203,11 +203,11 @@ export default function WarrantyPurchasePage() {
               className="bg-white rounded-2xl border border-gray-200 shadow-sm hover:shadow-md transition-all p-6 flex flex-col justify-between space-y-5 relative group"
             >
               <div className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <span className="text-[10px] font-black uppercase bg-blue-50 text-blue-700 px-2.5 py-1 rounded-md border border-blue-150">
+                <div className="flex items-center justify-between gap-2">
+                  <span className="text-[10px] font-black uppercase bg-blue-50 text-blue-700 px-2 py-1 rounded-md border border-blue-150 truncate max-w-[55%]" title={w.code}>
                     Mã gói: {w.code}
                   </span>
-                  <span className="text-[10px] font-bold text-gray-400">
+                  <span className="text-[10px] font-bold text-gray-500 whitespace-nowrap shrink-0">
                     Thời hạn {w.durationMonths} Tháng
                   </span>
                 </div>
