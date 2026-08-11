@@ -1,0 +1,75 @@
+================================================================================
+           BÁO CÁO KIỂM TRA TÍNH NĂNG CHATBOT AI TRỢ LÝ TƯ VẤN (PHONESHOP)
+================================================================================
+Thời gian kiểm tra : 2026-08-08
+Hệ thống             : Frontend PhoneShop E-Commerce (React + Vite + TailwindCSS)
+Thành phần kiểm tra : ChatbotWidget Component & ChatbotService
+
+--------------------------------------------------------------------------------
+1. TỔNG QUAN KIẾN TRÚC & FILE LIÊN QUAN
+--------------------------------------------------------------------------------
+- Component Giao Diện : d:\LUANVAN\lv-fe-main\src\components\ChatbotWidget.jsx
+- Service Kết Nối API  : d:\LUANVAN\lv-fe-main\src\services\chatbotService.js
+- Điểm Tích Hợp Chính : Được nhúng toàn cục tại App.jsx (hiển thị trên tất cả các trang)
+- Endpoint Backend API : POST /Chatbot/chat
+
+--------------------------------------------------------------------------------
+2. CHI TIẾT TÍNH NĂNG GIAO DIỆN (UI/UX)
+--------------------------------------------------------------------------------
+[+] Nút Nổi Kích Hoạt (Floating Trigger Button):
+    - Đặt cố định ở góc dưới bên phải màn hình (fixed bottom-20 right-4 / md:bottom-6 md:right-6).
+    - Biểu tượng MessageCircle kèm chấm xanh nhấp nháy (Online Status Ping).
+    - Hiển thị Banner gợi ý "Tư vấn AI 24/7" khi nút đang ở trạng thái thu gọn.
+
+[+] Khung Cửa Sổ Trò Chuyện (Chat Window Popup):
+    - Tiêu đề Header sang trọng với Gradient Dark Slate/Indigo và Badge "AI 24/7".
+    - Tự động cuộn xuống tin nhắn mới nhất (Auto-scroll to bottom via Ref).
+    - Phân biệt bong bóng tin nhắn Người dùng (Xanh Indigo) và Trợ lý AI (Trắng nhãn Bot).
+
+[+] Tính Năng Gợi Ý Nhanh (Quick Prompts):
+    - Hiển thị các câu hỏi mẫu phổ biến khi vừa mở chat:
+      1. ✨ Gợi ý iPhone hot nhất?
+      2. ✨ Điện thoại dưới 10 triệu
+      3. ✨ Chính sách bảo hành
+      4. ✨ Khuyến mãi hôm nay
+    - Bấm 1-click vào gợi ý để gửi trực tiếp câu hỏi cho AI mà không cần gõ.
+
+[+] Trạng Thái Xử Lý & Nguồn Lực (Loading & Indicator):
+    - Hiển thị hiệu ứng xoay "AI đang soạn câu trả lời..." trong lúc chờ Backend phản hồi.
+    - Giới hạn tối đa 500 ký tự cho mỗi câu hỏi người dùng nhập.
+    - Vô hiệu hóa nút gửi khi input trống hoặc đang chờ xử lý (isSending = true).
+
+--------------------------------------------------------------------------------
+3. LUỒNG XỬ LÝ DỮ LIỆU & KẾT NỐI API (DATA FLOW)
+--------------------------------------------------------------------------------
+- Payload gửi lên Backend (/Chatbot/chat):
+  {
+    "message": "Nội dung câu hỏi người dùng nhập",
+    "history": [
+      { "role": "user", "content": "..." },
+      { "role": "assistant", "content": "..." }
+    ] // Duy trì ngữ cảnh tối đa 12 tin nhắn gần nhất (.slice(-12))
+  }
+- Phản hồi từ Backend:
+  {
+    "reply": "Nội dung phản hồi được tạo từ AI"
+  }
+- Xử lý lỗi (Error Handling):
+  - Hiển thị hộp thông báo lỗi màu vàng cam nếu kết nối API thất bại.
+  - Phản hồi mặc định nhẹ nhàng: "Mình chưa xử lý được yêu cầu này. Bạn thử lại sau nhé."
+
+--------------------------------------------------------------------------------
+4. ĐÁNH GIÁ KẾT QUẢ KIỂM TRA & ĐỀ XUẤT
+--------------------------------------------------------------------------------
+[KẾT QUẢ]:
+  ✓ Giao diện hiện đại, chuẩn Responsive trên cả Mobile và Desktop.
+  ✓ Tích hợp đầy đủ luồng tư vấn tự động, gợi ý nhanh và duy trì lịch sử hội thoại.
+  ✓ Tự động cuộn mượt và xử lý ngoại lệ tốt khi Backend ngắt kết nối.
+
+[ĐỀ XUẤT NÂNG CẤP BỔ SUNG (NẾU CẦN)]:
+  1. Thêm nút "Xóa lịch sử trò chuyện" (Clear Chat History) để người dùng reset hội thoại.
+  2. Hỗ trợ hiển thị Markdown/Link sản phẩm trực tiếp trong tin nhắn trả về của AI để người dùng click xem điện thoại ngay.
+
+================================================================================
+                          NGƯỜI KIỂM TRA: ANTIGRAVITY AI
+================================================================================

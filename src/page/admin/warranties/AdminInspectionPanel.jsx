@@ -1262,6 +1262,10 @@ export default function AdminInspectionPanel() {
                   Xác nhận Từ chối
                 </button>
               </div>
+            </form>
+          </div>
+        </div>
+      )}
       {/* =======================================================================
           TAB CHẾ ĐỘ 3: BẢO HÀNH KHÁCH HÀNG & IMEI (QUẢN TRỊ & TIẾP CẬN SỬA CHỮA)
           ======================================================================= */}
