@@ -571,10 +571,10 @@ export default function AdminInspectionPanel() {
 
             <div className="flex gap-1 bg-gray-50 p-1 rounded border border-gray-100 shrink-0">
               {[
+                { key: 'ALL', label: 'Tất cả' },
                 { key: 'WAITING_CHECK', label: 'Chờ thẩm định' },
                 { key: 'PASSED', label: 'Đã duyệt' },
-                { key: 'FAILED', label: 'Từ chối' },
-                { key: 'ALL', label: 'Tất cả' }
+                { key: 'FAILED', label: 'Từ chối' }
               ].map((tab) => (
                 <button
                   key={tab.key}
