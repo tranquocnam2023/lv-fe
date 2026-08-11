@@ -4,7 +4,7 @@ import { warrantyService } from '../../../services/warrantyService';
 import { brandService } from '../../../services/brandService';
 import { categoryService } from '../../../services/categoryService';
 import { productService } from '../../../services/productService';
-import { Search, ShieldAlert, CheckCircle2, XCircle, Clock, Eye, AlertCircle, Plus, Pencil, Trash2, HelpCircle } from 'lucide-react';
+import { Search, ShieldAlert, CheckCircle2, XCircle, Clock, Eye, AlertCircle, Plus, Pencil, Trash2, HelpCircle, RefreshCw } from 'lucide-react';
 
 /**
  * ============================================================================
