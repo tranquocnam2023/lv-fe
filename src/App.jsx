@@ -1,3 +1,4 @@
+//định tuyến (Routing)
 import React, { useState, useEffect, Suspense } from 'react';
 import { Routes, Route, useLocation } from 'react-router-dom';
 import './App.css';
@@ -23,6 +24,7 @@ const AuthPage = React.lazy(() => import('./page/AuthPage'));
 const CartPage = React.lazy(() => import('./page/CartPage'));
 const AdminPage = React.lazy(() => import('./page/admin/AdminPage'));
 const DonatePage = React.lazy(() => import('./page/DonatePage'));
+const TermsOfServicePage = React.lazy(() => import('./page/Termsofservice'));
 const ProductDetailPage = React.lazy(() => import('./page/ProductDetailPage'));
 const PolicyPage = React.lazy(() => import('./page/PolicyPage'));
 const CheckoutPage = React.lazy(() => import('./page/CheckoutPage'));
@@ -140,6 +142,7 @@ function App() {
                   <Route path="/danh-muc/:brand" element={<HomePage selectedLocation={selectedLocation} />} />
                   <Route path="/track" element={<OrderTrackingPage />} />
                   <Route path="/dich-vu-bao-hanh" element={<WarrantyPurchasePage />} />
+                  <Route path="/dieu-khoan-dich-vu" element={<TermsOfServicePage />} />
                 </Routes>
               </Suspense>
             </main>

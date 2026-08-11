@@ -14,10 +14,10 @@ export default function InventoryStats({ products, txHistory }) {
   // Tính tổng giá trị tồn kho (Số lượng * Giá bán lẻ cơ bản)
   const totalStockValue = products.reduce((acc, p) => acc + ((p.basePrice || p.price || 0) * (p.totalStock ?? p.stock ?? p.stockQuantity ?? 0)), 0);
 
-  // Tổng số lượng giao dịch thành công (loại trừ các giao dịch bị hoàn tác/hủy)
+  // Tổng số lượng giao dịch thành công (loại trừ các giao dịch bị hoàn tác/hủy) bỏ ! để đảo ngược
   const totalTxCount = txHistory.filter(t => !t.isReverted).length;
 
-  // Số lượng sản phẩm sắp hết hàng (tồn kho nhỏ hơn 5 cái)
+  // Số lượng sản phẩm sắp hết hàng (tồn kho nhỏ hơn 5 cái) đảo < để hiện sản phẩm còn hàng
   const lowStockCount = products.filter(p => (p.totalStock ?? p.stock ?? p.stockQuantity ?? 0) < 5).length;
 
   // Cấu hình các thẻ hiển thị chỉ số (Stats Cards)
@@ -41,7 +41,7 @@ export default function InventoryStats({ products, txHistory }) {
   const maxTime = times.length > 0 ? Math.max(...times) : new Date().getTime();
   const oneMonthAgo = maxTime - 30 * 24 * 60 * 60 * 1000;
 
-  // LƯỢC LỌC GIAO DỊCH XUẤT BÁN HÀNG THÀNH CÔNG (EXPORT_SELL VÀ KHÔNG BỊ HỦY) TRONG 30 NGÀY GẦN NHẤT
+  // LƯỢC LỌC GIAO DỊCH XUẤT BÁN HÀNG THÀNH CÔNG (EXPORT_SELL(xuất bán) VÀ KHÔNG BỊ HỦY) TRONG 30 NGÀY GẦN NHẤT CỦA 2 BẢNG PHỤ
   const recentSales = txHistory.filter(t =>
     t.transactionType === 'EXPORT_SELL' &&
     !t.isReverted &&
@@ -83,7 +83,7 @@ export default function InventoryStats({ products, txHistory }) {
       return true; // Mặc định là sản phẩm chính nếu không thấy thông tin đối tượng
     })
     .sort((a, b) => b.quantitySold - a.quantitySold) // Sắp xếp giảm dần theo số lượng bán, đổi lại thành (b, a) thì ra 5 sản phẩm BÁN Ế NHẤT
-    .slice(0, 5); // Lấy Top 5
+    .slice(0,5); // Lấy Top 5
 
   // PHÂN TÁCH: LỌC TOP 5 PHỤ KIỆN BÁN CHẠY NHẤT (SẠC, TAI NGHE, CÁP...)
   const bestAccessories = allSales
@@ -98,6 +98,7 @@ export default function InventoryStats({ products, txHistory }) {
 
   // PHÂN TÁCH: DỮ LIỆU TOÀN BỘ SẢN PHẨM & PHỤ KIỆN BÁN CHẠY (KHÔNG GIỚI HẠN TOP 5)
   const allBestSellers = [...allSales].sort((a, b) => b.quantitySold - a.quantitySold);
+  // Bỏ comment dòng 234 để hiện
 
   // HELPER HIỂN THỊ BADGE - MÀU SẮC THỨ HẠNG TRỰC QUAN (VÀNG, BẠC, ĐỒNG...)
   const renderRankBadge = (index) => {
@@ -140,7 +141,6 @@ export default function InventoryStats({ products, txHistory }) {
       </div>
 
       {/* ─── HIỂN THỊ 2 BẢNG THỐNG KÊ TOP 5 BÁN CHẠY NHẤT  ────────────────── */}
-
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div className="bg-white rounded-lg border border-admin-border/60 p-5 shadow-sm">
           <div className="flex items-center gap-2 mb-4 pb-3 border-b border-admin-border/40">
@@ -231,7 +231,7 @@ export default function InventoryStats({ products, txHistory }) {
       </div>
 
          {/*BẢNG HIỂN THỊ TOÀN BỘ SẢN PHẨM & PHỤ KIỆN BÁN CHẠY*/}
-      {/* 
+      {/*
         {allBestSellers.length > 0 && (
           <div className="bg-white rounded-lg border border-admin-border/60 p-5 shadow-sm mt-6">
             <div className="flex items-center justify-between mb-4 pb-3 border-b border-admin-border/40">
