@@ -916,17 +916,6 @@ export default function ProductDetailPage() {
                 </div>
               </div>
 
-              <div className="bg-gray-50/80 p-3.5 rounded-2xl border border-gray-200/80 flex items-start gap-3">
-                <div className="w-8 h-8 rounded-xl bg-orange-100/80 text-orange-700 flex items-center justify-center shrink-0">
-                  <Check size={18} className="stroke-[3]" />
-                </div>
-                <div>
-                  <h5 className="font-black text-xs text-gray-900">Giao hàng miễn phí</h5>
-                  <p className="text-[11px] text-gray-500 mt-0.5">Miễn phí vận chuyển tận nhà trên toàn quốc</p>
-                </div>
-              </div>
-
-
             </div>
           </div>
 
