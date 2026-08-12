@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { 
-  Calendar, User, Clock, ArrowLeft, Share2, Tag, 
-  ChevronRight, BookOpen, Newspaper, ThumbsUp, Copy, Check 
+  Calendar, User, Clock, ArrowLeft, Tag, 
+  ChevronRight, BookOpen, Newspaper 
 } from 'lucide-react';
 import api from '../../services/api';
 import { blogService } from '../../services/Blog';
