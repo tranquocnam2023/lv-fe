@@ -1,7 +1,6 @@
 // ĐIỀU PHỐI CÁC TRANG CON ADMIN
 import React from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { Settings } from 'lucide-react';
 
 import AdminLayout from './AdminLayout';
 
