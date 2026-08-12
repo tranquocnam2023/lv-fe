@@ -22,7 +22,7 @@ import ProductCard from '../components/product/ProductCard';
 import Breadcrumb from '../components/Breadcrumb';
 import FilterBar from '../components/FilterBar';
 import BannerSection from '../components/BannerSection';
-import { Sliders } from 'lucide-react';
+import { Sliders, ChevronRight } from 'lucide-react';
 import { productService } from '../services/productService';
 import { categoryService } from '../services/categoryService';
 import api from '../services/api';
