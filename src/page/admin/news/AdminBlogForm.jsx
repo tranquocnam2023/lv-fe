@@ -127,11 +127,9 @@ export default function AdminBlogForm({ blogId = null, onBack }) {
       setFetchingData(true);
       try {
         // 👉 ĐỌC CHI TIẾT BÀI VIẾT:
-        // CÁCH 1: Lấy theo SLUG (Hiện tại đang dùng)
-        const res = await blogService.getBlogBySlug(blogId);
-
-        // CÁCH 2: Nếu muốn lấy theo ID thì mở comment dòng dưới và comment dòng CÁCH 1 ở trên:
-        // const res = await blogService.getBlog(blogId);
+        const res = (blogService && typeof blogService.getBlogBySlug === 'function')
+          ? await blogService.getBlogBySlug(blogId)
+          : await api.get(`/Blog/slug/${blogId}`);
 
         const data = res.data || res;
 
@@ -201,15 +199,19 @@ export default function AdminBlogForm({ blogId = null, onBack }) {
     try {
       if (isEdit) {
         // 👉 CẬP NHẬT BÀI VIẾT:
-        // CÁCH 1: Cập nhật theo SLUG (Hiện tại đang dùng)
-        await blogService.updateBlogBySlug(blogId, payload);
-
-        // CÁCH 2: Nếu muốn cập nhật theo ID thì mở comment dòng dưới và comment dòng CÁCH 1 ở trên:
-        // await blogService.updateBlog(blogId, payload);
-
+        if (blogService && typeof blogService.updateBlogBySlug === 'function') {
+          await blogService.updateBlogBySlug(blogId, payload);
+        } else {
+          await api.put(`/Blog/slug/${blogId}`, payload);
+        }
         alert(isPub ? 'Cập nhật và xuất bản bài viết thành công!' : 'Đã lưu bản nháp bài viết!');
       } else {
-        await blogService.createBlog(payload);
+        // 👉 TẠO MỚI BÀI VIẾT:
+        if (blogService && typeof blogService.createBlog === 'function') {
+          await blogService.createBlog(payload);
+        } else {
+          await api.post('/Blog', payload);
+        }
         alert(isPub ? 'Đăng bài viết mới thành công!' : 'Đã tạo bản nháp bài viết!');
       }
       if (onBack) onBack();
