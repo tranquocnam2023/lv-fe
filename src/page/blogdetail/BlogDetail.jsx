@@ -111,11 +111,28 @@ export default function BlogDetail() {
       
       {/* ── BREADCRUMB NAVIGATION ── */}
       <nav className="flex items-center gap-2 text-xs font-semibold text-gray-500 overflow-x-auto pb-1">
-        <Link to="/" className="hover:text-blue-600 transition-colors shrink-0">Trang chủ</Link>
-        <ChevronRight size={14} className="shrink-0 text-gray-300" />
-        <span className="shrink-0 text-gray-400">Tin tức &amp; Blog</span>
-        <ChevronRight size={14} className="shrink-0 text-gray-300" />
-        <span className="text-blue-600 font-bold truncate max-w-xs">{blog.category || 'Tin công nghệ'}</span>
+        <Link to="/" className="hover:text-blue-600 transition-colors shrink-0 flex items-center gap-1">
+          <span>Trang chủ</span>
+        </Link>
+        <ChevronRight size={13} className="shrink-0 text-gray-300" />
+        <Link to="/blog" className="hover:text-blue-600 transition-colors shrink-0">
+          Tin tức &amp; Blog
+        </Link>
+        {blog.category && (
+          <>
+            <ChevronRight size={13} className="shrink-0 text-gray-300" />
+            <Link 
+              to={`/blog?category=${encodeURIComponent(blog.category)}`} 
+              className="hover:text-blue-600 transition-colors shrink-0"
+            >
+              {blog.category}
+            </Link>
+          </>
+        )}
+        <ChevronRight size={13} className="shrink-0 text-gray-300" />
+        <span className="text-gray-900 font-bold truncate max-w-sm">
+          {blog.title || blog.name}
+        </span>
       </nav>
 
       {/* ── MAIN CONTENT & SIDEBAR GRID ── */}
