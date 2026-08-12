@@ -4,7 +4,7 @@ import {
   Home, Cpu, Star, Lightbulb, Tag, Folder, Search, 
   Eye, Calendar, User, ChevronRight, Newspaper, Flame, ArrowLeft, RefreshCw 
 } from 'lucide-react';
-import { blogService } from '../../services/Blog';
+import { blogService } from '../../services/blog';
 import { THEME } from '../../utils/theme';
 
 export default function BlogPage() {
