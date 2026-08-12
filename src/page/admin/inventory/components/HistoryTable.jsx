@@ -6,7 +6,6 @@ export default function HistoryTable({
   error,
   paginatedHistory,
   formatCurrency,
-  handleRevertTransaction,
   setSelectedTxGroup,
   setSelectedStockProduct,
   viewMode = 'TRANSACTIONS'

@@ -5,9 +5,7 @@ import {
   ComposedChart, Line, AreaChart, Area, PieChart, Pie, Cell
 } from 'recharts';
 import {
-  ShoppingCart, Gift, Package, TrendingUp, ShoppingBag,
-  Users, HardDrive, ShieldAlert, Award, FileText, BarChart3,
-  Calendar, Layers, CheckCircle2, ChevronRight, Activity, ArrowUpRight, ArrowDownRight
+  HardDrive, ShieldAlert, ChevronRight, ArrowUpRight, ArrowDownRight
 } from 'lucide-react';
 import { dashboardService } from '../../../services/dashboardService';
 import { productService } from '../../../services/productService';

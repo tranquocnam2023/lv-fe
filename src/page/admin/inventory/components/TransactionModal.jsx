@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useMemo } from "react";
-import { Search, Plus, RotateCcw, ArrowDownLeft, ArrowUpRight, ShoppingCart, Activity, FileText, ChevronDown, CheckCircle, Package, Clock, X, AlertCircle } from "lucide-react";
+import { Plus, ChevronDown, CheckCircle, X } from "lucide-react";
 import PriceInput from "../../../../components/PriceInput";
 import api from "../../../../services/api";
 import { inventoryService } from "../../../../services/inventoryService";
