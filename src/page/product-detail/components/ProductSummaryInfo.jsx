@@ -171,17 +171,6 @@ export default function ProductSummaryInfo({
             <span className="w-2 h-2 rounded-full bg-emerald-500 shrink-0"></span>
             <span>{displayDetails.stock > 0 ? `Còn hàng (Giao nhanh 2H)` : 'Tạm hết hàng'}</span>
           </div>
-
-          {/* Ưu đãi S-Member */}
-          <div className="bg-white rounded-xl p-2.5 border border-slate-200 flex items-center justify-between text-xs font-bold text-slate-800">
-            <div className="flex items-center gap-2 text-red-600">
-              <Award size={15} />
-              <span>Giá Smember chỉ từ:</span>
-            </div>
-            <span className="text-sm font-black text-red-600">
-              {Math.round(displayDetails.price * 0.99).toLocaleString('vi-VN')}₫
-            </span>
-          </div>
         </div>
 
         {/* KHUYẾN MÃI ĐẶC BIỆT */}
