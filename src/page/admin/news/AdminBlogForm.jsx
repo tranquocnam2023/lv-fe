@@ -1,11 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { 
-  ArrowLeft, Save, Sparkles, Newspaper, Image as ImageIcon, 
-  CheckCircle2, Upload, X, Tag, User, Star, FileText, 
+import {
+  ArrowLeft, Save, Sparkles, Newspaper, Image as ImageIcon,
+  CheckCircle2, Upload, X, Tag, User, Star, FileText,
   Search, Globe, Calendar, Clock, Edit3, Trash2, RotateCcw, FileEdit, Eye
 } from 'lucide-react';
 import api from '../../../services/api';
-import { productService } from '../../../services/productService';
+import { blogService } from '../../../services/Blog';
 
 export const getMediaUrl = (url) => {
   if (!url) return '';
@@ -14,7 +14,7 @@ export const getMediaUrl = (url) => {
   }
   const backendOrigin = (import.meta.env.VITE_API_URL || api.defaults?.baseURL || 'https://localhost:7279/api')
     .replace(/\/api\/?$/, '');
-  
+
   const cleanPath = url.startsWith('/') ? url : `/${url}`;
   return `${backendOrigin}${cleanPath}`;
 };
@@ -23,7 +23,7 @@ const generateSlug = (text) => {
   if (!text) return '';
   let str = text.toLowerCase().trim();
   const from = "àáảãạăằắẳẵặâầấẩẫậèéẻẽẹêềếểễệìíỉĩịòóỏõọôồốổỗộơờớởỡợùúủũụưừứửữựỳýỷỹỵđ";
-  const to   = "aaaaaaaaaaaaaaaaaeeeeeeeeeeeiiiiiooooooooooooooooouuuuuuuuuuuyyyyyd";
+  const to = "aaaaaaaaaaaaaaaaaeeeeeeeeeeeiiiiiooooooooooooooooouuuuuuuuuuuyyyyyd";
   for (let i = 0; i < from.length; i++) {
     str = str.replaceAll(from[i], to[i]);
   }
@@ -126,7 +126,8 @@ export default function AdminBlogForm({ blogId = null, onBack }) {
     const fetchBlogDetail = async () => {
       setFetchingData(true);
       try {
-        const res = await api.get(`/blog/${blogId}`);
+        const isNumeric = typeof blogId === 'number' || (!isNaN(blogId) && !isNaN(parseFloat(blogId)));
+        const res = isNumeric ? await blogService.getBlog(blogId) : await blogService.getBlogBySlug(blogId);
         const data = res.data || res;
 
         const isPub = data.isPublished ?? data.isActive ?? true;
@@ -141,9 +142,9 @@ export default function AdminBlogForm({ blogId = null, onBack }) {
           category: data.category || 'Tin công nghệ',
           tags: data.tags || '',
           publishStatus: isPub ? 'published' : 'draft',
-          scheduledDate: data.createdAt ? new Date(data.createdAt).toISOString().slice(0, 16) : '',
+          scheduledDate: '',
           isPublished: isPub,
-          isFeatured: data.isFeatured ?? false,
+          isFeatured: Boolean(data.isFeatured),
           seoTitle: data.title || '',
           metaDescription: data.summary || '',
           focusKeyword: ''
@@ -159,6 +160,7 @@ export default function AdminBlogForm({ blogId = null, onBack }) {
 
     fetchBlogDetail();
   }, [blogId]);
+
 
   // Submit Handler
   const handleSubmit = async (e, forcedPublishState = null) => {
@@ -193,13 +195,18 @@ export default function AdminBlogForm({ blogId = null, onBack }) {
     setLoading(true);
     try {
       if (isEdit) {
-        await api.put(`/blog/${blogId}`, payload);
+        const isNumeric = typeof blogSlug === 'number' || (!isNaN(blogSlug) && !isNaN(parseFloat(blogId)));
+        if (isNumeric) {
+          await blogService.updateBlog(blogId, payload);
+        } else {
+          await blogService.updateBlogBySlug(blogId, payload);
+        }
         alert(isPub ? 'Cập nhật và xuất bản bài viết thành công!' : 'Đã lưu bản nháp bài viết!');
       } else {
-        await api.post('/blog', payload);
+        await blogService.createBlog(payload);
         alert(isPub ? 'Đăng bài viết mới thành công!' : 'Đã tạo bản nháp bài viết!');
       }
-      onBack();
+      if (onBack) onBack();
     } catch (err) {
       console.error('Lỗi lưu bài viết:', err);
       const errMsg = err.response?.data?.errors
@@ -237,14 +244,13 @@ export default function AdminBlogForm({ blogId = null, onBack }) {
             <h1 className="text-xl font-black text-gray-900 flex items-center gap-2">
               <Newspaper className="text-blue-600" size={22} />
               <span>{isEdit ? 'Chỉnh sửa Bài Viết' : 'Tạo Bài Viết Mới'}</span>
-              <span className={`ml-2 text-xs px-2.5 py-1 rounded-full font-bold uppercase tracking-wider ${
-                formData.publishStatus === 'published' ? 'bg-green-100 text-green-700' :
+              <span className={`ml-2 text-xs px-2.5 py-1 rounded-full font-bold uppercase tracking-wider ${formData.publishStatus === 'published' ? 'bg-green-100 text-green-700' :
                 formData.publishStatus === 'scheduled' ? 'bg-amber-100 text-amber-700' :
-                'bg-gray-100 text-gray-600'
-              }`}>
-                {formData.publishStatus === 'published' ? '● Đã xuất bản' :
-                 formData.publishStatus === 'scheduled' ? '⏰ Hẹn giờ đăng' :
-                 '📝 Bản nháp'}
+                  'bg-gray-100 text-gray-600'
+                }`}>
+                {formData.publishStatus === 'published' ? ' Đã xuất bản' :
+                  formData.publishStatus === 'scheduled' ? ' Hẹn giờ đăng' :
+                    ' Bản nháp'}
               </span>
             </h1>
             <p className="text-xs text-gray-500 font-semibold mt-0.5">
@@ -284,10 +290,10 @@ export default function AdminBlogForm({ blogId = null, onBack }) {
       </div>
 
       <form onSubmit={(e) => handleSubmit(e, null)} className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        
+
         {/* ── LEFT COLUMN: MAIN CONTENT & SEO (8 Cols) ── */}
         <div className="lg:col-span-8 space-y-6">
-          
+
           {/* Card 1: Main Content Editor */}
           <div className="bg-white rounded-3xl p-6 shadow-sm border border-gray-100 space-y-5">
             <h2 className="text-lg font-black text-gray-900 flex items-center gap-2 pb-3 border-b border-gray-100">
@@ -362,10 +368,10 @@ export default function AdminBlogForm({ blogId = null, onBack }) {
                   value={formData.content}
                   onChange={(e) => setFormData({ ...formData, content: e.target.value })}
                 />
+              </div>
             </div>
           </div>
         </div>
-      </div>
 
         {/* ── RIGHT COLUMN: SIDEBAR SETTINGS (4 Cols) ── */}
         <div className="lg:col-span-4 space-y-6">
@@ -470,16 +476,16 @@ export default function AdminBlogForm({ blogId = null, onBack }) {
                   value={formData.publishStatus}
                   onChange={(e) => {
                     const status = e.target.value;
-                    setFormData({ 
-                      ...formData, 
+                    setFormData({
+                      ...formData,
                       publishStatus: status,
                       isPublished: status === 'published'
                     });
                   }}
                 >
-                  <option value="published">🟢 Công khai (Xuất bản ngay)</option>
-                  <option value="draft">📝 Bản nháp (Save Draft)</option>
-                  <option value="scheduled">⏰ Hẹn giờ đăng</option>
+                  <option value="published"> Công khai (Xuất bản ngay)</option>
+                  <option value="draft"> Bản nháp (Save Draft)</option>
+                  <option value="scheduled"> Hẹn giờ đăng</option>
                 </select>
               </div>
 
@@ -563,9 +569,8 @@ export default function AdminBlogForm({ blogId = null, onBack }) {
       {/* ── STICKY BOTTOM ACTION FOOTER BAR ── */}
       <div className="fixed bottom-4 left-4 right-4 md:left-72 md:right-8 z-40 bg-white/90 backdrop-blur-lg border border-gray-200 rounded-2xl p-4 shadow-2xl flex items-center justify-between gap-4 animate-in slide-in-from-bottom-4 duration-300">
         <div className="flex items-center gap-3">
-          <span className={`w-3 h-3 rounded-full ${
-            formData.publishStatus === 'published' ? 'bg-green-500 animate-pulse' : 'bg-gray-400'
-          }`} />
+          <span className={`w-3 h-3 rounded-full ${formData.publishStatus === 'published' ? 'bg-green-500 animate-pulse' : 'bg-gray-400'
+            }`} />
           <span className="text-xs font-bold text-gray-700 hidden sm:inline">
             {formData.publishStatus === 'published' ? 'Sẵn sàng xuất bản công khai' : 'Đang ở chế độ Lưu Nháp'}
           </span>
