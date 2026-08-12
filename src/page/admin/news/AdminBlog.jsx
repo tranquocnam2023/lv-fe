@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { Plus, Edit2, Trash2, PackagePlus, AlertCircle, RefreshCw, Search, Filter } from 'lucide-react';
 import api from '../../../services/api';
-import { blogService } from '../../../services/blog';
+import { blogService } from '../../../services/Blog';
 
 // function getWeekNumber(d) {
 //   d = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
