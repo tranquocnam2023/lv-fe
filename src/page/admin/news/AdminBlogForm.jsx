@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import {
   ArrowLeft, Save, Sparkles, Newspaper, Image as ImageIcon,
-  CheckCircle2, Upload, X, Tag, User, Star, FileText
+  CheckCircle2, Upload, X, Tag, User, Star, FileText,
+  FileEdit, RotateCcw, Trash2, Clock
 } from 'lucide-react';
 import api from '../../../services/api';
 import { blogService } from '../../../services/Blog';
