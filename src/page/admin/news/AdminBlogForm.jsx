@@ -511,18 +511,18 @@ export default function AdminBlogForm({ blogId = null, onBack }) {
                 </div>
               )}
 
-              {/* Toggle Bài viết Nổi bật */}
+              {/* Toggle Đánh dấu Tin Mới */}
               <div className="pt-2">
                 <label className="flex items-center gap-3 p-3 bg-gray-50 border border-gray-200 rounded-xl cursor-pointer select-none hover:bg-gray-100 transition-colors">
                   <input
                     type="checkbox"
-                    className="w-4 h-4 rounded text-amber-500 focus:ring-amber-500 cursor-pointer"
+                    className="w-4 h-4 rounded text-blue-600 focus:ring-blue-500 cursor-pointer"
                     checked={formData.isFeatured}
                     onChange={(e) => setFormData({ ...formData, isFeatured: e.target.checked })}
                   />
                   <span className="font-bold text-xs text-gray-800 flex items-center gap-1.5">
-                    <Star size={16} className={formData.isFeatured ? "text-amber-500 fill-amber-500" : "text-gray-400"} />
-                    <span>Bài viết Nổi bật (Featured)</span>
+                    <Star size={16} className={formData.isFeatured ? "text-blue-600 fill-blue-600" : "text-gray-400"} />
+                    <span>Đánh dấu Tin Mới (Hiển thị đầu trang)</span>
                   </span>
                 </label>
               </div>

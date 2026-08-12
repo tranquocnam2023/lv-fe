@@ -177,14 +177,14 @@ export default function BlogPage() {
                     />
                     <span className="absolute top-3 left-3 bg-blue-600 text-white text-[10px] font-black uppercase px-2.5 py-1 rounded-md shadow-md flex items-center gap-1">
                       <Flame size={12} />
-                      <span>Nổi Bật</span>
+                      <span>Tin Mới</span>
                     </span>
                   </div>
 
                   <div className="md:col-span-5 p-6 flex flex-col justify-between bg-white">
                     <div className="space-y-3">
                       <span className="text-[11px] font-bold text-blue-600 bg-blue-50 px-2.5 py-1 rounded-md border border-blue-100 inline-block">
-                        {featuredPost.category || 'Tin nổi bật'}
+                        {featuredPost.category || 'Tin mới'}
                       </span>
                       <h2 className="text-lg font-black text-gray-900 group-hover:text-blue-600 transition-colors leading-snug line-clamp-3">
                         {featuredPost.title}
