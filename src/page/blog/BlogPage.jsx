@@ -5,7 +5,6 @@ import {
   Eye, Calendar, User, ChevronRight, Newspaper, Flame, ArrowLeft, RefreshCw
 } from 'lucide-react';
 import { blogService } from '../../services/Blog';
-import { THEME } from '../../utils/theme';
 
 export default function BlogPage() {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -118,8 +117,8 @@ export default function BlogPage() {
                     key={cat.id}
                     onClick={() => handleCategorySelect(cat.id)}
                     className={`w-full flex items-center justify-between px-3.5 py-3 rounded-xl text-xs font-bold transition-all text-left cursor-pointer ${isActive
-                        ? 'bg-blue-50 text-blue-600 border border-blue-100 shadow-xs'
-                        : 'text-gray-700 hover:bg-gray-50 hover:text-blue-600'
+                      ? 'bg-blue-50 text-blue-600 border border-blue-100 shadow-xs'
+                      : 'text-gray-700 hover:bg-gray-50 hover:text-blue-600'
                       }`}
                   >
                     <div className="flex items-center gap-3">
