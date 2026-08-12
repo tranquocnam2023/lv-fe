@@ -559,45 +559,6 @@ export default function AdminBlogForm({ blogId = null, onBack }) {
           </div>
         </div>
       </form>
-
-      {/* ── STICKY BOTTOM ACTION FOOTER BAR ── */}
-      <div className="fixed bottom-4 left-4 right-4 md:left-72 md:right-8 z-40 bg-white/90 backdrop-blur-lg border border-gray-200 rounded-2xl p-4 shadow-2xl flex items-center justify-between gap-4 animate-in slide-in-from-bottom-4 duration-300">
-        <div className="flex items-center gap-3">
-          <span className={`w-3 h-3 rounded-full ${formData.publishStatus === 'published' ? 'bg-green-500 animate-pulse' : 'bg-gray-400'
-            }`} />
-          <span className="text-xs font-bold text-gray-700 hidden sm:inline">
-            {formData.publishStatus === 'published' ? 'Sẵn sàng xuất bản công khai' : 'Đang ở chế độ Lưu Nháp'}
-          </span>
-        </div>
-
-        <div className="flex items-center gap-3">
-          <button
-            type="button"
-            onClick={onBack}
-            className="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl font-bold text-xs transition-colors cursor-pointer"
-          >
-            Hủy
-          </button>
-          <button
-            type="button"
-            onClick={(e) => handleSubmit(e, false)}
-            disabled={loading}
-            className="px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-800 rounded-xl font-bold text-xs transition-all flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
-          >
-            <FileEdit size={14} />
-            <span>Lưu Nháp</span>
-          </button>
-          <button
-            type="button"
-            onClick={(e) => handleSubmit(e, true)}
-            disabled={loading}
-            className="px-6 py-2 bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white rounded-xl font-bold text-xs shadow-lg shadow-blue-500/20 transition-all flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
-          >
-            <Save size={15} strokeWidth={2.5} />
-            <span>{loading ? 'Đang lưu...' : (isEdit ? 'Lưu Thay Đổi' : 'Đăng Bài')}</span>
-          </button>
-        </div>
-      </div>
     </div>
   );
 }
