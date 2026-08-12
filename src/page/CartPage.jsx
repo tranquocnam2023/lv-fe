@@ -8,7 +8,7 @@ import { orderService } from '../services/orderService';
 import api from '../services/api';
 import { authService } from '../services/authService';
 import { userService } from '../services/userService';
-import { ArrowLeft, ShoppingBag, CreditCard, Gift, ChevronRight, X, AlertTriangle } from 'lucide-react';
+import { ArrowLeft, ShoppingBag, X, AlertTriangle } from 'lucide-react';
 
 // Subcomponents
 import CartItemsList from './cart/components/CartItemsList';

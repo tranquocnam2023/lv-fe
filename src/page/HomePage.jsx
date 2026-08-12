@@ -15,9 +15,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useParams, useSearchParams, useNavigate, Link } from 'react-router-dom';
 import { useLoading } from '../context/LoadingContext';
-import BannerSkeleton from '../components/common/skeletons/BannerSkeleton';
 import ProductCardSkeleton from '../components/common/skeletons/ProductCardSkeleton';
-import CategorySkeleton from '../components/common/skeletons/CategorySkeleton';
 import ProductCard from '../components/product/ProductCard';
 import Breadcrumb from '../components/Breadcrumb';
 import FilterBar from '../components/FilterBar';
