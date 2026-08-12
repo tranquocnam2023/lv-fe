@@ -195,7 +195,7 @@ export default function AdminBlogForm({ blogId = null, onBack }) {
     setLoading(true);
     try {
       if (isEdit) {
-        const isNumeric = typeof blogSlug === 'number' || (!isNaN(blogSlug) && !isNaN(parseFloat(blogId)));
+        const isNumeric = typeof blogId === 'number' || (!isNaN(blogId) && !isNaN(parseFloat(blogId)));
         if (isNumeric) {
           await blogService.updateBlog(blogId, payload);
         } else {
