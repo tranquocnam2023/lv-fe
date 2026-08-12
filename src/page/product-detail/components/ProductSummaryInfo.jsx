@@ -16,7 +16,6 @@ const getHexForColor = (colorName) => {
 
 export default function ProductSummaryInfo({
   product,
-  displayProductName,
   displayDetails,
   attributesConfig,
   selectedAttributes,
