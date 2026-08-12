@@ -13,7 +13,7 @@
  */
 
 import { useState, useEffect, useRef } from 'react';
-import { useParams, useSearchParams, useNavigate } from 'react-router-dom';
+import { useParams, useSearchParams, useNavigate, Link } from 'react-router-dom';
 import { useLoading } from '../context/LoadingContext';
 import BannerSkeleton from '../components/common/skeletons/BannerSkeleton';
 import ProductCardSkeleton from '../components/common/skeletons/ProductCardSkeleton';
