@@ -5,6 +5,7 @@ import {
   ChevronRight, BookOpen, Newspaper, ThumbsUp, Copy, Check 
 } from 'lucide-react';
 import api from '../../services/api';
+import { blogService } from '../../services/Blog';
 
 const getMediaUrl = (url) => {
   if (!url) return '';
@@ -37,16 +38,22 @@ export default function BlogDetail() {
   const fetchBlogDetail = async () => {
     setLoading(true);
     try {
-      // 1. Tải chi tiết bài viết hiện tại
-      const res = await api.get(`/blog/${id}`);
+      // 1. Tải chi tiết bài viết hiện tại (Thử lấy theo Slug, nếu không được lấy theo ID)
+      const isNumeric = !isNaN(id) && !isNaN(parseFloat(id));
+      let res;
+      try {
+        res = isNumeric ? await blogService.getBlog(id) : await blogService.getBlogBySlug(id);
+      } catch (errSlug) {
+        res = isNumeric ? await blogService.getBlogBySlug(id) : await blogService.getBlog(id);
+      }
       const data = res.data || res;
       setBlog(data);
 
       // 2. Tải bài viết liên quan / mới nhất
-      const listRes = await api.get('/blog?isPublished=true');
+      const listRes = await blogService.getBlogs({ isPublished: true });
       const listData = listRes.data || listRes;
       const allBlogs = Array.isArray(listData) ? listData : (listData.items || []);
-      const otherBlogs = allBlogs.filter(b => String(b.id) !== String(id));
+      const otherBlogs = allBlogs.filter(b => String(b.id) !== String(data.id) && b.slug !== id);
       setRelatedBlogs(otherBlogs.slice(0, 5));
     } catch (err) {
       console.error('Lỗi tải bài viết:', err);
