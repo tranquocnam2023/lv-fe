@@ -31,3 +31,5 @@ export const blogService = {
     // [2] Xóa theo SLUG:
     deleteBlogBySlug: (slug) => api.delete(`/Blog/slug/${slug}`),
 };
+
+export default blogService;
