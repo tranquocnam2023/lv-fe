@@ -2,13 +2,14 @@
 import React, { useState, useEffect } from 'react';
 import { Plus, Edit2, Trash2, PackagePlus, AlertCircle, RefreshCw, Search, Filter } from 'lucide-react';
 import api from '../../../services/api';
+import { blogService } from '../../../services/Blog';
 
-function getWeekNumber(d) {
-  d = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
-  d.setUTCDate(d.getUTCDate() + 4 - (d.getUTCDay()||7));
-  const yearStart = new Date(Date.UTC(d.getUTCFullYear(),0,1));
-  return Math.ceil(( ( (d - yearStart) / 86400000) + 1)/7);
-}
+// function getWeekNumber(d) {
+//   d = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
+//   d.setUTCDate(d.getUTCDate() + 4 - (d.getUTCDay()||7));
+//   const yearStart = new Date(Date.UTC(d.getUTCFullYear(),0,1));
+//   return Math.ceil(( ( (d - yearStart) / 86400000) + 1)/7);
+// }
 
 export default function AdminBlog({ onCreate, onEdit }) {
   const [blog, setBlog] = useState([]);
@@ -18,12 +19,12 @@ export default function AdminBlog({ onCreate, onEdit }) {
   // Filters
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('ALL');
-  const [timeFilter, setTimeFilter] = useState('ALL');
+  // const [timeFilter, setTimeFilter] = useState('ALL');
 
   const fetchData = async () => {
     try {
       setLoading(true);
-      const res = await api.get('/blog');
+      const res = await blogService.getBlogs();
       const data = res.data || res;
       const list = Array.isArray(data) ? data : (data.items || []);
       setBlog(list);
@@ -33,7 +34,6 @@ export default function AdminBlog({ onCreate, onEdit }) {
       setLoading(false);
     }
   };
-
   useEffect(() => {
     fetchData();
   }, []);

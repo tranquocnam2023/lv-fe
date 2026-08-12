@@ -1,13 +1,20 @@
 import api from './api';
+
 export const blogService = {
-    getBlogs: () => api.get('/blog'),
 
-    getBlog: (id) => api.get(`/blog/${id}`),
+    getBlogs: (params) => api.get('/Blog', { params }),
+    getBlogsPublish: (params) => api.get('/Blog/publish', { params }),
+    getBlogsDraft: (params) => api.get('/Blog/draft', { params }),
 
-    createBlog: (data) => api.post('/blog', data),
+    //getBlog: (id) => api.get(`/Blog/${id}`),
+    getBlogBySlug: (slug) => api.get(`/Blog/slug/${slug}`),
 
-    updateBlog: (id, data) => api.put(`/blog/${id}`, data),
+    //createBlog: (data) => api.post('/Blog', data),
+    createBlogBySlug: (slug, data) => api.post(`/Blog/slug/${slug}`, data),
 
-    deleteBlog: (id) => api.delete(`/blog/${id}`),
+    //updateBlog: (id, data) => api.put(`/Blog/${id}`, data),
+    updateBlogBySlug: (slug, data) => api.put(`/Blog/slug/${slug}`, data),
 
-}
+    //deleteBlog: (id) => api.delete(`/Blog/${id}`),
+    deleteBlogSlug: (slug) => api.delete(`/Blog/slug/${slug}`),
+};
