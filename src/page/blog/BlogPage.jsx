@@ -101,10 +101,10 @@ export default function BlogPage() {
         {/* ── MAIN LAYOUT: SIDEBAR + CONTENT ── */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
 
-          {/* ── LEFT SIDEBAR (CELLPHONES SFORUM STYLE) ── */}
+          {/* ── LEFT SIDEBAR ── */}
           <aside className="lg:col-span-3 bg-white rounded-2xl p-4 border border-gray-200/80 shadow-xs sticky top-20 z-20">
             <div className="flex items-center gap-2 px-3 py-2.5 mb-3 border-b border-gray-100 pb-3">
-              <Newspaper className="text-red-600" size={20} />
+              <Newspaper className="text-blue-600" size={20} />
               <h2 className="font-black text-gray-900 text-sm uppercase tracking-wider">Chuyên mục tin tức</h2>
             </div>
 
@@ -119,16 +119,16 @@ export default function BlogPage() {
                     onClick={() => handleCategorySelect(cat.id)}
                     className={`w-full flex items-center justify-between px-3.5 py-3 rounded-xl text-xs font-bold transition-all text-left cursor-pointer ${
                       isActive
-                        ? 'bg-red-50 text-red-600 border border-red-100 shadow-xs'
-                        : 'text-gray-700 hover:bg-gray-50 hover:text-gray-900'
+                        ? 'bg-blue-50 text-blue-600 border border-blue-100 shadow-xs'
+                        : 'text-gray-700 hover:bg-gray-50 hover:text-blue-600'
                     }`}
                   >
                     <div className="flex items-center gap-3">
-                      <IconComponent size={17} className={isActive ? 'text-red-600' : 'text-gray-400'} />
+                      <IconComponent size={17} className={isActive ? 'text-blue-600' : 'text-gray-400'} />
                       <span>{cat.name}</span>
                     </div>
 
-                    {isActive && <span className="w-1.5 h-1.5 rounded-full bg-red-600" />}
+                    {isActive && <span className="w-1.5 h-1.5 rounded-full bg-blue-600" />}
                   </button>
                 );
               })}
@@ -143,7 +143,7 @@ export default function BlogPage() {
               <div>
                 <h1 className="text-xl font-black text-gray-900 flex items-center gap-2">
                   <span>{activeCategory === 'ALL' ? 'TẤT CẢ BÀI VIẾT' : activeCategory.toUpperCase()}</span>
-                  <span className="text-xs px-2.5 py-0.5 rounded-full bg-red-100 text-red-700 font-bold">
+                  <span className="text-xs px-2.5 py-0.5 rounded-full bg-blue-100 text-blue-700 font-bold">
                     {filteredBlogs.length} bài
                   </span>
                 </h1>
@@ -160,7 +160,7 @@ export default function BlogPage() {
                   placeholder="Tìm bài viết..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-xs font-semibold text-gray-800 focus:bg-white focus:border-red-500 outline-none transition-all"
+                  className="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-xs font-semibold text-gray-800 focus:bg-white focus:border-blue-500 outline-none transition-all"
                 />
               </div>
             </div>
@@ -175,7 +175,7 @@ export default function BlogPage() {
                       alt={featuredPost.title}
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                     />
-                    <span className="absolute top-3 left-3 bg-red-600 text-white text-[10px] font-black uppercase px-2.5 py-1 rounded-md shadow-md flex items-center gap-1">
+                    <span className="absolute top-3 left-3 bg-blue-600 text-white text-[10px] font-black uppercase px-2.5 py-1 rounded-md shadow-md flex items-center gap-1">
                       <Flame size={12} />
                       <span>Nổi Bật</span>
                     </span>
@@ -183,10 +183,10 @@ export default function BlogPage() {
 
                   <div className="md:col-span-5 p-6 flex flex-col justify-between bg-white">
                     <div className="space-y-3">
-                      <span className="text-[11px] font-bold text-red-600 bg-red-50 px-2.5 py-1 rounded-md border border-red-100 inline-block">
+                      <span className="text-[11px] font-bold text-blue-600 bg-blue-50 px-2.5 py-1 rounded-md border border-blue-100 inline-block">
                         {featuredPost.category || 'Tin nổi bật'}
                       </span>
-                      <h2 className="text-lg font-black text-gray-900 group-hover:text-red-600 transition-colors leading-snug line-clamp-3">
+                      <h2 className="text-lg font-black text-gray-900 group-hover:text-blue-600 transition-colors leading-snug line-clamp-3">
                         {featuredPost.title}
                       </h2>
                       <p className="text-xs text-gray-600 line-clamp-3 leading-relaxed">
@@ -211,7 +211,7 @@ export default function BlogPage() {
 
             {/* REGULAR POSTS GRID */}
             {loading ? (
-              <div className="bg-white rounded-2xl p-12 border border-gray-200/80 flex flex-col items-center justify-center text-red-600">
+              <div className="bg-white rounded-2xl p-12 border border-gray-200/80 flex flex-col items-center justify-center text-blue-600">
                 <RefreshCw size={28} className="animate-spin mb-3" />
                 <p className="font-bold text-xs text-gray-500">Đang tải tin tức...</p>
               </div>
@@ -242,7 +242,7 @@ export default function BlogPage() {
 
                     <div className="p-4 flex-1 flex flex-col justify-between space-y-3">
                       <div>
-                        <h3 className="font-bold text-gray-900 text-sm group-hover:text-red-600 transition-colors line-clamp-2 leading-snug">
+                        <h3 className="font-bold text-gray-900 text-sm group-hover:text-blue-600 transition-colors line-clamp-2 leading-snug">
                           {item.title}
                         </h3>
                         <p className="text-xs text-gray-500 line-clamp-2 mt-2 leading-relaxed">
