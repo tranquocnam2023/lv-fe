@@ -126,8 +126,7 @@ export default function AdminBlogForm({ blogId = null, onBack }) {
     const fetchBlogDetail = async () => {
       setFetchingData(true);
       try {
-        const isNumeric = typeof blogId === 'number' || (!isNaN(blogId) && !isNaN(parseFloat(blogId)));
-        const res = isNumeric ? await blogService.getBlog(blogId) : await blogService.getBlogBySlug(blogId);
+        const res = await blogService.getBlogBySlug(blogId);
         const data = res.data || res;
 
         const isPub = data.isPublished ?? data.isActive ?? true;
@@ -195,12 +194,7 @@ export default function AdminBlogForm({ blogId = null, onBack }) {
     setLoading(true);
     try {
       if (isEdit) {
-        const isNumeric = typeof blogId === 'number' || (!isNaN(blogId) && !isNaN(parseFloat(blogId)));
-        if (isNumeric) {
-          await blogService.updateBlog(blogId, payload);
-        } else {
-          await blogService.updateBlogBySlug(blogId, payload);
-        }
+        await blogService.updateBlogBySlug(blogId, payload);
         alert(isPub ? 'Cập nhật và xuất bản bài viết thành công!' : 'Đã lưu bản nháp bài viết!');
       } else {
         await blogService.createBlog(payload);

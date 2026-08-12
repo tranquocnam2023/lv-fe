@@ -227,7 +227,7 @@ export default function AdminBlog({ onCreate, onEdit }) {
                       <td className="px-6 py-4 text-right">
                         <div className="flex items-center justify-end gap-2">
                           <button
-                            onClick={() => onEdit && onEdit(item.id)}
+                            onClick={() => onEdit && onEdit(item.slug || item.id)}
                             className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors border border-transparent hover:border-blue-100 cursor-pointer"
                             title="Chỉnh sửa"
                           >
