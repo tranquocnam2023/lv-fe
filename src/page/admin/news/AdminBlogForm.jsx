@@ -5,7 +5,7 @@ import {
   Search, Globe, Calendar, Clock, Edit3, Trash2, RotateCcw, FileEdit, Eye
 } from 'lucide-react';
 import api from '../../../services/api';
-import { blogService } from '../../../services/Blog';
+import { blogService } from '../../../services/blog';
 
 export const getMediaUrl = (url) => {
   if (!url) return '';

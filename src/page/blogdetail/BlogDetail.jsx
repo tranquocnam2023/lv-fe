@@ -5,7 +5,7 @@ import {
   ChevronRight, BookOpen, Newspaper, ThumbsUp, Copy, Check 
 } from 'lucide-react';
 import api from '../../services/api';
-import { blogService } from '../../services/Blog';
+import { blogService } from '../../services/blog';
 
 const getMediaUrl = (url) => {
   if (!url) return '';
