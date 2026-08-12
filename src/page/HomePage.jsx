@@ -721,7 +721,10 @@ export default function HomePage({ selectedLocation }) {
                <h3 className="text-lg font-black flex items-center gap-2" style={{ color: THEME.secondary }}>
                  <span>TIN TỨC - BLOG CÔNG NGHỆ</span>
                </h3>
-               <span className="text-xs font-bold text-gray-400">Cập nhật tin mới nhất</span>
+               <Link to="/blog" className="text-xs font-bold text-blue-600 hover:text-red-600 flex items-center gap-0.5 transition-colors">
+                 <span>Xem tất cả</span>
+                 <ChevronRight size={14} />
+               </Link>
              </div>
 
              {loadingBlogs ? (
