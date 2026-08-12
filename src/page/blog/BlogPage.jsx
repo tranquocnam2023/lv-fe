@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
-import { 
-  Home, Cpu, Star, Lightbulb, Tag, Folder, Search, 
-  Eye, Calendar, User, ChevronRight, Newspaper, Flame, ArrowLeft, RefreshCw 
+import {
+  Home, Cpu, Star, Lightbulb, Tag, Folder, Search,
+  Eye, Calendar, User, ChevronRight, Newspaper, Flame, ArrowLeft, RefreshCw
 } from 'lucide-react';
-import { blogService } from '../../services/blog';
+import { blogService } from '../../services/Blog';
 import { THEME } from '../../utils/theme';
 
 export default function BlogPage() {
@@ -61,13 +61,13 @@ export default function BlogPage() {
   // Filtered blogs by search and category
   const filteredBlogs = blogs.filter(item => {
     const titleMatch = (item.title || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
-                       (item.summary || '').toLowerCase().includes(searchQuery.toLowerCase());
+      (item.summary || '').toLowerCase().includes(searchQuery.toLowerCase());
     if (!titleMatch) return false;
 
     if (activeCategory !== 'ALL') {
       const itemCat = (item.category || '').toLowerCase().trim();
       const targetCat = activeCategory.toLowerCase().trim();
-      
+
       if (activeCategory === 'Chuyên mục khác') {
         const knownCats = ['tin công nghệ', 'đánh giá sản phẩm', 'mẹo hay & thủ thuật', 'khuyến mãi & ưu đãi'];
         if (knownCats.includes(itemCat)) return false;
@@ -117,11 +117,10 @@ export default function BlogPage() {
                   <button
                     key={cat.id}
                     onClick={() => handleCategorySelect(cat.id)}
-                    className={`w-full flex items-center justify-between px-3.5 py-3 rounded-xl text-xs font-bold transition-all text-left cursor-pointer ${
-                      isActive
+                    className={`w-full flex items-center justify-between px-3.5 py-3 rounded-xl text-xs font-bold transition-all text-left cursor-pointer ${isActive
                         ? 'bg-blue-50 text-blue-600 border border-blue-100 shadow-xs'
                         : 'text-gray-700 hover:bg-gray-50 hover:text-blue-600'
-                    }`}
+                      }`}
                   >
                     <div className="flex items-center gap-3">
                       <IconComponent size={17} className={isActive ? 'text-blue-600' : 'text-gray-400'} />
@@ -134,6 +133,7 @@ export default function BlogPage() {
               })}
             </nav>
           </aside>
+
 
           {/* ── MAIN CONTENT AREA ── */}
           <main className="lg:col-span-9 space-y-6">
@@ -267,8 +267,42 @@ export default function BlogPage() {
             )}
 
           </main>
-        </div>
 
+          {/* ── RIGHT SIDEBAR ── */}
+          {/*<aside className="lg:col-span-3 bg-white rounded-2xl p-4 border border-gray-200/80 shadow-xs sticky top-20 z-20">
+            <div className="flex items-center gap-2 px-3 py-2.5 mb-3 border-b border-gray-100 pb-3">
+              <Newspaper className="text-blue-600" size={20} />
+              <h2 className="font-black text-gray-900 text-sm uppercase tracking-wider">Chuyên mục tin tức</h2>
+            </div>
+
+            <nav className="space-y-1">
+              {categories.map((cat) => {
+                const IconComponent = cat.icon;
+                const isActive = activeCategory === cat.id;
+
+                return (
+                  <button
+                    key={cat.id}
+                    onClick={() => handleCategorySelect(cat.id)}
+                    className={`w-full flex items-center justify-between px-3.5 py-3 rounded-xl text-xs font-bold transition-all text-left cursor-pointer ${
+                      isActive
+                        ? 'bg-blue-50 text-blue-600 border border-blue-100 shadow-xs'
+                        : 'text-gray-700 hover:bg-gray-50 hover:text-blue-600'
+                    }`}
+                  >
+                    <div className="flex items-center gap-3">
+                      <IconComponent size={17} className={isActive ? 'text-blue-600' : 'text-gray-400'} />
+                      <span>{cat.name}</span>
+                    </div>
+
+                    {isActive && <span className="w-1.5 h-1.5 rounded-full bg-blue-600" />}
+                  </button>
+                );
+              })}
+            </nav>
+          </aside>*/}
+
+        </div>
       </div>
     </div>
   );
