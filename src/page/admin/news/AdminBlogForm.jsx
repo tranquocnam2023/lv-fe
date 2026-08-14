@@ -42,7 +42,7 @@ export default function AdminBlogForm({ blogId = null, onBack }) {
 
   const fileInputRef = useRef(null);
 
-  // Form State matching Backend BlogRequest DTO + SEO Metadata
+  // Form State giá trị khởi tạo ban đầu (Initial State)
   const [formData, setFormData] = useState({
     title: '',
     slug: '',
@@ -140,6 +140,8 @@ export default function AdminBlogForm({ blogId = null, onBack }) {
 
         const isPub = data.isPublished ?? data.isActive ?? true;
 
+        //Nhiệm vụ là nạp (fill) dữ liệu cũ của bài viết đó từ Database lên Form(chứ năng chỉnh sửa) 
+        //Dấu || là nếu dữ liệu cũ trong Database bị bỏ trống (null/undefined) thì sẽ tự động điền giá trị mặc định
         setFormData({
           title: data.title || data.name || '',
           slug: data.slug || generateSlug(data.title || data.name || ''),
@@ -219,9 +221,11 @@ export default function AdminBlogForm({ blogId = null, onBack }) {
         // ➕ [TẠO MỚI BÀI VIẾT]
         // =========================================================================
         await blogService.createBlog(payload);
-        alert(isPub ? 'Đăng bài viết mới thành công!' : 'Đã tạo bản nháp bài viết!');
       }
-      if (onBack) onBack();
+      // Chỉ chuyển về danh sách khi Đăng bài/Xuất bản (isPub === true). Khi Lưu Nháp sẽ giữ nguyên ở màn hình để tiếp tục chỉnh sửa
+      if (isPub && onBack) {
+        onBack();
+      }
     } catch (err) {
       console.error('Lỗi lưu bài viết:', err);
       const errMsg = err.response?.data?.errors
@@ -483,8 +487,13 @@ export default function AdminBlogForm({ blogId = null, onBack }) {
 
             <div className="space-y-3">
               <div>
+                {/* 
+                  Cờ trạng thái IsPublished (Boolean: true/false) ngay trên bảng Blogs:
+                  - IsPublished = false: CSDL hiểu đây là Bản nháp -> Vẫn lưu an toàn vào DB để bảo toàn dữ liệu, nhưng API phía người dùng ngoài trang chủ (WHERE IsPublished = 1) sẽ tự động ẩn bài này đi.
+                  - IsPublished = true: CSDL hiểu bài viết đã được Xuất bản -> Cho phép khách hàng xem.
+                */}
                 <label className="block text-xs font-bold text-gray-700 mb-1.5 uppercase tracking-wider">
-                  Trạng thái đăng
+                  Trạng thái 
                 </label>
                 <select
                   className="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 rounded-xl font-bold text-gray-800 text-xs focus:border-blue-500 outline-none"
@@ -499,7 +508,7 @@ export default function AdminBlogForm({ blogId = null, onBack }) {
                   }}
                 >
                   <option value="published"> Công khai (Xuất bản ngay)</option>
-                  <option value="draft"> Bản nháp (Save Draft)</option>
+                  <option value="draft"> Bản nháp </option>
                   <option value="scheduled"> Hẹn giờ đăng</option>
                 </select>
               </div>
@@ -548,7 +557,7 @@ export default function AdminBlogForm({ blogId = null, onBack }) {
             <div className="space-y-3">
               <div>
                 <label className="block text-xs font-bold text-gray-700 mb-1.5 uppercase tracking-wider">
-                  Chuyên mục Blog
+                  Chuyên mục
                 </label>
                 <select
                   className="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 rounded-xl font-bold text-gray-800 text-xs focus:border-blue-500 outline-none"

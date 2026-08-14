@@ -7,6 +7,7 @@ import { orderService } from '../../../services/orderService';
 import { usePagination } from '../../../hooks/usePagination';
 import { useFormat } from '../../../hooks/useFormat';
 import OrderDetailsModal from './OrderDetailsModal';
+import OrderReturnModal from '../../../components/OrderReturnModal';
 
 const STATUS_TABS = [
   { id: 'all', name: 'Tất cả', count: 0 },
@@ -55,8 +56,19 @@ export default function AdminOrders() {
   const [error, setError] = useState(null);
   const [cancelModal, setCancelModal] = useState({ isOpen: false, orderId: null, newStatus: null });
   const [selectedOrderDetails, setSelectedOrderDetails] = useState(null);
+  const [returnModalOrder, setReturnModalOrder] = useState(null);
   const [searchParams, setSearchParams] = useSearchParams();
   const orderIdParam = searchParams.get('orderId');
+
+  // Helper đọc dữ liệu yêu cầu đổi trả
+  const getReturnRequestInfo = (ordId) => {
+    try {
+      const requests = JSON.parse(localStorage.getItem('PROJECT_RETURN_REQUESTS') || '{}');
+      return requests[ordId] || null;
+    } catch {
+      return null;
+    }
+  };
 
   // Khởi tạo các hook
   const { formatCurrency, formatDate } = useFormat();
@@ -585,13 +597,38 @@ export default function AdminOrders() {
 
                         {order.status === 'delivered' && (
                           <div className="flex gap-1.5 items-center">
-                            <button
-                              onClick={() => handleStatusChange(order.id, 'refunded')}
-                              className="text-[10px] font-extrabold text-purple-700 hover:underline px-2.5 py-1 bg-purple-50 rounded-md border border-purple-200 transition-all hover:bg-purple-100 active:scale-95 whitespace-nowrap cursor-pointer"
-                              title="Yêu cầu đổi trả hoặc hoàn tiền cho khách"
-                            >
-                              Đổi trả / Hoàn tiền
-                            </button>
+                            {(() => {
+                              const returnData = getReturnRequestInfo(order.id);
+                              if (returnData && returnData.status === 'Pending') {
+                                return (
+                                  <button
+                                    onClick={() => setReturnModalOrder(order)}
+                                    className="text-[10px] font-extrabold text-admin-danger hover:underline px-2.5 py-1 bg-admin-danger/10 border border-admin-danger/20 hover:bg-admin-danger/20 rounded-md transition-all active:scale-95 whitespace-nowrap cursor-pointer"
+                                    title="Khách vừa gửi yêu cầu đổi trả! Nhấp để xem và duyệt ngay"
+                                  >
+                                    Duyệt Đổi trả
+                                  </button>
+                                );
+                              }
+                              if (returnData && returnData.status === 'Rejected') {
+                                return (
+                                  <span className="text-[10px] font-bold text-gray-500 bg-gray-100 px-2 py-0.5 rounded-md border border-gray-200">
+                                    Từ chối đổi trả
+                                  </span>
+                                );
+                              }
+                              // Khách chưa gửi yêu cầu -> Ẩn hoàn toàn nút ở bảng danh sách
+                              return null;
+                            })()}
+                          </div>
+                        )}
+
+                        {order.status === 'refunded' && (
+                          <div className="flex gap-1.5 items-center">
+                            <span className="text-[10px] font-black text-purple-700 bg-purple-50 border border-purple-200 px-2.5 py-1 rounded-md flex items-center gap-1">
+                              <RotateCcw size={11} />
+                              <span>Đã hoàn tiền</span>
+                            </span>
                           </div>
                         )}
 
@@ -705,6 +742,38 @@ export default function AdminOrders() {
         }}
         onShipWithAhamove={handleShipWithAhamove}
       />
+
+      {/* MODAL KIỂM DUYỆT ĐỔI TRẢ HOÀN TIỀN CHO ADMIN */}
+      {returnModalOrder && (
+        <OrderReturnModal
+          isOpen={!!returnModalOrder}
+          onClose={() => setReturnModalOrder(null)}
+          order={returnModalOrder}
+          mode="admin"
+          onSuccess={() => {
+            setReturnModalOrder(null);
+            // Tải lại danh sách đơn hàng
+            orderService.getAll().then(data => {
+              if (Array.isArray(data)) {
+                const statusMap = {
+                  1: 'pending', 2: 'confirmed', 3: 'shipping', 4: 'delivered', 5: 'cancelled', 6: 'shipping_failed', 7: 'refunded'
+                };
+                const mappedOrders = data.map(order => ({
+                  id: order.id,
+                  customer: order.receiverName || 'Khách hàng',
+                  date: order.createdAt ? new Date(order.createdAt).toLocaleDateString('vi-VN') : '',
+                  total: order.totalPrice || 0,
+                  status: statusMap[order.statusId] || 'pending',
+                  paymentMethod: order.paymentMethod || 'N/A',
+                  itemsCount: order.items?.length || 0,
+                  raw: order
+                }));
+                setOrders(mappedOrders);
+              }
+            });
+          }}
+        />
+      )}
     </div>
   );
 }

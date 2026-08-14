@@ -1,3 +1,10 @@
+/**
+ * =========================================================================
+ * 📌 FILE: ProfileWarrantyDevicesTab.jsx
+ * - CHỨC NĂNG: Tab "Thiết bị & Bảo hành" (Danh sách thiết bị đã mua, thời hạn bảo hành, số seri và yêu cầu kích hoạt/bảo hành).
+ * - HIỂN THỊ Ở ĐÂU: Xuất hiện khi người dùng mở Trang cá nhân `/profile?tab=warranties`.
+ * =========================================================================
+ */
 import React, { useState, useEffect } from 'react';
 import { warrantyService } from '../../../services/warrantyService';
 import { ShieldCheck, Smartphone, CheckCircle, AlertCircle, RefreshCw, Sparkles, Clock, Calendar, Check } from 'lucide-react';

@@ -1,3 +1,10 @@
+/**
+ * =========================================================================
+ * 📌 FILE: ProfileInfoTab.jsx
+ * - CHỨC NĂNG: Tab xem và cập nhật "Thông tin tài khoản cá nhân" (Họ tên, Email, Vai trò, Hạng thành viên, Điểm thưởng).
+ * - HIỂN THỊ Ở ĐÂU: Xuất hiện mặc định khi người dùng đã đăng nhập mở Trang cá nhân `/profile` hoặc `/profile?tab=info`.
+ * =========================================================================
+ */
 import React from 'react';
 
 // LUỒNG PHÂN HẠNG THÀNH VIÊN (CUSTOMER TIERS):

@@ -29,4 +29,16 @@ export const orderService = {
   checkout: (data) => api.post('/Order/checkout', data),
 
   shipAhamove: (id) => api.post(`/Order/${id}/ship-ahamove`),
+
+  cancelOrder: (id, phoneNumber) => {
+    const query = phoneNumber ? `?phoneNumber=${encodeURIComponent(phoneNumber)}` : '';
+    return api.put(`/Order/${id}/cancel${query}`);
+  },
+
+  // --- Return & Refund API Endpoints ---
+  createReturnRequest: (data) => api.post('/Return', data),
+  getReturnRequestByOrder: (orderId) => api.get(`/Return/order/${orderId}`),
+  getAllReturnRequests: () => api.get('/Return'),
+  approveReturnRequest: (id, adminNote) => api.put(`/Return/${id}/approve`, { adminNote }),
+  rejectReturnRequest: (id, adminNote) => api.put(`/Return/${id}/reject`, { adminNote }),
 };

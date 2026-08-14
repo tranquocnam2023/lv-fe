@@ -7,6 +7,7 @@ import { userService } from '../services/userService';
 import { shippingInfoService } from '../services/shippingInfoService';
 import { orderService } from '../services/orderService';
 import { useFormat } from '../hooks/useFormat';
+
 import api from '../services/api';
 
 // Subcomponents
@@ -17,6 +18,7 @@ import ProfileAddressTab from './auth/components/ProfileAddressTab';
 import ProfileOrderHistoryTab from './auth/components/ProfileOrderHistoryTab';
 import ProfilePasswordTab from './auth/components/ProfilePasswordTab';
 import ProfileWarrantyDevicesTab from './auth/components/ProfileWarrantyDevicesTab';
+import ProfileTrackOrderTab from './auth/components/ProfileTrackOrderTab';
 
 export default function AuthPage() {
   const { stopLoading } = useLoading();
@@ -74,12 +76,12 @@ export default function AuthPage() {
       navigate(redirectUrl);
       return;
     }
-
+    // truyền tab từ url vào state
     const tab = searchParams.get('tab');
-    if (tab && ['info', 'addresses', 'password', 'history'].includes(tab)) {
-      setProfileTab(tab);
+    if (tab && ['info', 'addresses', 'password', 'history', 'track', 'warranties', 'warranty'].includes(tab)) {
+      setProfileTab(tab === 'warranty' ? 'warranties' : tab);
     }
-    
+
     // CƠ CHẾ CHUYỂN TỰ ĐỘNG GIỮA ĐĂNG KÝ / ĐĂNG NHẬP:
     // Nhận diện tham số 'mode' truyền vào từ đường dẫn (ví dụ: /auth?mode=register&redirect=/cart).
     // Phục vụ luồng chuyển hướng khi khách hàng bấm Đăng ký hoặc Đăng nhập trên popup giỏ hàng.
@@ -225,16 +227,16 @@ export default function AuthPage() {
       const token = loginData.token || loginData.accessToken || (loginData.data && loginData.data.token);
       if (token) {
         localStorage.setItem('token', token);
-        
+
         // Giải mã JWT của Google để lấy Tên và Email người dùng
         const base64Url = idToken.split('.')[1];
         const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-        const jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
-            return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+        const jsonPayload = decodeURIComponent(atob(base64).split('').map(function (c) {
+          return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
         }).join(''));
-        
+
         const googlePayload = JSON.parse(jsonPayload);
-        
+
         localStorage.setItem('user', JSON.stringify({
           id: loginData.id,
           username: googlePayload.name || 'Khách hàng',
@@ -284,7 +286,7 @@ export default function AuthPage() {
       };
 
       initGoogleBtn();
-      
+
       const timer = setInterval(() => {
         if (window.google) {
           initGoogleBtn();
@@ -369,7 +371,7 @@ export default function AuthPage() {
     }
     setLoading(true);
     setError('');
-    
+
     try {
       const res = await authService.sendForgotPasswordOtp(targetInput);
       const emailRes = res?.email || res?.data?.email;
@@ -601,7 +603,7 @@ export default function AuthPage() {
 
           {/* Main Panel Content */}
           <main className="flex-1 bg-white rounded-md border border-gray-200 p-6">
-            
+
             {profileTab === 'info' && (
               <ProfileInfoTab
                 userProfile={userProfile}
@@ -636,6 +638,10 @@ export default function AuthPage() {
               />
             )}
 
+            {(profileTab === 'track' || profileTab === 'history') && (
+              <ProfileTrackOrderTab />
+            )}
+
             {profileTab === 'warranties' && (
               <ProfileWarrantyDevicesTab />
             )}
@@ -646,16 +652,6 @@ export default function AuthPage() {
                 setPasswordData={setPasswordData}
                 handleChangePassword={handleChangePassword}
                 loading={loading}
-              />
-            )}
-
-            {profileTab === 'history' && (
-              <ProfileOrderHistoryTab
-                orders={orders}
-                ordersLoading={ordersLoading}
-                selectedOrder={selectedOrder}
-                setSelectedOrder={setSelectedOrder}
-                fetchMyOrders={fetchMyOrders}
               />
             )}
 

@@ -1,3 +1,10 @@
+/**
+ * =========================================================================
+ * 📌 FILE: AuthGuestForms.jsx
+ * - CHỨC NĂNG: Form Đăng nhập, Đăng ký tài khoản mới và Quên/Đặt lại mật khẩu cho khách hàng chưa đăng nhập.
+ * - HIỂN THỊ Ở ĐÂU: Xuất hiện khi người dùng chưa đăng nhập mở trang `/auth` hoặc `/profile`.
+ * =========================================================================
+ */
 import React from 'react';
 import Breadcrumb from '../../../components/Breadcrumb';
 import OtpVerification from '../../../components/OtpVerification';
