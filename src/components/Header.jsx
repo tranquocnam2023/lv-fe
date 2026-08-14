@@ -425,7 +425,7 @@ export default function Header() {
           />
         </div>
 
-        {/* DESKTOP: Right Icons: Orders, Cart, Account */}
+        {/* DESKTOP:: tra cứu đơn hàng,giỏ hàng, quản lý tài khoản */}
         <div className="hidden lg:flex items-center space-x-3 text-xs shrink-0 select-none">
           <Link
             to="/track"
@@ -459,7 +459,7 @@ export default function Header() {
           </Link>
 
           {/* Theme Toggle Button */}
-          <button
+          {/*<button
             type="button"
             onClick={toggleTheme}
             className="theme-toggle-btn p-2 rounded-full hover:bg-white/10 text-white focus:outline-none flex items-center justify-center cursor-pointer"
@@ -471,7 +471,7 @@ export default function Header() {
             ) : (
               <Moon className="w-5 h-5 text-indigo-100 fill-indigo-100/10" />
             )}
-          </button>
+          </button>*/}
 
           {/* Account Menu Dropdown */}
           <HeaderAccountMenu
@@ -500,7 +500,7 @@ export default function Header() {
           </Link>
 
           {/* Theme Toggle Button (Mobile) */}
-          <button
+         {/*} <button
             type="button"
             onClick={toggleTheme}
             className="theme-toggle-btn p-2 rounded-full hover:bg-white/10 text-white focus:outline-none flex items-center justify-center cursor-pointer"
@@ -512,7 +512,7 @@ export default function Header() {
             ) : (
               <Moon className="w-5.5 h-5.5 text-indigo-100 fill-indigo-100/10" />
             )}
-          </button>
+          </button>*/}
 
           {/* User Profile / Auth link */}
           {isLoggedIn ? (

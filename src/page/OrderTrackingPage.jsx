@@ -5,6 +5,7 @@ import OrderDetailsTracker from '../components/OrderDetailsTracker';
 import Breadcrumb from '../components/Breadcrumb';
 import { Search, FileSearch, AlertCircle, RefreshCw, Eye, X, Filter, ShoppingBag } from 'lucide-react';
 import { useLoading } from '../context/LoadingContext';
+import { usePagination } from '../hooks/usePagination';
 
 export default function OrderTrackingPage() {
   const { stopLoading } = useLoading();
@@ -81,6 +82,27 @@ export default function OrderTrackingPage() {
     }
   };
 
+  /**
+   * HÀM CHUẨN HÓA TRẠNG THÁI ĐƠN HÀNG (ORDER STATUS MAPPER):
+   * - Đọc linh hoạt cả trường số (statusId / StatusId / orderStatusId) lẫn trường chuỗi (statusName / status).
+   * - Khắc phục triệt để lỗi lọc đơn hàng theo trạng thái (như 'Đã hoàn thành') bị báo N/A hoặc không khớp dữ liệu từ Backend C#.
+   */
+  const getOrderStatusId = (ord) => {
+    if (!ord) return 0;
+    let id = ord.statusId ?? ord.StatusId ?? ord.orderStatusId ?? ord.OrderStatusId;
+    if (id !== undefined && id !== null && !isNaN(Number(id))) return Number(id);
+
+    const st = String(ord.statusName || ord.StatusName || ord.status || '').toLowerCase();
+    if (st.includes('pending') || st.includes('chờ') || st.includes('xác nhận')) return 1;
+    if (st.includes('process') || st.includes('confirm') || st.includes('xử lý') || st.includes('chuẩn')) return 2;
+    if (st.includes('ship') || st.includes('giao')) return 3;
+    if (st.includes('complete') || st.includes('deliver') || st.includes('thành') || st.includes('hoàn thành')) return 4;
+    if (st.includes('cancel') || st.includes('hủy')) return 5;
+    if (st.includes('refund') || st.includes('hoàn tiền') || st.includes('đổi trả')) return 7;
+
+    return 1;
+  };
+
   // Lọc dữ liệu đơn hàng hiển thị ở bảng
   const filteredOrders = orders.filter(ord => {
     const ordId = String(ord.id || ord.Id || '');
@@ -95,17 +117,32 @@ export default function OrderTrackingPage() {
 
     let matchesStatus = true;
     if (selectedStatusFilter !== 'ALL') {
-      const stId = parseInt(selectedStatusFilter);
-      matchesStatus = (ord.orderStatusId || ord.OrderStatusId) === stId;
+      const targetStId = parseInt(selectedStatusFilter);
+      const currentStId = getOrderStatusId(ord);
+      matchesStatus = currentStId === targetStId;
     }
 
     return matchesOrderId && matchesPhone && matchesStatus;
   });
 
-  const getStatusBadge = (statusId, statusName) => {
-    switch (statusId) {
+  const {
+    currentPage,
+    totalPages,
+    currentData: paginatedOrders,
+    goToPage,
+    nextPage,
+    prevPage,
+    startIndex,
+    endIndex,
+    totalItems
+  } = usePagination(filteredOrders, 5);
+
+  const getStatusBadge = (ord) => {
+    const stId = getOrderStatusId(ord);
+    const stName = ord.statusName || ord.StatusName || ord.orderStatusName || ord.OrderStatus?.Name || ord.status;
+    switch (stId) {
       case 1:
-        return <span className="px-2.5 py-1 text-[10px] font-black uppercase text-amber-700 bg-amber-50 rounded-full border border-amber-200">Chờ thanh toán</span>;
+        return <span className="px-2.5 py-1 text-[10px] font-black uppercase text-amber-700 bg-amber-50 rounded-full border border-amber-200">Chờ xác nhận</span>;
       case 2:
         return <span className="px-2.5 py-1 text-[10px] font-black uppercase text-blue-700 bg-blue-50 rounded-full border border-blue-200">Đang xử lý</span>;
       case 3:
@@ -114,8 +151,10 @@ export default function OrderTrackingPage() {
         return <span className="px-2.5 py-1 text-[10px] font-black uppercase text-emerald-700 bg-emerald-50 rounded-full border border-emerald-200">Đã hoàn thành</span>;
       case 5:
         return <span className="px-2.5 py-1 text-[10px] font-black uppercase text-red-700 bg-red-50 rounded-full border border-red-200">Đã hủy</span>;
+      case 7:
+        return <span className="px-2.5 py-1 text-[10px] font-black uppercase text-purple-700 bg-purple-50 rounded-full border border-purple-200">Đổi trả / Hoàn tiền</span>;
       default:
-        return <span className="px-2.5 py-1 text-[10px] font-black uppercase text-gray-700 bg-gray-50 rounded-full border border-gray-200">{statusName || 'N/A'}</span>;
+        return <span className="px-2.5 py-1 text-[10px] font-black uppercase text-gray-700 bg-gray-50 rounded-full border border-gray-200">{stName || 'Khác'}</span>;
     }
   };
 
@@ -161,7 +200,7 @@ export default function OrderTrackingPage() {
         <form onSubmit={handleTrackSubmit} className="bg-gray-50 p-3.5 rounded-xl border border-gray-200 flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3">
           <div className="flex flex-1 flex-col sm:flex-row items-stretch sm:items-center gap-2.5">
             {/* Input Mã đơn */}
-            <div className="relative flex-1 min-w-[150px]">
+            <div className="relative flex-1 min-w-[200px]">
               <input
                 type="text"
                 placeholder="Mã đơn hàng (VD: 12)"
@@ -170,18 +209,6 @@ export default function OrderTrackingPage() {
                 className="w-full pl-9 pr-3 py-2 bg-white border border-gray-300 rounded-lg text-xs font-semibold outline-none focus:border-primary transition-colors"
               />
               <Search className="absolute left-3 top-2.5 text-gray-400" size={14} />
-            </div>
-
-            {/* Input SĐT */}
-            <div className="relative flex-1 min-w-[160px]">
-              <input
-                type="text"
-                placeholder="Số điện thoại mua hàng..."
-                value={searchPhone}
-                onChange={(e) => setSearchPhone(e.target.value)}
-                className="w-full pl-9 pr-3 py-2 bg-white border border-gray-300 rounded-lg text-xs font-semibold outline-none focus:border-primary transition-colors"
-              />
-              <FileSearch className="absolute left-3 top-2.5 text-gray-400" size={14} />
             </div>
 
             {/* Dropdown Lọc trạng thái */}
@@ -207,7 +234,7 @@ export default function OrderTrackingPage() {
             disabled={loading}
             className="px-5 py-2 bg-primary hover:bg-secondary disabled:bg-gray-400 text-white rounded-lg text-xs font-black uppercase tracking-wider transition cursor-pointer border-0 shadow shrink-0 flex items-center justify-center gap-1.5 select-none"
           >
-            {loading ? 'Đang tìm...' : 'Tra cứu ngay'}
+            {loading ? 'Đang tìm...' : 'Tra cứu'}
             <Search size={14} />
           </button>
         </form>
@@ -242,7 +269,7 @@ export default function OrderTrackingPage() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-150">
-                  {filteredOrders.map(ord => {
+                  {paginatedOrders.map(ord => {
                     const ordId = ord.id || ord.Id;
                     const name = ord.receiverName || ord.ReceiverName || 'Khách hàng';
                     const phone = ord.receiverPhone || ord.ReceiverPhone || '';
@@ -271,7 +298,7 @@ export default function OrderTrackingPage() {
                           {date ? new Date(date).toLocaleDateString('vi-VN') : 'N/A'}
                         </td>
                         <td className="p-3.5 whitespace-nowrap">
-                          {getStatusBadge(stId, stName)}
+                          {getStatusBadge(ord)}
                         </td>
                         <td className="p-3.5 text-right whitespace-nowrap">
                           <button
@@ -280,7 +307,7 @@ export default function OrderTrackingPage() {
                             className="px-3 py-1.5 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded-lg text-xs font-bold transition cursor-pointer border-0 inline-flex items-center gap-1"
                           >
                             <Eye size={14} />
-                            <span>Theo dõi chi tiết</span>
+                            <span>Xem chi tiết</span>
                           </button>
                         </td>
                       </tr>
@@ -288,6 +315,49 @@ export default function OrderTrackingPage() {
                   })}
                 </tbody>
               </table>
+            </div>
+          )}
+
+          {/* PHẦN THANH PHÂN TRANG (PAGINATION FOOTER) */}
+          {filteredOrders.length > 0 && (
+            <div className="px-4 py-3 bg-gray-50 border-t border-gray-200 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs font-bold">
+              <span className="text-gray-500">
+                Hiển thị <span className="text-gray-900">{startIndex}-{endIndex}</span> trên <span className="text-gray-900">{totalItems}</span> đơn hàng
+              </span>
+              {totalPages > 1 && (
+                <div className="flex items-center gap-1">
+                  <button
+                    type="button"
+                    onClick={prevPage}
+                    disabled={currentPage === 1}
+                    className="px-3 py-1.5 bg-white border border-gray-300 text-gray-700 rounded-lg font-bold hover:bg-gray-100 disabled:opacity-40 disabled:cursor-not-allowed transition cursor-pointer"
+                  >
+                    Trước
+                  </button>
+                  {[...Array(totalPages)].map((_, i) => (
+                    <button
+                      key={i}
+                      type="button"
+                      onClick={() => goToPage(i + 1)}
+                      className={`w-7 h-7 rounded-lg text-xs font-black transition cursor-pointer ${
+                        currentPage === i + 1
+                          ? 'bg-blue-600 text-white shadow-xs'
+                          : 'bg-white border border-gray-200 text-gray-700 hover:bg-gray-100'
+                      }`}
+                    >
+                      {i + 1}
+                    </button>
+                  ))}
+                  <button
+                    type="button"
+                    onClick={nextPage}
+                    disabled={currentPage === totalPages}
+                    className="px-3 py-1.5 bg-white border border-gray-300 text-gray-700 rounded-lg font-bold hover:bg-gray-100 disabled:opacity-40 disabled:cursor-not-allowed transition cursor-pointer"
+                  >
+                    Sau
+                  </button>
+                </div>
+              )}
             </div>
           )}
         </div>

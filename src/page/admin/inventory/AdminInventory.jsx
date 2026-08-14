@@ -162,7 +162,7 @@ export default function AdminInventory() {
   const filteredHistory = groupedHistory.filter(group => {
     let match = true;
     if (typeFilter !== 'ALL' && group.transactionType !== typeFilter) match = false;
-    
+
     // Lọc theo khoảng ngày (Từ ngày - Đến ngày)
     if (txStartDate) {
       const start = new Date(txStartDate);
@@ -304,10 +304,20 @@ export default function AdminInventory() {
       }
     });
 
-    return Object.values(productMap).map(p => ({
-      ...p,
-      variants: Object.values(p.variantMap)
-    }));
+
+    return Object.values(productMap).map(p => {
+      //Tìm sản phẩm tương ứng trong danh sách sản phẩm chính
+      const realProd = (products || []).find(prod => prod.id === p.productId);
+      // Ưu tiên lấy số lượng tồn kho thực tế từ CSDL (totalStock) 
+      const realStock = (realProd && realProd.totalStock !== undefined && realProd.totalStock !== null)
+        ? realProd.totalStock
+        : p.totalQuantityRemaining;
+      return {
+        ...p,
+        totalQuantityRemaining: realStock,  //lấy số lượng tồn chuẩn
+        variants: Object.values(p.variantMap)
+      };
+    });
   }, [stockHistory, products, brands, categories]);
 
   // Filter grouped stock list

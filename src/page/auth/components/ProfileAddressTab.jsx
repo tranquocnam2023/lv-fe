@@ -1,3 +1,10 @@
+/**
+ * =========================================================================
+ * 📌 FILE: ProfileAddressTab.jsx
+ * - CHỨC NĂNG: Tab quản lý "Sổ địa chỉ nhận hàng" (thêm, sửa, xóa địa chỉ giao hàng, gợi ý tự động bằng Goong API).
+ * - HIỂN THỊ Ở ĐÂU: Xuất hiện khi người dùng đã đăng nhập vào Trang cá nhân `/profile?tab=addresses`.
+ * =========================================================================
+ */
 import React from 'react';
 import { Plus, Check, Edit2, Trash2, MapPin } from 'lucide-react';
 import SearchableSelect from '../../../components/SearchableSelect';

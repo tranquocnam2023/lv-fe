@@ -1,3 +1,10 @@
+/**
+ * =========================================================================
+ * 📌 FILE: ProfileSidebar.jsx
+ * - CHỨC NĂNG: Thanh Menu điều hướng bên trái (Sidebar) của Trang cá nhân (gồm Avatar, tên User và các nút bấm chuyển Tab).
+ * - HIỂN THỊ Ở ĐÂU: Hiển thị ở cột bên trái xuyên suốt tất cả các Tab trong trang cá nhân `/profile`.
+ * =========================================================================
+ */
 import React from 'react';
 import { User, MapPin, ClipboardList, Key, LogOut, ShieldCheck } from 'lucide-react';
 
@@ -35,6 +42,18 @@ export default function ProfileSidebar({
         </button>
 
         <button
+          onClick={() => setProfileTab('track')}
+          className={`flex items-center space-x-3 px-4 py-3 rounded-md text-sm font-bold transition-all text-left cursor-pointer border-0 ${
+            (profileTab === 'track' || profileTab === 'history')
+              ? 'bg-primary/10 text-primary'
+              : 'text-gray-600 hover:bg-gray-50 bg-transparent'
+          }`}
+        >
+          <ClipboardList size={18} />
+          <span>Lịch sử &amp; Tra cứu đơn hàng</span>
+        </button>
+
+        <button
           onClick={() => setProfileTab('warranties')}
           className={`flex items-center space-x-3 px-4 py-3 rounded-md text-sm font-bold transition-all text-left cursor-pointer border-0 ${
             profileTab === 'warranties'
@@ -56,21 +75,6 @@ export default function ProfileSidebar({
         >
           <MapPin size={18} />
           <span>Sổ địa chỉ nhận hàng</span>
-        </button>
-
-        <button
-          onClick={() => {
-            setProfileTab('history');
-            setSelectedOrder(null);
-          }}
-          className={`flex items-center space-x-3 px-4 py-3 rounded-md text-sm font-bold transition-all text-left cursor-pointer border-0 ${
-            profileTab === 'history'
-              ? 'bg-primary/10 text-primary'
-              : 'text-gray-600 hover:bg-gray-50 bg-transparent'
-          }`}
-        >
-          <ClipboardList size={18} />
-          <span>Lịch sử mua hàng</span>
         </button>
 
         <button

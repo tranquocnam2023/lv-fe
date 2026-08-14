@@ -1,3 +1,10 @@
+/**
+ * =========================================================================
+ * 📌 FILE: ProfilePasswordTab.jsx
+ * - CHỨC NĂNG: Tab "Đổi mật khẩu" (Form nhập mật khẩu hiện tại, mật khẩu mới và xác nhận mật khẩu mới).
+ * - HIỂN THỊ Ở ĐÂU: Xuất hiện khi người dùng đã đăng nhập vào Trang cá nhân `/profile?tab=password`.
+ * =========================================================================
+ */
 import React from 'react';
 
 export default function ProfilePasswordTab({

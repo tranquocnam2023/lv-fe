@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
-import { Clock, Package, Truck, Smile, Calendar, MapPin, CreditCard, AlertTriangle } from 'lucide-react';
+import { Clock, Package, Truck, Smile, Calendar, MapPin, CreditCard, AlertTriangle, RotateCcw, ShieldAlert, CheckCircle2, X } from 'lucide-react';
 import api from '../services/api';
+import { orderService } from '../services/orderService';
 
 // Subcomponents
 import OrderTimeline from './order-tracker/OrderTimeline';
 import OrderCancelModal from './order-tracker/OrderCancelModal';
+import OrderReturnModal from './OrderReturnModal';
 
 const getPaymentMethodLabel = (method) => {
   if (!method) return 'Chưa xác định';
@@ -24,7 +26,20 @@ export default function OrderDetailsTracker({ order, onOrderCancelled, isGuest =
   const [cancelling, setCancelling] = useState(false);
   const [cancelError, setCancelError] = useState('');
 
+  // State Yêu cầu Đổi trả
+  const [isReturnModalOpen, setIsReturnModalOpen] = useState(false);
+  const [returnReason, setReturnReason] = useState('');
+  const [returnNote, setReturnNote] = useState('');
+
   if (!order) return null;
+
+  const getReturnDeadline = (createdDate) => {
+    const d = new Date(createdDate || Date.now());
+    if (isNaN(d.getTime())) return '';
+    // Ngày đặt + 1 ngày giao + 7 ngày chính sách đổi trả
+    d.setDate(d.getDate() + 8);
+    return d.toLocaleDateString('vi-VN');
+  };
 
   // Trích xuất gói bảo hành (nếu có) từ chi tiết đơn hàng
   const warrantyItem = order.items?.find(item => item.warrantyId);
@@ -102,7 +117,7 @@ export default function OrderDetailsTracker({ order, onOrderCancelled, isGuest =
     setCancelError('');
     try {
       const phoneParam = order.receiverPhone || order.customerPhone || '';
-      await api.put(`/Order/${order.id}/cancel?phoneNumber=${encodeURIComponent(phoneParam)}`);
+      await orderService.cancelOrder(order.id, phoneParam);
       
       alert('Đơn hàng đã được hủy thành công.');
       setIsCancelModalOpen(false);
@@ -193,13 +208,13 @@ export default function OrderDetailsTracker({ order, onOrderCancelled, isGuest =
             Ngày đặt: {new Date(order.createdAt).toLocaleDateString('vi-VN')}
           </p>
         </div>
-        <div className="flex items-center gap-3 select-none">
+        <div className="flex flex-wrap items-center gap-2.5 select-none">
           <span className={`px-4 py-1.5 rounded-full text-xs font-black uppercase tracking-wider border ${
             statusId === 5
               ? 'bg-red-50 border-red-200 text-red-500'
               : statusId === 7
               ? 'bg-purple-50 border-purple-200 text-purple-600'
-              : currentStep === 4
+              : currentStep === 4 || statusId === 4
               ? 'bg-green-50 border-green-200 text-green-600'
               : currentStep === 3
               ? 'bg-blue-50 border-blue-200 text-blue-600'
@@ -207,6 +222,20 @@ export default function OrderDetailsTracker({ order, onOrderCancelled, isGuest =
           }`}>
             {getStatusText(statusId)}
           </span>
+
+          {/* NÚT THỨ CẤP (SECONDARY BUTTON) YÊU CẦU ĐỔI TRẢ KHI ĐÃ GIAO HÀNG */}
+          {(currentStep === 4 || statusId === 4) && (
+            <button
+              type="button"
+              onClick={() => setIsReturnModalOpen(true)}
+              className="px-3.5 py-1.5 bg-gray-100 hover:bg-gray-200 text-gray-800 border border-gray-300 rounded-full text-xs font-bold transition-all active:scale-95 flex items-center gap-1.5 cursor-pointer shadow-2xs"
+              title="Gửi yêu cầu đổi trả sản phẩm trong thời hạn 7 ngày"
+            >
+              <RotateCcw size={14} className="text-gray-600" />
+              <span>Yêu cầu đổi trả</span>
+            </button>
+          )}
+
           {/* PHÂN QUYỀN: Cho phép thanh toán khi đơn hàng ở trạng thái 1 */}
           {statusId === 1 && (order.paymentMethod?.toLowerCase() === 'stripe' || order.paymentMethod?.toLowerCase() === 'vnpay' || order.paymentMethod?.toLowerCase() === 'momo') && (!warrantyItem || inspectionStatus === 'PASSED') && (
             <button
@@ -227,6 +256,16 @@ export default function OrderDetailsTracker({ order, onOrderCancelled, isGuest =
           )}
         </div>
       </div>
+
+      {/* THÔNG BÁO QUYỀN LỢI VÀ THỜI HẠN ĐỔI TRẢ 7 NGÀY */}
+      {(currentStep === 4 || statusId === 4) && (
+        <div className="p-3.5 bg-blue-50/80 border border-blue-200 rounded-xl flex items-center gap-2.5 text-xs font-semibold text-blue-900 shadow-xs animate-in fade-in duration-200">
+          <ShieldAlert size={18} className="text-blue-600 shrink-0" />
+          <span>
+            Quyền lợi khách hàng: Bạn có thể yêu cầu đổi trả trong vòng <strong>7 ngày</strong> (đến ngày <strong>{getReturnDeadline(order.createdAt)}</strong>).
+          </span>
+        </div>
+      )}
 
       {/* TRẠNG THÁI THẨM ĐỊNH BẢO HÀNH */}
       {warrantyItem && (
@@ -387,6 +426,17 @@ export default function OrderDetailsTracker({ order, onOrderCancelled, isGuest =
           cancelReasons={cancelReasons}
         />
       )}
+
+      {/* MODAL YÊU CẦU ĐỔI TRẢ SẢN PHẨM 7 NGÀY (TÁI SỬ DỤNG COMPONENT) */}
+      <OrderReturnModal
+        isOpen={isReturnModalOpen}
+        onClose={() => setIsReturnModalOpen(false)}
+        order={order}
+        mode="user"
+        onSuccess={() => {
+          setIsReturnModalOpen(false);
+        }}
+      />
     </div>
   );
 }

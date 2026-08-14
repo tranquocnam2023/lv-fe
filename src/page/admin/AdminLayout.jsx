@@ -109,10 +109,43 @@ export default function AdminLayout({ activeAdminTab, onTabChange, setSearchPara
     }
   }, [readNotificationIds, user?.id]);
 
+  // State làm mới thông báo khi có yêu cầu đổi trả mới
+  const [returnSignal, setReturnSignal] = useState(0);
+
+  useEffect(() => {
+    const handleReturnEvent = () => setReturnSignal(prev => prev + 1);
+    window.addEventListener('return_request_updated', handleReturnEvent);
+    window.addEventListener('storage', handleReturnEvent);
+    return () => {
+      window.removeEventListener('return_request_updated', handleReturnEvent);
+      window.removeEventListener('storage', handleReturnEvent);
+    };
+  }, []);
+
   const notifications = React.useMemo(() => {
     const list = [];
+
+    // 1. Yêu cầu đổi trả từ khách hàng (PROJECT_RETURN_REQUESTS)
+    try {
+      const returnRequests = JSON.parse(localStorage.getItem('PROJECT_RETURN_REQUESTS') || '{}');
+      Object.values(returnRequests).forEach(req => {
+        if (req && req.status === 'Pending') {
+          list.push({
+            id: `return-${req.orderId}`,
+            type: 'order',
+            title: 'Yêu cầu đổi trả / hoàn tiền',
+            message: `Đơn hàng #PS${req.orderId} có yêu cầu đổi trả sản phẩm cần xử lý`,
+            time: req.createdAt || new Date().toISOString(),
+            targetTab: 'orders',
+            data: req
+          });
+        }
+      });
+    } catch (e) {
+      console.error('Lỗi đọc thông báo đổi trả:', e);
+    }
     
-    // 1. Pending orders (statusId === 1) tất cả 
+    // 2. Pending orders (statusId === 1) tất cả 
     allOrders.forEach(o => {
       if (o.statusId === 1) {
         list.push({
@@ -127,7 +160,7 @@ export default function AdminLayout({ activeAdminTab, onTabChange, setSearchPara
       }
     });
 
-    // 2. Low stock products (< 5) hết hàng 
+    // 3. Low stock products (< 5) hết hàng 
     allProducts.forEach(p => {
       const stock = p.totalStock ?? p.stock ?? p.stockQuantity ?? 0;
       if (stock < 5) {
@@ -146,7 +179,7 @@ export default function AdminLayout({ activeAdminTab, onTabChange, setSearchPara
     const stocks = list.filter(n => n.type === 'stock') ;
     return [...orders, ...stocks];
   }, 
-  [allOrders, allProducts]);
+  [allOrders, allProducts, returnSignal]);
 
   //bộ lọc tab thông báo
   const filteredNotifications = React.useMemo(() => {
@@ -454,13 +487,13 @@ export default function AdminLayout({ activeAdminTab, onTabChange, setSearchPara
             )}
 
             {/* Theme Toggle */}
-            <button
+            {/*<button
               onClick={toggleTheme}
               className="p-2 text-admin-text-muted hover:text-primary hover:bg-gray-100 dark:hover:bg-gray-800/40 transition-colors mr-2 cursor-pointer rounded-full flex items-center justify-center"
               title={isDark ? "Chuyển sang Giao diện Sáng" : "Chuyển sang Giao diện Tối"}
             >
               {isDark ? <Sun size={20} className="text-yellow-400" /> : <Moon size={20} className="text-indigo-600" />}
-            </button>
+            </button>*/}
 
             {/* Bell & Notifications */}
             <div ref={notificationRef} className="relative">
