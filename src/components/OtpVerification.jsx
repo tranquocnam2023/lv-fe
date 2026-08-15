@@ -12,59 +12,62 @@ export default function OtpVerification({
   title = 'Xác thực mã OTP',
   description = 'Vui lòng nhập mã OTP đã được gửi đến email của bạn để tiếp tục.'
 }) {
-  // State: otpValues - Quản lý trạng thái và dữ liệu của otpValues trong giao diện
+  // Mảng chứa 6 ô số OTP
   const [otpValues, setOtpValues] = useState(['', '', '', '', '', '']);
-  // State: timer - Quản lý trạng thái và dữ liệu của timer trong giao diện
+
+  // Thời gian đếm ngược (60 giây)
   const [timer, setTimer] = useState(60);
-  // State: canResend - Quản lý trạng thái và dữ liệu của canResend trong giao diện
+
+  // Trạng thái cho phép bấm nút Gửi lại mã (true/false)
   const [canResend, setCanResend] = useState(false);
-  // Reference (useRef): inputRefs - Lưu vết tham chiếu DOM hoặc giá trị không gây re-render
+
+  // Tham chiếu DOM tới 6 ô nhập OTP
   const inputRefs = useRef([]);
 
-  // Countdown timer logic
+  // Cứ sau 1000ms (1 giây), trừ timer đi 1 đơn vị cho tới 0s
   useEffect(() => {
     let interval = null;
     if (timer > 0) {
       interval = setInterval(() => {
         setTimer((prev) => prev - 1);
-      }, 1000);
+      }, 1000); // 1000ms = đúng 1 giây
     } else {
       // eslint-disable-next-line react-hooks/set-state-in-effect
-      setCanResend(true);
+      setCanResend(true); // Hết 60s thì cho phép bấm Gửi lại mã
     }
     return () => clearInterval(interval);
-  }, [timer]);
+  }, [timer]);//dòng 18
 
-  // Handle character inputs
+  // Xử lý sự kiện nhập ô số OTP
   const handleChange = (index, value) => {
-    // Only accept numeric inputs
+    // Chỉ chấp nhận ký tự chữ số (0-9)
     if (value && !/^\d+$/.test(value)) return;
 
     // Khai báo biến/hằng số: newOtpValues - Dùng trong logic xử lý của component
     const newOtpValues = [...otpValues];
-    newOtpValues[index] = value.substring(value.length - 1); // Get last typed char
+    newOtpValues[index] = value.substring(value.length - 1); // Lấy ký tự chữ số vừa nhập
     setOtpValues(newOtpValues);
 
-    // Auto focus next input
+    // Tự động nhảy con trỏ chuột sang ô tiếp theo
     if (value && index < 5) {
       inputRefs.current[index + 1].focus();
     }
 
-    // Auto submit if all filled
+    // Tự động gửi xác thực nếu đã điền đủ 6 số
     const completedOtp = newOtpValues.join('');
     if (completedOtp.length === 6 && index === 5) {
       onVerify(completedOtp);
     }
   };
 
-  // Handle keypresses (like Backspace)
+  // Xử lý phím xóa (Backspace) để lùi về ô trước
   const handleKeyDown = (index, e) => {
     if (e.key === 'Backspace' && !otpValues[index] && index > 0) {
       inputRefs.current[index - 1].focus();
     }
   };
 
-  // Handle paste events
+  // Xử lý sự kiện dán chuỗi OTP (Paste Event)
   const handlePaste = (e) => {
     e.preventDefault();
     // Cấu hình/Hằng số/Dịch vụ dữ liệu: pastedData
@@ -78,7 +81,7 @@ export default function OtpVerification({
     }
   };
 
-  // Handle Resend Trigger
+  // Xử lý khi bấm nút Gửi lại mã OTP
   const handleResendClick = () => {
     if (!canResend) return;
     setOtpValues(['', '', '', '', '', '']);
@@ -99,7 +102,7 @@ export default function OtpVerification({
   return (
     <div className="flex flex-col w-full max-w-md mx-auto bg-white/80 backdrop-blur-xl border border-gray-100 rounded-md p-8 animate-fade-in">
       
-      {/* Dev helper to display mock OTP */}
+      {/* Trình hỗ trợ hiển thị mã OTP thử nghiệm */}
       {mockOtp && (
         <div className="mb-6 p-4 bg-amber-50 border border-amber-200 rounded-md flex items-start gap-3 text-amber-800 text-xs font-bold animate-pulse">
           <AlertCircle className="text-amber-500 shrink-0 mt-0.5" size={16} />

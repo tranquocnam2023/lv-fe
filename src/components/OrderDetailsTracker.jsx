@@ -46,8 +46,8 @@ export default function OrderDetailsTracker({ order, onOrderCancelled, isGuest =
     // Khai báo biến/hằng số: d - Dùng trong logic xử lý của component
     const d = new Date(createdDate || Date.now());
     if (isNaN(d.getTime())) return '';
-    // Ngày đặt + 1 ngày giao + 7 ngày chính sách đổi trả
-    d.setDate(d.getDate() + 8);
+    // Ngày đặt + 1 ngày giao + 30 ngày chính sách đổi trả
+    d.setDate(d.getDate() + 31);
     return d.toLocaleDateString('vi-VN');
   };
 
@@ -249,7 +249,7 @@ export default function OrderDetailsTracker({ order, onOrderCancelled, isGuest =
               type="button"
               onClick={() => setIsReturnModalOpen(true)}
               className="px-3.5 py-1.5 bg-gray-100 hover:bg-gray-200 text-gray-800 border border-gray-300 rounded-full text-xs font-bold transition-all active:scale-95 flex items-center gap-1.5 cursor-pointer shadow-2xs"
-              title="Gửi yêu cầu đổi trả sản phẩm trong thời hạn 7 ngày"
+              title="Gửi yêu cầu đổi trả sản phẩm trong thời hạn 30 ngày"
             >
               <RotateCcw size={14} className="text-gray-600" />
               <span>Yêu cầu đổi trả</span>
@@ -277,12 +277,12 @@ export default function OrderDetailsTracker({ order, onOrderCancelled, isGuest =
         </div>
       </div>
 
-      {/* THÔNG BÁO QUYỀN LỢI VÀ THỜI HẠN ĐỔI TRẢ 7 NGÀY */}
+      {/* THÔNG BÁO QUYỀN LỢI VÀ THỜI HẠN ĐỔI TRẢ 30 NGÀY */}
       {(currentStep === 4 || statusId === 4) && (
         <div className="p-3.5 bg-blue-50/80 border border-blue-200 rounded-xl flex items-center gap-2.5 text-xs font-semibold text-blue-900 shadow-xs animate-in fade-in duration-200">
           <ShieldAlert size={18} className="text-blue-600 shrink-0" />
           <span>
-            Quyền lợi khách hàng: Bạn có thể yêu cầu đổi trả trong vòng <strong>7 ngày</strong> (đến ngày <strong>{getReturnDeadline(order.createdAt)}</strong>).
+            Quyền lợi khách hàng: Bạn có thể yêu cầu đổi trả trong vòng <strong>30 ngày</strong> (đến ngày <strong>{getReturnDeadline(order.createdAt)}</strong>).
           </span>
         </div>
       )}
@@ -447,7 +447,7 @@ export default function OrderDetailsTracker({ order, onOrderCancelled, isGuest =
         />
       )}
 
-      {/* MODAL YÊU CẦU ĐỔI TRẢ SẢN PHẨM 7 NGÀY (TÁI SỬ DỤNG COMPONENT) */}
+      {/* MODAL YÊU CẦU ĐỔI TRẢ SẢN PHẨM 30 NGÀY (TÁI SỬ DỤNG COMPONENT) */}
       <OrderReturnModal
         isOpen={isReturnModalOpen}
         onClose={() => setIsReturnModalOpen(false)}

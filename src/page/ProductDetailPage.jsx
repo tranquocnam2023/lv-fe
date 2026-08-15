@@ -8,7 +8,7 @@ import { productService } from '../services/productService';
 import { reviewService } from '../services/reviewService';
 import { categoryService } from '../services/categoryService';
 import api from '../services/api';
-import { Check } from 'lucide-react';
+import { Check, ShoppingCart } from 'lucide-react';
 
 // Subcomponents
 import ProductGallery from './product-detail/components/ProductGallery';
@@ -637,7 +637,7 @@ export default function ProductDetailPage() {
     return getMergedSpecs(product.specs, matchedVariant?.specsOverride);
   }, [product, matchedVariant]);
 
-  // Cấu hình hiển thị tên sản phẩm động
+  // Cấu hình hiển thị tên sản phẩm động (chống lặp chữ khi tên gốc đã chứa dung lượng/màu)
   const displayProductName = useMemo(() => {
     if (!product) return '';
     // Khai báo biến/hằng số: targetVar - Dùng trong logic xử lý của component
@@ -659,7 +659,10 @@ export default function ProductDetailPage() {
       // Khai báo biến/hằng số: kLower - Dùng trong logic xử lý của component
       const kLower = key.toLowerCase().trim();
       if (kLower !== 'sku' && kLower !== 'chargetax' && kLower !== 'costprice' && !kLower.includes('màu') && !kLower.includes('color')) {
-        nonColorParts.push(String(val));
+        const valStr = String(val).trim();
+        if (valStr && !product.name.toLowerCase().includes(valStr.toLowerCase())) {
+          nonColorParts.push(valStr);
+        }
       }
     });
 
@@ -1179,6 +1182,46 @@ export default function ProductDetailPage() {
         initialType={installmentModalType}
         onConfirmInstallment={handleConfirmInstallment}
       />
+
+      {/* THANH THAO TÁC NÚT MUA CỐ ĐỊNH DƯỚI ĐÁY MÀN HÌNH DI ĐỘNG (MOBILE STICKY ACTION BAR) */}
+      <div className="fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-md border-t border-gray-200/80 p-2.5 shadow-[0_-4px_20px_rgba(0,0,0,0.08)] flex items-center justify-between gap-2.5 md:hidden animate-in slide-in-from-bottom duration-300">
+        <div className="flex flex-col pl-1 shrink-0">
+          <span className="text-[10px] font-bold text-gray-500 uppercase tracking-tight">Giá ưu đãi:</span>
+          <div className="flex items-baseline gap-1">
+            <span className="text-base font-black text-red-600 tracking-tight">
+              {displayDetails.price.toLocaleString('vi-VN')}₫
+            </span>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-2 flex-1 justify-end">
+          <button
+            type="button"
+            onClick={handleAddToCart}
+            disabled={displayDetails.stock === 0 || product.isAvailable === false}
+            className={`px-3 py-2.5 rounded-xl border font-black text-[11px] uppercase flex items-center justify-center gap-1 transition cursor-pointer select-none shrink-0 ${displayDetails.stock > 0 && product.isAvailable !== false
+              ? 'border-red-600 text-red-600 bg-white active:bg-red-50'
+              : 'border-gray-200 text-gray-400 bg-gray-50 cursor-not-allowed'
+              }`}
+            title="Thêm vào giỏ hàng"
+          >
+            <ShoppingCart size={16} />
+            <span className="hidden xs:inline">Thêm giỏ</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={handleBuyNow}
+            disabled={displayDetails.stock === 0 || product.isAvailable === false}
+            className={`flex-1 max-w-[170px] py-2.5 px-3 rounded-xl font-black text-xs uppercase tracking-wider transition flex items-center justify-center border-0 text-white cursor-pointer select-none ${displayDetails.stock > 0 && product.isAvailable !== false
+              ? 'bg-red-600 active:bg-red-700 shadow-sm'
+              : 'bg-gray-300 cursor-not-allowed'
+              }`}
+          >
+            {product.isAvailable === false ? 'TẠM NGƯNG' : displayDetails.stock > 0 ? 'MUA NGAY' : 'HẾT HÀNG'}
+          </button>
+        </div>
+      </div>
     </div>
   );
 }

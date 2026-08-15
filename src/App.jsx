@@ -53,10 +53,6 @@ function App() {
   // State: selectedLocation - Quản lý trạng thái và dữ liệu của selectedLocation trong giao diện
   const [selectedLocation, setSelectedLocation] = useState(() => localStorage.getItem('selectedLocation') || 'Toàn quốc');
 
-
-
-
-
   if (isAdminPath) {
     return (
       <Suspense fallback={<div className="min-h-screen flex items-center justify-center font-semibold text-gray-500 bg-gray-50">Đang tải Admin...</div>}>

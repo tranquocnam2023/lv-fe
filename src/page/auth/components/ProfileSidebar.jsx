@@ -50,7 +50,7 @@ export default function ProfileSidebar({
           }`}
         >
           <ClipboardList size={18} />
-          <span>Lịch sử &amp; Tra cứu đơn hàng</span>
+          <span>Tra cứu &amp; Lịch sử đơn hàng</span>
         </button>
 
         <button

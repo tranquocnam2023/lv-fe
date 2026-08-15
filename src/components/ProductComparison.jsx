@@ -8,7 +8,6 @@ const formatVND = (price) => {
 };
 
 export default function ProductComparison() {
-  // State: compareList - Quản lý trạng thái và dữ liệu của compareList trong giao diện
   const [compareList, setCompareList] = useState(() => {
     try {
       return JSON.parse(localStorage.getItem('compare_products') || '[]');
@@ -17,13 +16,11 @@ export default function ProductComparison() {
       return [];
     }
   });
-  // State: isOpen - Quản lý trạng thái và dữ liệu của isOpen trong giao diện
   const [isOpen, setIsOpen] = useState(false);
 
   // Sync compare items from localStorage
   const loadCompareList = () => {
     try {
-      // Khai báo biến/hằng số: items - Dùng trong logic xử lý của component
       const items = JSON.parse(localStorage.getItem('compare_products') || '[]');
       setCompareList(items);
     } catch (e) {
@@ -35,7 +32,6 @@ export default function ProductComparison() {
 
     // Listen for custom events to add products to comparison
     const handleAddCompare = (e) => {
-      // Khai báo biến/hằng số: product - Dùng trong logic xử lý của component
       const product = e.detail;
       setCompareList(prev => {
         if (prev.some(item => item.id === product.id)) {
@@ -46,7 +42,6 @@ export default function ProductComparison() {
           alert('Bạn chỉ có thể so sánh tối đa 3 sản phẩm cùng lúc!');
           return prev;
         }
-        // Cấu hình/Hằng số/Dịch vụ dữ liệu: newList
         const newList = [...prev, product];
         localStorage.setItem('compare_products', JSON.stringify(newList));
         return newList;
@@ -61,15 +56,12 @@ export default function ProductComparison() {
     };
   }, []);
 
-  // Hàm thực thi logic: removeFromCompare
   const removeFromCompare = (productId) => {
-    // Hàm thực thi logic: newList
     const newList = compareList.filter(item => item.id !== productId);
     localStorage.setItem('compare_products', JSON.stringify(newList));
     setCompareList(newList);
   };
 
-  // Hàm thực thi logic: clearAll
   const clearAll = () => {
     localStorage.setItem('compare_products', '[]');
     setCompareList([]);
@@ -92,13 +84,13 @@ export default function ProductComparison() {
         <div className="flex items-center gap-3">
           {compareList.map(prod => (
             <div key={prod.id} className="relative group flex items-center gap-2 bg-gray-50 border border-gray-200 pl-2 pr-7 py-1 rounded-xl shrink-0">
-              <img 
-                src={prod.thumbnailImage || prod.mainImage || '/placeholder.png'} 
-                alt={prod.name} 
+              <img
+                src={prod.thumbnailImage || prod.mainImage || '/placeholder.png'}
+                alt={prod.name}
                 className="w-8 h-8 object-contain rounded bg-white"
               />
               <span className="text-xs font-bold text-gray-700 max-w-[120px] truncate">{prod.name}</span>
-              <button 
+              <button
                 onClick={() => removeFromCompare(prod.id)}
                 className="absolute right-1 top-1/2 -translate-y-1/2 p-1 text-gray-400 hover:text-red-500 rounded-full"
               >
@@ -111,14 +103,14 @@ export default function ProductComparison() {
         <div className="h-8 w-px bg-gray-200" />
 
         <div className="flex items-center gap-2 shrink-0">
-          <button 
+          <button
             onClick={() => setIsOpen(true)}
             className="flex items-center gap-1.5 px-4 py-2 bg-primary text-white text-xs font-bold rounded-xl hover:bg-primary-hover shadow-md hover:shadow-lg transition-all"
           >
             So sánh ngay
             <ArrowRight size={14} />
           </button>
-          <button 
+          <button
             onClick={clearAll}
             className="p-2 text-gray-400 hover:text-gray-600 rounded-xl text-xs font-medium hover:bg-gray-100 transition-colors"
             title="Xóa tất cả"
@@ -143,7 +135,7 @@ export default function ProductComparison() {
                   <p className="text-xs text-gray-500 font-medium">Đối chiếu cấu hình, thông số và giá bán trực quan</p>
                 </div>
               </div>
-              <button 
+              <button
                 onClick={() => setIsOpen(false)}
                 className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full transition-colors"
               >
@@ -160,16 +152,16 @@ export default function ProductComparison() {
                     {compareList.map(prod => (
                       <th key={prod.id} className="pb-6 px-4 text-center align-top">
                         <div className="flex flex-col items-center gap-3 relative">
-                          <button 
+                          <button
                             onClick={() => removeFromCompare(prod.id)}
                             className="absolute -top-2 right-4 p-1.5 bg-gray-100 hover:bg-red-50 text-gray-400 hover:text-red-500 rounded-full transition-colors"
                             title="Xóa khỏi so sánh"
                           >
                             <X size={14} />
                           </button>
-                          <img 
-                            src={prod.thumbnailImage || prod.mainImage || '/placeholder.png'} 
-                            alt={prod.name} 
+                          <img
+                            src={prod.thumbnailImage || prod.mainImage || '/placeholder.png'}
+                            alt={prod.name}
                             className="w-28 h-28 object-contain p-2 border border-gray-100 bg-gray-50 rounded-2xl"
                           />
                           <span className="text-sm font-bold text-gray-900 line-clamp-2 px-2 max-h-[40px] leading-tight">
@@ -252,15 +244,14 @@ export default function ProductComparison() {
                     <td className="py-6 text-sm font-bold text-gray-500" />
                     {compareList.map(prod => (
                       <td key={prod.id} className="py-6 px-4 text-center">
-                        <button
-                          onClick={() => {
-                            window.location.href = `/product/${prod.slug}`;
-                          }}
-                          className="px-4 py-2 border border-primary text-primary hover:bg-primary hover:text-white text-xs font-bold rounded-xl transition-all inline-flex items-center gap-1.5"
+                        <Link
+                          to={`/product/${prod.slug || prod.id}`}
+                          onClick={() => setIsOpen(false)}
+                          className="px-4 py-2 border border-primary text-primary hover:bg-primary hover:text-white text-xs font-bold rounded-xl transition-all inline-flex items-center gap-1.5 cursor-pointer"
                         >
                           <ShoppingCart size={14} />
                           Xem chi tiết / Mua
-                        </button>
+                        </Link>
                       </td>
                     ))}
                     {Array.from({ length: 3 - compareList.length }).map((_, i) => <td key={i} className="py-6 px-4" />)}
@@ -272,7 +263,7 @@ export default function ProductComparison() {
             {/* Modal Footer */}
             <div className="px-8 py-4 bg-gray-50 border-t border-gray-100 flex items-center justify-between text-xs text-gray-400 font-medium">
               <span>* Các thông tin so sánh được trích xuất trực tiếp từ dữ liệu sản phẩm thực tế.</span>
-              <button 
+              <button
                 onClick={clearAll}
                 className="text-red-500 hover:text-red-700 font-bold"
               >

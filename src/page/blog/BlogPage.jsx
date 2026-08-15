@@ -100,7 +100,7 @@ export default function BlogPage() {
 
   return (
     <div className="min-h-screen bg-gray-50/60 pb-16 pt-4 animate-in fade-in duration-300">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6">
+      <div className="max-w-7xl mx-auto px-2 sm:px-6">
 
         {/* ── BREADCRUMB ── */}
         <div className="flex items-center gap-2 text-xs text-gray-500 mb-4 font-semibold">

@@ -42,31 +42,18 @@ const POLICY_DATA = {
     )
   },
   'doi-tra': {
-    title: 'CHÍNH SÁCH ĐỔI TRẢ SẢN PHẨM TẠI THẾ GIỚI DI ĐỘNG',
+    title: 'CHÍNH SÁCH ĐỔI TRẢ SẢN PHẨM TẠI PHONESHOP',
     content: (
       <div className="bg-white p-8 rounded-md border border-gray-100">
-        <h3 className="text-xl font-bold text-blue-700 mb-4">1. Lỗi kỹ thuật từ nhà sản xuất</h3>
-        <p className="text-gray-600 mb-6">Áp dụng đổi mới sản phẩm tương đương hoặc hoàn tiền nếu sản phẩm gặp lỗi phần cứng do nhà sản xuất trong vòng 30 ngày đầu sử dụng.</p>
-        <h3 className="text-xl font-bold text-blue-700 mb-4">2. Đổi trả theo nhu cầu</h3>
-        <p className="text-gray-600">Sản phẩm không lỗi nhưng khách hàng muốn đổi sang mẫu khác sẽ được thu mua lại với mức giá ưu đãi theo quy định của hệ thống.</p>
+        <h3 className="text-xl font-bold text-blue-700">1. Lỗi kỹ thuật từ nhà sản xuất</h3>
+        <p className="text-gray-600 mb-3">Áp dụng đổi mới sản phẩm tương đương hoặc hoàn tiền nếu sản phẩm gặp lỗi phần cứng do nhà sản xuất trong vòng 30 ngày đầu sử dụng.</p>
+        <h3 className="text-xl font-bold text-blue-700">2. Đổi trả theo nhu cầu</h3>
+        <p className="text-gray-600 mb-3">Sản phẩm không lỗi nhưng khách hàng muốn đổi sang mẫu khác sẽ được thu mua lại với mức giá ưu đãi theo quy định của hệ thống.</p>
+        <h3 className="text-xl font-bold text-blue-700">3. Đổi trả do giao hàng sai sản phẩm</h3>
+        <p className="text-gray-600 mb-3">Sản phẩm không lỗi nhưng hàng giao cho khách hàng bị sai sản phẩm hoặc không đúng như mô tả, không đúng màu sắc sẽ đổi mới theo quy định của hệ thống nếu hộp còn nguyên vẹn.</p>
       </div>
     )
   },
-  'tra-gop': {
-    title: 'HƯỚNG DẪN MUA TRẢ GÓP 0% LÃI SUẤT',
-    content: (
-      <div className="grid md:grid-cols-2 gap-8">
-        <div className="bg-blue-50 p-6 rounded-md border border-blue-100">
-          <h3 className="text-lg font-bold text-blue-800 mb-4">Trả góp qua thẻ tín dụng</h3>
-          <p className="text-sm text-blue-700">Hỗ trợ hơn 20 ngân hàng lớn tại Việt Nam. Thủ tục nhanh gọn, không cần chứng minh thu nhập.</p>
-        </div>
-        <div className="bg-orange-50 p-6 rounded-md border border-orange-100">
-          <h3 className="text-lg font-bold text-orange-800 mb-4">Trả góp qua công ty tài chính</h3>
-          <p className="text-sm text-orange-700">Dành cho khách hàng chưa có thẻ tín dụng. Chỉ cần CCCD, duyệt hồ sơ trong 15-30 phút.</p>
-        </div>
-      </div>
-    )
-  }
 };
 
 export default function PolicyPage() {
