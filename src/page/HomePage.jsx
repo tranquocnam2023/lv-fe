@@ -26,6 +26,7 @@ import { categoryService } from '../services/categoryService';
 import api from '../services/api';
 import { THEME } from '../utils/theme';
 
+// Hàm thực thi logic: parseSpecs
 const parseSpecs = (specsInput) => {
   if (!specsInput) return [];
   let parsed = specsInput;
@@ -40,11 +41,13 @@ const parseSpecs = (specsInput) => {
   if (parsed.length === 0) return [];
   if (typeof parsed[0] === 'string') return parsed;
 
+  // Khai báo biến/hằng số: tags - Dùng trong logic xử lý của component
   const tags = [];
   parsed.forEach(group => {
     if (group && Array.isArray(group.items)) {
       group.items.forEach(item => {
         if (item && item.value && item.value.trim() !== '') {
+          // Khai báo biến/hằng số: val - Dùng trong logic xử lý của component
           const val = item.value.trim();
           if (!tags.includes(val)) {
             tags.push(val);
@@ -57,8 +60,11 @@ const parseSpecs = (specsInput) => {
 };
 
 export default function HomePage({ selectedLocation }) {
+  // Khai báo giải nén các thuộc tính/hàm (stopLoading) từ Hook / Context / Props
   const { stopLoading } = useLoading();
+  // Khai báo giải nén các thuộc tính/hàm (brand) từ Hook / Context / Props
   const { brand } = useParams();
+  // Hook điều hướng trang (useNavigate) để chuyển hướng Route
   const navigate = useNavigate();
 
   // ── Khai báo toàn bộ các React State Hooks ở đầu component ──
@@ -67,50 +73,74 @@ export default function HomePage({ selectedLocation }) {
   const [selectedBrand, setSelectedBrand] = useState(brand || null);
   // selectedQuickBrand: Bộ lọc thương hiệu phụ (ví dụ: khi đang xem Điện thoại mà bấm lọc nhanh 'Apple' thì lưu tại đây)
   const [selectedQuickBrand, setSelectedQuickBrand] = useState(null);
+  // State: categories - Quản lý trạng thái và dữ liệu của categories trong giao diện
   const [categories, setCategories] = useState([]);
+  // State: advancedFilters - Quản lý trạng thái và dữ liệu của advancedFilters trong giao diện
   const [advancedFilters, setAdvancedFilters] = useState(null);
+  // State: sortBy - Quản lý trạng thái và dữ liệu của sortBy trong giao diện
   const [sortBy, setSortBy] = useState('featured');
+  // State: isPriceDropdownOpen - Quản lý trạng thái và dữ liệu của isPriceDropdownOpen trong giao diện
   const [isPriceDropdownOpen, setIsPriceDropdownOpen] = useState(false);
+  // State: products - Quản lý trạng thái và dữ liệu của products trong giao diện
   const [products, setProducts] = useState([]);
+  // State: isLoading - Quản lý trạng thái và dữ liệu của isLoading trong giao diện
   const [isLoading, setIsLoading] = useState(true);
+  // State: currentPage - Quản lý trạng thái và dữ liệu của currentPage trong giao diện
   const [currentPage, setCurrentPage] = useState(1);
+  // Khai báo biến/hằng số: PRODUCTS_PER_PAGE - Dùng trong logic xử lý của component
   const PRODUCTS_PER_PAGE = 12;
+  // Reference (useRef): productListRef - Lưu vết tham chiếu DOM hoặc giá trị không gây re-render
   const productListRef = useRef(null);
 
   // Tin tức Blog State & Phân trang
   const [blogs, setBlogs] = useState([]);
+  // State: loadingBlogs - Quản lý trạng thái và dữ liệu của loadingBlogs trong giao diện
   const [loadingBlogs, setLoadingBlogs] = useState(true);
+  // State: currentBlogPage - Quản lý trạng thái và dữ liệu của currentBlogPage trong giao diện
   const [currentBlogPage, setCurrentBlogPage] = useState(1);
+  // State: selectedBlog - Quản lý trạng thái và dữ liệu của selectedBlog trong giao diện
   const [selectedBlog, setSelectedBlog] = useState(null);
+  // Khai báo biến/hằng số: BLOGS_PER_PAGE - Dùng trong logic xử lý của component
   const BLOGS_PER_PAGE = 4;
+  // Reference (useRef): blogListRef - Lưu vết tham chiếu DOM hoặc giá trị không gây re-render
   const blogListRef = useRef(null);
 
+  // Hàm thực thi logic: scrollToBlogList
   const scrollToBlogList = () => {
     if (blogListRef.current) {
+      // Khai báo biến/hằng số: yOffset - Dùng trong logic xử lý của component
       const yOffset = -80;
+      // Khai báo biến/hằng số: y - Dùng trong logic xử lý của component
       const y = blogListRef.current.getBoundingClientRect().top + window.pageYOffset + yOffset;
       window.scrollTo({ top: y, behavior: 'smooth' });
     }
   };
 
+  // Hàm xử lý logic/sự kiện: getMediaUrl
   const getMediaUrl = (url) => {
     if (!url) return '';
     if (url.startsWith('data:') || url.startsWith('blob:') || url.startsWith('http://') || url.startsWith('https://')) {
       return url;
     }
+    // Khai báo biến/hằng số: backendOrigin - Dùng trong logic xử lý của component
     const backendOrigin = (import.meta.env.VITE_API_URL || api.defaults?.baseURL || 'https://localhost:7279/api')
       .replace(/\/api\/?$/, '');
-    
+
+    // Khai báo biến/hằng số: cleanPath - Dùng trong logic xử lý của component
     const cleanPath = url.startsWith('/') ? url : `/${url}`;
     return `${backendOrigin}${cleanPath}`;
   };
 
   useEffect(() => {
+    // Hàm xử lý logic/sự kiện: fetchBlogs
     const fetchBlogs = async () => {
       try {
         setLoadingBlogs(true);
+        // Khai báo biến/hằng số: res - Dùng trong logic xử lý của component
         const res = await api.get('/blog?isPublished=true');
+        // Cấu hình/Hằng số/Dịch vụ dữ liệu: data
         const data = res.data || res;
+        // Cấu hình/Hằng số/Dịch vụ dữ liệu: list
         const list = Array.isArray(data) ? data : (data.items || []);
         setBlogs(list);
       } catch (err) {
@@ -122,9 +152,12 @@ export default function HomePage({ selectedLocation }) {
     fetchBlogs();
   }, []);
 
+  // Hàm thực thi logic: scrollToProductList
   const scrollToProductList = () => {
     if (productListRef.current) {
+      // Khai báo biến/hằng số: yOffset - Dùng trong logic xử lý của component
       const yOffset = -80; // Trừ đi khoảng 80px chiều cao của sticky header để không bị che khuất
+      // Khai báo biến/hằng số: y - Dùng trong logic xử lý của component
       const y = productListRef.current.getBoundingClientRect().top + window.pageYOffset + yOffset;
       window.scrollTo({ top: y, behavior: 'smooth' });
     }
@@ -132,9 +165,13 @@ export default function HomePage({ selectedLocation }) {
 
   // ── Lấy các tham số tìm kiếm từ URL query string ──
   const [searchParams] = useSearchParams();
+  // Khai báo biến/hằng số: searchQuery - Dùng trong logic xử lý của component
   const searchQuery = searchParams.get('search') || '';
+  // Khai báo biến/hằng số: priceMinParam - Dùng trong logic xử lý của component
   const priceMinParam = searchParams.get('price_min');
+  // Khai báo biến/hằng số: priceMaxParam - Dùng trong logic xử lý của component
   const priceMaxParam = searchParams.get('price_max');
+  // Khai báo biến/hằng số: filterBrandParam - Dùng trong logic xử lý của component
   const filterBrandParam = searchParams.get('filterBrand');
 
   // Hàm chuẩn hóa chuỗi tiếng Việt để so khớp chính xác không phụ thuộc dấu, khoảng trắng hay encoding
@@ -159,7 +196,9 @@ export default function HomePage({ selectedLocation }) {
   //   Lúc này, trang web hoạt động ở chế độ [THƯƠNG HIỆU] (Hiển thị sản phẩm thuộc hãng Apple trên toàn hệ thống).
   // =========================================================================
   const brandLower = selectedBrand ? selectedBrand.toLowerCase() : '';
+  // Khai báo biến/hằng số: normalizedBrand - Dùng trong logic xử lý của component
   const normalizedBrand = normalizeString(selectedBrand);
+  // Hàm thực thi logic: matchingCat
   const matchingCat = categories.find(c =>
     normalizeString(c.name) === normalizedBrand ||
     (c.slug && normalizeString(c.slug) === normalizedBrand)
@@ -209,7 +248,9 @@ export default function HomePage({ selectedLocation }) {
     // (Bình luận lại để hiển thị đầy đủ cả điện thoại và phụ kiện ở trang chủ, chỉ khi nào click chọn danh mục Điện thoại mới lọc riêng)
     /*
     if (!selectedBrand && !searchQuery) {
+      // Hàm thực thi logic: defaultCat
       const defaultCat = categories.find(c => {
+        // Khai báo biến/hằng số: norm - Dùng trong logic xử lý của component
         const norm = normalizeString(c.name);
         return norm === 'dienthoai' || norm === 'dienthoaididong';
       });
@@ -239,6 +280,7 @@ export default function HomePage({ selectedLocation }) {
       //nổi bật
     }
 
+    // Khai báo biến/hằng số: params - Dùng trong logic xử lý của component
     const params = {
       categoryId,
       brand: brandParam,
@@ -250,6 +292,7 @@ export default function HomePage({ selectedLocation }) {
     productService.getAll(params)
       .then(productsData => {
         if (Array.isArray(productsData)) {
+          // Hàm thực thi logic: normalizedData
           const normalizedData = productsData.map(p => ({
             ...p,
             price: p.price || p.basePrice,
@@ -278,6 +321,7 @@ export default function HomePage({ selectedLocation }) {
     setCurrentPage(1);
   }, [brand, selectedBrand, selectedQuickBrand, searchQuery, advancedFilters]);
 
+  // Reference (useRef): isFirstMount - Lưu vết tham chiếu DOM hoặc giá trị không gây re-render
   const isFirstMount = useRef(true);
 
   // Cuộn mượt mà lên đầu danh sách sản phẩm khi đổi trang (sau khi DOM đã render xong)
@@ -286,12 +330,14 @@ export default function HomePage({ selectedLocation }) {
       isFirstMount.current = false;
       return;
     }
+    // Hàm thực thi logic: timer
     const timer = setTimeout(() => {
       scrollToProductList();
     }, 50);
     return () => clearTimeout(timer);
   }, [currentPage]);
 
+  // Hàm xử lý logic/sự kiện: handleApplyFilter
   const handleApplyFilter = (filters) => {
     setAdvancedFilters(filters);
     setSelectedBrand(null);
@@ -305,10 +351,12 @@ export default function HomePage({ selectedLocation }) {
   const filteredProducts = products.filter(product => {
     // Lọc theo khoảng giá từ URL (?price_min=...&price_max=...)
     if (priceMinParam !== null) {
+      // Khai báo biến/hằng số: minPrice - Dùng trong logic xử lý của component
       const minPrice = parseFloat(priceMinParam);
       if (!isNaN(minPrice) && product.price < minPrice) return false;
     }
     if (priceMaxParam !== null) {
+      // Khai báo biến/hằng số: maxPrice - Dùng trong logic xử lý của component
       const maxPrice = parseFloat(priceMaxParam);
       if (!isNaN(maxPrice) && product.price > maxPrice) return false;
     }
@@ -323,9 +371,13 @@ export default function HomePage({ selectedLocation }) {
 
       // 1. Lọc theo Loại điện thoại (Hệ điều hành Android / iPhone (iOS))
       if (advancedFilters['Loại điện thoại'] && advancedFilters['Loại điện thoại'].length > 0) {
+        // Cấu hình/Hằng số/Dịch vụ dữ liệu: selectedTypes
         const selectedTypes = advancedFilters['Loại điện thoại'];
+        // Khai báo biến/hằng số: specsLower - Dùng trong logic xử lý của component
         const specsLower = (product.specs || '').toLowerCase();
+        // Khai báo biến/hằng số: nameLower - Dùng trong logic xử lý của component
         const nameLower = (product.name || '').toLowerCase();
+        // Khai báo biến/hằng số: brandLower - Dùng trong logic xử lý của component
         const brandLower = (product.brandName || product.brand?.name || product.brand || '').toLowerCase();
 
         // Nhận diện iPhone/iOS
@@ -333,6 +385,7 @@ export default function HomePage({ selectedLocation }) {
         // Nhận diện Android
         const isAndroid = !isIphone && (specsLower.includes('android') || brandLower.includes('samsung') || brandLower.includes('oppo') || brandLower.includes('xiaomi') || brandLower.includes('vivo') || brandLower.includes('realme') || brandLower.includes('sony'));
 
+        // Hàm thực thi logic: matchesType
         const matchesType = selectedTypes.some(type => {
           if (type === 'iPhone (iOS)') return isIphone;
           if (type === 'Android') return isAndroid;
@@ -343,24 +396,35 @@ export default function HomePage({ selectedLocation }) {
 
       // 2. Lọc theo Hãng sản xuất được chọn trong modal
       if (advancedFilters['Hãng'] && advancedFilters['Hãng'].length > 0) {
+        // Khai báo biến/hằng số: selectedBrands - Dùng trong logic xử lý của component
         const selectedBrands = advancedFilters['Hãng'];
+        // Khai báo biến/hằng số: brandName - Dùng trong logic xử lý của component
         const brandName = (product.brandName || product.brand?.name || product.brand || '').toLowerCase();
+        // Hàm thực thi logic: matchesBrand
         const matchesBrand = selectedBrands.some(brand => brandName === brand.toLowerCase());
         if (!matchesBrand) return false;
       }
 
       // 3. Lọc theo dung lượng RAM
       if (advancedFilters['RAM'] && advancedFilters['RAM'].length > 0) {
+        // Khai báo biến/hằng số: specTags - Dùng trong logic xử lý của component
         const specTags = parseSpecs(product.specs);
+        // Khai báo biến/hằng số: nameLower - Dùng trong logic xử lý của component
         const nameLower = (product.name || '').toLowerCase();
+        // Hàm thực thi logic: matchesRam
         const matchesRam = advancedFilters['RAM'].some(ram => {
+          // Khai báo biến/hằng số: cleanRam - Dùng trong logic xử lý của component
           const cleanRam = ram.replace(/\s+/g, '').toLowerCase(); // Ví dụ: "8gb"
+          // Khai báo biến/hằng số: spaceRam - Dùng trong logic xử lý của component
           const spaceRam = ram.toLowerCase(); // Ví dụ: "8 gb"
 
+          // Hàm thực thi logic: inSpecs
           const inSpecs = specTags.some(spec => {
+            // Khai báo biến/hằng số: cleanSpec - Dùng trong logic xử lý của component
             const cleanSpec = spec.replace(/\s+/g, '').toLowerCase();
             return cleanSpec === cleanRam || cleanSpec.includes(spaceRam);
           });
+          // Khai báo biến/hằng số: inName - Dùng trong logic xử lý của component
           const inName = nameLower.includes(cleanRam) || nameLower.includes(spaceRam);
           return inSpecs || inName;
         });
@@ -369,16 +433,24 @@ export default function HomePage({ selectedLocation }) {
 
       // 4. Lọc theo Dung lượng lưu trữ bộ nhớ trong (ROM)
       if (advancedFilters['Dung lượng lưu trữ'] && advancedFilters['Dung lượng lưu trữ'].length > 0) {
+        // Khai báo biến/hằng số: specTags - Dùng trong logic xử lý của component
         const specTags = parseSpecs(product.specs);
+        // Khai báo biến/hằng số: nameLower - Dùng trong logic xử lý của component
         const nameLower = (product.name || '').toLowerCase();
+        // Hàm thực thi logic: matchesStorage
         const matchesStorage = advancedFilters['Dung lượng lưu trữ'].some(storage => {
+          // Khai báo biến/hằng số: cleanStorage - Dùng trong logic xử lý của component
           const cleanStorage = storage.replace(/\s+/g, '').toLowerCase(); // Ví dụ: "128gb"
+          // Khai báo biến/hằng số: spaceStorage - Dùng trong logic xử lý của component
           const spaceStorage = storage.toLowerCase(); // Ví dụ: "128 gb"
 
+          // Hàm thực thi logic: inSpecs
           const inSpecs = specTags.some(spec => {
+            // Khai báo biến/hằng số: cleanSpec - Dùng trong logic xử lý của component
             const cleanSpec = spec.replace(/\s+/g, '').toLowerCase();
             return cleanSpec === cleanStorage || cleanSpec.includes(spaceStorage);
           });
+          // Khai báo biến/hằng số: inName - Dùng trong logic xử lý của component
           const inName = nameLower.includes(cleanStorage) || nameLower.includes(spaceStorage);
           return inSpecs || inName;
         });
@@ -394,6 +466,7 @@ export default function HomePage({ selectedLocation }) {
     .sort((a, b) => (b.reviewCount || 0) - (a.reviewCount || 0))
     .slice(0, 4);
 
+  // Hàm thực thi logic: displaySelectedBrand
   const displaySelectedBrand = () => {
     if (matchingCat) {
       if (selectedQuickBrand) {
@@ -463,7 +536,7 @@ export default function HomePage({ selectedLocation }) {
         </div>
       )}
 
-      
+
 
       {/* Banner Quảng cáo chạy (Nằm trên bộ lọc, dưới mục sản phẩm nổi bật) */}
       {!selectedBrand && !searchQuery && !advancedFilters && (
@@ -611,9 +684,13 @@ export default function HomePage({ selectedLocation }) {
             <>
               {/* Calculate sliced products for pagination */}
               {(() => {
+                // Khai báo biến/hằng số: totalPages - Dùng trong logic xử lý của component
                 const totalPages = Math.ceil(filteredProducts.length / PRODUCTS_PER_PAGE);
+                // Khai báo biến/hằng số: startIndex - Dùng trong logic xử lý của component
                 const startIndex = (currentPage - 1) * PRODUCTS_PER_PAGE;
+                // Khai báo biến/hằng số: endIndex - Dùng trong logic xử lý của component
                 const endIndex = startIndex + PRODUCTS_PER_PAGE;
+                // Khai báo biến/hằng số: productsToShow - Dùng trong logic xử lý của component
                 const productsToShow = filteredProducts.slice(startIndex, endIndex);
 
                 return (
@@ -650,11 +727,10 @@ export default function HomePage({ selectedLocation }) {
                             setCurrentPage(prev => Math.max(prev - 1, 1));
                             scrollToProductList();
                           }}
-                          className={`w-9 h-9 rounded-lg border flex items-center justify-center text-sm font-bold transition-all ${
-                            currentPage === 1
+                          className={`w-9 h-9 rounded-lg border flex items-center justify-center text-sm font-bold transition-all ${currentPage === 1
                               ? 'bg-gray-50 border-gray-200 text-gray-300 cursor-not-allowed'
                               : 'bg-white border-gray-200 hover:border-blue-500 hover:text-blue-600 text-gray-700 cursor-pointer shadow-sm'
-                          }`}
+                            }`}
                         >
                           <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-4 h-4">
                             <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5 8.25 12l7.5-7.5" />
@@ -663,6 +739,7 @@ export default function HomePage({ selectedLocation }) {
 
                         {/* Page Numbers */}
                         {Array.from({ length: totalPages }).map((_, idx) => {
+                          // Khai báo biến/hằng số: pageNum - Dùng trong logic xử lý của component
                           const pageNum = idx + 1;
                           return (
                             <button
@@ -671,11 +748,10 @@ export default function HomePage({ selectedLocation }) {
                                 setCurrentPage(pageNum);
                                 scrollToProductList();
                               }}
-                              className={`w-9 h-9 rounded-lg border text-sm font-bold transition-all ${
-                                currentPage === pageNum
+                              className={`w-9 h-9 rounded-lg border text-sm font-bold transition-all ${currentPage === pageNum
                                   ? 'bg-blue-600 border-blue-600 text-white shadow-md shadow-blue-500/20'
                                   : 'bg-white border-gray-200 hover:border-blue-500 hover:text-blue-600 text-gray-700 cursor-pointer'
-                              }`}
+                                }`}
                             >
                               {pageNum}
                             </button>
@@ -689,11 +765,10 @@ export default function HomePage({ selectedLocation }) {
                             setCurrentPage(prev => Math.min(prev + 1, totalPages));
                             scrollToProductList();
                           }}
-                          className={`w-9 h-9 rounded-lg border flex items-center justify-center text-sm font-bold transition-all ${
-                            currentPage === totalPages
+                          className={`w-9 h-9 rounded-lg border flex items-center justify-center text-sm font-bold transition-all ${currentPage === totalPages
                               ? 'bg-gray-50 border-gray-200 text-gray-300 cursor-not-allowed'
                               : 'bg-white border-gray-200 hover:border-blue-500 hover:text-blue-600 text-gray-700 cursor-pointer shadow-sm'
-                          }`}
+                            }`}
                         >
                           <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-4 h-4">
                             <path strokeLinecap="round" strokeLinejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5" />
@@ -711,169 +786,171 @@ export default function HomePage({ selectedLocation }) {
             </div>
           )}
 
-           {/* ========================================================================= */}
-           {/* 📰 [THẺ BÀI ĐĂNG / TIN TỨC] SECTION TIN TỨC - BLOG CÔNG NGHỆ (BLOG CARDS GRID) */}
-           {/* ========================================================================= */}
-           <div className="w-full bg-white rounded-2xl p-6 mb-8 border border-gray-200 shadow-sm animate-in fade-in zoom-in-95 duration-500">
-             <div className="flex items-center justify-between mb-5 border-b border-gray-100 pb-3">
-               <h3 className="text-lg font-black flex items-center gap-2" style={{ color: THEME.secondary }}>
-                 <span>TIN TỨC - BLOG CÔNG NGHỆ</span>
-               </h3>
-               <Link to="/blog" className="text-xs font-bold text-blue-600 hover:text-red-600 flex items-center gap-0.5 transition-colors">
-                 <span>Xem tất cả</span>
-                 <ChevronRight size={14} />
-               </Link>
-             </div>
+          {/* ========================================================================= */}
+          {/* 📰 [THẺ BÀI ĐĂNG / TIN TỨC] SECTION TIN TỨC - BLOG CÔNG NGHỆ (BLOG CARDS GRID) */}
+          {/* ========================================================================= */}
+          <div className="w-full bg-white rounded-2xl p-6 mb-8 border border-gray-200 shadow-sm animate-in fade-in zoom-in-95 duration-500">
+            <div className="flex items-center justify-between mb-5 border-b border-gray-100 pb-3">
+              <h3 className="text-lg font-black flex items-center gap-2" style={{ color: THEME.secondary }}>
+                <span>TIN TỨC - BLOG CÔNG NGHỆ</span>
+              </h3>
+              <Link to="/blog" className="text-xs font-bold text-blue-600 hover:text-red-600 flex items-center gap-0.5 transition-colors">
+                <span>Xem tất cả</span>
+                <ChevronRight size={14} />
+              </Link>
+            </div>
 
-             {loadingBlogs ? (
-               <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                 {[1, 2, 3, 4].map(i => (
-                   <div key={i} className="animate-pulse space-y-2 bg-gray-50 p-3 rounded-xl border border-gray-100">
-                     <div className="h-32 bg-gray-200 rounded-lg" />
-                     <div className="h-4 bg-gray-200 rounded w-3/4" />
-                     <div className="h-3 bg-gray-200 rounded w-full" />
-                   </div>
-                 ))}
-               </div>
-             ) : blogs.length === 0 ? (
-               <div className="py-10 text-center text-gray-400 font-medium text-sm">
-                 Chưa có bài viết tin tức nào được xuất bản.
-               </div>
-             ) : (
-                /* Tính toán Phân trang cho Thẻ Bài đăng */
-                (() => {
-                  const totalBlogPages = Math.ceil(blogs.length / BLOGS_PER_PAGE);
-                  const blogStartIndex = (currentBlogPage - 1) * BLOGS_PER_PAGE;
-                  const blogEndIndex = blogStartIndex + BLOGS_PER_PAGE;
-                  const blogsToShow = blogs.slice(blogStartIndex, blogEndIndex);
+            {loadingBlogs ? (
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                {[1, 2, 3, 4].map(i => (
+                  <div key={i} className="animate-pulse space-y-2 bg-gray-50 p-3 rounded-xl border border-gray-100">
+                    <div className="h-32 bg-gray-200 rounded-lg" />
+                    <div className="h-4 bg-gray-200 rounded w-3/4" />
+                    <div className="h-3 bg-gray-200 rounded w-full" />
+                  </div>
+                ))}
+              </div>
+            ) : blogs.length === 0 ? (
+              <div className="py-10 text-center text-gray-400 font-medium text-sm">
+                Chưa có bài viết tin tức nào được xuất bản.
+              </div>
+            ) : (
+              /* Tính toán Phân trang cho Thẻ Bài đăng */
+              (() => {
+                // Khai báo biến/hằng số: totalBlogPages - Dùng trong logic xử lý của component
+                const totalBlogPages = Math.ceil(blogs.length / BLOGS_PER_PAGE);
+                // Khai báo biến/hằng số: blogStartIndex - Dùng trong logic xử lý của component
+                const blogStartIndex = (currentBlogPage - 1) * BLOGS_PER_PAGE;
+                // Khai báo biến/hằng số: blogEndIndex - Dùng trong logic xử lý của component
+                const blogEndIndex = blogStartIndex + BLOGS_PER_PAGE;
+                // Khai báo biến/hằng số: blogsToShow - Dùng trong logic xử lý của component
+                const blogsToShow = blogs.slice(blogStartIndex, blogEndIndex);
 
-                  return (
-                    <>
-                      {/* Lưới 4 cột nhỏ gọn tương tự Lưới Thẻ Sản Phẩm (grid-cols-2 md:grid-cols-3 lg:grid-cols-4) */}
-                      <div ref={blogListRef} className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 animate-in fade-in duration-350">
-                        {blogsToShow.map(item => (
-                   /* ── [THẺ BÀI ĐĂNG CÁ NHÂN (BLOG CARD ITEM)] ── */
-                   <div
-                     key={item.id}
-                     onClick={() => navigate(`/blog/${item.id}`)}
-                     className="group flex flex-col bg-white border border-gray-200 hover:border-blue-500 rounded-xl p-3 hover:shadow-md transition-all duration-300 relative cursor-pointer h-full overflow-hidden active:scale-98"
-                   >
-                     {/* Ảnh bìa Thẻ Bài Đăng (Thu nhỏ chiều cao h-32 sm:h-36 vừa bằng ảnh thẻ sản phẩm) */}
-                     <div className="relative w-full h-32 sm:h-36 rounded-lg overflow-hidden bg-gray-100 shrink-0 mb-2">
-                       {item.thumbnailUrl ? (
-                         <img
-                           src={getMediaUrl(item.thumbnailUrl)}
-                           alt={item.title}
-                           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                           onError={(e) => {
-                             e.target.onerror = null;
-                             e.target.src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="300" height="200" viewBox="0 0 300 200"%3E%3Crect width="300" height="200" fill="%23f1f5f9"/%3E%3Ctext x="50%25" y="50%25" dominant-baseline="middle" text-anchor="middle" fill="%2394a3b8" font-family="sans-serif" font-size="14" font-weight="bold"%3ETin+T%E1%BB%A9c+PhoneShop%3C/text%3E%3C/svg%3E';
-                           }}
-                         />
-                       ) : (
-                         <div className="w-full h-full flex items-center justify-center text-gray-400 bg-slate-100 font-bold text-xs">
-                           PhoneShop Blog
-                         </div>
-                       )}
-                       {item.category && (
-                         <span className="absolute top-2 left-2 bg-blue-600/90 backdrop-blur-md text-white text-[9px] font-black px-2 py-0.5 rounded uppercase tracking-wider shadow-sm">
-                           {item.category}
-                         </span>
-                       )}
-                     </div>
-
-                     {/* Content */}
-                     <div className="p-2 flex-1 flex flex-col justify-between">
-                       <div>
-                         <h4 className="font-bold text-gray-900 group-hover:text-blue-600 transition-colors line-clamp-2 text-xs sm:text-sm leading-snug mb-1">
-                           {item.title}
-                         </h4>
-                         {item.summary && (
-                           <p className="text-[11px] text-gray-500 line-clamp-2 leading-relaxed mb-2">
-                             {item.summary}
-                           </p>
-                         )}
-                       </div>
-
-                       <div className="flex items-center justify-between text-[10px] text-gray-400 pt-2 border-t border-gray-100 font-medium">
-                         <span>{item.authorName || item.author || 'Ban Biên Tập'}</span>
-                         <span>{item.createdAt ? new Date(item.createdAt).toLocaleDateString('vi-VN') : ''}</span>
-                       </div>
-                     </div>
-                   </div>
-                 ))}
-               </div>
-
-                      {/* Pagination Controls Cho Phân Trang Bài Viết / Blog */}
-                      {totalBlogPages > 1 && (
-                        <div className="flex items-center justify-center gap-2 mt-8 mb-2 select-none">
-                          {/* Prev Button */}
-                          <button
-                            disabled={currentBlogPage === 1}
-                            onClick={() => {
-                              setCurrentBlogPage(prev => Math.max(prev - 1, 1));
-                              scrollToBlogList();
-                            }}
-                            className={`w-9 h-9 rounded-lg border flex items-center justify-center text-sm font-bold transition-all ${
-                              currentBlogPage === 1
-                                ? 'bg-gray-50 border-gray-200 text-gray-300 cursor-not-allowed'
-                                : 'bg-white border-gray-200 hover:border-blue-500 hover:text-blue-600 text-gray-700 cursor-pointer shadow-sm'
-                            }`}
-                          >
-                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-4 h-4">
-                              <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5 8.25 12l7.5-7.5" />
-                            </svg>
-                          </button>
-
-                          {/* Page Numbers */}
-                          {Array.from({ length: totalBlogPages }).map((_, idx) => {
-                            const pageNum = idx + 1;
-                            return (
-                              <button
-                                key={`blog-page-${pageNum}`}
-                                onClick={() => {
-                                  setCurrentBlogPage(pageNum);
-                                  scrollToBlogList();
+                return (
+                  <>
+                    {/* Lưới 4 cột nhỏ gọn tương tự Lưới Thẻ Sản Phẩm (grid-cols-2 md:grid-cols-3 lg:grid-cols-4) */}
+                    <div ref={blogListRef} className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 animate-in fade-in duration-350">
+                      {blogsToShow.map(item => (
+                        /* ── [THẺ BÀI ĐĂNG CÁ NHÂN (BLOG CARD ITEM)] ── */
+                        <div
+                          key={item.id}
+                          onClick={() => navigate(`/blog/${item.id}`)}
+                          className="group flex flex-col bg-white border border-gray-200 hover:border-blue-500 rounded-xl p-3 hover:shadow-md transition-all duration-300 relative cursor-pointer h-full overflow-hidden active:scale-98"
+                        >
+                          {/* Ảnh bìa Thẻ Bài Đăng (Thu nhỏ chiều cao h-32 sm:h-36 vừa bằng ảnh thẻ sản phẩm) */}
+                          <div className="relative w-full h-32 sm:h-36 rounded-lg overflow-hidden bg-gray-100 shrink-0 mb-2">
+                            {item.thumbnailUrl ? (
+                              <img
+                                src={getMediaUrl(item.thumbnailUrl)}
+                                alt={item.title}
+                                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                                onError={(e) => {
+                                  e.target.onerror = null;
+                                  e.target.src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="300" height="200" viewBox="0 0 300 200"%3E%3Crect width="300" height="200" fill="%23f1f5f9"/%3E%3Ctext x="50%25" y="50%25" dominant-baseline="middle" text-anchor="middle" fill="%2394a3b8" font-family="sans-serif" font-size="14" font-weight="bold"%3ETin+T%E1%BB%A9c+PhoneShop%3C/text%3E%3C/svg%3E';
                                 }}
-                                className={`w-9 h-9 rounded-lg border text-sm font-bold transition-all ${
-                                  currentBlogPage === pageNum
-                                    ? 'bg-blue-600 border-blue-600 text-white shadow-md shadow-blue-500/20'
-                                    : 'bg-white border-gray-200 hover:border-blue-500 hover:text-blue-600 text-gray-700 cursor-pointer'
-                                }`}
-                              >
-                                {pageNum}
-                              </button>
-                            );
-                          })}
+                              />
+                            ) : (
+                              <div className="w-full h-full flex items-center justify-center text-gray-400 bg-slate-100 font-bold text-xs">
+                                PhoneShop Blog
+                              </div>
+                            )}
+                            {item.category && (
+                              <span className="absolute top-2 left-2 bg-blue-600/90 backdrop-blur-md text-white text-[9px] font-black px-2 py-0.5 rounded uppercase tracking-wider shadow-sm">
+                                {item.category}
+                              </span>
+                            )}
+                          </div>
 
-                          {/* Next Button */}
-                          <button
-                            disabled={currentBlogPage === totalBlogPages}
-                            onClick={() => {
-                              setCurrentBlogPage(prev => Math.min(prev + 1, totalBlogPages));
-                              scrollToBlogList();
-                            }}
-                            className={`w-9 h-9 rounded-lg border flex items-center justify-center text-sm font-bold transition-all ${
-                              currentBlogPage === totalBlogPages
-                                ? 'bg-gray-50 border-gray-200 text-gray-300 cursor-not-allowed'
-                                : 'bg-white border-gray-200 hover:border-blue-500 hover:text-blue-600 text-gray-700 cursor-pointer shadow-sm'
-                            }`}
-                          >
-                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-4 h-4">
-                              <path strokeLinecap="round" strokeLinejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5" />
-                            </svg>
-                          </button>
+                          {/* Content */}
+                          <div className="p-2 flex-1 flex flex-col justify-between">
+                            <div>
+                              <h4 className="font-bold text-gray-900 group-hover:text-blue-600 transition-colors line-clamp-2 text-xs sm:text-sm leading-snug mb-1">
+                                {item.title}
+                              </h4>
+                              {item.summary && (
+                                <p className="text-[11px] text-gray-500 line-clamp-2 leading-relaxed mb-2">
+                                  {item.summary}
+                                </p>
+                              )}
+                            </div>
+
+                            <div className="flex items-center justify-between text-[10px] text-gray-400 pt-2 border-t border-gray-100 font-medium">
+                              <span>{item.authorName || item.author || 'Ban Biên Tập'}</span>
+                              <span>{item.createdAt ? new Date(item.createdAt).toLocaleDateString('vi-VN') : ''}</span>
+                            </div>
+                          </div>
                         </div>
-                      )}
-                    </>
-                  );
-                })()
-              )}
-            </div> 
-      
+                      ))}
+                    </div>
+
+                    {/* Pagination Controls Cho Phân Trang Bài Viết / Blog */}
+                    {totalBlogPages > 1 && (
+                      <div className="flex items-center justify-center gap-2 mt-8 mb-2 select-none">
+                        {/* Prev Button */}
+                        <button
+                          disabled={currentBlogPage === 1}
+                          onClick={() => {
+                            setCurrentBlogPage(prev => Math.max(prev - 1, 1));
+                            scrollToBlogList();
+                          }}
+                          className={`w-9 h-9 rounded-lg border flex items-center justify-center text-sm font-bold transition-all ${currentBlogPage === 1
+                              ? 'bg-gray-50 border-gray-200 text-gray-300 cursor-not-allowed'
+                              : 'bg-white border-gray-200 hover:border-blue-500 hover:text-blue-600 text-gray-700 cursor-pointer shadow-sm'
+                            }`}
+                        >
+                          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-4 h-4">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5 8.25 12l7.5-7.5" />
+                          </svg>
+                        </button>
+
+                        {/* Page Numbers */}
+                        {Array.from({ length: totalBlogPages }).map((_, idx) => {
+                          // Khai báo biến/hằng số: pageNum - Dùng trong logic xử lý của component
+                          const pageNum = idx + 1;
+                          return (
+                            <button
+                              key={`blog-page-${pageNum}`}
+                              onClick={() => {
+                                setCurrentBlogPage(pageNum);
+                                scrollToBlogList();
+                              }}
+                              className={`w-9 h-9 rounded-lg border text-sm font-bold transition-all ${currentBlogPage === pageNum
+                                  ? 'bg-blue-600 border-blue-600 text-white shadow-md shadow-blue-500/20'
+                                  : 'bg-white border-gray-200 hover:border-blue-500 hover:text-blue-600 text-gray-700 cursor-pointer'
+                                }`}
+                            >
+                              {pageNum}
+                            </button>
+                          );
+                        })}
+
+                        {/* Next Button */}
+                        <button
+                          disabled={currentBlogPage === totalBlogPages}
+                          onClick={() => {
+                            setCurrentBlogPage(prev => Math.min(prev + 1, totalBlogPages));
+                            scrollToBlogList();
+                          }}
+                          className={`w-9 h-9 rounded-lg border flex items-center justify-center text-sm font-bold transition-all ${currentBlogPage === totalBlogPages
+                              ? 'bg-gray-50 border-gray-200 text-gray-300 cursor-not-allowed'
+                              : 'bg-white border-gray-200 hover:border-blue-500 hover:text-blue-600 text-gray-700 cursor-pointer shadow-sm'
+                            }`}
+                        >
+                          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-4 h-4">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5" />
+                          </svg>
+                        </button>
+                      </div>
+                    )}
+                  </>
+                );
+              })()
+            )}
+          </div>
+
         </>
       )}
     </>
   );
-  
+
 }

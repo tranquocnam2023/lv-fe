@@ -51,6 +51,7 @@ export default function ChatbotWidget() {
 
   // Hàm xử lý gửi tin nhắn của người dùng tới Backend AI Service
   const sendQuery = async (queryText) => {
+    // Khai báo biến/hằng số: trimmedMessage - Dùng trong logic xử lý của component
     const trimmedMessage = queryText.trim();
     if (!trimmedMessage || isSending) return;
 

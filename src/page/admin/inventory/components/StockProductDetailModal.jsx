@@ -112,9 +112,12 @@ export default function StockProductDetailModal({
               </thead>
               <tbody className="text-xs divide-y divide-gray-100">
                 {variants.map((v, idx) => {
+                  // Khai báo biến/hằng số: variantIdCode - Dùng trong logic xử lý của component
                   const variantIdCode = v.variantId ? `#${v.variantId}` : (v.productVariantId ? `#${v.productVariantId}` : `#${idx + 1}`);
+                  // Khai báo biến/hằng số: variantVal - Dùng trong logic xử lý của component
                   const variantVal = (v.price || 0) * (v.quantityRemaining || 0);
 
+                  // Khai báo biến/hằng số: displayName - Dùng trong logic xử lý của component
                   const displayName = v.variantName && v.variantName !== 'Tiêu chuẩn' && v.variantName !== 'Mặc định'
                     ? v.variantName.replace(productName, '').replace(/^[\s\-\:\,]+/, '')
                     : (v.variantName || 'Bản chuẩn');

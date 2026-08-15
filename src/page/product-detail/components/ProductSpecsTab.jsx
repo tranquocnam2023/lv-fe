@@ -1,6 +1,7 @@
 import React from 'react';
 import { FileText } from 'lucide-react';
 
+// Hàm xử lý logic/sự kiện: getSummarySpecs
 const getSummarySpecs = (specsInput) => {
   if (!specsInput) return [];
   try {
@@ -12,6 +13,7 @@ const getSummarySpecs = (specsInput) => {
     }
     if (!Array.isArray(parsed)) return [];
 
+    // Khai báo biến/hằng số: result - Dùng trong logic xử lý của component
     const result = [];
 
     for (const group of parsed) {

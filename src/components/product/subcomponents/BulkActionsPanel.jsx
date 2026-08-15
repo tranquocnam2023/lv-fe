@@ -6,13 +6,20 @@ import PriceInput from '../../PriceInput';
 import { productService } from '../../../services/productService';
 
 export default function BulkActionsPanel() {
+  // State: isAttrDropdownOpen - Quản lý trạng thái và dữ liệu của isAttrDropdownOpen trong giao diện
   const [isAttrDropdownOpen, setIsAttrDropdownOpen] = useState(false);
+  // State: bulkUploading - Quản lý trạng thái và dữ liệu của bulkUploading trong giao diện
   const [bulkUploading, setBulkUploading] = useState(false);
+  // Reference (useRef): dropdownRef - Lưu vết tham chiếu DOM hoặc giá trị không gây re-render
   const dropdownRef = useRef(null);
 
+  // State: bulkSpecKey - Quản lý trạng thái và dữ liệu của bulkSpecKey trong giao diện
   const [bulkSpecKey, setBulkSpecKey] = useState('');
+  // State: bulkSpecValue - Quản lý trạng thái và dữ liệu của bulkSpecValue trong giao diện
   const [bulkSpecValue, setBulkSpecValue] = useState('');
+  // State: isBulkCustomKey - Quản lý trạng thái và dữ liệu của isBulkCustomKey trong giao diện
   const [isBulkCustomKey, setIsBulkCustomKey] = useState(false);
+  // State: customBulkSpecKey - Quản lý trạng thái và dữ liệu của customBulkSpecKey trong giao diện
   const [customBulkSpecKey, setCustomBulkSpecKey] = useState('');
 
   const {
@@ -38,8 +45,10 @@ export default function BulkActionsPanel() {
     productId
   } = useProductFormContext();
 
+  // State: searchParams - Quản lý trạng thái và dữ liệu của searchParams trong giao diện
   const [searchParams, setSearchParams] = useSearchParams();
 
+  // Hàm xử lý logic/sự kiện: handleRedirectToInventory
   const handleRedirectToInventory = (actionType) => {
     if (!productId) {
       showToast("warning", "Vui lòng lưu thông tin cơ bản sản phẩm trước khi thao tác kho.");
@@ -54,6 +63,7 @@ export default function BulkActionsPanel() {
   };
 
   useEffect(() => {
+    // Hàm xử lý logic/sự kiện: handleClickOutside
     const handleClickOutside = (event) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
         setIsAttrDropdownOpen(false);
@@ -65,11 +75,14 @@ export default function BulkActionsPanel() {
     };
   }, []);
 
+  // Hàm thực thi logic: availableSpecKeys
   const availableSpecKeys = useMemo(() => {
     if (!formData?.specs) return [];
     try {
+      // Khai báo biến/hằng số: parsed - Dùng trong logic xử lý của component
       const parsed = typeof formData.specs === 'string' ? JSON.parse(formData.specs) : formData.specs;
       if (Array.isArray(parsed)) {
+        // Khai báo biến/hằng số: keys - Dùng trong logic xử lý của component
         const keys = [];
         parsed.forEach(group => {
           if (group.items && Array.isArray(group.items)) {
@@ -88,7 +101,9 @@ export default function BulkActionsPanel() {
     return [];
   }, [formData?.specs]);
 
+  // Hàm xử lý logic/sự kiện: handleApplyBulkSpecOverride
   const handleApplyBulkSpecOverride = () => {
+    // Khai báo biến/hằng số: finalKey - Dùng trong logic xử lý của component
     const finalKey = isBulkCustomKey ? customBulkSpecKey.trim() : bulkSpecKey.trim();
     if (!finalKey) {
       return showToast("warning", "Vui lòng chọn hoặc nhập tên thông số kỹ thuật.");
@@ -98,8 +113,11 @@ export default function BulkActionsPanel() {
     }
 
     selectedVariantKeys.forEach(key => {
+      // Cấu hình/Hằng số/Dịch vụ dữ liệu: vData
       const vData = variantsData[key] || {};
+      // Cấu hình/Hằng số/Dịch vụ dữ liệu: specsList
       const specsList = Array.isArray(vData.specsOverrideList) ? [...vData.specsOverrideList] : [];
+      // Hàm thực thi logic: index
       const index = specsList.findIndex(s => s.key.trim().toLowerCase() === finalKey.toLowerCase());
       if (index !== -1) {
         specsList[index] = { key: finalKey, value: bulkSpecValue.trim() };
@@ -113,7 +131,9 @@ export default function BulkActionsPanel() {
     setBulkSpecValue('');
   };
 
+  // Hàm xử lý logic/sự kiện: handleRemoveBulkSpecOverride
   const handleRemoveBulkSpecOverride = () => {
+    // Khai báo biến/hằng số: finalKey - Dùng trong logic xử lý của component
     const finalKey = isBulkCustomKey ? customBulkSpecKey.trim() : bulkSpecKey.trim();
     if (!finalKey) {
       return showToast("warning", "Vui lòng chọn hoặc nhập tên thông số để xóa.");
@@ -121,8 +141,11 @@ export default function BulkActionsPanel() {
 
     if (window.confirm(`Bạn có chắc chắn muốn gỡ thông số '${finalKey}' khỏi các biến thể đang chọn?`)) {
       selectedVariantKeys.forEach(key => {
+        // Cấu hình/Hằng số/Dịch vụ dữ liệu: vData
         const vData = variantsData[key] || {};
+        // Cấu hình/Hằng số/Dịch vụ dữ liệu: specsList
         const specsList = Array.isArray(vData.specsOverrideList) ? [...vData.specsOverrideList] : [];
+        // Hàm thực thi logic: updated
         const updated = specsList.filter(s => s.key.trim().toLowerCase() !== finalKey.toLowerCase());
         updateVariantField(key, 'specsOverrideList', updated);
       });
@@ -182,6 +205,7 @@ export default function BulkActionsPanel() {
                       </div>
                       <div className="px-1 py-1 space-y-0.5">
                         {opt.values.map(val => {
+                          // Khai báo biến/hằng số: isAttrSelected - Dùng trong logic xử lý của component
                           const isAttrSelected = selectedAttributes.includes(`${opt.id}:${val.text}`);
                           return (
                             <button
@@ -255,15 +279,19 @@ export default function BulkActionsPanel() {
                     accept=".jpg,.jpeg,.png,.webp,.svg"
                     disabled={bulkUploading}
                     onChange={async (e) => {
+                      // Khai báo biến/hằng số: file - Dùng trong logic xử lý của component
                       const file = e.target.files[0];
                       if (!file) return;
                       setBulkUploading(true);
                       try {
+                        // Khai báo biến/hằng số: res - Dùng trong logic xử lý của component
                         const res = await productService.uploadLocalImage(file, 'variants');
                         if (res && res.url) {
                           let finalUrl = res.url;
                           if (finalUrl.startsWith('/')) {
+                            // Khai báo biến/hằng số: apiBase - Dùng trong logic xử lý của component
                             const apiBase = import.meta.env.VITE_API_URL || 'https://localhost:5001/api';
+                            // Khai báo biến/hằng số: hostBase - Dùng trong logic xử lý của component
                             const hostBase = apiBase.replace('/api', '');
                             finalUrl = `${hostBase}${finalUrl}`;
                           }
@@ -358,6 +386,7 @@ export default function BulkActionsPanel() {
                         className="flex-1 px-2 py-1.5 border border-admin-border rounded outline-none text-xs text-admin-text-main font-semibold bg-white focus:border-primary cursor-pointer shadow-sm h-8"
                         value={bulkSpecKey}
                         onChange={(e) => {
+                          // Khai báo biến/hằng số: val - Dùng trong logic xử lý của component
                           const val = e.target.value;
                           if (val === '__custom__') {
                             setIsBulkCustomKey(true);

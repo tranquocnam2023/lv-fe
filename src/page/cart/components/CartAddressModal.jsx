@@ -46,11 +46,15 @@ export default function CartAddressModal({
 
   // Lấy tên Tỉnh/Thành và Phường/Xã hiện tại để làm ngữ cảnh tìm kiếm bản đồ
   const selectedProvince = provinces?.find(p => p.id === selectedProvinceId);
+  // Khai báo biến/hằng số: provinceName - Dùng trong logic xử lý của component
   const provinceName = selectedProvince ? (selectedProvince.fullName || selectedProvince.name) : '';
 
+  // Hàm thực thi logic: selectedWard
   const selectedWard = wards?.find(w => w.id === modalWardId);
+  // Khai báo biến/hằng số: wardName - Dùng trong logic xử lý của component
   const wardName = selectedWard ? (selectedWard.fullName || selectedWard.name) : '';
 
+  // Khai báo biến/hằng số: addressContext - Dùng trong logic xử lý của component
   const addressContext = [wardName, provinceName].filter(Boolean).join(', ');
 
   return (
@@ -83,6 +87,7 @@ export default function CartAddressModal({
               </label>
               <div className="grid grid-cols-1 gap-2 max-h-40 overflow-y-auto pr-1">
                 {userAddresses.map((addr) => {
+                  // Khai báo biến/hằng số: isSelected - Dùng trong logic xử lý của component
                   const isSelected = 
                     modalFullName === addr.recipientName && 
                     modalPhone === addr.phoneNumber && 

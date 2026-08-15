@@ -1,15 +1,19 @@
 import api from './api';
 
+// Cấu hình/Hằng số/Dịch vụ dữ liệu: dashboardService
 export const dashboardService = {
   getStats: async () => {
     try {
+      // State: orders - Quản lý trạng thái và dữ liệu của orders trong giao diện
       const [orders, products, users] = await Promise.all([
         api.get('/Order').catch(() => []),
         api.get('/Product').catch(() => []),
         api.get('/User').catch(() => [])
       ]);
 
+      // Hàm thực thi logic: completedOrders
       const completedOrders = orders.filter(o => o.statusId === 4 || o.statusName === 'Đã giao' || o.statusName === 'Hoàn thành');
+      // Hàm thực thi logic: totalRevenue
       const totalRevenue = completedOrders.reduce((sum, o) => sum + (o.totalPrice || 0), 0);
 
       return {
@@ -26,16 +30,20 @@ export const dashboardService = {
   
   getRevenue: async () => {
     try {
+      // Hàm thực thi logic: orders
       const orders = await api.get('/Order').catch(() => []);
       
       // Group by day of week
       const days = ['Chủ Nhật', 'Thứ 2', 'Thứ 3', 'Thứ 4', 'Thứ 5', 'Thứ 6', 'Thứ 7'];
+      // Khai báo biến/hằng số: revenueByDay - Dùng trong logic xử lý của component
       const revenueByDay = {};
       
       // Initialize last 7 days
       for (let i = 6; i >= 0; i--) {
+        // Khai báo biến/hằng số: d - Dùng trong logic xử lý của component
         const d = new Date();
         d.setDate(d.getDate() - i);
+        // Khai báo biến/hằng số: dayName - Dùng trong logic xử lý của component
         const dayName = days[d.getDay()];
         revenueByDay[dayName] = { name: dayName, daily: 0, monthly: 0 };
       }
@@ -45,10 +53,13 @@ export const dashboardService = {
       sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
       
       orders.forEach(o => {
+        // Khai báo biến/hằng số: isCompleted - Dùng trong logic xử lý của component
         const isCompleted = o.statusId === 4 || o.statusName === 'Đã giao' || o.statusName === 'Hoàn thành';
         if (!isCompleted) return;
+        // Khai báo biến/hằng số: orderDate - Dùng trong logic xử lý của component
         const orderDate = new Date(o.createdAt);
         if (orderDate >= sevenDaysAgo) {
+          // Khai báo biến/hằng số: dayName - Dùng trong logic xử lý của component
           const dayName = days[orderDate.getDay()];
           if (revenueByDay[dayName]) {
             revenueByDay[dayName].daily += o.totalPrice || 0;
@@ -58,6 +69,7 @@ export const dashboardService = {
 
       // Calculate monthly trend
       let cumulative = 0;
+      // Khai báo biến/hằng số: result - Dùng trong logic xử lý của component
       const result = Object.values(revenueByDay);
       result.forEach(item => {
         cumulative += item.daily;
@@ -73,10 +85,12 @@ export const dashboardService = {
   
   getRecentOrders: async () => {
     try {
+      // Hàm thực thi logic: orders
       const orders = await api.get('/Order').catch(() => []);
       
       return orders.slice(0, 5).map(o => {
         let statusVN = 'Chờ xác nhận';
+        // Khai báo biến/hằng số: statusId - Dùng trong logic xử lý của component
         const statusId = o.statusId;
         if (statusId === 2) statusVN = 'Đã xác nhận';
         else if (statusId === 3) statusVN = 'Đang giao';
@@ -100,11 +114,15 @@ export const dashboardService = {
   
   getBirthdays: async () => {
     try {
+      // Hàm thực thi logic: users
       const users = await api.get('/User').catch(() => []);
+      // Khai báo biến/hằng số: monthNames - Dùng trong logic xử lý của component
       const monthNames = ['tháng 1', 'tháng 2', 'tháng 3', 'tháng 4', 'tháng 5', 'tháng 6', 'tháng 7', 'tháng 8', 'tháng 9', 'tháng 10', 'tháng 11', 'tháng 12'];
+      // Khai báo biến/hằng số: currentMonth - Dùng trong logic xử lý của component
       const currentMonth = new Date().getMonth();
       
       return users.slice(0, 3).map((u, i) => {
+        // Khai báo biến/hằng số: birthDay - Dùng trong logic xử lý của component
         const birthDay = 5 + (i * 7);
         return {
           name: u.username || 'Khách hàng',

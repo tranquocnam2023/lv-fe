@@ -26,8 +26,10 @@ export default function CartSummaryPayment({
   isSubmitting,
   handleCheckoutSubmit
 }) {
+  // Khai báo biến/hằng số: userPoints - Dùng trong logic xử lý của component
   const userPoints = currentUser?.rewardPoints || 0;
 
+  // Khai báo biến/hằng số: cartSavings - Dùng trong logic xử lý của component
   const cartSavings = cartItems.reduce(
     (total, item) => total + ((item.originalBasePrice || item.price) - item.price) * item.quantity,
     0

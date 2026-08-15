@@ -47,8 +47,10 @@ const DEFAULT_BANNERS = [
   { id: 'right', imageUrl: bannerRight, linkUrl: TGDD_LINKS.SIDE, type: 'Right', isActive: true, position: 0 },
 ];
 
+// Component React: LinkWrapper - Quản lý giao diện và logic xử lý của LinkWrapper
 const LinkWrapper = ({ to, children }) => {
   if (!to) return children;
+  // Khai báo biến/hằng số: isExternal - Dùng trong logic xử lý của component
   const isExternal = to.startsWith('http://') || to.startsWith('https://');
   if (isExternal) {
     return (
@@ -64,12 +66,16 @@ const LinkWrapper = ({ to, children }) => {
   );
 };
 
+// Component React: BannerSection - Quản lý giao diện và logic xử lý của BannerSection
 const BannerSection = ({ showSideBanners = true, showTopBanner = true, showSlider = true, bannersData = null }) => {
+  // State: banners - Quản lý trạng thái và dữ liệu của banners trong giao diện
   const [banners, setBanners] = useState(bannersData || []);
+  // State: currentIndex - Quản lý trạng thái và dữ liệu của currentIndex trong giao diện
   const [currentIndex, setCurrentIndex] = useState(0);
 
   // Đồng bộ banners khi bannersData thay đổi hoặc khi có sự kiện cập nhật từ API hoặc localStorage
   useEffect(() => {
+    // Hàm thực thi logic: ensureTgddLink
     const ensureTgddLink = (list) => {
       if (!Array.isArray(list)) return DEFAULT_BANNERS;
       return list.map(b => {
@@ -86,8 +92,10 @@ const BannerSection = ({ showSideBanners = true, showTopBanner = true, showSlide
     if (bannersData) {
       setBanners(ensureTgddLink(bannersData));
     } else {
+      // Hàm xử lý logic/sự kiện: fetchBanners
       const fetchBanners = async () => {
         try {
+          // Cấu hình/Hằng số/Dịch vụ dữ liệu: data
           const data = await bannerService.getBanners();
           if (data && data.length > 0) {
             setBanners(ensureTgddLink(data));
@@ -97,6 +105,7 @@ const BannerSection = ({ showSideBanners = true, showTopBanner = true, showSlide
         } catch (error) {
           console.error('Error loading published banners from backend:', error);
           try {
+            // Khai báo biến/hằng số: saved - Dùng trong logic xử lý của component
             const saved = localStorage.getItem('publishedBanners');
             if (saved) {
               setBanners(ensureTgddLink(JSON.parse(saved)));
@@ -124,8 +133,11 @@ const BannerSection = ({ showSideBanners = true, showTopBanner = true, showSlide
     .filter(b => b.type === 'Slider' && b.isActive)
     .sort((a, b) => a.position - b.position);
 
+  // Hàm thực thi logic: topBanner
   const topBanner = banners.find(b => b.type === 'Top' && b.isActive);
+  // Hàm thực thi logic: leftBanner
   const leftBanner = banners.find(b => b.type === 'Left' && b.isActive);
+  // Hàm thực thi logic: rightBanner
   const rightBanner = banners.find(b => b.type === 'Right' && b.isActive);
 
   // Logic tự động trượt cho Slider đoàn tàu
@@ -135,7 +147,9 @@ const BannerSection = ({ showSideBanners = true, showTopBanner = true, showSlide
       setCurrentIndex(0);
       return;
     }
+    // Khai báo biến/hằng số: step - Dùng trong logic xử lý của component
     const step = sliderBanners.length % 2 === 0 ? 2 : 1;
+    // Hàm thực thi logic: slideInterval
     const slideInterval = setInterval(() => {
       setCurrentIndex((prevIndex) => {
         if (prevIndex >= sliderBanners.length - 2) {
@@ -147,6 +161,7 @@ const BannerSection = ({ showSideBanners = true, showTopBanner = true, showSlide
     return () => clearInterval(slideInterval);
   }, [sliderBanners.length]);
 
+  // Hàm thực thi logic: nextSlide
   const nextSlide = () => {
     if (sliderBanners.length <= 2) return;
     //xử lý số lượng banner hiển thị, Nếu tổng số banner là số chẵn thì trượt 2 banner mỗi lần bấm
@@ -155,8 +170,10 @@ const BannerSection = ({ showSideBanners = true, showTopBanner = true, showSlide
     setCurrentIndex((prev) => (prev >= sliderBanners.length - 2 ? 0 : prev + step));
   };
 
+  // Hàm thực thi logic: prevSlide
   const prevSlide = () => {
     if (sliderBanners.length <= 2) return;
+    // Khai báo biến/hằng số: step - Dùng trong logic xử lý của component
     const step = sliderBanners.length % 2 === 0 ? 2 : 1;
     setCurrentIndex((prev) => (prev === 0 ? Math.max(0, sliderBanners.length - 2) : prev - step));
   };

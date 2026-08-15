@@ -8,17 +8,23 @@ import { useLoading } from '../context/LoadingContext';
 import { usePagination } from '../hooks/usePagination';
 
 export default function OrderTrackingPage() {
+  // Khai báo giải nén các thuộc tính/hàm (stopLoading) từ Hook / Context / Props
   const { stopLoading } = useLoading();
+  // Khai báo biến/hằng số: isLoggedIn - Dùng trong logic xử lý của component
   const isLoggedIn = !!localStorage.getItem('token');
 
   // Input tra cứu
   const [searchOrderId, setSearchOrderId] = useState('');
+  // State: searchPhone - Quản lý trạng thái và dữ liệu của searchPhone trong giao diện
   const [searchPhone, setSearchPhone] = useState('');
+  // State: selectedStatusFilter - Quản lý trạng thái và dữ liệu của selectedStatusFilter trong giao diện
   const [selectedStatusFilter, setSelectedStatusFilter] = useState('ALL');
 
   // Dữ liệu bảng
   const [orders, setOrders] = useState([]);
+  // State: loading - Quản lý trạng thái và dữ liệu của loading trong giao diện
   const [loading, setLoading] = useState(false);
+  // State: error - Quản lý trạng thái và dữ liệu của error trong giao diện
   const [error, setError] = useState('');
 
   // Đơn hàng đang được xem chi tiết
@@ -31,11 +37,14 @@ export default function OrderTrackingPage() {
     }
   }, [isLoggedIn, stopLoading]);
 
+  // Hàm thực thi logic: loadMyOrders
   const loadMyOrders = async () => {
     setLoading(true);
     setError('');
     try {
+      // Khai báo biến/hằng số: res - Dùng trong logic xử lý của component
       const res = await orderService.getMyOrders();
+      // Cấu hình/Hằng số/Dịch vụ dữ liệu: data
       const data = Array.isArray(res) ? res : res?.data || [];
       setOrders(data);
     } catch (err) {
@@ -45,6 +54,7 @@ export default function OrderTrackingPage() {
     }
   };
 
+  // Hàm xử lý logic/sự kiện: handleTrackSubmit
   const handleTrackSubmit = async (e) => {
     if (e) e.preventDefault();
     if (!searchOrderId.trim() && !searchPhone.trim() && !isLoggedIn) {
@@ -57,7 +67,9 @@ export default function OrderTrackingPage() {
 
     try {
       if (searchOrderId.trim() && searchPhone.trim()) {
+        // Khai báo biến/hằng số: res - Dùng trong logic xử lý của component
         const res = await api.get(`/Order/track?orderId=${searchOrderId.trim()}&phoneNumber=${searchPhone.trim()}`);
+        // Cấu hình/Hằng số/Dịch vụ dữ liệu: data
         const data = res?.data || res;
         if (data && data.id) {
           setOrders([data]);
@@ -92,6 +104,7 @@ export default function OrderTrackingPage() {
     let id = ord.statusId ?? ord.StatusId ?? ord.orderStatusId ?? ord.OrderStatusId;
     if (id !== undefined && id !== null && !isNaN(Number(id))) return Number(id);
 
+    // Khai báo biến/hằng số: st - Dùng trong logic xử lý của component
     const st = String(ord.statusName || ord.StatusName || ord.status || '').toLowerCase();
     if (st.includes('pending') || st.includes('chờ') || st.includes('xác nhận')) return 1;
     if (st.includes('process') || st.includes('confirm') || st.includes('xử lý') || st.includes('chuẩn')) return 2;
@@ -105,19 +118,28 @@ export default function OrderTrackingPage() {
 
   // Lọc dữ liệu đơn hàng hiển thị ở bảng
   const filteredOrders = orders.filter(ord => {
+    // Khai báo biến/hằng số: ordId - Dùng trong logic xử lý của component
     const ordId = String(ord.id || ord.Id || '');
+    // Khai báo biến/hằng số: phoneNum - Dùng trong logic xử lý của component
     const phoneNum = String(ord.receiverPhone || ord.ReceiverPhone || '');
+    // Khai báo biến/hằng số: name - Dùng trong logic xử lý của component
     const name = String(ord.receiverName || ord.ReceiverName || '').toLowerCase();
 
+    // Khai báo biến/hằng số: cleanOrderId - Dùng trong logic xử lý của component
     const cleanOrderId = searchOrderId.trim().replace('#', '').toLowerCase();
+    // Khai báo biến/hằng số: cleanPhone - Dùng trong logic xử lý của component
     const cleanPhone = searchPhone.trim().toLowerCase();
 
+    // Khai báo biến/hằng số: matchesOrderId - Dùng trong logic xử lý của component
     const matchesOrderId = !cleanOrderId || ordId.toLowerCase().includes(cleanOrderId);
+    // Khai báo biến/hằng số: matchesPhone - Dùng trong logic xử lý của component
     const matchesPhone = !cleanPhone || phoneNum.toLowerCase().includes(cleanPhone) || name.includes(cleanPhone);
 
     let matchesStatus = true;
     if (selectedStatusFilter !== 'ALL') {
+      // Khai báo biến/hằng số: targetStId - Dùng trong logic xử lý của component
       const targetStId = parseInt(selectedStatusFilter);
+      // Khai báo biến/hằng số: currentStId - Dùng trong logic xử lý của component
       const currentStId = getOrderStatusId(ord);
       matchesStatus = currentStId === targetStId;
     }
@@ -137,8 +159,11 @@ export default function OrderTrackingPage() {
     totalItems
   } = usePagination(filteredOrders, 5);
 
+  // Hàm xử lý logic/sự kiện: getStatusBadge
   const getStatusBadge = (ord) => {
+    // Khai báo biến/hằng số: stId - Dùng trong logic xử lý của component
     const stId = getOrderStatusId(ord);
+    // Khai báo biến/hằng số: stName - Dùng trong logic xử lý của component
     const stName = ord.statusName || ord.StatusName || ord.orderStatusName || ord.OrderStatus?.Name || ord.status;
     switch (stId) {
       case 1:
@@ -158,6 +183,7 @@ export default function OrderTrackingPage() {
     }
   };
 
+  // Khai báo biến/hằng số: isInitialLoading - Dùng trong logic xử lý của component
   const isInitialLoading = loading && orders.length === 0;
 
   return (
@@ -270,13 +296,21 @@ export default function OrderTrackingPage() {
                 </thead>
                 <tbody className="divide-y divide-gray-150">
                   {paginatedOrders.map(ord => {
+                    // Khai báo biến/hằng số: ordId - Dùng trong logic xử lý của component
                     const ordId = ord.id || ord.Id;
+                    // Khai báo biến/hằng số: name - Dùng trong logic xử lý của component
                     const name = ord.receiverName || ord.ReceiverName || 'Khách hàng';
+                    // Khai báo biến/hằng số: phone - Dùng trong logic xử lý của component
                     const phone = ord.receiverPhone || ord.ReceiverPhone || '';
+                    // Khai báo biến/hằng số: addr - Dùng trong logic xử lý của component
                     const addr = ord.shippingAddressLine || ord.ShippingAddressLine || 'N/A';
+                    // Khai báo biến/hằng số: total - Dùng trong logic xử lý của component
                     const total = ord.totalPrice || ord.TotalPrice || 0;
+                    // Khai báo biến/hằng số: date - Dùng trong logic xử lý của component
                     const date = ord.createdAt || ord.CreatedAt;
+                    // Khai báo biến/hằng số: stId - Dùng trong logic xử lý của component
                     const stId = ord.orderStatusId || ord.OrderStatusId;
+                    // Khai báo biến/hằng số: stName - Dùng trong logic xử lý của component
                     const stName = ord.orderStatusName || ord.OrderStatus?.Name;
 
                     return (

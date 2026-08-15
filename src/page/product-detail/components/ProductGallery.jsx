@@ -1,25 +1,35 @@
 import React, { useState, useEffect } from 'react';
 import { ChevronLeft, ChevronRight, Maximize2, X, Play } from 'lucide-react';
 
+// Hàm xử lý logic/sự kiện: getYouTubeId
 const getYouTubeId = (url) => {
   if (!url) return null;
+  // Khai báo biến/hằng số: regExp - Dùng trong logic xử lý của component
   const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
+  // Khai báo biến/hằng số: match - Dùng trong logic xử lý của component
   const match = url.match(regExp);
   return (match && match[2].length === 11) ? match[2] : null;
 };
 
 export default function ProductGallery({ product, selectedColor, galleryImages, activeImage, setActiveImage }) {
+  // State: isVideoLoaded - Quản lý trạng thái và dữ liệu của isVideoLoaded trong giao diện
   const [isVideoLoaded, setIsVideoLoaded] = useState(false);
+  // State: isLightboxOpen - Quản lý trạng thái và dữ liệu của isLightboxOpen trong giao diện
   const [isLightboxOpen, setIsLightboxOpen] = useState(false);
+  // State: lightboxActiveIndex - Quản lý trạng thái và dữ liệu của lightboxActiveIndex trong giao diện
   const [lightboxActiveIndex, setLightboxActiveIndex] = useState(0);
+  // State: isHoveringImage - Quản lý trạng thái và dữ liệu của isHoveringImage trong giao diện
   const [isHoveringImage, setIsHoveringImage] = useState(false);
+  // State: isFading - Quản lý trạng thái và dữ liệu của isFading trong giao diện
   const [isFading, setIsFading] = useState(false);
 
   // Auto-play slideshow effect (5 seconds)
   useEffect(() => {
+    // Khai báo biến/hằng số: isActiveVideo - Dùng trong logic xử lý của component
     const isActiveVideo = activeImage?.type === 'video';
     if (galleryImages.length <= 1 || isLightboxOpen || isHoveringImage || isActiveVideo) return;
 
+    // Hàm thực thi logic: timer
     const timer = setInterval(() => {
       handleMainImageNext();
     }, 5000);
@@ -33,7 +43,9 @@ export default function ProductGallery({ product, selectedColor, galleryImages, 
 
     if (activeImage.type === 'video') {
       if (isVideoLoaded) {
+        // Hàm thực thi logic: timer
         const timer = setTimeout(() => {
+          // Khai báo biến/hằng số: iframe - Dùng trong logic xử lý của component
           const iframe = document.getElementById('product-youtube-iframe');
           if (iframe && iframe.contentWindow) {
             iframe.contentWindow.postMessage('{"event":"command","func":"playVideo","args":""}', '*');
@@ -43,6 +55,7 @@ export default function ProductGallery({ product, selectedColor, galleryImages, 
       }
     } else {
       if (isVideoLoaded) {
+        // Khai báo biến/hằng số: iframe - Dùng trong logic xử lý của component
         const iframe = document.getElementById('product-youtube-iframe');
         if (iframe && iframe.contentWindow) {
           iframe.contentWindow.postMessage('{"event":"command","func":"pauseVideo","args":""}', '*');
@@ -51,10 +64,14 @@ export default function ProductGallery({ product, selectedColor, galleryImages, 
     }
   }, [activeImage, isVideoLoaded]);
 
+  // Hàm xử lý logic/sự kiện: handleMainImagePrev
   const handleMainImagePrev = () => {
+    // Hàm thực thi logic: currentIndex
     const currentIndex = galleryImages.findIndex(img => img.url === activeImage?.url && img.type === activeImage?.type);
     if (currentIndex === -1) return;
+    // Hàm thực thi logic: hasVideo
     const hasVideo = galleryImages.some(img => img.type === 'video');
+    // Khai báo biến/hằng số: targetFirstIndex - Dùng trong logic xử lý của component
     const targetFirstIndex = hasVideo ? 1 : 0;
     
     let prevIndex = currentIndex === 0 ? galleryImages.length - 1 : currentIndex - 1;
@@ -69,10 +86,14 @@ export default function ProductGallery({ product, selectedColor, galleryImages, 
     }, 120);
   };
 
+  // Hàm xử lý logic/sự kiện: handleMainImageNext
   const handleMainImageNext = () => {
+    // Hàm thực thi logic: currentIndex
     const currentIndex = galleryImages.findIndex(img => img.url === activeImage?.url && img.type === activeImage?.type);
     if (currentIndex === -1) return;
+    // Hàm thực thi logic: hasVideo
     const hasVideo = galleryImages.some(img => img.type === 'video');
+    // Khai báo biến/hằng số: targetFirstIndex - Dùng trong logic xử lý của component
     const targetFirstIndex = hasVideo ? 1 : 0;
     
     let nextIndex = currentIndex === 0 ? targetFirstIndex : currentIndex + 1;
@@ -87,6 +108,7 @@ export default function ProductGallery({ product, selectedColor, galleryImages, 
     }, 120);
   };
 
+  // Hàm xử lý logic/sự kiện: handleThumbnailClick
   const handleThumbnailClick = (img) => {
     setIsFading(true);
     setTimeout(() => {
@@ -98,14 +120,17 @@ export default function ProductGallery({ product, selectedColor, galleryImages, 
     }, 120);
   };
 
+  // Hàm xử lý logic/sự kiện: handleLightboxPrev
   const handleLightboxPrev = () => {
     setLightboxActiveIndex(prev => (prev === 0 ? galleryImages.length - 1 : prev - 1));
   };
 
+  // Hàm xử lý logic/sự kiện: handleLightboxNext
   const handleLightboxNext = () => {
     setLightboxActiveIndex(prev => (prev === galleryImages.length - 1 ? 0 : prev + 1));
   };
 
+  // Hàm thực thi logic: activeIndex
   const activeIndex = galleryImages.findIndex(img => img.url === activeImage?.url && img.type === activeImage?.type);
 
   return (
@@ -231,9 +256,11 @@ export default function ProductGallery({ product, selectedColor, galleryImages, 
               <button
                 type="button"
                 onClick={() => {
+                  // Hàm thực thi logic: videoIdx
                   const videoIdx = galleryImages.findIndex(img => img.type === 'video');
                   if (videoIdx !== -1) {
                     handleThumbnailClick(galleryImages[videoIdx]);
+                    // Khai báo biến/hằng số: el - Dùng trong logic xử lý của component
                     const el = document.getElementById('product-slideshow-container');
                     if (el) el.scrollIntoView({ behavior: 'smooth' });
                   }
@@ -247,6 +274,7 @@ export default function ProductGallery({ product, selectedColor, galleryImages, 
             <button
               type="button"
               onClick={() => {
+                // Hàm thực thi logic: activeIdx
                 const activeIdx = galleryImages.findIndex(img => img.url === activeImage?.url && img.type === activeImage?.type);
                 setLightboxActiveIndex(activeIdx !== -1 ? activeIdx : 0);
                 setIsLightboxOpen(true);

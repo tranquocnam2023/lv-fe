@@ -11,38 +11,49 @@ export default function SharedLocalImageUpload({
   disabled = false,
   compact = false
 }) {
+  // State: isDragOver - Quản lý trạng thái và dữ liệu của isDragOver trong giao diện
   const [isDragOver, setIsDragOver] = useState(false);
+  // State: uploading - Quản lý trạng thái và dữ liệu của uploading trong giao diện
   const [uploading, setUploading] = useState(false);
+  // State: draggedIndex - Quản lý trạng thái và dữ liệu của draggedIndex trong giao diện
   const [draggedIndex, setDraggedIndex] = useState(null);
 
   // Placeholder hiển thị khi không có ảnh hoặc sau khi xóa
   const NO_IMAGE_URL = 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 100 100"><rect width="100" height="100" fill="%23f8fafc" stroke="%23e2e8f0" stroke-width="2"/><path d="M30 35 h40 a 5 5 0 0 1 5 5 v25 a 5 5 0 0 1 -5 5 h-40 a 5 5 0 0 1 -5 -5 v-25 a 5 5 0 0 1 5 -5 z" fill="none" stroke="%23cbd5e1" stroke-width="2"/><circle cx="42" cy="47" r="4" fill="%23cbd5e1"/><path d="M30 62 l12 -12 l10 10 l14 -14 l8 8" fill="none" stroke="%23cbd5e1" stroke-width="2"/></svg>';
+  // Hàm thực thi logic: isNoImage
   const isNoImage = (url) => !url || url === NO_IMAGE_URL || url === '/no_image.png' || url.includes('no_image.png');
 
   // Helper to ensure VITE_API_URL is appended if the URL is relative
   const getAbsoluteUrl = (url) => {
     if (!url || isNoImage(url)) return NO_IMAGE_URL;
     if (url.startsWith('http://') || url.startsWith('https://') || url.startsWith('data:')) return url;
+    // Khai báo biến/hằng số: apiBase - Dùng trong logic xử lý của component
     const apiBase = import.meta.env.VITE_API_URL || 'https://localhost:7279/api';
+    // Khai báo biến/hằng số: hostBase - Dùng trong logic xử lý của component
     const hostBase = apiBase.replace('/api', '');
     return `${hostBase}${url.startsWith('/') ? '' : '/'}${url}`;
   };
 
+  // Hàm xử lý logic/sự kiện: handleImageUpload
   const handleImageUpload = async (e) => {
+    // Khai báo biến/hằng số: files - Dùng trong logic xử lý của component
     const files = Array.from(e.target.files || []);
     if (files.length === 0) return;
 
     setUploading(true);
     try {
       if (multiple) {
+        // Khai báo biến/hằng số: currentImages - Dùng trong logic xử lý của component
         const currentImages = Array.isArray(value) ? [...value] : [];
         for (const file of files) {
           if (file.size > 2 * 1024 * 1024) {
             alert(`Tệp "${file.name}" quá lớn (>2MB).`);
             continue;
           }
+          // Khai báo biến/hằng số: res - Dùng trong logic xử lý của component
           const res = await productService.uploadLocalImage(file, folder);
           if (res && res.url) {
+            // Khai báo biến/hằng số: absoluteUrl - Dùng trong logic xử lý của component
             const absoluteUrl = getAbsoluteUrl(res.url);
             currentImages.push({
               url: absoluteUrl,
@@ -53,12 +64,14 @@ export default function SharedLocalImageUpload({
         }
         onChange(currentImages);
       } else {
+        // Khai báo biến/hằng số: file - Dùng trong logic xử lý của component
         const file = files[0];
         if (file.size > 2 * 1024 * 1024) {
           alert(`Tệp "${file.name}" quá lớn (>2MB).`);
           setUploading(false);
           return;
         }
+        // Khai báo biến/hằng số: res - Dùng trong logic xử lý của component
         const res = await productService.uploadLocalImage(file, folder);
         if (res && res.url) {
           onChange(getAbsoluteUrl(res.url));
@@ -71,13 +84,17 @@ export default function SharedLocalImageUpload({
     }
   };
 
+  // Hàm xử lý logic/sự kiện: handleRemoveSingle
   const handleRemoveSingle = () => {
     onChange('');
   };
 
+  // Hàm xử lý logic/sự kiện: handleRemoveMultiple
   const handleRemoveMultiple = (index) => {
     if (!Array.isArray(value)) return;
+    // Hàm thực thi logic: nextImages
     const nextImages = value.filter((_, i) => i !== index);
+    // Hàm thực thi logic: updated
     const updated = nextImages.map((img, idx) => ({
       ...img,
       isMain: idx === 0,
@@ -86,11 +103,15 @@ export default function SharedLocalImageUpload({
     onChange(updated);
   };
 
+  // Hàm xử lý logic/sự kiện: handleSetMain
   const handleSetMain = (index) => {
     if (!Array.isArray(value) || index < 0 || index >= value.length) return;
+    // Khai báo biến/hằng số: nextImages - Dùng trong logic xử lý của component
     const nextImages = [...value];
+    // State: selected - Quản lý trạng thái và dữ liệu của selected trong giao diện
     const [selected] = nextImages.splice(index, 1);
     nextImages.unshift(selected);
+    // Hàm thực thi logic: updated
     const updated = nextImages.map((img, idx) => ({
       ...img,
       isMain: idx === 0,
@@ -99,11 +120,15 @@ export default function SharedLocalImageUpload({
     onChange(updated);
   };
 
+  // Hàm xử lý logic/sự kiện: handleMove
   const handleMove = (from, to) => {
     if (!Array.isArray(value) || to < 0 || to >= value.length) return;
+    // Khai báo biến/hằng số: nextImages - Dùng trong logic xử lý của component
     const nextImages = [...value];
+    // State: moved - Quản lý trạng thái và dữ liệu của moved trong giao diện
     const [moved] = nextImages.splice(from, 1);
     nextImages.splice(to, 0, moved);
+    // Hàm thực thi logic: updated
     const updated = nextImages.map((img, idx) => ({
       ...img,
       isMain: idx === 0,
@@ -112,18 +137,22 @@ export default function SharedLocalImageUpload({
     onChange(updated);
   };
 
+  // Hàm xử lý logic/sự kiện: handleDragStart
   const handleDragStart = (e, index) => {
     e.dataTransfer.effectAllowed = 'move';
     e.dataTransfer.setData('text/plain', index);
     setDraggedIndex(index);
   };
 
+  // Hàm xử lý logic/sự kiện: handleDragEnd
   const handleDragEnd = () => {
     setDraggedIndex(null);
   };
 
+  // Hàm xử lý logic/sự kiện: handleDrop
   const handleDrop = (e, toIndex) => {
     e.preventDefault();
+    // Khai báo biến/hằng số: fromIndex - Dùng trong logic xử lý của component
     const fromIndex = parseInt(e.dataTransfer.getData('text/plain'), 10);
     if (!isNaN(fromIndex)) {
       handleMove(fromIndex, toIndex);
@@ -132,7 +161,9 @@ export default function SharedLocalImageUpload({
 
   // Render Compact Single Image Mode (e.g. for grid cells)
   if (compact && !multiple) {
+    // Khai báo biến/hằng số: previewUrl - Dùng trong logic xử lý của component
     const previewUrl = getAbsoluteUrl(value) || NO_IMAGE_URL;
+    // Khai báo biến/hằng số: showDelete - Dùng trong logic xử lý của component
     const showDelete = !isNoImage(value);
     return (
       <div className="relative w-8 h-8 rounded border border-admin-border bg-gray-50 flex items-center justify-center overflow-hidden cursor-pointer group shadow-sm">
@@ -182,7 +213,9 @@ export default function SharedLocalImageUpload({
 
   // Render Single Image Mode
   if (!multiple) {
+    // Khai báo biến/hằng số: previewUrl - Dùng trong logic xử lý của component
     const previewUrl = getAbsoluteUrl(value) || NO_IMAGE_URL;
+    // Khai báo biến/hằng số: showDelete - Dùng trong logic xử lý của component
     const showDelete = !isNoImage(value);
 
     return (
@@ -282,7 +315,9 @@ export default function SharedLocalImageUpload({
       {images.length > 0 && (
         <div className="grid grid-cols-3 gap-2 mt-4">
           {images.map((img, idx) => {
+            // Khai báo biến/hằng số: isMain - Dùng trong logic xử lý của component
             const isMain = idx === 0;
+            // Khai báo biến/hằng số: isDraggingThis - Dùng trong logic xử lý của component
             const isDraggingThis = draggedIndex === idx;
 
             return (

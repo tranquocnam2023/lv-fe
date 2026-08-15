@@ -26,6 +26,7 @@ const getCategoryIcon = (name, iconUrl) => {
     );
   }
 
+  // Khai báo biến/hằng số: normalized - Dùng trong logic xử lý của component
   const normalized = name.toLowerCase();
   let IconComponent = ShoppingBag;
   
@@ -55,10 +56,15 @@ const getCategoryIcon = (name, iconUrl) => {
 };
 
 export default function Sidebar({ isFocused, setIsFocused }) {
+  // State: categories - Quản lý trạng thái và dữ liệu của categories trong giao diện
   const [categories, setCategories] = useState([]);
+  // State: hoveredRootId - Quản lý trạng thái và dữ liệu của hoveredRootId trong giao diện
   const [hoveredRootId, setHoveredRootId] = useState(null);
+  // State: hoveredSub2Id - Quản lý trạng thái và dữ liệu của hoveredSub2Id trong giao diện
   const [hoveredSub2Id, setHoveredSub2Id] = useState(null);
+  // State: brands - Quản lý trạng thái và dữ liệu của brands trong giao diện
   const [brands, setBrands] = useState([]);
+  // State: allProducts - Quản lý trạng thái và dữ liệu của allProducts trong giao diện
   const [allProducts, setAllProducts] = useState([]);
 
   useEffect(() => {
@@ -123,9 +129,13 @@ export default function Sidebar({ isFocused, setIsFocused }) {
     >
       <nav className="flex flex-col">
         {rootCategories.map((cat) => {
+          // Khai báo biến/hằng số: path - Dùng trong logic xử lý của component
           const path = `/danh-muc/${cat.slug || encodeURIComponent(cat.name.toLowerCase())}`;
+          // Khai báo biến/hằng số: isHovered - Dùng trong logic xử lý của component
           const isHovered = hoveredRootId === cat.id;
+          // Hàm thực thi logic: subcategories
           const subcategories = categories.filter(c => c.parentId === cat.id);
+          // Khai báo biến/hằng số: hasSub - Dùng trong logic xử lý của component
           const hasSub = subcategories.length > 0;
           
           return (
@@ -167,10 +177,13 @@ export default function Sidebar({ isFocused, setIsFocused }) {
       {/* Subcategories Flyout Menu */}
       {hoveredRootId && (
         (() => {
+          // Hàm thực thi logic: activeRoot
           const activeRoot = categories.find(c => c.id === hoveredRootId);
+          // Hàm thực thi logic: sub2List
           const sub2List = activeRoot ? categories.filter(c => c.parentId === activeRoot.id) : [];
           if (sub2List.length === 0) return null;
 
+          // Khai báo biến/hằng số: isDeviceCategory - Dùng trong logic xử lý của component
           const isDeviceCategory = activeRoot.name.toLowerCase().includes('thoại') || 
                                    activeRoot.name.toLowerCase().includes('phone') || 
                                    activeRoot.name.toLowerCase().includes('tablet') || 
@@ -179,13 +192,16 @@ export default function Sidebar({ isFocused, setIsFocused }) {
 
           // Default active sub2 selection
           const activeSub2 = sub2List.find(s => s.id === hoveredSub2Id) || sub2List[0];
+          // Hàm thực thi logic: sub3List
           const sub3List = activeSub2 ? categories.filter(c => c.parentId === activeSub2.id) : [];
 
           // Get all descendant category IDs under this root category
           const descendantIds = new Set([hoveredRootId]);
+          // Hàm thực thi logic: level2
           const level2 = categories.filter(c => c.parentId === hoveredRootId);
           level2.forEach(c2 => {
             descendantIds.add(c2.id);
+            // Hàm thực thi logic: level3
             const level3 = categories.filter(c => c.parentId === c2.id);
             level3.forEach(c3 => descendantIds.add(c3.id));
           });
@@ -225,11 +241,14 @@ export default function Sidebar({ isFocused, setIsFocused }) {
                   {isDeviceCategory ? (
                     <div className="grid grid-cols-3 gap-2">
                       {sub2List.map((sub2) => {
+                        // Hàm thực thi logic: matchedBrand
                         const matchedBrand = brands.find(b => 
                           b.name.toLowerCase() === sub2.name.toLowerCase() ||
                           (sub2.name.toLowerCase() === 'iphone' && b.name.toLowerCase() === 'apple')
                         );
+                        // Khai báo biến/hằng số: brandLogo - Dùng trong logic xử lý của component
                         const brandLogo = matchedBrand?.imageUrl;
+                        // Khai báo biến/hằng số: isSub2Hovered - Dùng trong logic xử lý của component
                         const isSub2Hovered = activeSub2 && activeSub2.id === sub2.id;
                         
                         return (
@@ -258,6 +277,7 @@ export default function Sidebar({ isFocused, setIsFocused }) {
                   ) : (
                     <div className="flex flex-col space-y-1.5">
                       {sub2List.map((sub2) => {
+                        // Khai báo biến/hằng số: isSub2Hovered - Dùng trong logic xử lý của component
                         const isSub2Hovered = activeSub2 && activeSub2.id === sub2.id;
                         return (
                           <Link
@@ -341,8 +361,11 @@ export default function Sidebar({ isFocused, setIsFocused }) {
                   {featuredProducts.length > 0 ? (
                     <div className="grid grid-cols-1 gap-2.5">
                       {featuredProducts.map((prod, idx) => {
+                        // Khai báo biến/hằng số: hasBadge - Dùng trong logic xử lý của component
                         const hasBadge = idx % 3 === 0 || prod.isFeatured;
+                        // Khai báo biến/hằng số: badgeText - Dùng trong logic xử lý của component
                         const badgeText = idx % 6 === 0 ? "Hot" : "Mới";
+                        // Khai báo biến/hằng số: prodImage - Dùng trong logic xử lý của component
                         const prodImage = prod.image || prod.thumbnailImage || prod.mainImage || prod.imageUrl;
                         return (
                           <Link

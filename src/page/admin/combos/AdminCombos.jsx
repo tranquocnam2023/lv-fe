@@ -5,23 +5,31 @@ import api from '../../../services/api';
 function getWeekNumber(d) {
   d = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
   d.setUTCDate(d.getUTCDate() + 4 - (d.getUTCDay()||7));
+  // Khai báo biến/hằng số: yearStart - Dùng trong logic xử lý của component
   const yearStart = new Date(Date.UTC(d.getUTCFullYear(),0,1));
   return Math.ceil(( ( (d - yearStart) / 86400000) + 1)/7);
 }
 
 export default function AdminCombos({ onCreate, onEdit }) {
+  // State: campaigns - Quản lý trạng thái và dữ liệu của campaigns trong giao diện
   const [campaigns, setCampaigns] = useState([]);
+  // State: loading - Quản lý trạng thái và dữ liệu của loading trong giao diện
   const [loading, setLoading] = useState(true);
+  // State: actionLoading - Quản lý trạng thái và dữ liệu của actionLoading trong giao diện
   const [actionLoading, setActionLoading] = useState(null);
   
   // Filters
   const [searchTerm, setSearchTerm] = useState('');
+  // State: statusFilter - Quản lý trạng thái và dữ liệu của statusFilter trong giao diện
   const [statusFilter, setStatusFilter] = useState('ALL');
+  // State: timeFilter - Quản lý trạng thái và dữ liệu của timeFilter trong giao diện
   const [timeFilter, setTimeFilter] = useState('ALL');
 
+  // Hàm xử lý logic/sự kiện: fetchData
   const fetchData = async () => {
     try {
       setLoading(true);
+      // Khai báo biến/hằng số: res - Dùng trong logic xử lý của component
       const res = await api.get('/PromotionCampaign');
       setCampaigns(res.data || res || []);
     } catch (err) {
@@ -35,6 +43,7 @@ export default function AdminCombos({ onCreate, onEdit }) {
     fetchData();
   }, []);
 
+  // Hàm xử lý logic/sự kiện: handleDelete
   const handleDelete = async (id) => {
     if (!window.confirm("Bạn có chắc chắn muốn xóa Chiến dịch này không?")) return;
     try {
@@ -49,9 +58,11 @@ export default function AdminCombos({ onCreate, onEdit }) {
     }
   };
 
+  // Hàm xử lý logic/sự kiện: handleToggleStatus
   const handleToggleStatus = async (campaign) => {
     try {
       setActionLoading(campaign.id + '_toggle');
+      // Khai báo biến/hằng số: payload - Dùng trong logic xử lý của component
       const payload = {
         name: campaign.name,
         description: campaign.description,
@@ -74,9 +85,13 @@ export default function AdminCombos({ onCreate, onEdit }) {
     }
   };
 
+  // Hàm xử lý logic/sự kiện: getStatus
   const getStatus = (campaign) => {
+    // Khai báo biến/hằng số: now - Dùng trong logic xử lý của component
     const now = new Date();
+    // Khai báo biến/hằng số: start - Dùng trong logic xử lý của component
     const start = new Date(campaign.startDate);
+    // Khai báo biến/hằng số: end - Dùng trong logic xử lý của component
     const end = new Date(campaign.endDate);
 
     if (!campaign.isActive) return 'PAUSED';
@@ -85,23 +100,30 @@ export default function AdminCombos({ onCreate, onEdit }) {
     return 'ACTIVE';
   };
 
+  // Hàm thực thi logic: filteredCampaigns
   const filteredCampaigns = campaigns.filter(c => {
+    // Khai báo biến/hằng số: matchText - Dùng trong logic xử lý của component
     const matchText = c.name?.toLowerCase().includes(searchTerm.toLowerCase()) || c.id.toString() === searchTerm;
     if (!matchText) return false;
 
     if (statusFilter !== 'ALL') {
+      // Cấu hình/Hằng số/Dịch vụ dữ liệu: status
       const status = getStatus(c);
       if (status !== statusFilter) return false;
     }
 
     if (timeFilter !== 'ALL') {
+      // Khai báo biến/hằng số: start - Dùng trong logic xử lý của component
       const start = new Date(c.startDate);
+      // Khai báo biến/hằng số: now - Dùng trong logic xử lý của component
       const now = new Date();
       if (timeFilter === 'THIS_MONTH') {
          if (start.getMonth() !== now.getMonth() || start.getFullYear() !== now.getFullYear()) return false;
       }
       if (timeFilter === 'THIS_WEEK') {
+         // Khai báo biến/hằng số: currentWeek - Dùng trong logic xử lý của component
          const currentWeek = getWeekNumber(now);
+         // Khai báo biến/hằng số: startWeek - Dùng trong logic xử lý của component
          const startWeek = getWeekNumber(start);
          if (currentWeek !== startWeek || start.getFullYear() !== now.getFullYear()) return false;
       }
@@ -218,8 +240,11 @@ export default function AdminCombos({ onCreate, onEdit }) {
               </thead>
               <tbody className="divide-y divide-gray-100 text-gray-800 bg-white">
                 {filteredCampaigns.map(campaign => {
+                  // Cấu hình/Hằng số/Dịch vụ dữ liệu: status
                   const status = getStatus(campaign);
+                  // Khai báo biến/hằng số: mainRules - Dùng trong logic xử lý của component
                   const mainRules = campaign.mainProductRules || [];
+                  // Khai báo biến/hằng số: addonRules - Dùng trong logic xử lý của component
                   const addonRules = campaign.addonProductRules || [];
 
                   return (

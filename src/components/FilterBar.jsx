@@ -5,7 +5,9 @@ import FilterModal from './FilterModal';
 import { brandService } from '../services/brandService';
 
 export default function FilterBar({ selectedBrand, onSelectBrand, onApplyFilter, onClearAll }) {
+  // State: isModalOpen - Quản lý trạng thái và dữ liệu của isModalOpen trong giao diện
   const [isModalOpen, setIsModalOpen] = useState(false);
+  // State: quickBrands - Quản lý trạng thái và dữ liệu của quickBrands trong giao diện
   const [quickBrands, setQuickBrands] = useState([]);
 
   useEffect(() => {
@@ -14,6 +16,7 @@ export default function FilterBar({ selectedBrand, onSelectBrand, onApplyFilter,
         if (Array.isArray(data)) {
           //Tạo cứng Chỉ cho hiện các hãng điện thoại đang hoạt động
           const PHONE_BRANDS = ['Apple', 'Vivo', 'OPPO', 'Xiaomi', 'Samsung', 'Sony'];
+          // Khai báo biến/hằng số: activeBrands - Dùng trong logic xử lý của component
           const activeBrands = data
             .filter(b => b.isActive !== false && PHONE_BRANDS.some(pb => pb.toLowerCase() === b.name.toLowerCase()))
             .map(b => b.name);

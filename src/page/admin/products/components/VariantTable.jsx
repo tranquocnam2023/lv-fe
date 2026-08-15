@@ -39,9 +39,11 @@ export default function VariantTable({
           <tbody className="divide-y divide-admin-border text-sm">
             {paginatedVariants.length > 0 ? (
               paginatedVariants.map((v) => {
+                // Khai báo biến/hằng số: product - Dùng trong logic xử lý của component
                 const product = getProductById(v.productId);
                 let parsedAttr = {};
                 try { parsedAttr = v.attributes ? JSON.parse(v.attributes) : {}; } catch { /* ignore JSON parse error */ }
+                // Khai báo biến/hằng số: sku - Dùng trong logic xử lý của component
                 const sku = parsedAttr["SKU"] || generateSkuFromName(v.name);
 
                 return (

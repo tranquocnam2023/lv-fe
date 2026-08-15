@@ -16,6 +16,7 @@ export default function CategorySpecsTemplateEditor({ value, onChange }) {
   useEffect(() => {
     if (value) {
       try {
+        // Khai báo biến/hằng số: parsed - Dùng trong logic xử lý của component
         const parsed = JSON.parse(value);
         if (Array.isArray(parsed)) {
           setGroups(parsed);
@@ -40,6 +41,7 @@ export default function CategorySpecsTemplateEditor({ value, onChange }) {
 
   // THÊM MỘT NHÓM THÔNG SỐ MẪU MỚI (VÍ DỤ: MÀN HÌNH)
   const handleAddGroup = () => {
+    // Khai báo biến/hằng số: newGroups - Dùng trong logic xử lý của component
     const newGroups = [
       ...groups,
       { groupName: '', items: [] }
@@ -51,6 +53,7 @@ export default function CategorySpecsTemplateEditor({ value, onChange }) {
   // XÓA MỘT NHÓM THÔNG SỐ MẪU CÓ XÁC NHẬN
   const handleRemoveGroup = (gIdx) => {
     if (window.confirm("Bạn có chắc chắn muốn xóa nhóm thông số mẫu này?")) {
+      // Hàm thực thi logic: newGroups
       const newGroups = groups.filter((_, idx) => idx !== gIdx);
       triggerChange(newGroups);
       setActiveTabIdx(prev => {
@@ -64,6 +67,7 @@ export default function CategorySpecsTemplateEditor({ value, onChange }) {
 
   // THAY ĐỔI TÊN CỦA NHÓM THÔNG SỐ MẪU
   const handleGroupNameChange = (gIdx, name) => {
+    // Hàm thực thi logic: newGroups
     const newGroups = groups.map((g, idx) => {
       if (idx === gIdx) {
         return { ...g, groupName: name };
@@ -83,6 +87,7 @@ export default function CategorySpecsTemplateEditor({ value, onChange }) {
 
   // THÊM THUỘC TÍNH CON VÀO NHÓM (VÍ DỤ: THÊM "Độ phân giải" VÀO NHÓM "Màn hình")
   const handleAddTag = (gIdx) => {
+    // Khai báo biến/hằng số: text - Dùng trong logic xử lý của component
     const text = tagInputs[gIdx]?.trim();
     if (!text) return;
 
@@ -93,6 +98,7 @@ export default function CategorySpecsTemplateEditor({ value, onChange }) {
       return;
     }
 
+    // Hàm thực thi logic: newGroups
     const newGroups = groups.map((g, idx) => {
       if (idx === gIdx) {
         return {
@@ -117,6 +123,7 @@ export default function CategorySpecsTemplateEditor({ value, onChange }) {
 
   // XÓA MỘT THUỘC TÍNH CON KHỎI NHÓM
   const handleRemoveTag = (gIdx, tagToRemove) => {
+    // Hàm thực thi logic: newGroups
     const newGroups = groups.map((g, idx) => {
       if (idx === gIdx) {
         return {
@@ -129,7 +136,9 @@ export default function CategorySpecsTemplateEditor({ value, onChange }) {
     triggerChange(newGroups);
   };
 
+  // Khai báo biến/hằng số: safeActiveTabIdx - Dùng trong logic xử lý của component
   const safeActiveTabIdx = Math.min(activeTabIdx, Math.max(0, groups.length - 1));
+  // Khai báo biến/hằng số: activeGroup - Dùng trong logic xử lý của component
   const activeGroup = groups[safeActiveTabIdx];
 
   return (
@@ -162,7 +171,9 @@ export default function CategorySpecsTemplateEditor({ value, onChange }) {
           {/* HIỂN THỊ DANH SÁCH CÁC TABS NHÓM ĐÃ TẠO */}
           <div className="flex flex-nowrap items-center gap-2 overflow-x-auto pb-2 no-scrollbar border-b border-admin-border">
             {groups.map((group, idx) => {
+              // Khai báo biến/hằng số: name - Dùng trong logic xử lý của component
               const name = group.groupName.trim() || `Nhóm ${idx + 1}`;
+              // Khai báo biến/hằng số: isActive - Dùng trong logic xử lý của component
               const isActive = safeActiveTabIdx === idx;
               return (
                 <button

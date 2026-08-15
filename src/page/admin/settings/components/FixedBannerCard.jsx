@@ -3,8 +3,11 @@ import { Upload } from 'lucide-react';
 import { productService } from '../../../../services/productService';
 
 export default function FixedBannerCard({ title, dimensions, bannerData, onUpdate, isPortrait = false }) {
+  // State: localLink - Quản lý trạng thái và dữ liệu của localLink trong giao diện
   const [localLink, setLocalLink] = useState(bannerData.linkUrl || '');
+  // State: localImage - Quản lý trạng thái và dữ liệu của localImage trong giao diện
   const [localImage, setLocalImage] = useState(bannerData.imageUrl || '');
+  // State: uploading - Quản lý trạng thái và dữ liệu của uploading trong giao diện
   const [uploading, setUploading] = useState(false);
 
   // Đồng bộ link và ảnh khi bannerData thay đổi (ví dụ khi Admin Discard hoặc đổi ảnh từ nơi khác)
@@ -13,10 +16,13 @@ export default function FixedBannerCard({ title, dimensions, bannerData, onUpdat
     setLocalImage(bannerData.imageUrl || '');
   }, [bannerData]);
 
+  // Hàm xử lý logic/sự kiện: handleFileUpload
   const handleFileUpload = async (e) => {
+    // Khai báo biến/hằng số: file - Dùng trong logic xử lý của component
     const file = e.target.files[0];
     if (!file) return;
 
+    // Khai báo biến/hằng số: validExtensions - Dùng trong logic xử lý của component
     const validExtensions = ['image/svg+xml', 'image/webp', 'image/png', 'image/jpeg', 'image/jpg'];
     if (!validExtensions.includes(file.type)) {
       alert("Hệ thống chỉ hỗ trợ các định dạng: SVG, WebP, PNG, JPG/JPEG.");
@@ -30,11 +36,14 @@ export default function FixedBannerCard({ title, dimensions, bannerData, onUpdat
 
     setUploading(true);
     try {
+      // Khai báo biến/hằng số: res - Dùng trong logic xử lý của component
       const res = await productService.uploadLocalImage(file, 'banners');
       if (res && res.url) {
         let finalUrl = res.url;
         if (finalUrl.startsWith('/')) {
+          // Khai báo biến/hằng số: apiBase - Dùng trong logic xử lý của component
           const apiBase = import.meta.env.VITE_API_URL || 'https://localhost:5001/api';
+          // Khai báo biến/hằng số: hostBase - Dùng trong logic xử lý của component
           const hostBase = apiBase.replace('/api', '');
           finalUrl = `${hostBase}${finalUrl}`;
         }
@@ -48,6 +57,7 @@ export default function FixedBannerCard({ title, dimensions, bannerData, onUpdat
     }
   };
 
+  // Hàm xử lý logic/sự kiện: handleApply
   const handleApply = () => {
     onUpdate(localImage, localLink);
   };

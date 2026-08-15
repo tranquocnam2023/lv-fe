@@ -6,13 +6,17 @@ import { useNavigate } from 'react-router-dom';
 const BUNDLE_DISCOUNT_RATE = 0.9;
 
 export default function FrequentlyBoughtTogether({ accessorySuggestions = [], onSelectAccessory }) {
+  // Reference (useRef): sliderRef - Lưu vết tham chiếu DOM hoặc giá trị không gây re-render
   const sliderRef = useRef(null);
+  // Hook điều hướng trang (useNavigate) để chuyển hướng Route
   const navigate = useNavigate();
 
   if (!accessorySuggestions || accessorySuggestions.length === 0) return null;
 
+  // Hàm xử lý logic/sự kiện: handleScroll
   const handleScroll = (direction) => {
     if (sliderRef.current) {
+      // Khai báo biến/hằng số: scrollAmount - Dùng trong logic xử lý của component
       const scrollAmount = direction === 'left' 
         ? -sliderRef.current.clientWidth 
         : sliderRef.current.clientWidth;
@@ -20,12 +24,14 @@ export default function FrequentlyBoughtTogether({ accessorySuggestions = [], on
     }
   };
 
+  // Hàm xử lý logic/sự kiện: handleGoToAccessoryProduct
   const handleGoToAccessoryProduct = (e, accId) => {
     e.stopPropagation();
     navigate(`/product/${accId}`);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
+  // Khai báo biến/hằng số: showNavigation - Dùng trong logic xử lý của component
   const showNavigation = accessorySuggestions.length > 4;
 
   return (
@@ -45,8 +51,11 @@ export default function FrequentlyBoughtTogether({ accessorySuggestions = [], on
           style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
         >
           {accessorySuggestions.map((acc) => {
+            // Khai báo biến/hằng số: originalPrice - Dùng trong logic xử lý của component
             const originalPrice = acc.price || acc.basePrice || 0;
+            // Khai báo biến/hằng số: comboPrice - Dùng trong logic xử lý của component
             const comboPrice = originalPrice * BUNDLE_DISCOUNT_RATE;
+            // Khai báo biến/hằng số: rating - Dùng trong logic xử lý của component
             const rating = acc.averageRating ?? acc.rating ?? 5;
 
             return (

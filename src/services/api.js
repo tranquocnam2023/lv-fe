@@ -3,6 +3,7 @@ import axios from 'axios';
 // Đọc URL từ file .env, nếu không có thì dùng mặc định
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://localhost:5001/api';
 
+// Cấu hình/Hằng số/Dịch vụ dữ liệu: api
 const api = axios.create({
   baseURL: API_BASE_URL,
   headers: {
@@ -13,6 +14,7 @@ const api = axios.create({
 // Interceptor để tự động đính kèm token vào mỗi request
 api.interceptors.request.use(
   (config) => {
+    // Khai báo biến/hằng số: token - Dùng trong logic xử lý của component
     const token = localStorage.getItem('token');
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;

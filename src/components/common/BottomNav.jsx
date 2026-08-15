@@ -17,7 +17,9 @@ import { Home, Grid, ShoppingBag, User, Search } from 'lucide-react';
 import { useCart } from '../../context/CartContext';
 
 export default function BottomNav() {
+  // Hook điều hướng trang (useNavigate) để chuyển hướng Route
   const navigate = useNavigate();
+  // Hook lấy thông tin đường dẫn/location hiện tại (useLocation)
   const location = useLocation();
   
   // Lấy số lượng sản phẩm từ CartContext để hiển thị Badge real-time
@@ -25,6 +27,7 @@ export default function BottomNav() {
   
   // State quản lý việc ẩn/hiện thanh điều hướng khi cuộn trang
   const [isVisible, setIsVisible] = useState(true);
+  // State: lastScrollY - Quản lý trạng thái và dữ liệu của lastScrollY trong giao diện
   const [lastScrollY, setLastScrollY] = useState(0);
 
   /**
@@ -33,7 +36,9 @@ export default function BottomNav() {
    * - Nếu cuộn lên (scroll up) > 10px hoặc gần đầu trang (< 50px): Hiển thị lại thanh BottomNav.
    */
   useEffect(() => {
+    // Hàm xử lý logic/sự kiện: handleScroll
     const handleScroll = () => {
+      // Khai báo biến/hằng số: currentScrollY - Dùng trong logic xử lý của component
       const currentScrollY = window.scrollY;
       
       // Luôn hiển thị khi ở gần đầu trang
@@ -105,6 +110,7 @@ export default function BottomNav() {
     >
       <div className="flex items-center justify-around h-16 px-2 max-w-md mx-auto">
         {navItems.map((item) => {
+          // Khai báo biến/hằng số: Icon - Dùng trong logic xử lý của component
           const Icon = item.icon;
           return (
             <button

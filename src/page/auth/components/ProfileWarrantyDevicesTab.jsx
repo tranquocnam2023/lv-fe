@@ -10,20 +10,29 @@ import { warrantyService } from '../../../services/warrantyService';
 import { ShieldCheck, Smartphone, CheckCircle, AlertCircle, RefreshCw, Sparkles, Clock, Calendar, Check } from 'lucide-react';
 
 export default function ProfileWarrantyDevicesTab() {
+  // State: data - Quản lý trạng thái và dữ liệu của data trong giao diện
   const [data, setData] = useState({ devices: [], warranties: [] });
+  // State: loading - Quản lý trạng thái và dữ liệu của loading trong giao diện
   const [loading, setLoading] = useState(true);
+  // State: errorMsg - Quản lý trạng thái và dữ liệu của errorMsg trong giao diện
   const [errorMsg, setErrorMsg] = useState('');
+  // State: successMsg - Quản lý trạng thái và dữ liệu của successMsg trong giao diện
   const [successMsg, setSuccessMsg] = useState('');
 
   // State nhập IMEI
   const [activeInputId, setActiveInputId] = useState(null);
+  // State: imeiInputs - Quản lý trạng thái và dữ liệu của imeiInputs trong giao diện
   const [imeiInputs, setImeiInputs] = useState({});
+  // State: activatingId - Quản lý trạng thái và dữ liệu của activatingId trong giao diện
   const [activatingId, setActivatingId] = useState(null);
 
+  // Hàm thực thi logic: loadData
   const loadData = async () => {
     setLoading(true);
     try {
+      // Khai báo biến/hằng số: res - Dùng trong logic xử lý của component
       const res = await warrantyService.getMyDevices();
+      // Khai báo biến/hằng số: payload - Dùng trong logic xử lý của component
       const payload = res?.data || res;
       setData(payload);
     } catch (err) {
@@ -38,12 +47,16 @@ export default function ProfileWarrantyDevicesTab() {
     loadData();
   }, []);
 
+  // Hàm xử lý logic/sự kiện: handleImeiChange
   const handleImeiChange = (orderItemId, val) => {
+    // Khai báo biến/hằng số: cleanVal - Dùng trong logic xử lý của component
     const cleanVal = val.replace(/\D/g, '').slice(0, 15);
     setImeiInputs(prev => ({ ...prev, [orderItemId]: cleanVal }));
   };
 
+  // Hàm xử lý logic/sự kiện: handleActivate
   const handleActivate = async (orderItemId) => {
+    // Khai báo biến/hằng số: imeiVal - Dùng trong logic xử lý của component
     const imeiVal = imeiInputs[orderItemId] || '';
     if (imeiVal.length !== 15) {
       setErrorMsg('Mã IMEI phải có đúng 15 chữ số từ 0-9.');
@@ -55,7 +68,9 @@ export default function ProfileWarrantyDevicesTab() {
     setSuccessMsg('');
 
     try {
+      // Khai báo biến/hằng số: res - Dùng trong logic xử lý của component
       const res = await warrantyService.activateImei({ orderItemId, imei: imeiVal });
+      // Khai báo biến/hằng số: msg - Dùng trong logic xử lý của component
       const msg = res?.data?.message || 'Kích hoạt mã IMEI thành công!';
       setSuccessMsg(msg);
       setActiveInputId(null);
@@ -77,6 +92,7 @@ export default function ProfileWarrantyDevicesTab() {
     );
   }
 
+  // Cấu hình/Hằng số/Dịch vụ dữ liệu: warrantiesList
   const warrantiesList = data.warranties || [];
 
   return (
@@ -127,8 +143,11 @@ export default function ProfileWarrantyDevicesTab() {
       ) : (
         <div className="space-y-4">
           {warrantiesList.map(item => {
+            // Khai báo biến/hằng số: isActivated - Dùng trong logic xử lý của component
             const isActivated = item.isActivated;
+            // Khai báo biến/hằng số: inputVal - Dùng trong logic xử lý của component
             const inputVal = imeiInputs[item.orderItemId] ?? '';
+            // Khai báo biến/hằng số: isEditing - Dùng trong logic xử lý của component
             const isEditing = activeInputId === item.orderItemId;
 
             return (

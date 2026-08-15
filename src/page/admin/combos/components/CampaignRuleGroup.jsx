@@ -30,13 +30,20 @@ export default function CampaignRuleGroup({
   infoTitle,
   infoContent
 }) {
+  // Khai báo biến/hằng số: isAmber - Dùng trong logic xử lý của component
   const isAmber = colorTheme === 'amber';
 
+  // Khai báo biến/hằng số: badgeBg - Dùng trong logic xử lý của component
   const badgeBg = isAmber ? 'bg-amber-100/80 text-amber-800' : 'bg-blue-100/80 text-blue-700';
+  // Khai báo biến/hằng số: infoBg - Dùng trong logic xử lý của component
   const infoBg = isAmber ? 'bg-amber-50/70 border-amber-100 text-amber-950' : 'bg-blue-50/70 border-blue-100 text-blue-900';
+  // Khai báo biến/hằng số: infoIconColor - Dùng trong logic xử lý của component
   const infoIconColor = isAmber ? 'text-amber-600' : 'text-blue-600';
+  // Khai báo biến/hằng số: addBtnBg - Dùng trong logic xử lý của component
   const addBtnBg = isAmber ? 'bg-amber-50 hover:bg-amber-100 text-amber-800' : 'bg-blue-50 hover:bg-blue-100 text-blue-700';
+  // Khai báo biến/hằng số: iconColor - Dùng trong logic xử lý của component
   const iconColor = isAmber ? 'text-amber-600' : 'text-blue-600';
+  // Khai báo biến/hằng số: focusBorderColor - Dùng trong logic xử lý của component
   const focusBorderColor = isAmber ? 'focus:border-amber-500' : 'focus:border-blue-500';
 
   return (

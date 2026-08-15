@@ -4,25 +4,32 @@ import { categoryService } from '../../../../services/categoryService';
 import { productService } from '../../../../services/productService';
 
 export default function CategoryRow({ category, level = 1, onEdit, onAddSubCategory, onDelete, allCategories = [], onRefresh }) {
+  // State: expanded - Quản lý trạng thái và dữ liệu của expanded trong giao diện
   const [expanded, setExpanded] = useState(true);
+  // State: details - Quản lý trạng thái và dữ liệu của details trong giao diện
   const [details, setDetails] = useState([]); // Chứa danh sách các danh mục con trực tiếp của danh mục hiện tại
+  // State: loadingDetails - Quản lý trạng thái và dữ liệu của loadingDetails trong giao diện
   const [loadingDetails, setLoadingDetails] = useState(false);
+  // State: inlineUploading - Quản lý trạng thái và dữ liệu của inlineUploading trong giao diện
   const [inlineUploading, setInlineUploading] = useState(false);
 
   // LOGIC CHA-CON: Lọc ra các danh mục con trực tiếp từ danh sách phẳng (allCategories)
   React.useEffect(() => {
     if (allCategories && allCategories.length > 0) {
+      // Hàm thực thi logic: subCats
       const subCats = allCategories.filter(c => c.parentId === category.id);
       setDetails(subCats);
     }
   }, [allCategories, category.id]);
 
+  // Hàm xử lý logic/sự kiện: handleDeleteIconInline
   const handleDeleteIconInline = async (e) => {
     e.stopPropagation();
     e.preventDefault();
     if (!window.confirm(`Bạn có chắc chắn muốn xóa hình ảnh/icon của danh mục "${category.name}"?`)) return;
 
     try {
+      // Khai báo biến/hằng số: payload - Dùng trong logic xử lý của component
       const payload = {
         name: category.name,
         slug: category.slug || '',
@@ -41,10 +48,13 @@ export default function CategoryRow({ category, level = 1, onEdit, onAddSubCateg
     }
   };
 
+  // Hàm xử lý logic/sự kiện: handleUploadIconInline
   const handleUploadIconInline = async (e) => {
+    // Khai báo biến/hằng số: file - Dùng trong logic xử lý của component
     const file = e.target.files[0];
     if (!file) return;
 
+    // Khai báo biến/hằng số: validExtensions - Dùng trong logic xử lý của component
     const validExtensions = ['image/svg+xml', 'image/webp', 'image/png', 'image/jpeg', 'image/jpg'];
     if (!validExtensions.includes(file.type)) {
       return alert('Hệ thống chỉ hỗ trợ SVG, WebP, PNG, JPG/JPEG.');
@@ -56,15 +66,19 @@ export default function CategoryRow({ category, level = 1, onEdit, onAddSubCateg
 
     setInlineUploading(true);
     try {
+      // Khai báo biến/hằng số: res - Dùng trong logic xử lý của component
       const res = await productService.uploadLocalImage(file, 'categories');
       if (res && res.url) {
         let finalUrl = res.url;
         if (finalUrl.startsWith('/')) {
+          // Khai báo biến/hằng số: apiBase - Dùng trong logic xử lý của component
           const apiBase = import.meta.env.VITE_API_URL || 'https://localhost:5001/api';
+          // Khai báo biến/hằng số: hostBase - Dùng trong logic xử lý của component
           const hostBase = apiBase.replace('/api', '');
           finalUrl = `${hostBase}${finalUrl}`;
         }
         
+        // Khai báo biến/hằng số: payload - Dùng trong logic xử lý của component
         const payload = {
           name: category.name,
           slug: category.slug || '',
@@ -86,10 +100,12 @@ export default function CategoryRow({ category, level = 1, onEdit, onAddSubCateg
     }
   };
 
+  // Hàm xử lý logic/sự kiện: handleToggle
   const handleToggle = () => {
     setExpanded(!expanded);
   };
 
+  // Hàm xử lý logic/sự kiện: getLevelBadgeColor
   const getLevelBadgeColor = (lvl) => {
     if (lvl === 1) return 'bg-admin-border text-admin-text-main';
     if (lvl === 2) return 'bg-primary/10 text-primary';
@@ -101,6 +117,7 @@ export default function CategoryRow({ category, level = 1, onEdit, onAddSubCateg
   const checkInheritedInactive = (cat) => {
     let parentId = cat.parentId;
     while (parentId) {
+      // Hàm thực thi logic: parent
       const parent = allCategories.find(c => c.id === parentId);
       if (!parent) break;
       if (parent.isActive === false) return true; // Có tổ tiên bị ẩn
@@ -109,12 +126,18 @@ export default function CategoryRow({ category, level = 1, onEdit, onAddSubCateg
     return false;
   };
 
+  // Khai báo biến/hằng số: inheritedInactive - Dùng trong logic xử lý của component
   const inheritedInactive = checkInheritedInactive(category);
+  // Khai báo biến/hằng số: isSelfInactive - Dùng trong logic xử lý của component
   const isSelfInactive = category.isActive === false;
+  // Khai báo biến/hằng số: isInactive - Dùng trong logic xử lý của component
   const isInactive = inheritedInactive || isSelfInactive; // Trạng thái ẩn thực tế cuối cùng
+  // Khai báo biến/hằng số: currentLevel - Dùng trong logic xử lý của component
   const currentLevel = category.level || level; // Xác định cấp hiện tại (Cấp 1, 2, hay 3)
 
+  // Hàm xử lý logic/sự kiện: getDirectoryPath
   const getDirectoryPath = (cat) => {
+    // Khai báo biến/hằng số: parts - Dùng trong logic xử lý của component
     const parts = [];
     let current = cat;
     while (current) {

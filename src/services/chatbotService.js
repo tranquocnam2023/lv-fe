@@ -1,6 +1,7 @@
 // SERVICE GỬI YÊU CẦU ĐẾN TRỢ LÝ AI CHATBOT
 import api from './api';
 
+// Cấu hình/Hằng số/Dịch vụ dữ liệu: chatbotService
 export const chatbotService = {
   /**
    * Gửi tin nhắn và lịch sử trò chuyện đến Backend Chatbot (/Chatbot/chat)

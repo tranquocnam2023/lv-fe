@@ -4,17 +4,25 @@ import api from "../../../services/api";
 import AccessoryVariantModal from "./AccessoryVariantModal";
 import MuaKemGiaSocModal from "./MuaKemGiaSocModal";
 
+// Component React: CoPurchaseRecommendation - Quản lý giao diện và logic xử lý của CoPurchaseRecommendation
 const CoPurchaseRecommendation = ({ mainProduct, mainProductPrice, selectedVariantId, onAddComboToCart, isCartPage = false }) => {
+  // State: campaigns - Quản lý trạng thái và dữ liệu của campaigns trong giao diện
   const [campaigns, setCampaigns] = useState([]);
+  // State: loading - Quản lý trạng thái và dữ liệu của loading trong giao diện
   const [loading, setLoading] = useState(true);
   
   // Modal states
   const [modalOpen, setModalOpen] = useState(false);
+  // State: bigModalOpen - Quản lý trạng thái và dữ liệu của bigModalOpen trong giao diện
   const [bigModalOpen, setBigModalOpen] = useState(false);
+  // State: bigModalTab - Quản lý trạng thái và dữ liệu của bigModalTab trong giao diện
   const [bigModalTab, setBigModalTab] = useState(0);
+  // State: selectedAccessory - Quản lý trạng thái và dữ liệu của selectedAccessory trong giao diện
   const [selectedAccessory, setSelectedAccessory] = useState(null);
 
+  // State: currentPage - Quản lý trạng thái và dữ liệu của currentPage trong giao diện
   const [currentPage, setCurrentPage] = useState(0);
+  // Khai báo biến/hằng số: itemsPerPage - Dùng trong logic xử lý của component
   const itemsPerPage = 4;
 
   useEffect(() => {
@@ -23,6 +31,7 @@ const CoPurchaseRecommendation = ({ mainProduct, mainProductPrice, selectedVaria
     // Gọi API lấy thông tin chiến dịch mua kèm khả dụng cho sản phẩm này
     api.get(`/PromotionCampaign/product/${mainProduct.id}`)
       .then(res => {
+        // Cấu hình/Hằng số/Dịch vụ dữ liệu: data
         const data = res.data || res || [];
         setCampaigns(data);
         setLoading(false);
@@ -50,6 +59,7 @@ const CoPurchaseRecommendation = ({ mainProduct, mainProductPrice, selectedVaria
     }
   });
 
+  // Hàm thực thi logic: mixedItems
   const mixedItems = explicitProducts.slice(0, 3).map(p => ({ type: 'product', data: p }));
 
   // 2. Lấy danh sách các Card Chiến dịch (chỉ các chiến dịch có chứa ít nhất 1 sản phẩm KHÔNG phải set riêng)
@@ -58,6 +68,7 @@ const CoPurchaseRecommendation = ({ mainProduct, mainProductPrice, selectedVaria
   );
 
   displayCampaigns.forEach((campData, index) => {
+    // Hàm thực thi logic: repProduct
     const repProduct = campData.addonProducts.find(p => !p.isExplicitlyAdded) || campData.addonProducts[0];
     mixedItems.push({
       type: 'campaign',
@@ -67,16 +78,22 @@ const CoPurchaseRecommendation = ({ mainProduct, mainProductPrice, selectedVaria
     });
   });
 
+  // Khai báo biến/hằng số: displaySource - Dùng trong logic xử lý của component
   const displaySource = mixedItems;
 
   // Ở phần màn hình chính (gợi ý), lấy tối đa 2 trang
   const maxPages = 2;
+  // Khai báo biến/hằng số: totalPages - Dùng trong logic xử lý của component
   const totalPages = Math.min(maxPages, Math.ceil(displaySource.length / itemsPerPage));
+  // Khai báo biến/hằng số: displayedAccessories - Dùng trong logic xử lý của component
   const displayedAccessories = displaySource.slice(currentPage * itemsPerPage, (currentPage + 1) * itemsPerPage);
 
+  // Hàm xử lý logic/sự kiện: getDynamicPrice
   const getDynamicPrice = (item) => {
+    // Khai báo biến/hằng số: basePrice - Dùng trong logic xử lý của component
     const basePrice = item.basePrice;
     let comboPrice = basePrice;
+    // Khai báo biến/hằng số: campaignToApply - Dùng trong logic xử lý của component
     const campaignToApply = item._campaign || campaigns[0].campaign;
     
     if (campaignToApply.discountType === 'Percentage') {
@@ -111,6 +128,7 @@ const CoPurchaseRecommendation = ({ mainProduct, mainProductPrice, selectedVaria
       <div className="relative group px-1">
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           {Array.from({ length: itemsPerPage }).map((_, idx) => {
+            // Khai báo biến/hằng số: item - Dùng trong logic xử lý của component
             const item = displayedAccessories[idx];
             
             if (!item) {
@@ -123,7 +141,9 @@ const CoPurchaseRecommendation = ({ mainProduct, mainProductPrice, selectedVaria
             }
 
             if (item.type === 'product') {
+              // Khai báo biến/hằng số: product - Dùng trong logic xử lý của component
               const product = item.data;
+              // Khai báo giải nén các thuộc tính/hàm (basePrice, comboPrice, campaignToApply) từ Hook / Context / Props
               const { basePrice, comboPrice, campaignToApply } = getDynamicPrice(product);
               
               let discountText = '';

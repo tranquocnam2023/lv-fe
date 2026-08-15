@@ -1,5 +1,6 @@
 import api from './api';
 
+// Cấu hình/Hằng số/Dịch vụ dữ liệu: userService
 export const userService = {
   getAll: () => api.get('/User'),//lấy danh sách user
 

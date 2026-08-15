@@ -3,7 +3,9 @@ import { useNavigate } from 'react-router-dom';
 import { useLoading } from '../context/LoadingContext';
 
 export default function CheckoutPage() {
+  // Hook điều hướng trang (useNavigate) để chuyển hướng Route
   const navigate = useNavigate();
+  // Khai báo giải nén các thuộc tính/hàm (stopLoading) từ Hook / Context / Props
   const { stopLoading } = useLoading();
   
   useEffect(() => {

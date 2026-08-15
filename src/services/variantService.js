@@ -1,5 +1,6 @@
 import api from './api';
 
+// Cấu hình/Hằng số/Dịch vụ dữ liệu: variantService
 export const variantService = {
   getAll: (productId) => api.get('/ProductVariant' + (productId ? `?productId=${productId}` : '')),
   

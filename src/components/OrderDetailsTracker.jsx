@@ -8,6 +8,7 @@ import OrderTimeline from './order-tracker/OrderTimeline';
 import OrderCancelModal from './order-tracker/OrderCancelModal';
 import OrderReturnModal from './OrderReturnModal';
 
+// Hàm xử lý logic/sự kiện: getPaymentMethodLabel
 const getPaymentMethodLabel = (method) => {
   if (!method) return 'Chưa xác định';
   switch (method.toLowerCase()) {
@@ -20,20 +21,29 @@ const getPaymentMethodLabel = (method) => {
 };
 
 export default function OrderDetailsTracker({ order, onOrderCancelled, isGuest = false }) {
+  // State: isCancelModalOpen - Quản lý trạng thái và dữ liệu của isCancelModalOpen trong giao diện
   const [isCancelModalOpen, setIsCancelModalOpen] = useState(false);
+  // State: cancelReason - Quản lý trạng thái và dữ liệu của cancelReason trong giao diện
   const [cancelReason, setCancelReason] = useState('');
+  // State: customReason - Quản lý trạng thái và dữ liệu của customReason trong giao diện
   const [customReason, setCustomReason] = useState('');
+  // State: cancelling - Quản lý trạng thái và dữ liệu của cancelling trong giao diện
   const [cancelling, setCancelling] = useState(false);
+  // State: cancelError - Quản lý trạng thái và dữ liệu của cancelError trong giao diện
   const [cancelError, setCancelError] = useState('');
 
   // State Yêu cầu Đổi trả
   const [isReturnModalOpen, setIsReturnModalOpen] = useState(false);
+  // State: returnReason - Quản lý trạng thái và dữ liệu của returnReason trong giao diện
   const [returnReason, setReturnReason] = useState('');
+  // State: returnNote - Quản lý trạng thái và dữ liệu của returnNote trong giao diện
   const [returnNote, setReturnNote] = useState('');
 
   if (!order) return null;
 
+  // Hàm xử lý logic/sự kiện: getReturnDeadline
   const getReturnDeadline = (createdDate) => {
+    // Khai báo biến/hằng số: d - Dùng trong logic xử lý của component
     const d = new Date(createdDate || Date.now());
     if (isNaN(d.getTime())) return '';
     // Ngày đặt + 1 ngày giao + 7 ngày chính sách đổi trả
@@ -43,8 +53,10 @@ export default function OrderDetailsTracker({ order, onOrderCancelled, isGuest =
 
   // Trích xuất gói bảo hành (nếu có) từ chi tiết đơn hàng
   const warrantyItem = order.items?.find(item => item.warrantyId);
+  // Cấu hình/Hằng số/Dịch vụ dữ liệu: inspectionStatus
   const inspectionStatus = warrantyItem?.inspectionStatus;
 
+  // Khai báo biến/hằng số: cancelReasons - Dùng trong logic xử lý của component
   const cancelReasons = [
     "Tôi muốn đổi địa chỉ / thông tin nhận hàng",
     "Tôi muốn chọn mua sản phẩm khác",
@@ -66,6 +78,7 @@ export default function OrderDetailsTracker({ order, onOrderCancelled, isGuest =
     return 1;
   };
 
+  // Khai báo biến/hằng số: currentStep - Dùng trong logic xử lý của component
   const currentStep = getStatusStep(statusId);
 
   // Cho phép hủy nếu đơn hàng ở trạng thái Pending (1)
@@ -73,6 +86,7 @@ export default function OrderDetailsTracker({ order, onOrderCancelled, isGuest =
 
   // Helper định dạng thời gian giả lập chính xác theo mốc
   const getStepTime = (createdAtStr, stepIndex) => {
+    // Khai báo biến/hằng số: baseDate - Dùng trong logic xử lý của component
     const baseDate = new Date(createdAtStr);
     if (isNaN(baseDate.getTime())) return '';
 
@@ -103,6 +117,7 @@ export default function OrderDetailsTracker({ order, onOrderCancelled, isGuest =
     });
   };
 
+  // Hàm xử lý logic/sự kiện: handleCancelOrder
   const handleCancelOrder = async () => {
     if (!cancelReason) {
       setCancelError('Vui lòng chọn một lý do hủy đơn hàng.');
@@ -116,6 +131,7 @@ export default function OrderDetailsTracker({ order, onOrderCancelled, isGuest =
     setCancelling(true);
     setCancelError('');
     try {
+      // Khai báo biến/hằng số: phoneParam - Dùng trong logic xử lý của component
       const phoneParam = order.receiverPhone || order.customerPhone || '';
       await orderService.cancelOrder(order.id, phoneParam);
       
@@ -139,11 +155,15 @@ export default function OrderDetailsTracker({ order, onOrderCancelled, isGuest =
     }
   };
 
+  // Hàm xử lý logic/sự kiện: handlePaymentRetry
   const handlePaymentRetry = async () => {
     try {
+      // Khai báo biến/hằng số: provider - Dùng trong logic xử lý của component
       const provider = (order.paymentMethod || order.PaymentMethod || 'stripe').toLowerCase();
+      // Khai báo biến/hằng số: response - Dùng trong logic xử lý của component
       const response = await api.post(`/Payment/create-checkout-session/${order.id}?provider=${provider}`);
       
+      // Cấu hình/Hằng số/Dịch vụ dữ liệu: data
       const data = response?.data || response;
       if (data?.url) {
         window.location.href = data.url;

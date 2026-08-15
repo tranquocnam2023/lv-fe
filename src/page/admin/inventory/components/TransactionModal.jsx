@@ -5,6 +5,7 @@ import api from "../../../../services/api";
 import { inventoryService } from "../../../../services/inventoryService";
 import { orderService } from "../../../../services/orderService";
 
+// Khai báo biến/hằng số: TRANSACTIONS - Dùng trong logic xử lý của component
 const TRANSACTIONS = [
   { id: "IMPORT_SUPPLIER", name: "Nhập từ nhà cung cấp", type: "IN", bgColor: "#E0E7FF", textColor: "var(--color-primary)", borderColor: "var(--color-primary)" },
   { id: "IMPORT_RETURN", name: "Nhập hàng khách trả", type: "IN", bgColor: "#D1FAE5", textColor: "var(--color-success)", borderColor: "var(--color-success)" },
@@ -13,29 +14,47 @@ const TRANSACTIONS = [
 ];
 
 export default function TransactionModal({ activeTxTab, setActiveTxTab, products, brands, onSuccess, urlProductId, urlAction, setSearchParams }) {
+  // State: isTxDropdownOpen - Quản lý trạng thái và dữ liệu của isTxDropdownOpen trong giao diện
   const [isTxDropdownOpen, setIsTxDropdownOpen] = useState(false);
+  // State: txProductId - Quản lý trạng thái và dữ liệu của txProductId trong giao diện
   const [txProductId, setTxProductId] = useState('');
+  // State: selectedBrandId - Quản lý trạng thái và dữ liệu của selectedBrandId trong giao diện
   const [selectedBrandId, setSelectedBrandId] = useState('');
+  // State: txQuantity - Quản lý trạng thái và dữ liệu của txQuantity trong giao diện
   const [txQuantity, setTxQuantity] = useState(1);
+  // State: txPrice - Quản lý trạng thái và dữ liệu của txPrice trong giao diện
   const [txPrice, setTxPrice] = useState('');
+  // State: txNote - Quản lý trạng thái và dữ liệu của txNote trong giao diện
   const [txNote, setTxNote] = useState('');
+  // State: txVariants - Quản lý trạng thái và dữ liệu của txVariants trong giao diện
   const [txVariants, setTxVariants] = useState([]);
+  // State: txQueue - Quản lý trạng thái và dữ liệu của txQueue trong giao diện
   const [txQueue, setTxQueue] = useState([]);
+  // State: searchQueryOrder - Quản lý trạng thái và dữ liệu của searchQueryOrder trong giao diện
   const [searchQueryOrder, setSearchQueryOrder] = useState('');
+  // State: allOrdersList - Quản lý trạng thái và dữ liệu của allOrdersList trong giao diện
   const [allOrdersList, setAllOrdersList] = useState([]);
+  // State: ordersLoading - Quản lý trạng thái và dữ liệu của ordersLoading trong giao diện
   const [ordersLoading, setOrdersLoading] = useState(false);
+  // State: matchingOrders - Quản lý trạng thái và dữ liệu của matchingOrders trong giao diện
   const [matchingOrders, setMatchingOrders] = useState([]);
+  // State: selectedOrder - Quản lý trạng thái và dữ liệu của selectedOrder trong giao diện
   const [selectedOrder, setSelectedOrder] = useState(null);
+  // State: variantsLoading - Quản lý trạng thái và dữ liệu của variantsLoading trong giao diện
   const [variantsLoading, setVariantsLoading] = useState(false);
+  // Reference (useRef): txDropdownRef - Lưu vết tham chiếu DOM hoặc giá trị không gây re-render
   const txDropdownRef = useRef(null);
+  // State: isTxAttrOpen - Quản lý trạng thái và dữ liệu của isTxAttrOpen trong giao diện
   const [isTxAttrOpen, setIsTxAttrOpen] = useState(false);
 
   // Excel import state
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
+  // State: isExporting - Quản lý trạng thái và dữ liệu của isExporting trong giao diện
   const [isExporting, setIsExporting] = useState(false);
 
   // Close attribute dropdown on click outside
   useEffect(() => {
+    // Hàm xử lý logic/sự kiện: handleClickOutside
     const handleClickOutside = (event) => {
       if (txDropdownRef.current && !txDropdownRef.current.contains(event.target)) {
         setIsTxAttrOpen(false);
@@ -49,6 +68,7 @@ export default function TransactionModal({ activeTxTab, setActiveTxTab, products
 
   // Parse attributes for currently selected product variants
   const txAttributesConfig = useMemo(() => {
+    // Cấu hình/Hằng số/Dịch vụ dữ liệu: config
     const config = {
       "Dung lượng RAM - ROM": new Set(),
       "Màu sắc": new Set()
@@ -56,6 +76,7 @@ export default function TransactionModal({ activeTxTab, setActiveTxTab, products
 
     txVariants.forEach(v => {
       if (v.name && v.name.includes(' - ')) {
+        // Khai báo biến/hằng số: parts - Dùng trong logic xử lý của component
         const parts = v.name.split(' - ');
         if (parts.length > 1) {
           config["Dung lượng RAM - ROM"].add(parts[1].trim());
@@ -66,6 +87,7 @@ export default function TransactionModal({ activeTxTab, setActiveTxTab, products
       }
     });
 
+    // Khai báo biến/hằng số: result - Dùng trong logic xử lý của component
     const result = {};
     Object.entries(config).forEach(([key, set]) => {
       if (set.size > 0) {
@@ -86,6 +108,7 @@ export default function TransactionModal({ activeTxTab, setActiveTxTab, products
             urlAction === 'EXPORT_DEFECT' ? 'Trả hàng lỗi cho nhà cung cấp' : '');
 
       setSearchParams(prev => {
+        // Khai báo biến/hằng số: p - Dùng trong logic xử lý của component
         const p = new URLSearchParams(prev);
         p.delete('productId');
         p.delete('action');
@@ -129,6 +152,7 @@ export default function TransactionModal({ activeTxTab, setActiveTxTab, products
   // Load product variants when product is selected in modal
   useEffect(() => {
     if (txProductId) {
+      // Hàm thực thi logic: selectedProd
       const selectedProd = products.find(p => p.id === parseInt(txProductId));
       if (!selectedProd) return;
 
@@ -176,9 +200,12 @@ export default function TransactionModal({ activeTxTab, setActiveTxTab, products
     }
   }, [txProductId, products]);
 
+  // Hàm xử lý logic/sự kiện: handleQuantityChange
   const handleQuantityChange = (idx, value) => {
     setTxVariants(prev => {
+      // Khai báo biến/hằng số: target - Dùng trong logic xử lý của component
       const target = prev[idx];
+      // Khai báo biến/hằng số: isSelected - Dùng trong logic xử lý của component
       const isSelected = target.selected;
       return prev.map((item, i) => {
         if (i === idx) {
@@ -192,9 +219,12 @@ export default function TransactionModal({ activeTxTab, setActiveTxTab, products
     });
   };
 
+  // Hàm xử lý logic/sự kiện: handlePriceChange
   const handlePriceChange = (idx, value) => {
     setTxVariants(prev => {
+      // Khai báo biến/hằng số: target - Dùng trong logic xử lý của component
       const target = prev[idx];
+      // Khai báo biến/hằng số: isSelected - Dùng trong logic xử lý của component
       const isSelected = target.selected;
       return prev.map((item, i) => {
         if (i === idx) {
@@ -208,13 +238,18 @@ export default function TransactionModal({ activeTxTab, setActiveTxTab, products
     });
   };
 
+  // Hàm xử lý logic/sự kiện: handleSelectByTxAttribute
   const handleSelectByTxAttribute = (attrKey, value) => {
+    // Khai báo biến/hằng số: keyLower - Dùng trong logic xử lý của component
     const keyLower = attrKey.toLowerCase();
+    // Khai báo biến/hằng số: valLower - Dùng trong logic xử lý của component
     const valLower = value.toLowerCase().trim();
 
+    // Khai báo biến/hằng số: matchedIndices - Dùng trong logic xử lý của component
     const matchedIndices = [];
     txVariants.forEach((v, idx) => {
       if (v.name && v.name.includes(' - ')) {
+        // Khai báo biến/hằng số: parts - Dùng trong logic xử lý của component
         const parts = v.name.split(' - ');
         if (keyLower.includes('dung lượng') || keyLower.includes('ram')) {
           if (parts[1] && parts[1].toLowerCase().trim() === valLower) {
@@ -230,6 +265,7 @@ export default function TransactionModal({ activeTxTab, setActiveTxTab, products
 
     if (matchedIndices.length === 0) return;
 
+    // Hàm thực thi logic: allSelected
     const allSelected = matchedIndices.every(idx => txVariants[idx].selected);
 
     setTxVariants(prev => prev.map((v, idx) => {
@@ -246,6 +282,7 @@ export default function TransactionModal({ activeTxTab, setActiveTxTab, products
       alert("Vui lòng nhập số điện thoại hoặc mã hóa đơn!");
       return;
     }
+    // Khai báo biến/hằng số: query - Dùng trong logic xử lý của component
     const query = searchQueryOrder.trim().toLowerCase();
     
     // Lọc tìm đơn hàng
@@ -267,6 +304,7 @@ export default function TransactionModal({ activeTxTab, setActiveTxTab, products
     }
   };
 
+  // Hàm xử lý logic/sự kiện: handleSelectOrder
   const handleSelectOrder = (order) => {
     setSelectedOrder(order);
     setTxProductId(''); // xóa các lựa chọn sản phẩm thủ công trước đó
@@ -276,6 +314,7 @@ export default function TransactionModal({ activeTxTab, setActiveTxTab, products
     // Map danh sách hàng trong hóa đơn sang txVariants
     if (order.items && Array.isArray(order.items)) {
       setTxVariants(order.items.map(item => {
+        // Hàm thực thi logic: matchedProd
         const matchedProd = products.find(p => p.name === item.productName);
         return {
           id: item.variantId,
@@ -296,6 +335,7 @@ export default function TransactionModal({ activeTxTab, setActiveTxTab, products
     }
   };
 
+  // Hàm xử lý logic/sự kiện: handleClearSelectedOrder
   const handleClearSelectedOrder = () => {
     setSelectedOrder(null);
     setSearchQueryOrder('');
@@ -304,11 +344,14 @@ export default function TransactionModal({ activeTxTab, setActiveTxTab, products
     setTxProductId('');
   };
 
+  // Hàm xử lý logic/sự kiện: handleConditionChange
   const handleConditionChange = (idx, value) => {
     setTxVariants(prev => prev.map((item, i) => i === idx ? { ...item, condition: value } : item));
   };
 
+  // Hàm xử lý logic/sự kiện: handleAddSingleVariantToQueue
   const handleAddSingleVariantToQueue = (item) => {
+    // Khai báo biến/hằng số: price - Dùng trong logic xử lý của component
     const price = parseFloat(item.price);
     if (isNaN(price) || price < 1000 || price > 500000000) {
       alert(`Giá trị hoàn trả phải từ 1.000 đến 500.000.000 VNĐ!`);
@@ -322,6 +365,7 @@ export default function TransactionModal({ activeTxTab, setActiveTxTab, products
 
     setTxQueue(prev => {
       let updated = [...prev];
+      // Khai báo biến/hằng số: cond - Dùng trong logic xử lý của component
       const cond = item.condition;
 
       // Find if this variant WITH THE SAME CONDITION is already in the queue
@@ -334,6 +378,7 @@ export default function TransactionModal({ activeTxTab, setActiveTxTab, products
       if (existingIdx !== -1) {
         // Merge quantity
         const existingQty = parseInt(updated[existingIdx].quantity) || 0;
+        // Khai báo biến/hằng số: newQty - Dùng trong logic xử lý của component
         const newQty = parseInt(item.quantity) || 0;
         
         // Validate merged quantity against purchase limit
@@ -369,6 +414,7 @@ export default function TransactionModal({ activeTxTab, setActiveTxTab, products
 
   // Queue helper functions
   const handleAddToQueue = () => {
+    // Khai báo biến/hằng số: isByOrder - Dùng trong logic xử lý của component
     const isByOrder = activeTxTab === 'IMPORT_RETURN' && selectedOrder !== null;
 
     let product = null;
@@ -384,7 +430,9 @@ export default function TransactionModal({ activeTxTab, setActiveTxTab, products
       }
     }
 
+    // Hàm thực thi logic: itemsToAdd
     const itemsToAdd = txVariants.filter(v => {
+      // Khai báo biến/hằng số: qty - Dùng trong logic xử lý của component
       const qty = parseInt(v.quantity);
       return v.selected && !isNaN(qty) && qty > 0;
     });
@@ -396,6 +444,7 @@ export default function TransactionModal({ activeTxTab, setActiveTxTab, products
 
     // Validate prices and quantities of added items
     for (const item of itemsToAdd) {
+      // Khai báo biến/hằng số: price - Dùng trong logic xử lý của component
       const price = parseFloat(item.price);
       if (isNaN(price) || price < 1000 || price > 500000000) {
         alert(`Giá trị của biến thể "${item.name}" phải từ 1.000 đến 500.000.000 VNĐ!`);
@@ -423,9 +472,13 @@ export default function TransactionModal({ activeTxTab, setActiveTxTab, products
       itemsToAdd.forEach(item => {
         if (hasError) return;
 
+        // Khai báo biến/hằng số: prodId - Dùng trong logic xử lý của component
         const prodId = isByOrder ? item.productId : product.id;
+        // Khai báo biến/hằng số: prodName - Dùng trong logic xử lý của component
         const prodName = isByOrder ? item.productName : product.name;
+        // Khai báo biến/hằng số: varName - Dùng trong logic xử lý của component
         const varName = isByOrder ? item.variantName : (item.id ? item.name : 'Mặc định');
+        // Khai báo biến/hằng số: cond - Dùng trong logic xử lý của component
         const cond = activeTxTab === 'IMPORT_RETURN' ? item.condition : null;
 
         // Find if this variant WITH THE SAME CONDITION is already in the queue
@@ -438,6 +491,7 @@ export default function TransactionModal({ activeTxTab, setActiveTxTab, products
         if (existingIdx !== -1) {
           // Merge quantity
           const existingQty = parseInt(updated[existingIdx].quantity) || 0;
+          // Khai báo biến/hằng số: newQty - Dùng trong logic xử lý của component
           const newQty = parseInt(item.quantity) || 0;
           
           // Validate merged quantity against purchase limit (if applicable)
@@ -487,17 +541,21 @@ export default function TransactionModal({ activeTxTab, setActiveTxTab, products
     }
   };
 
+  // Hàm xử lý logic/sự kiện: handleRemoveFromQueue
   const handleRemoveFromQueue = (index) => {
     setTxQueue(prev => prev.filter((_, i) => i !== index));
   };
 
+  // Hàm xử lý logic/sự kiện: handleClearQueue
   const handleClearQueue = () => {
     setTxQueue([]);
   };
 
+  // Hàm xử lý logic/sự kiện: handleQueueQuantityChange
   const handleQueueQuantityChange = (index, value) => {
     setTxQueue(prev => prev.map((item, i) => {
       if (i === index) {
+        // Khai báo biến/hằng số: qty - Dùng trong logic xử lý của component
         const qty = parseInt(value);
         if (item.purchaseQuantity !== null && !isNaN(qty) && qty > item.purchaseQuantity) {
           alert(`Số lượng hoàn trả không được vượt quá số lượng đã mua (${item.purchaseQuantity})!`);
@@ -509,9 +567,11 @@ export default function TransactionModal({ activeTxTab, setActiveTxTab, products
     }));
   };
 
+  // Hàm xử lý logic/sự kiện: handleQueuePriceChange
   const handleQueuePriceChange = (index, value) => {
     setTxQueue(prev => prev.map((item, i) => {
       if (i === index) {
+        // Khai báo biến/hằng số: price - Dùng trong logic xử lý của component
         const price = parseFloat(value);
         if (item.purchasePrice !== null && !isNaN(price) && price > item.purchasePrice) {
           alert(`Giá hoàn lại không được vượt quá giá lúc mua (${item.purchasePrice.toLocaleString('vi-VN')} VNĐ)!`);
@@ -523,6 +583,7 @@ export default function TransactionModal({ activeTxTab, setActiveTxTab, products
     }));
   };
 
+  // Hàm xử lý logic/sự kiện: handleQueueConditionChange
   const handleQueueConditionChange = (index, value) => {
     setTxQueue(prev => prev.map((item, i) => {
       if (i === index) {
@@ -541,11 +602,13 @@ export default function TransactionModal({ activeTxTab, setActiveTxTab, products
 
     // Validate quantities and prices in queue
     for (const item of txQueue) {
+      // Khai báo biến/hằng số: qty - Dùng trong logic xử lý của component
       const qty = parseInt(item.quantity);
       if (isNaN(qty) || qty <= 0) {
         alert(`Số lượng của "${item.productName} (${item.variantName})" phải lớn hơn 0!`);
         return;
       }
+      // Khai báo biến/hằng số: price - Dùng trong logic xử lý của component
       const price = parseFloat(item.price);
       if (isNaN(price) || price < 1000 || price > 500000000) {
         alert(`Giá trị của "${item.productName} (${item.variantName})" phải từ 1.000 đến 500.000.000 VNĐ!`);
@@ -554,15 +617,19 @@ export default function TransactionModal({ activeTxTab, setActiveTxTab, products
     }
 
     try {
+      // Hàm thực thi logic: txConf
       const txConf = TRANSACTIONS.find(t => t.id === activeTxTab);
 
       // Execute all transactions sequentially to prevent concurrency issues and ensure correct parent stock sync
       for (const item of txQueue) {
         let finalNote = txNote || '';
         if (activeTxTab === 'IMPORT_RETURN') {
+          // Khai báo biến/hằng số: condText - Dùng trong logic xử lý của component
           const condText = item.condition === 'NEW' ? 'Nguyên seal / Chưa sử dụng' :
                            item.condition === 'USED' ? 'Đã bóc seal / Máy cũ' : 'Lỗi phần cứng';
+          // Khai báo biến/hằng số: orderPrefix - Dùng trong logic xử lý của component
           const orderPrefix = selectedOrder ? `[Đơn hàng: #${selectedOrder.id}]` : '';
+          // Khai báo biến/hằng số: condPrefix - Dùng trong logic xử lý của component
           const condPrefix = `[Tình trạng: ${condText}]`;
           finalNote = `${orderPrefix}${condPrefix} ${finalNote}`.trim();
         }
@@ -600,6 +667,7 @@ export default function TransactionModal({ activeTxTab, setActiveTxTab, products
   };
 
   if (!activeTxTab) return null;
+  // Hàm thực thi logic: txConf
   const txConf = TRANSACTIONS.find(t => t.id === activeTxTab);
 
   return (
@@ -733,8 +801,10 @@ export default function TransactionModal({ activeTxTab, setActiveTxTab, products
                       <select
                         value={txProductId}
                         onChange={(e) => {
+                          // Khai báo biến/hằng số: prodId - Dùng trong logic xử lý của component
                           const prodId = e.target.value;
                           setTxProductId(prodId);
+                          // Hàm thực thi logic: selectedProd
                           const selectedProd = products.find(p => p.id === parseInt(prodId));
                           if (selectedProd) {
                             setTxNote(activeTxTab === 'IMPORT_SUPPLIER' ? 'Nhập hàng từ nhà cung cấp' :
@@ -788,10 +858,14 @@ export default function TransactionModal({ activeTxTab, setActiveTxTab, products
                                     </div>
                                     <div className="px-1 py-1 space-y-0.5">
                                       {values.map(val => {
+                                        // Khai báo biến/hằng số: keyLower - Dùng trong logic xử lý của component
                                         const keyLower = attrKey.toLowerCase();
+                                        // Khai báo biến/hằng số: valLower - Dùng trong logic xử lý của component
                                         const valLower = val.toLowerCase().trim();
+                                        // Hàm thực thi logic: matches
                                         const matches = txVariants.filter(v => {
                                           if (!v.name || !v.name.includes(' - ')) return false;
+                                          // Khai báo biến/hằng số: parts - Dùng trong logic xử lý của component
                                           const parts = v.name.split(' - ');
                                           if (keyLower.includes('dung lượng') || keyLower.includes('ram')) {
                                             return parts[1] && parts[1].toLowerCase().trim() === valLower;
@@ -800,6 +874,7 @@ export default function TransactionModal({ activeTxTab, setActiveTxTab, products
                                           }
                                           return false;
                                         });
+                                        // Hàm thực thi logic: isAllSelected
                                         const isAllSelected = matches.length > 0 && matches.every(v => v.selected);
 
                                         return (
@@ -841,6 +916,7 @@ export default function TransactionModal({ activeTxTab, setActiveTxTab, products
                                     type="checkbox"
                                     checked={txVariants.length > 0 && txVariants.every(v => v.selected)}
                                     onChange={(e) => {
+                                      // Khai báo biến/hằng số: isChecked - Dùng trong logic xử lý của component
                                       const isChecked = e.target.checked;
                                       setTxVariants(prev => prev.map(v => ({ ...v, selected: isChecked })));
                                     }}
@@ -868,6 +944,7 @@ export default function TransactionModal({ activeTxTab, setActiveTxTab, products
                                       type="checkbox"
                                       checked={!!v.selected}
                                       onChange={(e) => {
+                                        // Khai báo biến/hằng số: isChecked - Dùng trong logic xử lý của component
                                         const isChecked = e.target.checked;
                                         setTxVariants(prev => prev.map((item, i) => i === idx ? { ...item, selected: isChecked } : item));
                                       }}

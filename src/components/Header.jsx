@@ -22,6 +22,7 @@ import { productService } from '../services/productService';
 import { categoryService } from '../services/categoryService';
 import { brandService } from '../services/brandService';
 
+// Hàm xử lý logic/sự kiện: getCategoryIcon
 const getCategoryIcon = (name, iconUrl) => {
   if (iconUrl) {
     return (
@@ -33,6 +34,7 @@ const getCategoryIcon = (name, iconUrl) => {
     );
   }
 
+  // Khai báo biến/hằng số: normalized - Dùng trong logic xử lý của component
   const normalized = name.toLowerCase();
   let IconComponent = ShoppingBag;
 
@@ -86,16 +88,21 @@ const BRAND_FALLBACK_LOGOS = {
 // Hàm đệ quy lấy tất cả ID danh mục con và cháu
 const getAllCategoryIdsRecursive = (parentId, allCategories) => {
   let result = [parentId];
+  // Hàm thực thi logic: children
   const children = allCategories.filter(c => String(c.parentId || c.ParentId) === String(parentId));
   children.forEach(child => {
+    // Khai báo biến/hằng số: childId - Dùng trong logic xử lý của component
     const childId = child.id || child.Id;
     result = result.concat(getAllCategoryIdsRecursive(childId, allCategories));
   });
   return result;
 };
 
+// Hàm xử lý logic/sự kiện: getMegaMenuData
 const getMegaMenuData = (cat, subcategories, allProducts, dbBrands, allCategories = []) => {
+  // Khai báo biến/hằng số: normName - Dùng trong logic xử lý của component
   const normName = cat.name.toLowerCase();
+  // Khai báo biến/hằng số: catId - Dùng trong logic xử lý của component
   const catId = cat.id || cat.Id;
 
   // Lấy tất cả ID danh mục con & cháu đệ quy (Cấp 2, Cấp 3, Cấp 4)
@@ -105,6 +112,7 @@ const getMegaMenuData = (cat, subcategories, allProducts, dbBrands, allCategorie
 
   // 1. Lọc sản phẩm thực tế thuộc danh mục này và tất cả các danh mục con/cháu
   const catProducts = allProducts.filter(p => {
+    // Khai báo biến/hằng số: pCatId - Dùng trong logic xử lý của component
     const pCatId = p.categoryId || p.CategoryId;
     if (pCatId && targetCategoryIds.includes(pCatId)) return true;
 
@@ -140,8 +148,11 @@ const getMegaMenuData = (cat, subcategories, allProducts, dbBrands, allCategorie
 
   // Chuyển đổi định dạng kèm logoUrl
   const brands = categoryBrands.map(b => {
+    // Khai báo biến/hằng số: nameLower - Dùng trong logic xử lý của component
     const nameLower = (b.name || '').toLowerCase().trim();
+    // Khai báo biến/hằng số: dbImage - Dùng trong logic xử lý của component
     const dbImage = b.imageUrl || b.ImageUrl || b.logoUrl || b.logo || b.image;
+    // Khai báo biến/hằng số: logoUrl - Dùng trong logic xử lý của component
     const logoUrl = dbImage || BRAND_FALLBACK_LOGOS[nameLower] || null;
     return {
       name: b.name,
@@ -153,6 +164,7 @@ const getMegaMenuData = (cat, subcategories, allProducts, dbBrands, allCategorie
   // 3. Lấy danh sách sản phẩm HOT thực tế thuộc danh mục này
   let hotProds = catProducts.filter(p => p.isFeatured || p.IsFeatured);
   if (hotProds.length < 4) {
+    // Hàm thực thi logic: regularProds
     const regularProds = catProducts.filter(p => !(p.isFeatured || p.IsFeatured));
     hotProds = [...hotProds, ...regularProds];
   }
@@ -162,7 +174,9 @@ const getMegaMenuData = (cat, subcategories, allProducts, dbBrands, allCategorie
   if (hotProds.length === 0) {
     if (normName.includes('phụ kiện')) {
       hotProds = allProducts.filter(p => {
+        // Khai báo biến/hằng số: pCatName - Dùng trong logic xử lý của component
         const pCatName = (p.categoryName || p.CategoryName || p.category || '').toLowerCase();
+        // Khai báo biến/hằng số: pName - Dùng trong logic xử lý của component
         const pName = (p.name || '').toLowerCase();
         return (
           pCatName.includes('phụ kiện') || pCatName.includes('sạc') || pCatName.includes('ốp') ||
@@ -171,7 +185,9 @@ const getMegaMenuData = (cat, subcategories, allProducts, dbBrands, allCategorie
       });
     } else if (normName.includes('âm thanh')) {
       hotProds = allProducts.filter(p => {
+        // Khai báo biến/hằng số: pCatName - Dùng trong logic xử lý của component
         const pCatName = (p.categoryName || p.CategoryName || p.category || '').toLowerCase();
+        // Khai báo biến/hằng số: pName - Dùng trong logic xử lý của component
         const pName = (p.name || '').toLowerCase();
         return (
           pCatName.includes('âm thanh') || pCatName.includes('tai nghe') || pCatName.includes('loa') ||
@@ -183,6 +199,7 @@ const getMegaMenuData = (cat, subcategories, allProducts, dbBrands, allCategorie
     }
   }
 
+  // Hàm thực thi logic: hotProducts
   const hotProducts = hotProds.slice(0, 4).map((p, idx) => ({
     id: p.id || p.Id,
     name: p.name,
@@ -226,16 +243,23 @@ const getMegaMenuData = (cat, subcategories, allProducts, dbBrands, allCategorie
   };
 };
 
+// Hàm xử lý logic/sự kiện: getUserFromStorage
 const getUserFromStorage = () => {
   try {
+    // Khai báo biến/hằng số: userJson - Dùng trong logic xử lý của component
     const userJson = localStorage.getItem('user');
     if (userJson && userJson !== 'undefined' && userJson !== 'null') {
+      // Khai báo biến/hằng số: user - Dùng trong logic xử lý của component
       const user = JSON.parse(userJson);
+      // Khai báo biến/hằng số: token - Dùng trong logic xử lý của component
       const token = localStorage.getItem('token');
       if (!user.username && token) {
         try {
+          // Khai báo biến/hằng số: payloadBase64 - Dùng trong logic xử lý của component
           const payloadBase64 = token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/');
+          // Hàm thực thi logic: payloadJson
           const payloadJson = decodeURIComponent(atob(payloadBase64).split('').map(c => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)).join(''));
+          // Khai báo biến/hằng số: payload - Dùng trong logic xử lý của component
           const payload = JSON.parse(payloadJson);
           user.username = payload['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name'] || payload.unique_name || payload.name || payload.sub;
         } catch (e) {
@@ -252,19 +276,29 @@ const getUserFromStorage = () => {
 };
 
 export default function Header() {
+  // Khai báo giải nén các thuộc tính/hàm (cartCount) từ Hook / Context / Props
   const { cartCount } = useCart();
+  // Hook điều hướng trang (useNavigate) để chuyển hướng Route
   const navigate = useNavigate();
+  // Khai báo giải nén các thuộc tính/hàm (toggleTheme, isDark) từ Hook / Context / Props
   const { toggleTheme, isDark } = useTheme();
 
+  // State: categories - Quản lý trạng thái và dữ liệu của categories trong giao diện
   const [categories, setCategories] = useState([]);
+  // State: isOpenMobileMenu - Quản lý trạng thái và dữ liệu của isOpenMobileMenu trong giao diện
   const [isOpenMobileMenu, setIsOpenMobileMenu] = useState(false);
+  // State: hoveredCatId - Quản lý trạng thái và dữ liệu của hoveredCatId trong giao diện
   const [hoveredCatId, setHoveredCatId] = useState(null);
+  // State: dbBrands - Quản lý trạng thái và dữ liệu của dbBrands trong giao diện
   const [dbBrands, setDbBrands] = useState([]);
 
   // States cho tìm kiếm
   const [searchQuery, setSearchQuery] = useState('');
+  // State: allProducts - Quản lý trạng thái và dữ liệu của allProducts trong giao diện
   const [allProducts, setAllProducts] = useState([]);
+  // State: showDropdown - Quản lý trạng thái và dữ liệu của showDropdown trong giao diện
   const [showDropdown, setShowDropdown] = useState(false);
+  // Reference (useRef): searchContainerRef - Lưu vết tham chiếu DOM hoặc giá trị không gây re-render
   const searchContainerRef = useRef(null);
 
   useEffect(() => {
@@ -302,10 +336,13 @@ export default function Header() {
 
   // Lấy dữ liệu sản phẩm từ DB
   useEffect(() => {
+    // Hàm xử lý logic/sự kiện: fetchProducts
     const fetchProducts = async () => {
       try {
+        // Cấu hình/Hằng số/Dịch vụ dữ liệu: data
         const data = await productService.getAll();
         if (Array.isArray(data)) {
+          // Hàm thực thi logic: normalized
           const normalized = data.map(p => ({
             ...p,
             price: p.price || p.basePrice,
@@ -322,6 +359,7 @@ export default function Header() {
 
   // Đóng dropdown khi bấm ra ngoài vùng tìm kiếm
   useEffect(() => {
+    // Hàm xử lý logic/sự kiện: handleClickOutside
     const handleClickOutside = (event) => {
       if (searchContainerRef.current && !searchContainerRef.current.contains(event.target)) {
         setShowDropdown(false);
@@ -333,6 +371,7 @@ export default function Header() {
     };
   }, []);
 
+  // Hàm xử lý logic/sự kiện: handleSearchSubmit
   const handleSearchSubmit = () => {
     if (searchQuery.trim()) {
       navigate(`/?search=${encodeURIComponent(searchQuery.trim())}`);
@@ -340,6 +379,7 @@ export default function Header() {
     }
   };
 
+  // Hàm xử lý logic/sự kiện: handleKeyDown
   const handleKeyDown = (e) => {
     if (e.key === 'Enter') {
       handleSearchSubmit();
@@ -348,16 +388,19 @@ export default function Header() {
     }
   };
 
+  // Khai báo biến/hằng số: filteredProducts - Dùng trong logic xử lý của component
   const filteredProducts = searchQuery.trim()
     ? allProducts.filter(p => p.name.toLowerCase().includes(searchQuery.toLowerCase()))
     : [];
 
+  // Khai báo biến/hằng số: shouldShowDropdown - Dùng trong logic xử lý của component
   const shouldShowDropdown = showDropdown && searchQuery.trim().length > 0;
 
   // State thông tin người dùng được lắng nghe phản xạ tức thì
   const [user, setUser] = useState(() => getUserFromStorage());
 
   useEffect(() => {
+    // Hàm xử lý logic/sự kiện: handleAuthSync
     const handleAuthSync = () => {
       setUser(getUserFromStorage());
     };
@@ -375,8 +418,10 @@ export default function Header() {
 
   // Kiểm tra đăng nhập
   const isLoggedIn = !!(user && (user.id || user.Id));
+  // Khai báo biến/hằng số: userRole - Dùng trong logic xử lý của component
   const userRole = user?.role || user?.Role || '';
 
+  // Hàm xử lý logic/sự kiện: handleLogout
   const handleLogout = () => {
     localStorage.removeItem('user');
     localStorage.removeItem('token');
@@ -540,8 +585,11 @@ export default function Header() {
       <div className="border-t border-white/10 bg-white/5 py-1.5 hidden md:block select-none">
         <div className="container-box flex items-center justify-start gap-3 px-4 md:px-6 lg:px-8 text-[11px] font-bold tracking-wide relative">
           {categories.filter(cat => cat.parentId === null || cat.level === 1).map((cat) => {
+            // Hàm thực thi logic: subcategories
             const subcategories = categories.filter(c => c.parentId === cat.id);
+            // Khai báo biến/hằng số: hasSub - Dùng trong logic xử lý của component
             const hasSub = subcategories.length > 0;
+            // Khai báo biến/hằng số: isHovered - Dùng trong logic xử lý của component
             const isHovered = hoveredCatId === cat.id;
 
             return (
@@ -554,6 +602,7 @@ export default function Header() {
                 <Link
                   to={`/danh-muc/${encodeURIComponent(cat.name.toLowerCase())}`}
                   onClick={() => {
+                    // Khai báo biến/hằng số: targetPath - Dùng trong logic xử lý của component
                     const targetPath = `/danh-muc/${encodeURIComponent(cat.name.toLowerCase())}`;
                     // LOGIC XỬ LÝ: So sánh đường dẫn (pathname) của trang hiện tại với link danh mục vừa bấm
                     // Nếu trùng khớp (tức là người dùng đang đứng ở danh mục này và muốn reset/tải lại danh sách gốc)
@@ -573,6 +622,7 @@ export default function Header() {
 
                 {/* Mega menu giống CellphoneS đè lên nội dung */}
                 {isHovered && hasSub && (() => {
+                  // Cấu hình/Hằng số/Dịch vụ dữ liệu: megaData
                   const megaData = getMegaMenuData(cat, subcategories, allProducts, dbBrands, categories);
                   return (
                     <div
@@ -603,6 +653,7 @@ export default function Header() {
                                     className="max-h-7 max-w-[85%] object-contain transition-all"
                                     onError={(e) => {
                                       e.currentTarget.style.display = 'none';
+                                      // Khai báo biến/hằng số: textSpan - Dùng trong logic xử lý của component
                                       const textSpan = e.currentTarget.parentElement.querySelector('.brand-text');
                                       if (textSpan) {
                                         textSpan.style.setProperty('display', 'block', 'important');
@@ -625,12 +676,15 @@ export default function Header() {
                           </h4>
                           <div className="flex flex-col gap-4 max-h-[340px] overflow-y-auto pr-1 no-scrollbar">
                             {(() => {
+                              // Hàm thực thi logic: level2Cats
                               const level2Cats = categories.filter(c => String(c.parentId) === String(cat.id));
+                              // Hàm thực thi logic: hasLevel3
                               const hasLevel3 = level2Cats.some(l2 => categories.some(c => String(c.parentId) === String(l2.id)));
 
                               if (hasLevel3) {
                                 // Gom nhóm theo từng danh mục cha cấp 2 (Ví dụ: Phụ kiện di động, Thiết bị lưu trữ...)
                                 return level2Cats.map((l2) => {
+                                  // Hàm thực thi logic: l3Children
                                   const l3Children = categories.filter(c => String(c.parentId) === String(l2.id));
                                   return (
                                     <div key={l2.id} className="space-y-2">
@@ -979,6 +1033,7 @@ export default function Header() {
                 <span className="text-xs font-bold text-gray-400 uppercase tracking-widest block">Danh mục điện thoại</span>
                 <div className="flex flex-col border border-gray-200 rounded-lg overflow-hidden divide-y divide-gray-150">
                   {categories.map((cat, idx) => {
+                    // Khai báo biến/hằng số: path - Dùng trong logic xử lý của component
                     const path = `/danh-muc/${encodeURIComponent(cat.name.toLowerCase())}`;
                     return (
                       <Link

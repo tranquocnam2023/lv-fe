@@ -7,27 +7,38 @@ import {
 import api from '../../services/api';
 import { blogService } from '../../services/Blog';
 
+// Hàm xử lý logic/sự kiện: getMediaUrl
 const getMediaUrl = (url) => {
   if (!url) return '';
   if (url.startsWith('data:') || url.startsWith('blob:') || url.startsWith('http://') || url.startsWith('https://')) {
     return url;
   }
+  // Khai báo biến/hằng số: backendOrigin - Dùng trong logic xử lý của component
   const backendOrigin = (import.meta.env.VITE_API_URL || api.defaults?.baseURL || 'https://localhost:7279/api')
     .replace(/\/api\/?$/, '');
   
+  // Khai báo biến/hằng số: cleanPath - Dùng trong logic xử lý của component
   const cleanPath = url.startsWith('/') ? url : `/${url}`;
   return `${backendOrigin}${cleanPath}`;
 };
 
 export default function BlogDetail() {
+  // Khai báo giải nén các thuộc tính/hàm (id) từ Hook / Context / Props
   const { id } = useParams();
+  // Hook điều hướng trang (useNavigate) để chuyển hướng Route
   const navigate = useNavigate();
 
+  // State: blog - Quản lý trạng thái và dữ liệu của blog trong giao diện
   const [blog, setBlog] = useState(null);
+  // State: relatedBlogs - Quản lý trạng thái và dữ liệu của relatedBlogs trong giao diện
   const [relatedBlogs, setRelatedBlogs] = useState([]);
+  // State: loading - Quản lý trạng thái và dữ liệu của loading trong giao diện
   const [loading, setLoading] = useState(true);
+  // State: copied - Quản lý trạng thái và dữ liệu của copied trong giao diện
   const [copied, setCopied] = useState(false);
+  // State: likes - Quản lý trạng thái và dữ liệu của likes trong giao diện
   const [likes, setLikes] = useState(12);
+  // State: hasLiked - Quản lý trạng thái và dữ liệu của hasLiked trong giao diện
   const [hasLiked, setHasLiked] = useState(false);
 
   useEffect(() => {
@@ -35,6 +46,7 @@ export default function BlogDetail() {
     fetchBlogDetail();
   }, [id]);
 
+  // Hàm xử lý logic/sự kiện: fetchBlogDetail
   const fetchBlogDetail = async () => {
     setLoading(true);
     try {
@@ -46,13 +58,17 @@ export default function BlogDetail() {
       } catch (errSlug) {
         res = isNumeric ? await blogService.getBlogBySlug(id) : await blogService.getBlog(id);
       }
+      // Cấu hình/Hằng số/Dịch vụ dữ liệu: data
       const data = res.data || res;
       setBlog(data);
 
       // 2. Tải bài viết liên quan / mới nhất
       const listRes = await blogService.getBlogs({ isPublished: true });
+      // Cấu hình/Hằng số/Dịch vụ dữ liệu: listData
       const listData = listRes.data || listRes;
+      // Khai báo biến/hằng số: allBlogs - Dùng trong logic xử lý của component
       const allBlogs = Array.isArray(listData) ? listData : (listData.items || []);
+      // Hàm thực thi logic: otherBlogs
       const otherBlogs = allBlogs.filter(b => String(b.id) !== String(data.id) && b.slug !== id);
       setRelatedBlogs(otherBlogs.slice(0, 5));
     } catch (err) {
@@ -62,12 +78,14 @@ export default function BlogDetail() {
     }
   };
 
+  // Hàm xử lý logic/sự kiện: handleCopyLink
   const handleCopyLink = () => {
     navigator.clipboard.writeText(window.location.href);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
 
+  // Hàm xử lý logic/sự kiện: handleLike
   const handleLike = () => {
     if (hasLiked) {
       setLikes(prev => prev - 1);

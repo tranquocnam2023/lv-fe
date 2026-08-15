@@ -26,7 +26,9 @@ export default function ProductVariantsMatrix() {
     setExcludedKeys
   } = useProductFormContext();
 
+  // State: searchParams - Quản lý trạng thái và dữ liệu của searchParams trong giao diện
   const [searchParams] = useSearchParams();
+  // Khai báo biến/hằng số: isEditMode - Dùng trong logic xử lý của component
   const isEditMode = !!searchParams.get('productId');
 
   // Tự động đóng mục xem chi tiết biến thể đang mở khi admin chọn hàng loạt biến thể
@@ -63,6 +65,7 @@ export default function ProductVariantsMatrix() {
                         if (e.target.checked) {
                           // Chọn tất cả các key biến thể hoạt động
                           const keys = activeCombinations.map(comb => {
+                            // Hàm thực thi logic: sortedParts
                             const sortedParts = [...comb].sort((a, b) => a.optionId.localeCompare(b.optionId));
                             return sortedParts.map(p => `${p.optionId}:${p.valueId.split(':').pop()}`).join('|');
                           });
@@ -85,24 +88,40 @@ export default function ProductVariantsMatrix() {
               </thead>
               <tbody>
                 {activeCombinations.map((comb, combIdx) => {
+                  // Hàm thực thi logic: sortedParts
                   const sortedParts = [...comb].sort((a, b) => a.optionId.localeCompare(b.optionId));
+                  // Hàm thực thi logic: key
                   const key = sortedParts.map(p => `${p.optionId}:${p.valueId.split(':').pop()}`).join('|');
+                  // Cấu hình/Hằng số/Dịch vụ dữ liệu: vData
                   const vData = variantsData[key];
 
+                  // Hàm thực thi logic: selectedBrand
                   const selectedBrand = brands.find(b => b.id === Number(formData.brandId));
+                  // Khai báo biến/hằng số: brandCode - Dùng trong logic xử lý của component
                   const brandCode = selectedBrand?.brandCode || 'GEN';
+                  // Khai báo biến/hằng số: productCode - Dùng trong logic xử lý của component
                   const productCode = formData.productCode.trim() || generateProductCode(formData.name, 20);
 
+                  // Hàm thực thi logic: combName
                   const combName = comb.map(p => p.valueText).join(' - ');
+                  // Khai báo biến/hằng số: defaultSku - Dùng trong logic xử lý của component
                   const defaultSku = generateVariantSku(brandCode, productCode, comb);
+                  // Khai báo biến/hằng số: defaultName - Dùng trong logic xử lý của component
                   const defaultName = `${formData.name} - ${combName}`;
 
+                  // Khai báo biến/hằng số: displayName - Dùng trong logic xử lý của component
                   const displayName = vData?.name !== undefined ? vData.name : defaultName;
+                  // Khai báo biến/hằng số: currentSku - Dùng trong logic xử lý của component
                   const currentSku = vData?.sku !== undefined ? vData.sku : defaultSku;
+                  // Khai báo biến/hằng số: priceVal - Dùng trong logic xử lý của component
                   const priceVal = vData?.price !== undefined ? vData.price : '';
+                  // Khai báo biến/hằng số: stockVal - Dùng trong logic xử lý của component
                   const stockVal = vData?.totalStock !== undefined ? vData.totalStock : 0;
+                  // Khai báo biến/hằng số: imgVal - Dùng trong logic xử lý của component
                   const imgVal = vData?.imageId || '';
+                  // Khai báo biến/hằng số: isExpanded - Dùng trong logic xử lý của component
                   const isExpanded = expandedVariantKey === key;
+                  // Khai báo biến/hằng số: hasSkuError - Dùng trong logic xử lý của component
                   const hasSkuError = duplicateSkuKeys.has(key);
 
                   return (

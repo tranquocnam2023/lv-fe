@@ -23,12 +23,16 @@ import PromotionSelector from '../components/PromotionSelector';
 import CoPurchaseRecommendation from './product-detail/components/CoPurchaseRecommendation';
 
 export default function CartPage() {
+  // Khai báo giải nén các thuộc tính/hàm (stopLoading) từ Hook / Context / Props
   const { stopLoading } = useLoading();
+  // Khai báo giải nén các thuộc tính/hàm (cartItems, updateQuantity, removeFromCart, cartTotal, clearCart) từ Hook / Context / Props
   const { cartItems, updateQuantity, removeFromCart, cartTotal, clearCart } = useCart();
+  // Hook điều hướng trang (useNavigate) để chuyển hướng Route
   const navigate = useNavigate();
 
   // Authentication states
   const [isLoggedIn, setIsLoggedIn] = useState(!!localStorage.getItem('token'));
+  // State: currentUser - Quản lý trạng thái và dữ liệu của currentUser trong giao diện
   const [currentUser, setCurrentUser] = useState(null);
 
   // Stop loading on mount/data loaded
@@ -57,6 +61,7 @@ export default function CartPage() {
         })
         .catch(err => {
           console.error("Lỗi lấy thông tin profile:", err);
+          // Khai báo biến/hằng số: userJson - Dùng trong logic xử lý của component
           const userJson = localStorage.getItem('user');
           if (userJson && userJson !== 'undefined' && userJson !== 'null') {
             try {
@@ -73,15 +78,22 @@ export default function CartPage() {
 
   // Inline Auth Form Input states
   const [inlineEmail, setInlineEmail] = useState('');
+  // State: inlineUsername - Quản lý trạng thái và dữ liệu của inlineUsername trong giao diện
   const [inlineUsername, setInlineUsername] = useState('');
+  // State: inlinePassword - Quản lý trạng thái và dữ liệu của inlinePassword trong giao diện
   const [inlinePassword, setInlinePassword] = useState('');
+  // State: inlineAuthLoading - Quản lý trạng thái và dữ liệu của inlineAuthLoading trong giao diện
   const [inlineAuthLoading, setInlineAuthLoading] = useState(false);
+  // State: inlineAuthError - Quản lý trạng thái và dữ liệu của inlineAuthError trong giao diện
   const [inlineAuthError, setInlineAuthError] = useState('');
+  // State: authMode - Quản lý trạng thái và dữ liệu của authMode trong giao diện
   const [authMode, setAuthMode] = useState('register'); // 'register' | 'login'
+  // State: showAuthModal - Quản lý trạng thái và dữ liệu của showAuthModal trong giao diện
   const [showAuthModal, setShowAuthModal] = useState(false);
 
   // Delivery configuration states
   const [deliveryMethod, setDeliveryMethod] = useState('ship'); // 'ship' | 'store'
+  // State: addressProvided - Quản lý trạng thái và dữ liệu của addressProvided trong giao diện
   const [addressProvided, setAddressProvided] = useState(false);
 
   // Shipping details state
@@ -105,28 +117,45 @@ export default function CartPage() {
 
   // Modal temporary inputs
   const [modalGender, setModalGender] = useState('Anh');
+  // State: modalFullName - Quản lý trạng thái và dữ liệu của modalFullName trong giao diện
   const [modalFullName, setModalFullName] = useState('');
+  // State: modalPhone - Quản lý trạng thái và dữ liệu của modalPhone trong giao diện
   const [modalPhone, setModalPhone] = useState('');
+  // State: modalEmail - Quản lý trạng thái và dữ liệu của modalEmail trong giao diện
   const [modalEmail, setModalEmail] = useState('');
+  // State: modalCity - Quản lý trạng thái và dữ liệu của modalCity trong giao diện
   const [modalCity, setModalCity] = useState('Hồ Chí Minh');
+  // State: modalWard - Quản lý trạng thái và dữ liệu của modalWard trong giao diện
   const [modalWard, setModalWard] = useState('');
+  // State: modalStreetAddress - Quản lý trạng thái và dữ liệu của modalStreetAddress trong giao diện
   const [modalStreetAddress, setModalStreetAddress] = useState('');
+  // State: modalSomeoneElse - Quản lý trạng thái và dữ liệu của modalSomeoneElse trong giao diện
   const [modalSomeoneElse, setModalSomeoneElse] = useState(false);
+  // State: modalSomeoneElseName - Quản lý trạng thái và dữ liệu của modalSomeoneElseName trong giao diện
   const [modalSomeoneElseName, setModalSomeoneElseName] = useState('');
+  // State: modalSomeoneElsePhone - Quản lý trạng thái và dữ liệu của modalSomeoneElsePhone trong giao diện
   const [modalSomeoneElsePhone, setModalSomeoneElsePhone] = useState('');
+  // State: modalLatitude - Quản lý trạng thái và dữ liệu của modalLatitude trong giao diện
   const [modalLatitude, setModalLatitude] = useState(null);
+  // State: modalLongitude - Quản lý trạng thái và dữ liệu của modalLongitude trong giao diện
   const [modalLongitude, setModalLongitude] = useState(null);
+  // State: pendingWardName - Quản lý trạng thái và dữ liệu của pendingWardName trong giao diện
   const [pendingWardName, setPendingWardName] = useState('');
+  // State: pendingWardId - Quản lý trạng thái và dữ liệu của pendingWardId trong giao diện
   const [pendingWardId, setPendingWardId] = useState('');
 
   // Location list states from SQL Server
   const [provinces, setProvinces] = useState([]);
+  // State: wards - Quản lý trạng thái và dữ liệu của wards trong giao diện
   const [wards, setWards] = useState([]);
+  // State: selectedProvinceId - Quản lý trạng thái và dữ liệu của selectedProvinceId trong giao diện
   const [selectedProvinceId, setSelectedProvinceId] = useState('');
+  // State: modalWardId - Quản lý trạng thái và dữ liệu của modalWardId trong giao diện
   const [modalWardId, setModalWardId] = useState('');
 
   // Modal toggle states
   const [showAddressModal, setShowAddressModal] = useState(false);
+  // State: showCodLimitModal - Quản lý trạng thái và dữ liệu của showCodLimitModal trong giao diện
   const [showCodLimitModal, setShowCodLimitModal] = useState(false);
 
   // Special Request configuration
@@ -135,7 +164,9 @@ export default function CartPage() {
     companyInvoice: false,
     otherRequest: false
   });
+  // State: otherRequestText - Quản lý trạng thái và dữ liệu của otherRequestText trong giao diện
   const [otherRequestText, setOtherRequestText] = useState('');
+  // State: companyInvoiceDetails - Quản lý trạng thái và dữ liệu của companyInvoiceDetails trong giao diện
   const [companyInvoiceDetails, setCompanyInvoiceDetails] = useState({
     companyName: '',
     taxCode: '',
@@ -144,14 +175,20 @@ export default function CartPage() {
 
   // Loyalty and promotion calculation
   const [appliedPromo, setAppliedPromo] = useState('');
+  // State: discountAmount - Quản lý trạng thái và dữ liệu của discountAmount trong giao diện
   const [discountAmount, setDiscountAmount] = useState(0);
+  // State: usePoints - Quản lý trạng thái và dữ liệu của usePoints trong giao diện
   const [usePoints, setUsePoints] = useState(false);
 
   // Dynamic Shipping Fee states
   const [shippingFee, setShippingFee] = useState(0);
+  // State: shippingCarrier - Quản lý trạng thái và dữ liệu của shippingCarrier trong giao diện
   const [shippingCarrier, setShippingCarrier] = useState('');
+  // State: shippingEstimatedDays - Quản lý trạng thái và dữ liệu của shippingEstimatedDays trong giao diện
   const [shippingEstimatedDays, setShippingEstimatedDays] = useState('');
+  // State: shippingLoading - Quản lý trạng thái và dữ liệu của shippingLoading trong giao diện
   const [shippingLoading, setShippingLoading] = useState(false);
+  // State: shippingOptions - Quản lý trạng thái và dữ liệu của shippingOptions trong giao diện
   const [shippingOptions, setShippingOptions] = useState([]);
 
   // Effect to calculate shipping fee dynamically
@@ -167,6 +204,7 @@ export default function CartPage() {
       })
         .then(res => {
           if (res) {
+            // Cấu hình/Hằng số/Dịch vụ dữ liệu: options
             const options = res.options || res.Options || [];
             setShippingOptions(options);
 
@@ -201,16 +239,21 @@ export default function CartPage() {
 
   // Form submission state
   const [paymentMethod, setPaymentMethod] = useState('stripe'); // default 'stripe'
+  // State: installmentMonths - Quản lý trạng thái và dữ liệu của installmentMonths trong giao diện
   const [installmentMonths, setInstallmentMonths] = useState(6);
+  // State: isSubmitting - Quản lý trạng thái và dữ liệu của isSubmitting trong giao diện
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Order Success screen state
   const [isFinished, setIsFinished] = useState(false);
+  // State: orderCode - Quản lý trạng thái và dữ liệu của orderCode trong giao diện
   const [orderCode, setOrderCode] = useState('');
+  // State: orderSuccessTotal - Quản lý trạng thái và dữ liệu của orderSuccessTotal trong giao diện
   const [orderSuccessTotal, setOrderSuccessTotal] = useState(0);
 
   // Address Book states
   const [userAddresses, setUserAddresses] = useState([]);
+  // State: saveToAddressBook - Quản lý trạng thái và dữ liệu của saveToAddressBook trong giao diện
   const [saveToAddressBook, setSaveToAddressBook] = useState(false);
 
   // Validation errors
@@ -250,12 +293,16 @@ export default function CartPage() {
   // Tự động tìm phường/xã khớp sau khi danh sách wards tải xong
   useEffect(() => {
     if (wards.length > 0 && (pendingWardId || pendingWardName)) {
+      // Hàm thực thi logic: cleanNameStr
       const cleanNameStr = (str) => String(str).toLowerCase().replace(/^(phường|xã|thị trấn|p\.?)\s+/i, '').trim();
+      // Khai báo biến/hằng số: targetName - Dùng trong logic xử lý của component
       const targetName = cleanNameStr(pendingWardName);
 
+      // Hàm thực thi logic: matchedWard
       const matchedWard = (pendingWardId && wards.find(w => String(w.id) === String(pendingWardId))) ||
         wards.find(w => {
           if (!targetName) return false;
+          // Khai báo biến/hằng số: wName - Dùng trong logic xử lý của component
           const wName = cleanNameStr(w.fullName || w.name);
           return wName === targetName || wName.includes(targetName) || targetName.includes(wName);
         });
@@ -269,7 +316,9 @@ export default function CartPage() {
     }
   }, [wards, pendingWardId, pendingWardName]);
 
+  // Hàm xử lý logic/sự kiện: handleSelectGoongAddress
   const handleSelectGoongAddress = (locationData) => {
+    // Khai báo giải nén các thuộc tính/hàm (formattedAddress, lat, lng, compound) từ Hook / Context / Props
     const { formattedAddress, lat, lng, compound } = locationData;
 
     setModalLatitude(lat);
@@ -278,9 +327,13 @@ export default function CartPage() {
     if (compound) {
       // 1. Khớp Tỉnh / Thành phố
       if (compound.province && provinces.length > 0) {
+        // Hàm thực thi logic: cleanProvinceStr
         const cleanProvinceStr = (str) => String(str).toLowerCase().replace(/^(tỉnh|thành phố|tp\.?)\s+/i, '').trim();
+        // Khai báo biến/hằng số: goongProvName - Dùng trong logic xử lý của component
         const goongProvName = cleanProvinceStr(compound.province);
+        // Hàm thực thi logic: matchedProv
         const matchedProv = provinces.find(p => {
+          // Khai báo biến/hằng số: pName - Dùng trong logic xử lý của component
           const pName = cleanProvinceStr(p.fullName || p.name);
           return pName.includes(goongProvName) || goongProvName.includes(pName);
         });
@@ -298,9 +351,13 @@ export default function CartPage() {
             // Nếu trùng tỉnh, cố gắng khớp ward mới từ Goong.
             // Nếu không tìm thấy khớp hoặc commune trống, giữ nguyên ward người dùng đã chọn thay vì reset!
             if (compound.commune) {
+              // Hàm thực thi logic: cleanNameStr
               const cleanNameStr = (str) => String(str).toLowerCase().replace(/^(phường|xã|thị trấn|p\.?)\s+/i, '').trim();
+              // Khai báo biến/hằng số: targetName - Dùng trong logic xử lý của component
               const targetName = cleanNameStr(compound.commune);
+              // Hàm thực thi logic: matchedWard
               const matchedWard = wards.find(w => {
+                // Khai báo biến/hằng số: wName - Dùng trong logic xử lý của component
                 const wName = cleanNameStr(w.fullName || w.name);
                 return wName === targetName || wName.includes(targetName) || targetName.includes(wName);
               });
@@ -315,6 +372,7 @@ export default function CartPage() {
     }
 
     if (formattedAddress) {
+      // Khai báo biến/hằng số: parts - Dùng trong logic xử lý của component
       const parts = formattedAddress.split(',');
       if (parts.length > 0) {
         setModalStreetAddress(parts[0].trim());
@@ -324,9 +382,13 @@ export default function CartPage() {
     }
   };
 
+  // Hàm xử lý logic/sự kiện: handleSelectSavedAddress
   const handleSelectSavedAddress = async (addr) => {
+    // Khai báo biến/hằng số: recipient - Dùng trong logic xử lý của component
     const recipient = addr.recipientName || '';
+    // Khai báo biến/hằng số: phoneNum - Dùng trong logic xử lý của component
     const phoneNum = addr.phoneNumber || '';
+    // Khai báo biến/hằng số: street - Dùng trong logic xử lý của component
     const street = addr.addressLine || '';
     let lat = addr.latitude || null;
     let lng = addr.longitude || null;
@@ -339,16 +401,24 @@ export default function CartPage() {
     if (!lat || !lng) {
       setModalLatitude(null);
       setModalLongitude(null);
+      // Khai báo biến/hằng số: goongApiKey - Dùng trong logic xử lý của component
       const goongApiKey = import.meta.env.VITE_GOONG_API_KEY || '';
       if (goongApiKey && street) {
         try {
+          // Khai báo biến/hằng số: fullAddr - Dùng trong logic xử lý của component
           const fullAddr = [street, addr.wardName || addr.ward || '', addr.provinceName || addr.province || ''].filter(Boolean).join(', ');
+          // Khai báo biến/hằng số: searchRes - Dùng trong logic xử lý của component
           const searchRes = await fetch(`https://rsapi.goong.io/Place/Autocomplete?input=${encodeURIComponent(fullAddr)}&api_key=${goongApiKey}&limit=1`);
+          // Cấu hình/Hằng số/Dịch vụ dữ liệu: searchData
           const searchData = await searchRes.json();
+          // Khai báo biến/hằng số: placeId - Dùng trong logic xử lý của component
           const placeId = searchData?.predictions?.[0]?.place_id;
           if (placeId) {
+            // Khai báo biến/hằng số: detailRes - Dùng trong logic xử lý của component
             const detailRes = await fetch(`https://rsapi.goong.io/Place/Detail?place_id=${placeId}&api_key=${goongApiKey}`);
+            // Cấu hình/Hằng số/Dịch vụ dữ liệu: detailData
             const detailData = await detailRes.json();
+            // Khai báo biến/hằng số: location - Dùng trong logic xử lý của component
             const location = detailData?.result?.geometry?.location;
             if (location?.lat && location?.lng) {
               lat = location.lat;
@@ -369,10 +439,14 @@ export default function CartPage() {
     let wardIdVal = addr.wardId || '';
 
     if (provinces && provinces.length > 0) {
+      // Hàm thực thi logic: cleanProvinceStr
       const cleanProvinceStr = (str) => String(str).toLowerCase().replace(/^(tỉnh|thành phố|tp\.?)\s+/i, '').trim();
+      // Khai báo biến/hằng số: addrProvName - Dùng trong logic xử lý của component
       const addrProvName = cleanProvinceStr(cityVal);
+      // Hàm thực thi logic: match
       const match = provinces.find(p => {
         if (addr.provinceId && String(p.id) === String(addr.provinceId)) return true;
+        // Khai báo biến/hằng số: pName - Dùng trong logic xử lý của component
         const pName = cleanProvinceStr(p.fullName || p.name);
         return pName.includes(addrProvName) || addrProvName.includes(pName);
       });
@@ -385,6 +459,7 @@ export default function CartPage() {
         let currentWards = wards;
         if (String(selectedProvinceId) !== String(match.id) || currentWards.length === 0) {
           try {
+            // Khai báo biến/hằng số: wardRes - Dùng trong logic xử lý của component
             const wardRes = await api.get(`/Location/provinces/${match.id}/wards`);
             if (Array.isArray(wardRes)) {
               currentWards = wardRes;
@@ -395,12 +470,16 @@ export default function CartPage() {
           }
         }
 
+        // Hàm thực thi logic: cleanNameStr
         const cleanNameStr = (str) => String(str).toLowerCase().replace(/^(phường|xã|thị trấn|p\.?)\s+/i, '').trim();
+        // Khai báo biến/hằng số: targetName - Dùng trong logic xử lý của component
         const targetName = cleanNameStr(wardVal);
 
+        // Hàm thực thi logic: matchedWard
         const matchedWard = (wardIdVal && currentWards.find(w => String(w.id) === String(wardIdVal))) ||
           currentWards.find(w => {
             if (!targetName) return false;
+            // Khai báo biến/hằng số: wName - Dùng trong logic xử lý của component
             const wName = cleanNameStr(w.fullName || w.name);
             return wName === targetName || wName.includes(targetName) || targetName.includes(wName);
           });
@@ -417,6 +496,7 @@ export default function CartPage() {
       }
     }
 
+    // Khai báo biến/hằng số: fullAddrString - Dùng trong logic xử lý của component
     const fullAddrString = [street, wardVal, cityVal].filter(Boolean).join(', ');
 
     // CẬP NHẬT FORM DATA CHÍNH DÙNG CHO CHECKOUT & VẬN CHUYỂN
@@ -436,6 +516,7 @@ export default function CartPage() {
     setAddressProvided(true);
   };
 
+  // Hàm xử lý logic/sự kiện: handleAddNewAddressClick
   const handleAddNewAddressClick = () => {
     setModalFullName('');
     setModalPhone('');
@@ -452,6 +533,7 @@ export default function CartPage() {
   // Sync selectedProvinceId when modalCity is set from default address
   useEffect(() => {
     if (provinces.length > 0 && modalCity) {
+      // Hàm thực thi logic: match
       const match = provinces.find(p => p.name === modalCity || p.fullName === modalCity);
       if (match) {
         setSelectedProvinceId(match.id);
@@ -467,25 +549,37 @@ export default function CartPage() {
           if (Array.isArray(res)) {
             setUserAddresses(res);
             if (res.length > 0) {
+              // Hàm thực thi logic: defaultAddr
               const defaultAddr = res.find(addr => addr.isDefault) || res[0];
+              // Khai báo biến/hằng số: recipient - Dùng trong logic xử lý của component
               const recipient = defaultAddr.recipientName || '';
+              // Khai báo biến/hằng số: phoneNum - Dùng trong logic xử lý của component
               const phoneNum = defaultAddr.phoneNumber || '';
+              // Khai báo biến/hằng số: fullAddress - Dùng trong logic xử lý của component
               const fullAddress = `${defaultAddr.addressLine}, ${defaultAddr.wardName || defaultAddr.ward || ''}, ${defaultAddr.provinceName || defaultAddr.province || ''}`;
 
               // Nếu địa chỉ mặc định chưa có tọa độ → geocode qua Goong Maps
               let lat = defaultAddr.latitude || null;
               let lng = defaultAddr.longitude || null;
               if ((!lat || !lng) && defaultAddr.addressLine) {
+                // Khai báo biến/hằng số: goongApiKey - Dùng trong logic xử lý của component
                 const goongApiKey = import.meta.env.VITE_GOONG_API_KEY || '';
                 if (goongApiKey) {
                   try {
+                    // Khai báo biến/hằng số: fullAddrStr - Dùng trong logic xử lý của component
                     const fullAddrStr = [defaultAddr.addressLine, defaultAddr.wardName || '', defaultAddr.provinceName || ''].filter(Boolean).join(', ');
+                    // Khai báo biến/hằng số: searchRes - Dùng trong logic xử lý của component
                     const searchRes = await fetch(`https://rsapi.goong.io/Place/Autocomplete?input=${encodeURIComponent(fullAddrStr)}&api_key=${goongApiKey}&limit=1`);
+                    // Cấu hình/Hằng số/Dịch vụ dữ liệu: searchData
                     const searchData = await searchRes.json();
+                    // Khai báo biến/hằng số: placeId - Dùng trong logic xử lý của component
                     const placeId = searchData?.predictions?.[0]?.place_id;
                     if (placeId) {
+                      // Khai báo biến/hằng số: detailRes - Dùng trong logic xử lý của component
                       const detailRes = await fetch(`https://rsapi.goong.io/Place/Detail?place_id=${placeId}&api_key=${goongApiKey}`);
+                      // Cấu hình/Hằng số/Dịch vụ dữ liệu: detailData
                       const detailData = await detailRes.json();
+                      // Khai báo biến/hằng số: loc - Dùng trong logic xử lý của component
                       const loc = detailData?.result?.geometry?.location;
                       if (loc?.lat && loc?.lng) {
                         lat = loc.lat;
@@ -549,8 +643,10 @@ export default function CartPage() {
     setShowAddressModal(true);
   };
 
+  // Hàm xử lý logic/sự kiện: handleProvinceChange
   const handleProvinceChange = (provinceId) => {
     setSelectedProvinceId(provinceId);
+    // Hàm thực thi logic: matchedProv
     const matchedProv = provinces.find(p => String(p.id) === String(provinceId));
     if (matchedProv) {
       setModalCity(matchedProv.name);
@@ -561,8 +657,10 @@ export default function CartPage() {
     setModalWardId('');
   };
 
+  // Hàm xử lý logic/sự kiện: handleWardChange
   const handleWardChange = (wardId) => {
     setModalWardId(wardId);
+    // Hàm thực thi logic: matchedWard
     const matchedWard = wards.find(w => String(w.id) === String(wardId));
     if (matchedWard) {
       setModalWard(matchedWard.fullName || matchedWard.name);
@@ -573,6 +671,7 @@ export default function CartPage() {
 
   // Confirm shipping address, copying temp states to formData
   const confirmAddress = () => {
+    // Khai báo biến/hằng số: errors - Dùng trong logic xử lý của component
     const errors = {};
     if (!modalFullName.trim()) errors.fullName = 'Vui lòng nhập họ tên người nhận';
     if (!modalPhone.trim()) errors.phone = 'Vui lòng nhập số điện thoại';
@@ -601,6 +700,7 @@ export default function CartPage() {
 
     let generatedAddress = '';
     if (deliveryMethod === 'ship') {
+      // Khai báo biến/hằng số: parts - Dùng trong logic xử lý của component
       const parts = [modalStreetAddress.trim()];
       if (modalWard) parts.push(modalWard);
       if (modalCity) parts.push(modalCity);
@@ -629,6 +729,7 @@ export default function CartPage() {
 
     // Lưu vào sổ địa chỉ nếu được tick chọn
     if (isLoggedIn && saveToAddressBook && deliveryMethod === 'ship') {
+      // Khai báo biến/hằng số: newAddrPayload - Dùng trong logic xử lý của component
       const newAddrPayload = {
         recipientName: modalFullName.trim(),
         phoneNumber: modalPhone.trim(),
@@ -669,6 +770,7 @@ export default function CartPage() {
       return;
     }
 
+    // Khai báo biến/hằng số: emailToUse - Dùng trong logic xử lý của component
     const emailToUse = inlineEmail.trim() || formData.email.trim();
     if (!emailToUse) {
       setInlineAuthError('Vui lòng nhập địa chỉ Email.');
@@ -685,8 +787,11 @@ export default function CartPage() {
 
     setInlineAuthLoading(true);
     try {
+      // Khai báo biến/hằng số: baseUsername - Dùng trong logic xử lý của component
       const baseUsername = emailToUse.split('@')[0].replace(/[^a-zA-Z0-9]/g, '');
+      // Khai báo biến/hằng số: randSuffix - Dùng trong logic xử lý của component
       const randSuffix = Math.floor(1000 + Math.random() * 9000);
+      // Khai báo biến/hằng số: generatedUsername - Dùng trong logic xử lý của component
       const generatedUsername = `${baseUsername}_${randSuffix}`;
 
       await authService.register({
@@ -695,11 +800,13 @@ export default function CartPage() {
         password: inlinePassword
       });
 
+      // Cấu hình/Hằng số/Dịch vụ dữ liệu: loginData
       const loginData = await authService.login({
         username: generatedUsername,
         password: inlinePassword
       });
 
+      // Khai báo biến/hằng số: token - Dùng trong logic xử lý của component
       const token = loginData.token || loginData.accessToken || (loginData.data && loginData.data.token);
       if (token) {
         localStorage.setItem('token', token);
@@ -743,11 +850,13 @@ export default function CartPage() {
 
     setInlineAuthLoading(true);
     try {
+      // Cấu hình/Hằng số/Dịch vụ dữ liệu: loginData
       const loginData = await authService.login({
         username: inlineUsername.trim(),
         password: inlinePassword
       });
 
+      // Khai báo biến/hằng số: token - Dùng trong logic xử lý của component
       const token = loginData.token || loginData.accessToken || (loginData.data && loginData.data.token);
       if (token) {
         localStorage.setItem('token', token);
@@ -814,6 +923,7 @@ export default function CartPage() {
 
     try {
 
+      // Khai báo biến/hằng số: finalNote - Dùng trong logic xử lý của component
       const finalNote = [
         paymentMethod === 'vnpay_installment'
           ? `[ĐƠN TRẢ GÓP 0%] Kỳ hạn: ${installmentMonths} tháng (${Math.round(finalTotalPay / (installmentMonths || 6)).toLocaleString('vi-VN')}₫/tháng)`
@@ -826,6 +936,7 @@ export default function CartPage() {
         formData.note ? `Ghi chú: ${formData.note}` : ""
       ].filter(n => n !== "").join(" | ");
 
+      // Khai báo biến/hằng số: payload - Dùng trong logic xử lý của component
       const payload = {
         recipientName: formData.fullName,
         phoneNumber: formData.phone,
@@ -848,12 +959,15 @@ export default function CartPage() {
         }))
       };
 
+      // Khai báo biến/hằng số: syncItems - Dùng trong logic xử lý của component
       const syncItems = [];
       await Promise.all(cartItems.map(async (item) => {
+        // Khai báo biến/hằng số: productId - Dùng trong logic xử lý của component
         const productId = item.id || item.Id;
         if (!productId) return;
 
         try {
+          // Khai báo biến/hằng số: variants - Dùng trong logic xử lý của component
           const variants = await api.get(`/ProductVariant?productId=${productId}`);
           let matchedVariant = null;
 
@@ -870,6 +984,7 @@ export default function CartPage() {
               }
 
               if (Object.keys(parsedAttrs).length === 0 && v.name.includes(' - ')) {
+                // Khai báo biến/hằng số: parts - Dùng trong logic xử lý của component
                 const parts = v.name.split(' - ');
                 if (parts.length > 1) {
                   parsedAttrs["Dung lượng RAM - ROM"] = parts[1].trim();
@@ -879,11 +994,13 @@ export default function CartPage() {
                 }
               }
 
+              // Hàm thực thi logic: cleanString
               const cleanString = (str) => {
                 if (!str) return '';
                 return String(str).toLowerCase().replace(/[\s-]/g, '');
               };
 
+              // Khai báo biến/hằng số: colorMatch - Dùng trong logic xử lý của component
               const colorMatch = !item.selectedColor ||
                 Object.entries(parsedAttrs).some(([k, val]) =>
                   (k.toLowerCase().includes('màu') || k.toLowerCase().includes('color')) &&
@@ -891,6 +1008,7 @@ export default function CartPage() {
                 ) ||
                 cleanString(v.name).includes(cleanString(item.selectedColor));
 
+              // Khai báo biến/hằng số: storageMatch - Dùng trong logic xử lý của component
               const storageMatch = !item.selectedStorage ||
                 Object.entries(parsedAttrs).some(([k, val]) =>
                   (k.toLowerCase().includes('dung lượng') || k.toLowerCase().includes('bộ nhớ') || k.toLowerCase().includes('ram') || k.toLowerCase().includes('rom') || k.toLowerCase().includes('storage')) &&
@@ -919,6 +1037,7 @@ export default function CartPage() {
 
       await api.post('/Cart/sync', syncItems);
 
+      // Khai báo biến/hằng số: checkoutRes - Dùng trong logic xử lý của component
       const checkoutRes = await orderService.checkout(payload);
 
       if (isLoggedIn) {
@@ -932,6 +1051,7 @@ export default function CartPage() {
           .catch(e => console.error("Lỗi lấy thông tin profile:", e));
       }
 
+      // Khai báo biến/hằng số: newOrderId - Dùng trong logic xử lý của component
       const newOrderId = checkoutRes?.orderId || checkoutRes?.OrderId || `PS${Math.floor(100000 + Math.random() * 900000)}`;
       setOrderCode(newOrderId);
       clearCart();
@@ -939,7 +1059,9 @@ export default function CartPage() {
       // Xử lý chuyển hướng cổng thanh toán online
       if (paymentMethod === 'stripe' || paymentMethod === 'vnpay') {
         try {
+          // Khai báo biến/hằng số: paymentRes - Dùng trong logic xử lý của component
           const paymentRes = await api.post(`/Payment/create-checkout-session/${newOrderId}?provider=${paymentMethod}`);
+          // Khai báo biến/hằng số: paymentUrl - Dùng trong logic xử lý của component
           const paymentUrl = paymentRes?.url || paymentRes?.Url;
           if (paymentUrl) {
             window.location.href = paymentUrl;
@@ -979,8 +1101,11 @@ export default function CartPage() {
     }
   };
 
+  // Khai báo biến/hằng số: userPoints - Dùng trong logic xử lý của component
   const userPoints = currentUser?.rewardPoints || 0;
+  // Khai báo biến/hằng số: pointsDiscount - Dùng trong logic xử lý của component
   const pointsDiscount = usePoints ? Math.min(userPoints, cartTotal - discountAmount) : 0;
+  // Khai báo biến/hằng số: finalTotalPay - Dùng trong logic xử lý của component
   const finalTotalPay = Math.max(0, cartTotal - discountAmount - pointsDiscount + shippingFee);
 
   // Render Success Screen

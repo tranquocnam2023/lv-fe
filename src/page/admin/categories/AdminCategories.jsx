@@ -11,16 +11,23 @@ import CategoryEditForm from './components/CategoryEditForm';
 import CategoryToast from './components/CategoryToast';
 
 export default function AdminCategories() {
+  // State: rootCategories - Quản lý trạng thái và dữ liệu của rootCategories trong giao diện
   const [rootCategories, setRootCategories] = useState([]);
+  // State: allCategories - Quản lý trạng thái và dữ liệu của allCategories trong giao diện
   const [allCategories, setAllCategories] = useState([]);
+  // State: searchTerm - Quản lý trạng thái và dữ liệu của searchTerm trong giao diện
   const [searchTerm, setSearchTerm] = useState('');
+  // State: loading - Quản lý trạng thái và dữ liệu của loading trong giao diện
   const [loading, setLoading] = useState(false);
 
   // Modal States
   const [isModalOpen, setIsModalOpen] = useState(false);
+  // State: editingCategory - Quản lý trạng thái và dữ liệu của editingCategory trong giao diện
   const [editingCategory, setEditingCategory] = useState(null);
+  // State: saving - Quản lý trạng thái và dữ liệu của saving trong giao diện
   const [saving, setSaving] = useState(false);
 
+  // State: formData - Quản lý trạng thái và dữ liệu của formData trong giao diện
   const [formData, setFormData] = useState({
     name: '',
     categoryCode: '',
@@ -30,20 +37,28 @@ export default function AdminCategories() {
     isActive: true,
     specsTemplate: ''
   });
+  // State: catErrorMessage - Quản lý trạng thái và dữ liệu của catErrorMessage trong giao diện
   const [catErrorMessage, setCatErrorMessage] = useState('');
+  // State: uploading - Quản lý trạng thái và dữ liệu của uploading trong giao diện
   const [uploading, setUploading] = useState(false);
+  // State: lockParentRoot - Quản lý trạng thái và dữ liệu của lockParentRoot trong giao diện
   const [lockParentRoot, setLockParentRoot] = useState(false);
+  // State: isCodeEditable - Quản lý trạng thái và dữ liệu của isCodeEditable trong giao diện
   const [isCodeEditable, setIsCodeEditable] = useState(true);
+  // State: parentName - Quản lý trạng thái và dữ liệu của parentName trong giao diện
   const [parentName, setParentName] = useState('');
 
   // Custom Toast & Modal Form Error states
   const [toast, setToast] = useState(null); // { type: 'success' | 'error' | 'warning', message: '', description: '' }
+  // State: formError - Quản lý trạng thái và dữ liệu của formError trong giao diện
   const [formError, setFormError] = useState(null); // { message: '', details: [] }
 
+  // Hàm thực thi logic: showToast
   const showToast = (type, message, description = '') => {
     setToast({ type, message, description });
   };
 
+  // Hàm thực thi logic: parseError
   const parseError = (err) => {
     let msg = typeof err === 'object' && err !== null ? (err.message || JSON.stringify(err)) : String(err);
     if (err && err.response && err.response.data) {
@@ -56,6 +71,7 @@ export default function AdminCategories() {
       details: []
     };
 
+    // Khai báo biến/hằng số: msgLower - Dùng trong logic xử lý của component
     const msgLower = msg.toLowerCase();
     if (msgLower.includes("vòng lặp gia phả") || msgLower.includes("loop") || msgLower.includes("ancestor")) {
       parsed.message = "Phát hiện vòng lặp gia phả (Nghịch lý phả hệ)";
@@ -102,6 +118,7 @@ export default function AdminCategories() {
     return parsed;
   };
 
+  // Hàm thực thi logic: isDescendantOrSelf
   const isDescendantOrSelf = (cat, targetId) => {
     if (!targetId) return false;
     if (cat.id === targetId) return true;
@@ -113,7 +130,9 @@ export default function AdminCategories() {
     return false;
   };
 
+  // Hàm xử lý logic/sự kiện: getFullDirectoryForSelect
   const getFullDirectoryForSelect = (cat) => {
+    // Khai báo biến/hằng số: parts - Dùng trong logic xử lý của component
     const parts = [];
     let current = cat;
     while (current) {
@@ -124,10 +143,12 @@ export default function AdminCategories() {
         current = null;
       }
     }
+    // Khai báo biến/hằng số: codePrefix - Dùng trong logic xử lý của component
     const codePrefix = cat.categoryCode ? `[${cat.categoryCode}] ` : '';
     return `${codePrefix}${parts.join(' \\ ')}`;
   };
 
+  // Hàm thực thi logic: loadData
   const loadData = () => {
     setLoading(true);
     Promise.all([
@@ -148,6 +169,7 @@ export default function AdminCategories() {
 
   useEffect(() => {
     if (toast) {
+      // Hàm thực thi logic: timer
       const timer = setTimeout(() => {
         setToast(null);
       }, toast.type === 'success' ? 4000 : 7000);
@@ -156,8 +178,10 @@ export default function AdminCategories() {
   }, [toast]);
 
   useEffect(() => {
+    // Hàm xử lý logic/sự kiện: handleKeyDown
     const handleKeyDown = (e) => {
       if (e.shiftKey && (e.key === 'N' || e.key === 'n')) {
+        // Khai báo biến/hằng số: activeElem - Dùng trong logic xử lý của component
         const activeElem = document.activeElement;
         if (activeElem && (activeElem.tagName === 'INPUT' || activeElem.tagName === 'TEXTAREA' || activeElem.isContentEditable)) {
           return;
@@ -172,6 +196,7 @@ export default function AdminCategories() {
     };
   }, []);
 
+  // Hàm xử lý logic/sự kiện: handleOpenModal
   const handleOpenModal = (category = null, defaultParentId = '', lockParentToRoot = false, parentNameVal = '') => {
     setFormError(null);
     setParentName(parentNameVal);
@@ -209,6 +234,7 @@ export default function AdminCategories() {
     setIsModalOpen(true);
   };
 
+  // Hàm xử lý logic/sự kiện: handleDeleteCategory
   const handleDeleteCategory = async (id) => {
     if (!window.confirm('Bạn có chắc chắn muốn xóa danh mục này? Hành động này không thể hoàn tác.')) return;
     try {
@@ -217,12 +243,15 @@ export default function AdminCategories() {
       loadData();
     } catch (err) {
       console.error(err);
+      // Khai báo biến/hằng số: parsed - Dùng trong logic xử lý của component
       const parsed = parseError(err);
       showToast('error', 'Lỗi xóa danh mục: ' + parsed.message, parsed.details.join('\n'));
     }
   };
 
+  // Hàm xử lý logic/sự kiện: handleImageUpload
   const handleImageUpload = async (e) => {
+    // Khai báo biến/hằng số: file - Dùng trong logic xử lý của component
     const file = e.target.files[0];
     if (!file) return;
 
@@ -232,11 +261,14 @@ export default function AdminCategories() {
 
     setUploading(true);
     try {
+      // Khai báo biến/hằng số: res - Dùng trong logic xử lý của component
       const res = await productService.uploadLocalImage(file, 'categories');
       if (res && res.url) {
         let finalUrl = res.url;
         if (finalUrl.startsWith('/')) {
+          // Khai báo biến/hằng số: apiBase - Dùng trong logic xử lý của component
           const apiBase = import.meta.env.VITE_API_URL || 'https://localhost:5001/api';
+          // Khai báo biến/hằng số: hostBase - Dùng trong logic xử lý của component
           const hostBase = apiBase.replace('/api', '');
           finalUrl = `${hostBase}${finalUrl}`;
         }
@@ -249,6 +281,7 @@ export default function AdminCategories() {
     }
   };
 
+  // Hàm xử lý logic/sự kiện: handleSave
   const handleSave = async (e) => {
     if (e && e.preventDefault) e.preventDefault();
     if (!formData.name.trim()) return showToast('warning', 'Thiếu dữ liệu', 'Vui lòng nhập tên danh mục.');
@@ -304,9 +337,11 @@ export default function AdminCategories() {
       loadData();
     } catch (err) {
       console.error(err);
+      // Khai báo biến/hằng số: parsed - Dùng trong logic xử lý của component
       const parsed = parseError(err);
       setFormError(parsed);
 
+      // Khai báo biến/hằng số: msgLower - Dùng trong logic xử lý của component
       const msgLower = parsed.message.toLowerCase();
       if (msgLower.includes('mã này đã tồn tại')) {
         setCatErrorMessage('Mã này đã tồn tại trong hệ thống.');
@@ -316,6 +351,7 @@ export default function AdminCategories() {
     }
   };
 
+  // Hàm thực thi logic: filteredRoots
   const filteredRoots = rootCategories.filter(cat =>
     cat.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     (cat.categoryCode && cat.categoryCode.toLowerCase().includes(searchTerm.toLowerCase()))

@@ -21,6 +21,7 @@ import FrequentlyBoughtTogether from './product-detail/components/FrequentlyBoug
 import AccessoryVariantModal from './product-detail/components/AccessoryVariantModal';
 import InstallmentModal from './product-detail/components/InstallmentModal';
 
+// Hàm xử lý logic/sự kiện: getMergedSpecs
 const getMergedSpecs = (baseSpecsStr, specsOverrideStr) => {
   if (!baseSpecsStr) return null;
 
@@ -46,6 +47,7 @@ const getMergedSpecs = (baseSpecsStr, specsOverrideStr) => {
     return baseSpecs;
   }
 
+  // Cấu hình/Hằng số/Dịch vụ dữ liệu: overridesMap
   const overridesMap = {};
   Object.entries(overrides).forEach(([key, val]) => {
     overridesMap[key.toLowerCase().trim()] = val;
@@ -54,8 +56,10 @@ const getMergedSpecs = (baseSpecsStr, specsOverrideStr) => {
   return baseSpecs.map(group => {
     if (!group.items || !Array.isArray(group.items)) return group;
 
+    // Hàm thực thi logic: mergedItems
     const mergedItems = group.items.map(item => {
       if (!item.key) return item;
+      // Khai báo biến/hằng số: normalizedKey - Dùng trong logic xử lý của component
       const normalizedKey = item.key.toLowerCase().trim();
 
       let newValue = item.value;
@@ -64,12 +68,14 @@ const getMergedSpecs = (baseSpecsStr, specsOverrideStr) => {
         newValue = overridesMap[normalizedKey];
       }
       else if (normalizedKey === 'rom' || normalizedKey.includes('bộ nhớ trong') || normalizedKey === 'internal storage') {
+        // Hàm thực thi logic: romOverrideKey
         const romOverrideKey = Object.keys(overridesMap).find(k => k === 'rom' || k.includes('bộ nhớ trong') || k === 'internal storage');
         if (romOverrideKey) {
           newValue = overridesMap[romOverrideKey];
         }
       }
       else if (normalizedKey === 'ram' || normalizedKey === 'bộ nhớ ram') {
+        // Hàm thực thi logic: ramOverrideKey
         const ramOverrideKey = Object.keys(overridesMap).find(k => k === 'ram' || k === 'bộ nhớ ram');
         if (ramOverrideKey) {
           newValue = overridesMap[ramOverrideKey];
@@ -94,20 +100,33 @@ const getMergedSpecs = (baseSpecsStr, specsOverrideStr) => {
 const BUNDLE_DISCOUNT_RATE = 0.9;
 
 export default function ProductDetailPage() {
+  // Khai báo giải nén các thuộc tính/hàm (id) từ Hook / Context / Props
   const { id } = useParams();
+  // Hook điều hướng trang (useNavigate) để chuyển hướng Route
   const navigate = useNavigate();
+  // Khai báo giải nén các thuộc tính/hàm (addToCart) từ Hook / Context / Props
   const { addToCart } = useCart();
 
+  // State: product - Quản lý trạng thái và dữ liệu của product trong giao diện
   const [product, setProduct] = useState(null);
+  // State: activeTab - Quản lý trạng thái và dữ liệu của activeTab trong giao diện
   const [activeTab, setActiveTab] = useState('specs');
+  // State: loading - Quản lý trạng thái và dữ liệu của loading trong giao diện
   const [loading, setLoading] = useState(true);
+  // State: isSpecsModalOpen - Quản lý trạng thái và dữ liệu của isSpecsModalOpen trong giao diện
   const [isSpecsModalOpen, setIsSpecsModalOpen] = useState(false);
+  // State: isInstallmentModalOpen - Quản lý trạng thái và dữ liệu của isInstallmentModalOpen trong giao diện
   const [isInstallmentModalOpen, setIsInstallmentModalOpen] = useState(false);
+  // State: installmentModalType - Quản lý trạng thái và dữ liệu của installmentModalType trong giao diện
   const [installmentModalType, setInstallmentModalType] = useState('company');
 
+  // State: selectedAttributes - Quản lý trạng thái và dữ liệu của selectedAttributes trong giao diện
   const [selectedAttributes, setSelectedAttributes] = useState({});
+  // State: variants - Quản lý trạng thái và dữ liệu của variants trong giao diện
   const [variants, setVariants] = useState([]);
+  // State: categories - Quản lý trạng thái và dữ liệu của categories trong giao diện
   const [categories, setCategories] = useState([]);
+  // State: selectedWarranty - Quản lý trạng thái và dữ liệu của selectedWarranty trong giao diện
   const [selectedWarranty, setSelectedWarranty] = useState(null);
 
   // Tự động hủy chọn bảo hành cũ khi đổi biến thể sản phẩm
@@ -117,23 +136,30 @@ export default function ProductDetailPage() {
 
   // States gợi ý mua kèm phụ kiện
   const [accessorySuggestions, setAccessorySuggestions] = useState([]);
+  // State: selectedAccessoryForModal - Quản lý trạng thái và dữ liệu của selectedAccessoryForModal trong giao diện
   const [selectedAccessoryForModal, setSelectedAccessoryForModal] = useState(null);
+  // State: isAccessoryModalOpen - Quản lý trạng thái và dữ liệu của isAccessoryModalOpen trong giao diện
   const [isAccessoryModalOpen, setIsAccessoryModalOpen] = useState(false);
 
   // States Thư viện hình ảnh động
   const [activeImage, setActiveImage] = useState(null);
+  // State: galleryImages - Quản lý trạng thái và dữ liệu của galleryImages trong giao diện
   const [galleryImages, setGalleryImages] = useState([]);
+  // State: isFading - Quản lý trạng thái và dữ liệu của isFading trong giao diện
   const [isFading, setIsFading] = useState(false);
 
   // States Đánh giá & bình luận
   const [reviews, setReviews] = useState([]);
+  // State: currentUser - Quản lý trạng thái và dữ liệu của currentUser trong giao diện
   const [currentUser, setCurrentUser] = useState(null);
 
+  // Hàm thực thi logic: selectedColor
   const selectedColor = selectedAttributes["Màu sắc"] || Object.entries(selectedAttributes).find(([k]) => k.toLowerCase().includes('màu'))?.[1] || '';
 
   // Toggle phụ kiện mua kèm
   const handleToggleAccessory = (acc) => {
     setSelectedAccessories(prev => {
+      // Hàm thực thi logic: exists
       const exists = prev.some(item => item.id === acc.id);
       if (exists) {
         return prev.filter(item => item.id !== acc.id);
@@ -152,6 +178,7 @@ export default function ProductDetailPage() {
       list.push({ type: 'video', url: prod.videoUrl });
     }
 
+    // Khai báo biến/hằng số: baseImg - Dùng trong logic xử lý của component
     const baseImg = prod.image || prod.thumbnailImage || prod.mainImage;
     if (baseImg) {
       list.push({ type: 'image', url: baseImg });
@@ -191,7 +218,9 @@ export default function ProductDetailPage() {
   const getAttributeValue = (attributesStr, targetKey) => {
     if (!attributesStr) return '';
     try {
+      // Khai báo biến/hằng số: parsed - Dùng trong logic xử lý của component
       const parsed = JSON.parse(attributesStr);
+      // Khai báo biến/hằng số: targetKeyNormalized - Dùng trong logic xử lý của component
       const targetKeyNormalized = targetKey.toLowerCase().trim();
       for (const key of Object.keys(parsed)) {
         if (key.toLowerCase().trim() === targetKeyNormalized) {
@@ -215,6 +244,7 @@ export default function ProductDetailPage() {
     ])
       .then(([productData, variantData, categoryData, allProducts]) => {
         if (productData) {
+          // Khai báo biến/hằng số: normalized - Dùng trong logic xử lý của component
           const normalized = {
             ...productData,
             price: productData.price || productData.basePrice || 0,
@@ -222,6 +252,7 @@ export default function ProductDetailPage() {
             stockQuantity: productData.availableStock ?? productData.totalStock ?? productData.stockQuantity ?? productData.stock ?? 0
           };
           setProduct(normalized);
+          // Khai báo biến/hằng số: masterImgs - Dùng trong logic xử lý của component
           const masterImgs = getMasterImages(normalized);
           setGalleryImages(masterImgs);
           setActiveImage(masterImgs[0]);
@@ -238,10 +269,12 @@ export default function ProductDetailPage() {
           // - Ẩn: Danh mục "Loa" và các loại "Phụ kiện" (sạc, cáp, ốp, kính, bao da...)
           const HIDE_RECOMMENDATION_KEYWORDS = ["loa", "speaker", "phụ kiện", "accessory", "sạc", "cáp", "ốp", "kính", "dán", "pin", "dự phòng", "adapter", "củ sạc", "bao da", "cường lực"];
 
+          // Khai báo biến/hằng số: productCatNames - Dùng trong logic xử lý của component
           const productCatNames = [];
           let currentCatId = normalized.categoryId;
           if (Array.isArray(categoryData) && categoryData.length > 0) {
             while (currentCatId) {
+              // Hàm thực thi logic: foundCat
               const foundCat = categoryData.find(c => c.id === currentCatId);
               if (foundCat) {
                 productCatNames.push((foundCat.name || '').toLowerCase());
@@ -254,7 +287,9 @@ export default function ProductDetailPage() {
 
           // Kiểm tra xem sản phẩm hiện tại có thuộc nhóm bị ẨN (Loa, Phụ kiện) hay không
           const isHideCategory = HIDE_RECOMMENDATION_KEYWORDS.some(kw => {
+            // Khai báo biến/hằng số: inName - Dùng trong logic xử lý của component
             const inName = (normalized.name || '').toLowerCase().includes(kw);
+            // Hàm thực thi logic: inCategory
             const inCategory = productCatNames.some(cName => cName.includes(kw));
             return inName || inCategory;
           });
@@ -270,14 +305,17 @@ export default function ProductDetailPage() {
               "2": [50, 49, 43],
             };
 
+            // Khai báo biến/hằng số: manualIds - Dùng trong logic xử lý của component
             const manualIds = MANUAL_BUNDLE_CONFIG[String(id)];
             if (manualIds && manualIds.length > 0) {
+              // Hàm thực thi logic: manualProds
               const manualProds = allProducts.filter(p => manualIds.includes(p.id) && p.isAvailable !== false);
               suggestions.push(...manualProds);
             }
 
             // 2. Tự động gợi ý phụ kiện cùng hãng hoặc hãng thứ 3 nếu chưa đạt tối đa 8 sản phẩm
             if (suggestions.length < 8) {
+              // Khai báo biến/hằng số: PHONE_BRAND_KEYWORDS - Dùng trong logic xử lý của component
               const PHONE_BRAND_KEYWORDS = {
                 apple: ['apple', 'iphone', 'ipad', 'airpods', 'magsafe', 'earpods'],
                 samsung: ['samsung', 'galaxy', 'buds'],
@@ -287,6 +325,7 @@ export default function ProductDetailPage() {
                 realme: ['realme']
               };
 
+              // Khai báo biến/hằng số: mainProdNameLower - Dùng trong logic xử lý của component
               const mainProdNameLower = normalized.name.toLowerCase();
               let currentBrandKey = '';
               for (const [bKey, keywordsList] of Object.entries(PHONE_BRAND_KEYWORDS)) {
@@ -296,6 +335,7 @@ export default function ProductDetailPage() {
                 }
               }
 
+              // Khai báo biến/hằng số: rivalKeywords - Dùng trong logic xử lý của component
               const rivalKeywords = [];
               for (const [bKey, keywordsList] of Object.entries(PHONE_BRAND_KEYWORDS)) {
                 if (bKey !== currentBrandKey) {
@@ -303,12 +343,15 @@ export default function ProductDetailPage() {
                 }
               }
 
+              // Khai báo biến/hằng số: keywords - Dùng trong logic xử lý của component
               const keywords = ["sạc", "tai nghe", "loa", "dự phòng", "cáp", "ốp", "kính", "jbl", "anker", "sony", "baseus", "spigen", "zealot", "pin", "củ sạc", "adapter"];
 
+              // Hàm thực thi logic: validAccessories
               const validAccessories = allProducts.filter(p => {
                 if (p.id === parseInt(id)) return false;
                 if (p.isAvailable === false) return false;
                 if (suggestions.some(s => s.id === p.id)) return false;
+                // Khai báo biến/hằng số: nameLower - Dùng trong logic xử lý của component
                 const nameLower = p.name.toLowerCase();
 
                 // 1. Phải là món thuộc loại phụ kiện
@@ -322,28 +365,36 @@ export default function ProductDetailPage() {
                 return true;
               });
 
+              // Khai báo biến/hằng số: modelTokens - Dùng trong logic xử lý của component
               const modelTokens = mainProdNameLower.match(/(s\d+|note\d+|z\s*fold\d*|z\s*flip\d*|iphone\s*\d+|ipad\s*\w+)/gi) || [];
 
+              // Hàm thực thi logic: sameBrandAccs
               const sameBrandAccs = validAccessories.filter(p => p.brandId === normalized.brandId || (currentBrandKey && p.name.toLowerCase().includes(currentBrandKey)));
               sameBrandAccs.sort((a, b) => {
+                // Hàm thực thi logic: aMatchesModel
                 const aMatchesModel = modelTokens.some(tok => a.name.toLowerCase().includes(tok.toLowerCase()));
+                // Hàm thực thi logic: bMatchesModel
                 const bMatchesModel = modelTokens.some(tok => b.name.toLowerCase().includes(tok.toLowerCase()));
                 if (aMatchesModel && !bMatchesModel) return -1;
                 if (!aMatchesModel && bMatchesModel) return 1;
                 return 0;
               });
 
+              // Hàm thực thi logic: thirdPartyAccs
               const thirdPartyAccs = validAccessories.filter(p => !sameBrandAccs.includes(p));
               suggestions.push(...sameBrandAccs, ...thirdPartyAccs);
             }
 
             // 3. Chỉ dự phòng nếu số lượng sản phẩm phù hợp bị ít hơn 4 (tối thiểu 4 sản phẩm)
             if (suggestions.length < 4) {
+              // Khai báo biến/hằng số: keywords - Dùng trong logic xử lý của component
               const keywords = ["sạc", "tai nghe", "loa", "dự phòng", "cáp", "ốp", "kính", "jbl", "anker", "sony", "baseus", "spigen", "zealot", "pin", "củ sạc", "adapter"];
+              // Hàm thực thi logic: generalAccessories
               const generalAccessories = allProducts.filter(p => {
                 if (p.id === parseInt(id)) return false;
                 if (p.isAvailable === false) return false;
                 if (suggestions.some(s => s.id === p.id)) return false;
+                // Khai báo biến/hằng số: nameLower - Dùng trong logic xử lý của component
                 const nameLower = p.name.toLowerCase();
                 return keywords.some(kw => nameLower.includes(kw));
               });
@@ -372,12 +423,16 @@ export default function ProductDetailPage() {
   // Tự động chọn biến thể hoạt động đầu tiên làm mặc định khi tải trang
   useEffect(() => {
     if (variants.length > 0 && Object.keys(selectedAttributes).length === 0) {
+      // Hàm thực thi logic: defaultVar
       const defaultVar = variants.find(v => v.isActive !== false) || variants[0];
       if (defaultVar && defaultVar.attributes) {
         try {
+          // Khai báo biến/hằng số: parsed - Dùng trong logic xử lý của component
           const parsed = JSON.parse(defaultVar.attributes);
+          // Khai báo biến/hằng số: initialSelections - Dùng trong logic xử lý của component
           const initialSelections = {};
           Object.entries(parsed).forEach(([key, val]) => {
+            // Khai báo biến/hằng số: kLower - Dùng trong logic xử lý của component
             const kLower = key.toLowerCase();
             if (kLower !== 'sku') {
               initialSelections[key.trim()] = String(val).trim();
@@ -394,11 +449,13 @@ export default function ProductDetailPage() {
   // Thiết lập tab hiển thị mặc định tuỳ thuộc vào mô tả sản phẩm
   useEffect(() => {
     if (product) {
+      // Khai báo biến/hằng số: hasDesc - Dùng trong logic xử lý của component
       const hasDesc = product.description && product.description.trim() !== '';
       setActiveTab(hasDesc ? 'specs' : 'info');
     }
   }, [product]);
 
+  // Hàm xử lý logic/sự kiện: fetchProductReviews
   const fetchProductReviews = () => {
     reviewService.getByProductId(id)
       .then(res => {
@@ -413,6 +470,7 @@ export default function ProductDetailPage() {
 
   useEffect(() => {
     fetchProductReviews();
+    // Khai báo biến/hằng số: userStr - Dùng trong logic xử lý của component
     const userStr = localStorage.getItem('user');
     if (userStr) {
       try {
@@ -434,21 +492,27 @@ export default function ProductDetailPage() {
         satisfiedPercent: 100
       };
     }
+    // Khai báo biến/hằng số: total - Dùng trong logic xử lý của component
     const total = reviews.length;
     let sum = 0;
+    // Khai báo biến/hằng số: counts - Dùng trong logic xử lý của component
     const counts = { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 };
     reviews.forEach(r => {
       sum += r.rating;
+      // Khai báo biến/hằng số: rate - Dùng trong logic xử lý của component
       const rate = Math.round(r.rating);
       if (counts[rate] !== undefined) {
         counts[rate]++;
       }
     });
+    // Khai báo biến/hằng số: average - Dùng trong logic xử lý của component
     const average = parseFloat((sum / total).toFixed(1));
+    // Khai báo biến/hằng số: percentages - Dùng trong logic xử lý của component
     const percentages = {};
     for (let i = 1; i <= 5; i++) {
       percentages[i] = Math.round((counts[i] / total) * 100);
     }
+    // Khai báo biến/hằng số: satisfiedPercent - Dùng trong logic xử lý của component
     const satisfiedPercent = Math.round(((counts[5] + counts[4]) / total) * 100);
     return { average, total, counts, percentages, satisfiedPercent };
   }, [reviews]);
@@ -460,6 +524,7 @@ export default function ProductDetailPage() {
 
   // Phân tích các thuộc tính động từ tất cả variants
   const attributesConfig = useMemo(() => {
+    // Cấu hình/Hằng số/Dịch vụ dữ liệu: config
     const config = {};
 
     variants.forEach(v => {
@@ -473,6 +538,7 @@ export default function ProductDetailPage() {
       }
 
       if (Object.keys(parsed).length === 0 && v.name && v.name.includes(' - ')) {
+        // Khai báo biến/hằng số: parts - Dùng trong logic xử lý của component
         const parts = v.name.split(' - ');
         if (parts.length > 1) {
           parsed["Dung lượng RAM - ROM"] = parts[1].trim();
@@ -483,9 +549,12 @@ export default function ProductDetailPage() {
       }
 
       Object.entries(parsed).forEach(([key, val]) => {
+        // Khai báo biến/hằng số: kLower - Dùng trong logic xử lý của component
         const kLower = key.toLowerCase().trim();
         if (kLower === 'sku' || kLower === 'chargetax' || kLower === 'costprice') return;
+        // Khai báo biến/hằng số: trimmedKey - Dùng trong logic xử lý của component
         const trimmedKey = key.trim();
+        // Khai báo biến/hằng số: trimmedVal - Dùng trong logic xử lý của component
         const trimmedVal = String(val).trim();
         if (trimmedKey && trimmedVal && trimmedVal !== 'Mặc định') {
           if (!config[trimmedKey]) {
@@ -496,6 +565,7 @@ export default function ProductDetailPage() {
       });
     });
 
+    // Khai báo biến/hằng số: result - Dùng trong logic xử lý của component
     const result = {};
     Object.entries(config).forEach(([key, set]) => {
       result[key] = Array.from(set);
@@ -507,7 +577,9 @@ export default function ProductDetailPage() {
   const selectedVariant = useMemo(() => {
     if (!product || variants.length === 0) return null;
 
+    // Khai báo biến/hằng số: requiredKeys - Dùng trong logic xử lý của component
     const requiredKeys = Object.keys(attributesConfig);
+    // Hàm thực thi logic: hasAllSelections
     const hasAllSelections = requiredKeys.every(k => !!selectedAttributes[k]);
     if (!hasAllSelections) return null;
 
@@ -522,7 +594,9 @@ export default function ProductDetailPage() {
       }
 
       return requiredKeys.every(key => {
+        // Khai báo biến/hằng số: val - Dùng trong logic xử lý của component
         const val = selectedAttributes[key];
+        // Hàm thực thi logic: vVal
         const vVal = Object.entries(parsedAttrs).find(([k]) => k.toLowerCase().trim() === key.toLowerCase().trim())?.[1];
         return String(vVal || '').toLowerCase().trim() === String(val).toLowerCase().trim();
       });
@@ -533,6 +607,7 @@ export default function ProductDetailPage() {
   const matchedVariant = useMemo(() => {
     if (!product || variants.length === 0) return null;
 
+    // Hàm thực thi logic: activeSelections
     const activeSelections = Object.entries(selectedAttributes).filter(([_, val]) => !!val);
     if (activeSelections.length === 0) {
       return variants.find(v => v.isActive !== false) || variants[0];
@@ -549,6 +624,7 @@ export default function ProductDetailPage() {
       }
 
       return activeSelections.every(([key, val]) => {
+        // Hàm thực thi logic: vVal
         const vVal = Object.entries(parsedAttrs).find(([k]) => k.toLowerCase().trim() === key.toLowerCase().trim())?.[1];
         return String(vVal || '').toLowerCase().trim() === String(val).toLowerCase().trim();
       });
@@ -564,6 +640,7 @@ export default function ProductDetailPage() {
   // Cấu hình hiển thị tên sản phẩm động
   const displayProductName = useMemo(() => {
     if (!product) return '';
+    // Khai báo biến/hằng số: targetVar - Dùng trong logic xử lý của component
     const targetVar = matchedVariant || selectedVariant;
     if (!targetVar) return product.name;
 
@@ -576,8 +653,10 @@ export default function ProductDetailPage() {
       }
     }
 
+    // Khai báo biến/hằng số: nonColorParts - Dùng trong logic xử lý của component
     const nonColorParts = [];
     Object.entries(parsedAttrs).forEach(([key, val]) => {
+      // Khai báo biến/hằng số: kLower - Dùng trong logic xử lý của component
       const kLower = key.toLowerCase().trim();
       if (kLower !== 'sku' && kLower !== 'chargetax' && kLower !== 'costprice' && !kLower.includes('màu') && !kLower.includes('color')) {
         nonColorParts.push(String(val));
@@ -594,7 +673,9 @@ export default function ProductDetailPage() {
   const displayDetails = useMemo(() => {
     if (!product) return { price: 0, originalPrice: 0, stock: 0 };
 
+    // Hàm thực thi logic: parsedVariants
     const parsedVariants = variants.map(v => {
+      // Khai báo biến/hằng số: parsedAttrs - Dùng trong logic xử lý của component
       const parsedAttrs = {};
       if (v.attributes) {
         try {
@@ -607,6 +688,7 @@ export default function ProductDetailPage() {
       }
 
       if (Object.keys(parsedAttrs).length === 0 && v.name && v.name.includes(' - ')) {
+        // Khai báo biến/hằng số: parts - Dùng trong logic xử lý của component
         const parts = v.name.split(' - ');
         if (parts.length > 1) {
           parsedAttrs["dung lượng ram - rom"] = parts[1].toLowerCase().trim();
@@ -624,13 +706,17 @@ export default function ProductDetailPage() {
       };
     });
 
+    // Hàm thực thi logic: hasSelections
     const hasSelections = Object.values(selectedAttributes).some(v => !!v);
 
     if (hasSelections) {
+      // Hàm thực thi logic: matchedVariants
       const matchedVariants = parsedVariants.filter(v => {
         for (const [key, val] of Object.entries(selectedAttributes)) {
           if (!val) continue;
+          // Khai báo biến/hằng số: normalizedKey - Dùng trong logic xử lý của component
           const normalizedKey = key.toLowerCase().trim();
+          // Khai báo biến/hằng số: normalizedVal - Dùng trong logic xử lý của component
           const normalizedVal = val.toLowerCase().trim();
           if (v.parsedAttrs[normalizedKey] !== normalizedVal) {
             return false;
@@ -640,9 +726,12 @@ export default function ProductDetailPage() {
       });
 
       if (matchedVariants.length > 0) {
+        // Khai báo biến/hằng số: firstMatch - Dùng trong logic xử lý của component
         const firstMatch = matchedVariants[0];
+        // Hàm thực thi logic: finalStock
         const finalStock = matchedVariants.reduce((sum, v) => sum + v.availableStock, 0);
 
+        // Khai báo biến/hằng số: ratio - Dùng trong logic xử lý của component
         const ratio = (product.originalPrice && product.price && product.originalPrice > product.price)
           ? (product.originalPrice / product.price)
           : 1;
@@ -667,7 +756,9 @@ export default function ProductDetailPage() {
   // Xử lý chọn thuộc tính
   const handleAttributeClick = (key, value) => {
     setSelectedAttributes(prev => {
+      // Khai báo biến/hằng số: next - Dùng trong logic xử lý của component
       const next = { ...prev };
+      // Khai báo biến/hằng số: isColorAttr - Dùng trong logic xử lý của component
       const isColorAttr = key.toLowerCase().includes('màu') || key.toLowerCase().includes('color');
 
       if (next[key] === value) {
@@ -676,6 +767,7 @@ export default function ProductDetailPage() {
         if (isColorAttr) {
           setIsFading(true);
           setTimeout(() => {
+            // Khai báo biến/hằng số: masterImgs - Dùng trong logic xử lý của component
             const masterImgs = getMasterImages(product);
             setGalleryImages(masterImgs);
             setActiveImage(masterImgs[0]);
@@ -688,9 +780,11 @@ export default function ProductDetailPage() {
         if (isColorAttr) {
           setIsFading(true);
           setTimeout(() => {
+            // Hàm thực thi logic: matchedVariant
             const matchedVariant = variants.find(v => {
               let vColor = getAttributeValue(v.attributes, key) || '';
               if (!vColor && v.name && v.name.includes(' - ')) {
+                // Khai báo biến/hằng số: parts - Dùng trong logic xử lý của component
                 const parts = v.name.split(' - ');
                 if (parts.length > 2) {
                   vColor = parts[2];
@@ -700,11 +794,16 @@ export default function ProductDetailPage() {
             });
 
             if (matchedVariant && matchedVariant.imageId) {
+              // Khai báo biến/hằng số: varImg - Dùng trong logic xử lý của component
               const varImg = matchedVariant.imageId;
+              // Khai báo biến/hằng số: varImgObj - Dùng trong logic xử lý của component
               const varImgObj = { type: 'image', url: varImg };
+              // Khai báo biến/hằng số: masterImgs - Dùng trong logic xử lý của component
               const masterImgs = getMasterImages(product);
               let newGallery = [...masterImgs];
+              // Hàm thực thi logic: videoIndex
               const videoIndex = newGallery.findIndex(item => item.type === 'video');
+              // Khai báo biến/hằng số: mainImgIndex - Dùng trong logic xử lý của component
               const mainImgIndex = videoIndex !== -1 ? 1 : 0;
               if (newGallery.length > mainImgIndex) {
                 newGallery[mainImgIndex] = varImgObj;
@@ -714,6 +813,7 @@ export default function ProductDetailPage() {
               setGalleryImages(newGallery);
               setActiveImage(varImgObj);
             } else {
+              // Khai báo biến/hằng số: masterImgs - Dùng trong logic xử lý của component
               const masterImgs = getMasterImages(product);
               setGalleryImages(masterImgs);
               setActiveImage(masterImgs[0]);
@@ -785,14 +885,17 @@ export default function ProductDetailPage() {
     }
   };
 
+  // Hàm thực thi logic: breadcrumbItems
   const breadcrumbItems = useMemo(() => {
     if (!product) return [];
 
+    // Khai báo biến/hằng số: items - Dùng trong logic xử lý của component
     const items = [];
     let currentCategoryId = product.categoryId;
 
     if (categories && categories.length > 0) {
       while (currentCategoryId) {
+        // Hàm thực thi logic: cat
         const cat = categories.find(c => c.id === currentCategoryId);
         if (cat) {
           items.unshift({
@@ -847,7 +950,9 @@ export default function ProductDetailPage() {
               <span className="text-amber-500 font-black text-sm mr-0.5">{stats.average}</span>
               <div className="flex text-amber-400">
                 {[...Array(5)].map((_, i) => {
+                  // Khai báo biến/hằng số: ratingVal - Dùng trong logic xử lý của component
                   const ratingVal = i + 1;
+                  // Khai báo biến/hằng số: isFilled - Dùng trong logic xử lý của component
                   const isFilled = ratingVal <= Math.round(stats.average);
                   return (
                     <svg
@@ -869,6 +974,7 @@ export default function ProductDetailPage() {
               type="button"
               onClick={() => {
                 setActiveTab('reviews');
+                // Khai báo biến/hằng số: el - Dùng trong logic xử lý của component
                 const el = document.getElementById('product-tabs-container');
                 if (el) el.scrollIntoView({ behavior: 'smooth' });
               }}

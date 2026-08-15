@@ -7,22 +7,28 @@ import {
 import api from '../../../services/api';
 import { blogService } from '../../../services/Blog';
 
+// Hàm xử lý logic/sự kiện: getMediaUrl
 export const getMediaUrl = (url) => {
   if (!url) return '';
   if (url.startsWith('data:') || url.startsWith('blob:') || url.startsWith('http://') || url.startsWith('https://')) {
     return url;
   }
+  // Khai báo biến/hằng số: backendOrigin - Dùng trong logic xử lý của component
   const backendOrigin = (import.meta.env.VITE_API_URL || api.defaults?.baseURL || 'https://localhost:7279/api')
     .replace(/\/api\/?$/, '');
 
+  // Khai báo biến/hằng số: cleanPath - Dùng trong logic xử lý của component
   const cleanPath = url.startsWith('/') ? url : `/${url}`;
   return `${backendOrigin}${cleanPath}`;
 };
 
+// Hàm thực thi logic: generateSlug
 const generateSlug = (text) => {
   if (!text) return '';
   let str = text.toLowerCase().trim();
+  // Khai báo biến/hằng số: from - Dùng trong logic xử lý của component
   const from = "àáảãạăằắẳẵặâầấẩẫậèéẻẽẹêềếểễệìíỉĩịòóỏõọôồốổỗộơờớởỡợùúủũụưừứửữựỳýỷỹỵđ";
+  // Khai báo biến/hằng số: to - Dùng trong logic xử lý của component
   const to = "aaaaaaaaaaaaaaaaaeeeeeeeeeeeiiiiiooooooooooooooooouuuuuuuuuuuyyyyyd";
   for (let i = 0; i < from.length; i++) {
     str = str.replaceAll(from[i], to[i]);
@@ -34,12 +40,17 @@ const generateSlug = (text) => {
 };
 
 export default function AdminBlogForm({ blogId = null, onBack }) {
+  // Khai báo biến/hằng số: isEdit - Dùng trong logic xử lý của component
   const isEdit = Boolean(blogId);
 
+  // State: loading - Quản lý trạng thái và dữ liệu của loading trong giao diện
   const [loading, setLoading] = useState(false);
+  // State: fetchingData - Quản lý trạng thái và dữ liệu của fetchingData trong giao diện
   const [fetchingData, setFetchingData] = useState(isEdit);
+  // State: uploadingImage - Quản lý trạng thái và dữ liệu của uploadingImage trong giao diện
   const [uploadingImage, setUploadingImage] = useState(false);
 
+  // Reference (useRef): fileInputRef - Lưu vết tham chiếu DOM hoặc giá trị không gây re-render
   const fileInputRef = useRef(null);
 
   // Form State giá trị khởi tạo ban đầu (Initial State)
@@ -62,9 +73,12 @@ export default function AdminBlogForm({ blogId = null, onBack }) {
     focusKeyword: ''
   });
 
+  // State: isSlugManuallyEdited - Quản lý trạng thái và dữ liệu của isSlugManuallyEdited trong giao diện
   const [isSlugManuallyEdited, setIsSlugManuallyEdited] = useState(false);
 
+  // Hàm xử lý logic/sự kiện: handleTitleChange
   const handleTitleChange = (e) => {
+    // Khai báo biến/hằng số: val - Dùng trong logic xử lý của component
     const val = e.target.value;
     setFormData(prev => ({
       ...prev,
@@ -74,6 +88,7 @@ export default function AdminBlogForm({ blogId = null, onBack }) {
     }));
   };
 
+  // Hàm xử lý logic/sự kiện: handleSlugChange
   const handleSlugChange = (e) => {
     setIsSlugManuallyEdited(true);
     setFormData(prev => ({ ...prev, slug: e.target.value }));
@@ -81,6 +96,7 @@ export default function AdminBlogForm({ blogId = null, onBack }) {
 
   // Upload & Replace local image
   const handleImageUpload = async (e) => {
+    // Khai báo biến/hằng số: file - Dùng trong logic xử lý của component
     const file = e.target.files?.[0];
     if (!file) return;
 
@@ -100,14 +116,18 @@ export default function AdminBlogForm({ blogId = null, onBack }) {
 
     setUploadingImage(true);
     try {
+      // Khai báo biến/hằng số: res - Dùng trong logic xử lý của component
       const res = await productService.uploadLocalImage(file, 'blogs');
+      // Khai báo biến/hằng số: uploadedUrl - Dùng trong logic xử lý của component
       const uploadedUrl = res?.data?.url || res?.url || (typeof res?.data === 'string' ? res.data : null);
       if (uploadedUrl) {
+        // Khai báo biến/hằng số: fullUrl - Dùng trong logic xử lý của component
         const fullUrl = getMediaUrl(uploadedUrl);
         setFormData(prev => ({ ...prev, thumbnailUrl: fullUrl }));
       }
     } catch (err) {
       console.warn('Lỗi upload server, giữ xem trước đệm:', err);
+      // Khai báo biến/hằng số: reader - Dùng trong logic xử lý của component
       const reader = new FileReader();
       reader.onloadend = () => {
         setFormData(prev => ({ ...prev, thumbnailUrl: reader.result }));
@@ -123,6 +143,7 @@ export default function AdminBlogForm({ blogId = null, onBack }) {
   useEffect(() => {
     if (!blogId) return;
 
+    // Hàm xử lý logic/sự kiện: fetchBlogDetail
     const fetchBlogDetail = async () => {
       setFetchingData(true);
       try {
@@ -136,8 +157,10 @@ export default function AdminBlogForm({ blogId = null, onBack }) {
         // const res = await blogService.getBlog(blogId);
         // =========================================================================
 
+        // Cấu hình/Hằng số/Dịch vụ dữ liệu: data
         const data = res.data || res;
 
+        // Khai báo biến/hằng số: isPub - Dùng trong logic xử lý của component
         const isPub = data.isPublished ?? data.isActive ?? true;
 
         //Nhiệm vụ là nạp (fill) dữ liệu cũ của bài viết đó từ Database lên Form(chứ năng chỉnh sửa) 
@@ -189,6 +212,7 @@ export default function AdminBlogForm({ blogId = null, onBack }) {
     // Determine publish status: true if published/forced, false if draft
     const isPub = forcedPublishState !== null ? forcedPublishState : (formData.publishStatus === 'published');
 
+    // Khai báo biến/hằng số: payload - Dùng trong logic xử lý của component
     const payload = {
       title: formData.title.trim(),
       slug: (formData.slug.trim() || generateSlug(formData.title)).slice(0, 255),
@@ -228,6 +252,7 @@ export default function AdminBlogForm({ blogId = null, onBack }) {
       }
     } catch (err) {
       console.error('Lỗi lưu bài viết:', err);
+      // Khai báo biến/hằng số: errMsg - Dùng trong logic xử lý của component
       const errMsg = err.response?.data?.errors
         ? Object.values(err.response.data.errors).flat().join('\n')
         : (err.response?.data?.message || err.response?.data || err.message || 'Lỗi hệ thống');
@@ -499,6 +524,7 @@ export default function AdminBlogForm({ blogId = null, onBack }) {
                   className="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 rounded-xl font-bold text-gray-800 text-xs focus:border-blue-500 outline-none"
                   value={formData.publishStatus}
                   onChange={(e) => {
+                    // Cấu hình/Hằng số/Dịch vụ dữ liệu: status
                     const status = e.target.value;
                     setFormData({
                       ...formData,

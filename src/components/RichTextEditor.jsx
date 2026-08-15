@@ -7,9 +7,13 @@ import { Eye, Code, Loader2 } from 'lucide-react';
 import { productService } from '../services/productService';
 
 export default function RichTextEditor({ value, onChange, placeholder }) {
+  // Reference (useRef): wrapperRef - Lưu vết tham chiếu DOM hoặc giá trị không gây re-render
   const wrapperRef = useRef(null);
+  // Reference (useRef): quillRef - Lưu vết tham chiếu DOM hoặc giá trị không gây re-render
   const quillRef = useRef(null);
+  // State: isHtmlMode - Quản lý trạng thái và dữ liệu của isHtmlMode trong giao diện
   const [isHtmlMode, setIsHtmlMode] = useState(false);
+  // State: isUploading - Quản lý trạng thái và dữ liệu của isUploading trong giao diện
   const [isUploading, setIsUploading] = useState(false);
 
   useEffect(() => {
@@ -53,6 +57,7 @@ export default function RichTextEditor({ value, onChange, placeholder }) {
 
       // Sự kiện khi người dùng đã chọn tệp ảnh
       input.onchange = async () => {
+        // Khai báo biến/hằng số: file - Dùng trong logic xử lý của component
         const file = input.files[0];
         if (!file) return;
 
@@ -69,7 +74,9 @@ export default function RichTextEditor({ value, onChange, placeholder }) {
           if (res && res.url) {
             let finalUrl = res.url;
             if (finalUrl.startsWith('/')) {
+              // Khai báo biến/hằng số: apiBase - Dùng trong logic xử lý của component
               const apiBase = import.meta.env.VITE_API_URL || 'https://localhost:5001/api';
+              // Khai báo biến/hằng số: hostBase - Dùng trong logic xử lý của component
               const hostBase = apiBase.replace('/api', '');
               finalUrl = `${hostBase}${finalUrl}`;
             }
@@ -95,6 +102,7 @@ export default function RichTextEditor({ value, onChange, placeholder }) {
 
     // LẮNG NGHE SỰ KIỆN THAY ĐỔI VĂN BẢN ĐỂ ĐẨY DỮ LIỆU HTML VỀ CHO CHA
     quill.on('text-change', () => {
+      // Khai báo biến/hằng số: html - Dùng trong logic xử lý của component
       const html = quill.root.innerHTML;
       // Tránh việc Quill sinh ra các đoạn thẻ trống mặc định '<p><br></p>'
       if (html === '<p><br></p>' || html === '<p></p>') {
@@ -112,6 +120,7 @@ export default function RichTextEditor({ value, onChange, placeholder }) {
   // ĐỒNG BỘ LẠI NỘI DUNG KHI VALUE TỪ CHA THAY ĐỔI NGOÀI Ý MUỐN (VÍ DỤ: RESET FORM)
   useEffect(() => {
     if (quillRef.current) {
+      // Khai báo biến/hằng số: currentHTML - Dùng trong logic xử lý của component
       const currentHTML = quillRef.current.root.innerHTML;
       if (value !== currentHTML && value !== undefined) {
         // Lưu giữ vị trí con trỏ chuột để tránh cursor bị nhảy lung tung khi nhập liệu

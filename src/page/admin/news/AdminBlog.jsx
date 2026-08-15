@@ -5,20 +5,28 @@ import api from '../../../services/api';
 import { blogService } from '../../../services/Blog';
 
 export default function AdminBlog({ onCreate, onEdit }) {
+  // State: blog - Quản lý trạng thái và dữ liệu của blog trong giao diện
   const [blog, setBlog] = useState([]);
+  // State: loading - Quản lý trạng thái và dữ liệu của loading trong giao diện
   const [loading, setLoading] = useState(true);
+  // State: actionLoading - Quản lý trạng thái và dữ liệu của actionLoading trong giao diện
   const [actionLoading, setActionLoading] = useState(null);
   
   // Filters
   const [searchTerm, setSearchTerm] = useState('');
+  // State: statusFilter - Quản lý trạng thái và dữ liệu của statusFilter trong giao diện
   const [statusFilter, setStatusFilter] = useState('ALL');
   // const [timeFilter, setTimeFilter] = useState('ALL');
 
+  // Hàm xử lý logic/sự kiện: fetchData
   const fetchData = async () => {
     try {
       setLoading(true);
+      // Khai báo biến/hằng số: res - Dùng trong logic xử lý của component
       const res = await blogService.getBlogs();
+      // Cấu hình/Hằng số/Dịch vụ dữ liệu: data
       const data = res.data || res;
+      // Cấu hình/Hằng số/Dịch vụ dữ liệu: list
       const list = Array.isArray(data) ? data : (data.items || []);
       setBlog(list);
     } catch (err) {
@@ -31,6 +39,7 @@ export default function AdminBlog({ onCreate, onEdit }) {
     fetchData();
   }, []);
 
+  // Hàm xử lý logic/sự kiện: handleDelete
   const handleDelete = async (id) => {
     if (!window.confirm("Bạn có chắc chắn muốn xóa bài đăng này không?")) return;
     try {
@@ -45,6 +54,7 @@ export default function AdminBlog({ onCreate, onEdit }) {
     }
   };
 
+  // Hàm xử lý logic/sự kiện: handleToggleStatus
   const handleToggleStatus = async (item) => {
     try {
       setActionLoading(item.id + '_toggle');
@@ -58,16 +68,21 @@ export default function AdminBlog({ onCreate, onEdit }) {
     }
   };
 
+  // Hàm xử lý logic/sự kiện: getStatus
   const getStatus = (item) => {
+    // Khai báo biến/hằng số: isPub - Dùng trong logic xử lý của component
     const isPub = item.isPublished ?? item.isActive ?? true;
     return isPub ? 'ACTIVE' : 'PAUSED';
   };
 
+  // Hàm thực thi logic: filteredBlog
   const filteredBlog = (Array.isArray(blog) ? blog : []).filter(item => {
+    // Khai báo biến/hằng số: matchText - Dùng trong logic xử lý của component
     const matchText = (item.title || item.name || '').toLowerCase().includes(searchTerm.toLowerCase()) || item.id?.toString() === searchTerm;
     if (!matchText) return false;
 
     if (statusFilter !== 'ALL') {
+      // Cấu hình/Hằng số/Dịch vụ dữ liệu: status
       const status = getStatus(item);
       if (status !== statusFilter) return false;
     }
@@ -164,7 +179,9 @@ export default function AdminBlog({ onCreate, onEdit }) {
               </thead>
               <tbody className="divide-y divide-gray-100 text-gray-800 bg-white">
                 {filteredBlog.map(item => {
+                  // Cấu hình/Hằng số/Dịch vụ dữ liệu: status
                   const status = getStatus(item);
+                  // Khai báo biến/hằng số: isPub - Dùng trong logic xử lý của component
                   const isPub = status === 'ACTIVE';
                   return (
                     <tr key={item.id} className="hover:bg-gray-50/50 transition-colors group">

@@ -13,10 +13,15 @@ import { orderService } from '../services/orderService';
 export default function OrderReturnModal({ isOpen, onClose, order, mode = 'user', onSuccess }) {
   // State phía User
   const [selectedItems, setSelectedItems] = useState({});
+  // State: itemReasons - Quản lý trạng thái và dữ liệu của itemReasons trong giao diện
   const [itemReasons, setItemReasons] = useState({});
+  // State: itemImages - Quản lý trạng thái và dữ liệu của itemImages trong giao diện
   const [itemImages, setItemImages] = useState({});
+  // State: generalNote - Quản lý trạng thái và dữ liệu của generalNote trong giao diện
   const [generalNote, setGeneralNote] = useState('');
+  // State: submitting - Quản lý trạng thái và dữ liệu của submitting trong giao diện
   const [submitting, setSubmitting] = useState(false);
+  // State: successMsg - Quản lý trạng thái và dữ liệu của successMsg trong giao diện
   const [successMsg, setSuccessMsg] = useState('');
 
   // State phía Admin
@@ -24,11 +29,15 @@ export default function OrderReturnModal({ isOpen, onClose, order, mode = 'user'
 
   useEffect(() => {
     if (order && order.items) {
+      // Khai báo biến/hằng số: initialSelected - Dùng trong logic xử lý của component
       const initialSelected = {};
+      // Khai báo biến/hằng số: initialReasons - Dùng trong logic xử lý của component
       const initialReasons = {};
+      // Khai báo biến/hằng số: initialImages - Dùng trong logic xử lý của component
       const initialImages = {};
 
       order.items.forEach(item => {
+        // Khai báo biến/hằng số: itemId - Dùng trong logic xử lý của component
         const itemId = item.id || item.Id || item.orderItemId;
         initialSelected[itemId] = true;
         initialReasons[itemId] = 'Sản phẩm lỗi kỹ thuật / Không hoạt động';
@@ -43,11 +52,14 @@ export default function OrderReturnModal({ isOpen, onClose, order, mode = 'user'
 
   if (!isOpen || !order) return null;
 
+  // Khai báo biến/hằng số: orderId - Dùng trong logic xử lý của component
   const orderId = order.id || order.Id;
+  // Khai báo biến/hằng số: items - Dùng trong logic xử lý của component
   const items = order.items || [];
 
   // Tính hạn đổi trả 7 ngày
   const getReturnDeadline = (createdDate) => {
+    // Khai báo biến/hằng số: d - Dùng trong logic xử lý của component
     const d = new Date(createdDate || Date.now());
     if (isNaN(d.getTime())) return '';
     d.setDate(d.getDate() + 8);
@@ -66,9 +78,11 @@ export default function OrderReturnModal({ isOpen, onClose, order, mode = 'user'
 
   // Giả lập upload ảnh minh chứng
   const handleImageUpload = (itemId, e) => {
+    // Khai báo biến/hằng số: files - Dùng trong logic xử lý của component
     const files = Array.from(e.target.files || []);
     if (files.length === 0) return;
 
+    // Hàm thực thi logic: newUrls
     const newUrls = files.map(file => URL.createObjectURL(file));
     setItemImages(prev => ({
       ...prev,
@@ -88,6 +102,7 @@ export default function OrderReturnModal({ isOpen, onClose, order, mode = 'user'
   const handleUserSubmit = async (e) => {
     if (e) e.preventDefault();
 
+    // Hàm thực thi logic: selectedIds
     const selectedIds = Object.keys(selectedItems).filter(id => selectedItems[id]);
     if (selectedIds.length === 0) {
       alert('Vui lòng chọn ít nhất 1 sản phẩm bạn muốn đổi trả.');
@@ -97,6 +112,7 @@ export default function OrderReturnModal({ isOpen, onClose, order, mode = 'user'
     setSubmitting(true);
 
     try {
+      // Khai báo biến/hằng số: returnPayload - Dùng trong logic xử lý của component
       const returnPayload = {
         returnRequestId: `REQ-${orderId}-${Date.now()}`,
         orderId: orderId,
@@ -105,6 +121,7 @@ export default function OrderReturnModal({ isOpen, onClose, order, mode = 'user'
         totalRefundAmount: order.totalPrice || order.TotalPrice,
         createdAt: new Date().toISOString(),
         returnItems: selectedIds.map(itemId => {
+          // Hàm thực thi logic: item
           const item = items.find(i => String(i.id || i.Id || i.orderItemId) === String(itemId));
           return {
             orderItemId: itemId,
@@ -118,6 +135,7 @@ export default function OrderReturnModal({ isOpen, onClose, order, mode = 'user'
         generalNote: generalNote
       };
 
+      // Khai báo biến/hằng số: existingReqs - Dùng trong logic xử lý của component
       const existingReqs = JSON.parse(localStorage.getItem('PROJECT_RETURN_REQUESTS') || '{}');
       existingReqs[orderId] = returnPayload;
       localStorage.setItem('PROJECT_RETURN_REQUESTS', JSON.stringify(existingReqs));
@@ -148,6 +166,7 @@ export default function OrderReturnModal({ isOpen, onClose, order, mode = 'user'
         await orderService.updateStatus(orderId, 'refunded');
       }
 
+      // Khai báo biến/hằng số: existingReqs - Dùng trong logic xử lý của component
       const existingReqs = JSON.parse(localStorage.getItem('PROJECT_RETURN_REQUESTS') || '{}');
       if (existingReqs[orderId]) {
         existingReqs[orderId].status = 'Approved';
@@ -157,6 +176,7 @@ export default function OrderReturnModal({ isOpen, onClose, order, mode = 'user'
 
       // Lưu log kiểm toán
       try {
+        // Khai báo biến/hằng số: currentLogs - Dùng trong logic xử lý của component
         const currentLogs = JSON.parse(localStorage.getItem('PROJECT_AUDIT_LOGS') || '[]');
         currentLogs.unshift({
           id: Date.now(),
@@ -192,6 +212,7 @@ export default function OrderReturnModal({ isOpen, onClose, order, mode = 'user'
       // Fallback local
     }
 
+    // Khai báo biến/hằng số: existingReqs - Dùng trong logic xử lý của component
     const existingReqs = JSON.parse(localStorage.getItem('PROJECT_RETURN_REQUESTS') || '{}');
     if (existingReqs[orderId]) {
       existingReqs[orderId].status = 'Rejected';
@@ -201,6 +222,7 @@ export default function OrderReturnModal({ isOpen, onClose, order, mode = 'user'
 
     // Lưu log kiểm toán từ chối
     try {
+      // Khai báo biến/hằng số: currentLogs - Dùng trong logic xử lý của component
       const currentLogs = JSON.parse(localStorage.getItem('PROJECT_AUDIT_LOGS') || '[]');
       currentLogs.unshift({
         id: Date.now(),
@@ -224,11 +246,13 @@ export default function OrderReturnModal({ isOpen, onClose, order, mode = 'user'
 
   // Đọc dữ liệu yêu cầu đổi trả đã lưu (nếu có)
   const savedRequests = JSON.parse(localStorage.getItem('PROJECT_RETURN_REQUESTS') || '{}');
+  // Cấu hình/Hằng số/Dịch vụ dữ liệu: existingReturnData
   const existingReturnData = savedRequests[orderId];
 
   // Kiểm tra đã hết thời hạn 7 ngày chưa (Ngày tạo đơn + 7 ngày)
   const isExpired = (() => {
     if (!order?.createdAt) return false;
+    // Khai báo biến/hằng số: deadline - Dùng trong logic xử lý của component
     const deadline = new Date(order.createdAt);
     deadline.setDate(deadline.getDate() + 7);
     return new Date() > deadline;
@@ -380,7 +404,9 @@ export default function OrderReturnModal({ isOpen, onClose, order, mode = 'user'
 
               <div className="space-y-2.5 max-h-60 overflow-y-auto pr-1">
                 {items.map(item => {
+                  // Khai báo biến/hằng số: itemId - Dùng trong logic xử lý của component
                   const itemId = item.id || item.Id || item.orderItemId;
+                  // Khai báo biến/hằng số: isChecked - Dùng trong logic xử lý của component
                   const isChecked = !!selectedItems[itemId];
 
                   return (

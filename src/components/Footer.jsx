@@ -14,6 +14,7 @@ import erablueLogo from '../assets/mwg-logos/erablue.svg';
 import thodmxLogo from '../assets/mwg-logos/thodmx.svg';
 
 export default function Footer() {
+  // State: isExpanded - Quản lý trạng thái và dữ liệu của isExpanded trong giao diện
   const [isExpanded, setIsExpanded] = useState(false);
 
   // Check login status dynamically
@@ -21,6 +22,7 @@ export default function Footer() {
   let isLoggedIn = false;
   if (userJson && userJson !== 'undefined' && userJson !== 'null') {
     try {
+      // Khai báo biến/hằng số: u - Dùng trong logic xử lý của component
       const u = JSON.parse(userJson);
       isLoggedIn = !!(u && (u.id || u.Id));
     } catch (e) {}

@@ -2,22 +2,32 @@ import React, { useState } from 'react';
 import { Star, Check, AlertCircle, ThumbsUp, MessageSquare } from 'lucide-react';
 import { reviewService } from '../../../services/reviewService';
 
+// Hàm thực thi logic: decodeHtml
 const decodeHtml = (html) => {
   if (!html) return '';
+  // Khai báo biến/hằng số: txt - Dùng trong logic xử lý của component
   const txt = document.createElement('textarea');
   txt.innerHTML = html;
   return txt.value;
 };
 
 export default function ProductReviews({ productId, reviews, currentUser, stats, onReviewSubmitted, productName }) {
+  // State: writeRating - Quản lý trạng thái và dữ liệu của writeRating trong giao diện
   const [writeRating, setWriteRating] = useState(0);
+  // State: hoverRating - Quản lý trạng thái và dữ liệu của hoverRating trong giao diện
   const [hoverRating, setHoverRating] = useState(0);
+  // State: writeComment - Quản lý trạng thái và dữ liệu của writeComment trong giao diện
   const [writeComment, setWriteComment] = useState('');
+  // State: isSubmittingReview - Quản lý trạng thái và dữ liệu của isSubmittingReview trong giao diện
   const [isSubmittingReview, setIsSubmittingReview] = useState(false);
+  // State: reviewError - Quản lý trạng thái và dữ liệu của reviewError trong giao diện
   const [reviewError, setReviewError] = useState('');
+  // State: reviewSuccess - Quản lý trạng thái và dữ liệu của reviewSuccess trong giao diện
   const [reviewSuccess, setReviewSuccess] = useState('');
+  // State: showReviewForm - Quản lý trạng thái và dữ liệu của showReviewForm trong giao diện
   const [showReviewForm, setShowReviewForm] = useState(false);
 
+  // Khai báo biến/hằng số: starLabels - Dùng trong logic xử lý của component
   const starLabels = {
     1: 'Rất tệ',
     2: 'Tệ / Không hài lòng',
@@ -26,6 +36,7 @@ export default function ProductReviews({ productId, reviews, currentUser, stats,
     5: 'Rất hài lòng / Tuyệt vời'
   };
 
+  // Hàm xử lý logic/sự kiện: handleSubmitReview
   const handleSubmitReview = async (e) => {
     e.preventDefault();
     if (!currentUser) {
@@ -155,6 +166,7 @@ export default function ProductReviews({ productId, reviews, currentUser, stats,
               </div>
               <div className="flex gap-2 text-gray-300">
                 {[1, 2, 3, 4, 5].map((star) => {
+                  // Khai báo biến/hằng số: isActive - Dùng trong logic xử lý của component
                   const isActive = star <= (hoverRating || writeRating);
                   return (
                     <button

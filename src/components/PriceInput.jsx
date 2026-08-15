@@ -14,6 +14,7 @@ export default function PriceInput({ value, onChange, placeholder, className, re
 
   // HÀM XỬ LÝ KHI NGƯỜI DÙNG THAY ĐỔI GIÁ TRỊ NHẬP
   const handleChange = (e) => {
+    // Khai báo biến/hằng số: rawValue - Dùng trong logic xử lý của component
     const rawValue = e.target.value;
     
     // Nếu ô nhập trống, xóa thông báo lỗi và gửi chuỗi rỗng về component cha
@@ -32,6 +33,7 @@ export default function PriceInput({ value, onChange, placeholder, className, re
       return; 
     }
 
+    // Khai báo biến/hằng số: numericValue - Dùng trong logic xử lý của component
     const numericValue = parseInt(stringWithoutDots, 10);
     
     // KIỂM TRA RÀNG BUỘC GIỚI HẠN GIÁ TIỀN TỪ 1.000 ĐỒNG ĐẾN 500 TRIỆU ĐỒNG

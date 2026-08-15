@@ -11,24 +11,39 @@ import BrandModal from './components/BrandModal';
 import BrandToast from './components/BrandToast';
 
 export default function AdminBrands({ onRedirectToProducts, onRedirectToCreateProduct }) {
+  // State: currentPage - Quản lý trạng thái và dữ liệu của currentPage trong giao diện
   const [currentPage, setCurrentPage] = useState(1);
+  // State: totalPages - Quản lý trạng thái và dữ liệu của totalPages trong giao diện
   const [totalPages, setTotalPages] = useState(1);
+  // State: totalItems - Quản lý trạng thái và dữ liệu của totalItems trong giao diện
   const [totalItems, setTotalItems] = useState(0);
+  // Khai báo biến/hằng số: pageSize - Dùng trong logic xử lý của component
   const pageSize = 8;
+  // State: brands - Quản lý trạng thái và dữ liệu của brands trong giao diện
   const [brands, setBrands] = useState([]);
+  // State: searchTerm - Quản lý trạng thái và dữ liệu của searchTerm trong giao diện
   const [searchTerm, setSearchTerm] = useState('');
+  // State: loading - Quản lý trạng thái và dữ liệu của loading trong giao diện
   const [loading, setLoading] = useState(true);
+  // Reference (useRef): isFirstRender - Lưu vết tham chiếu DOM hoặc giá trị không gây re-render
   const isFirstRender = useRef(true);
 
   // Modal & CRUD States
   const [isModalOpen, setIsModalOpen] = useState(false);
+  // State: editingBrand - Quản lý trạng thái và dữ liệu của editingBrand trong giao diện
   const [editingBrand, setEditingBrand] = useState(null);
+  // State: saving - Quản lý trạng thái và dữ liệu của saving trong giao diện
   const [saving, setSaving] = useState(false);
+  // State: uploading - Quản lý trạng thái và dữ liệu của uploading trong giao diện
   const [uploading, setUploading] = useState(false);
+  // State: inlineUploadingBrandId - Quản lý trạng thái và dữ liệu của inlineUploadingBrandId trong giao diện
   const [inlineUploadingBrandId, setInlineUploadingBrandId] = useState(null);
+  // State: isCodeEditable - Quản lý trạng thái và dữ liệu của isCodeEditable trong giao diện
   const [isCodeEditable, setIsCodeEditable] = useState(true);
+  // State: catErrorMessage - Quản lý trạng thái và dữ liệu của catErrorMessage trong giao diện
   const [catErrorMessage, setCatErrorMessage] = useState('');
 
+  // State: formData - Quản lý trạng thái và dữ liệu của formData trong giao diện
   const [formData, setFormData] = useState({
     name: '',
     brandCode: '',
@@ -40,17 +55,22 @@ export default function AdminBrands({ onRedirectToProducts, onRedirectToCreatePr
 
   // Expanded Row & Stats States
   const [expandedBrands, setExpandedBrands] = useState({}); // { [id]: boolean }
+  // State: brandStats - Quản lý trạng thái và dữ liệu của brandStats trong giao diện
   const [brandStats, setBrandStats] = useState({}); // { [id]: statsObj }
+  // State: loadingStats - Quản lý trạng thái và dữ liệu của loadingStats trong giao diện
   const [loadingStats, setLoadingStats] = useState({}); // { [id]: boolean }
 
   // Custom Toast & Modal Form Error states
   const [toast, setToast] = useState(null); // { type: 'success' | 'error' | 'warning', message: '', description: '' }
+  // State: formError - Quản lý trạng thái và dữ liệu của formError trong giao diện
   const [formError, setFormError] = useState(null); // { message: '', details: [] }
 
+  // Hàm thực thi logic: showToast
   const showToast = (type, message, description = '') => {
     setToast({ type, message, description });
   };
 
+  // Hàm thực thi logic: parseError
   const parseError = (err) => {
     let msg = typeof err === 'object' && err !== null ? (err.message || JSON.stringify(err)) : String(err);
     if (err && err.response && err.response.data) {
@@ -63,6 +83,7 @@ export default function AdminBrands({ onRedirectToProducts, onRedirectToCreatePr
       details: []
     };
 
+    // Khai báo biến/hằng số: msgLower - Dùng trong logic xử lý của component
     const msgLower = msg.toLowerCase();
     if (msgLower.includes("mã này đã tồn tại") || msgLower.includes("trùng mã") || msgLower.includes("brandcode")) {
       parsed.message = "Mã thương hiệu (BrandCode) đã tồn tại";
@@ -95,6 +116,7 @@ export default function AdminBrands({ onRedirectToProducts, onRedirectToCreatePr
     return parsed;
   };
 
+  // Hàm xử lý logic/sự kiện: fetchBrands
   const fetchBrands = () => {
     setLoading(true);
     brandService.getAll({
@@ -108,6 +130,7 @@ export default function AdminBrands({ onRedirectToProducts, onRedirectToCreatePr
           setTotalItems(res.totalItems || 0);
           setTotalPages(res.totalPages || 1);
         } else {
+          // Khai báo biến/hằng số: arr - Dùng trong logic xử lý của component
           const arr = Array.isArray(res) ? res : [];
           setBrands(arr);
           setTotalItems(arr.length);
@@ -129,6 +152,7 @@ export default function AdminBrands({ onRedirectToProducts, onRedirectToCreatePr
       return;
     }
 
+    // Hàm thực thi logic: delayDebounceFn
     const delayDebounceFn = setTimeout(() => {
       fetchBrands();
     }, 300);
@@ -138,8 +162,10 @@ export default function AdminBrands({ onRedirectToProducts, onRedirectToCreatePr
   }, [currentPage, searchTerm]);
 
   useEffect(() => {
+    // Hàm xử lý logic/sự kiện: handleKeyDown
     const handleKeyDown = (e) => {
       if (e.shiftKey && (e.key === 'N' || e.key === 'n')) {
+        // Khai báo biến/hằng số: activeElem - Dùng trong logic xử lý của component
         const activeElem = document.activeElement;
         if (activeElem && (activeElem.tagName === 'INPUT' || activeElem.tagName === 'TEXTAREA' || activeElem.isContentEditable)) {
           return;
@@ -156,6 +182,7 @@ export default function AdminBrands({ onRedirectToProducts, onRedirectToCreatePr
 
   useEffect(() => {
     if (toast) {
+      // Hàm thực thi logic: timer
       const timer = setTimeout(() => {
         setToast(null);
       }, toast.type === 'success' ? 4000 : 7000);
@@ -163,6 +190,7 @@ export default function AdminBrands({ onRedirectToProducts, onRedirectToCreatePr
     }
   }, [toast]);
 
+  // Hàm xử lý logic/sự kiện: handleOpenModal
   const handleOpenModal = (brand = null) => {
     setFormError(null);
     setCatErrorMessage('');
@@ -192,10 +220,13 @@ export default function AdminBrands({ onRedirectToProducts, onRedirectToCreatePr
     setIsModalOpen(true);
   };
 
+  // Hàm xử lý logic/sự kiện: handleImageUpload
   const handleImageUpload = async (e) => {
+    // Khai báo biến/hằng số: file - Dùng trong logic xử lý của component
     const file = e.target.files[0];
     if (!file) return;
 
+    // Khai báo biến/hằng số: validExtensions - Dùng trong logic xử lý của component
     const validExtensions = ['image/svg+xml', 'image/webp', 'image/png', 'image/jpeg', 'image/jpg'];
     if (!validExtensions.includes(file.type)) {
       return showToast('warning', 'Định dạng file không hợp lệ', 'Hệ thống chỉ hỗ trợ SVG, WebP, PNG, JPG/JPEG.');
@@ -207,11 +238,14 @@ export default function AdminBrands({ onRedirectToProducts, onRedirectToCreatePr
     
     setUploading(true);
     try {
+      // Khai báo biến/hằng số: res - Dùng trong logic xử lý của component
       const res = await productService.uploadLocalImage(file, 'brands');
       if (res && res.url) {
         let finalUrl = res.url;
         if (finalUrl.startsWith('/')) {
+          // Khai báo biến/hằng số: apiBase - Dùng trong logic xử lý của component
           const apiBase = import.meta.env.VITE_API_URL || 'https://localhost:5001/api';
+          // Khai báo biến/hằng số: hostBase - Dùng trong logic xử lý của component
           const hostBase = apiBase.replace('/api', '');
           finalUrl = `${hostBase}${finalUrl}`;
         }
@@ -225,6 +259,7 @@ export default function AdminBrands({ onRedirectToProducts, onRedirectToCreatePr
     }
   };
 
+  // Hàm xử lý logic/sự kiện: handleSave
   const handleSave = async (e) => {
     e.preventDefault();
     if (!formData.name.trim()) return showToast('warning', 'Thiếu dữ liệu', 'Vui lòng nhập tên thương hiệu.');
@@ -239,8 +274,10 @@ export default function AdminBrands({ onRedirectToProducts, onRedirectToCreatePr
       // - Nếu mã thương hiệu trống, FE tự sinh viết tắt từ tên (Ví dụ: "Samsung" -> "SAMSUNG").
       // =========================================================================
       const generatedCode = formData.brandCode.trim() || generateBrandOrCategoryCode(formData.name.trim(), 10);
+      // Khai báo biến/hằng số: generatedSlugStr - Dùng trong logic xử lý của component
       const generatedSlugStr = formData.slug.trim() || generateSlug(formData.name.trim());
       
+      // Khai báo biến/hằng số: payload - Dùng trong logic xử lý của component
       const payload = {
         name: formData.name.trim(),
         slug: generatedSlugStr,
@@ -261,6 +298,7 @@ export default function AdminBrands({ onRedirectToProducts, onRedirectToCreatePr
       fetchBrands();
     } catch (err) {
       console.error(err);
+      // Khai báo biến/hằng số: parsed - Dùng trong logic xử lý của component
       const parsed = parseError(err);
       setFormError(parsed);
 
@@ -272,8 +310,11 @@ export default function AdminBrands({ onRedirectToProducts, onRedirectToCreatePr
     }
   };
 
+  // Hàm xử lý logic/sự kiện: handleToggleExpand
   const handleToggleExpand = async (brand) => {
+    // Khai báo biến/hằng số: brandId - Dùng trong logic xử lý của component
     const brandId = brand.id;
+    // Khai báo biến/hằng số: isCurrentlyExpanded - Dùng trong logic xử lý của component
     const isCurrentlyExpanded = expandedBrands[brandId];
     
     setExpandedBrands(prev => ({ ...prev, [brandId]: !isCurrentlyExpanded }));
@@ -281,6 +322,7 @@ export default function AdminBrands({ onRedirectToProducts, onRedirectToCreatePr
     if (!isCurrentlyExpanded && !brandStats[brandId]) {
       setLoadingStats(prev => ({ ...prev, [brandId]: true }));
       try {
+        // Khai báo biến/hằng số: res - Dùng trong logic xử lý của component
         const res = await brandService.getStats(brandId);
         setBrandStats(prev => ({ ...prev, [brandId]: res }));
       } catch (err) {
@@ -292,8 +334,10 @@ export default function AdminBrands({ onRedirectToProducts, onRedirectToCreatePr
     }
   };
 
+  // Hàm xử lý logic/sự kiện: handleToggleActive
   const handleToggleActive = async (brand) => {
     try {
+      // Khai báo biến/hằng số: payload - Dùng trong logic xử lý của component
       const payload = {
         name: brand.name,
         slug: brand.slug || generateSlug(brand.name),
@@ -308,15 +352,18 @@ export default function AdminBrands({ onRedirectToProducts, onRedirectToCreatePr
       fetchBrands();
     } catch (err) {
       console.error(err);
+      // Khai báo biến/hằng số: parsed - Dùng trong logic xử lý của component
       const parsed = parseError(err);
       showToast('error', 'Lỗi thay đổi trạng thái', parsed.message);
     }
   };
 
+  // Hàm xử lý logic/sự kiện: handleDeleteLogo
   const handleDeleteLogo = async (brand) => {
     if (!window.confirm(`Bạn có chắc chắn muốn xóa logo của thương hiệu "${brand.name}"?`)) return;
 
     try {
+      // Khai báo biến/hằng số: payload - Dùng trong logic xử lý của component
       const payload = {
         name: brand.name,
         slug: brand.slug,
@@ -330,15 +377,19 @@ export default function AdminBrands({ onRedirectToProducts, onRedirectToCreatePr
       fetchBrands();
     } catch (err) {
       console.error(err);
+      // Khai báo biến/hằng số: parsed - Dùng trong logic xử lý của component
       const parsed = parseError(err);
       showToast('error', 'Lỗi xóa logo', parsed.message);
     }
   };
 
+  // Hàm xử lý logic/sự kiện: handleUploadLogoInline
   const handleUploadLogoInline = async (e, brand) => {
+    // Khai báo biến/hằng số: file - Dùng trong logic xử lý của component
     const file = e.target.files[0];
     if (!file) return;
 
+    // Khai báo biến/hằng số: validExtensions - Dùng trong logic xử lý của component
     const validExtensions = ['image/svg+xml', 'image/webp', 'image/png', 'image/jpeg', 'image/jpg'];
     if (!validExtensions.includes(file.type)) {
       return showToast('warning', 'Định dạng file không hợp lệ', 'Hệ thống chỉ hỗ trợ SVG, WebP, PNG, JPG/JPEG.');
@@ -350,15 +401,19 @@ export default function AdminBrands({ onRedirectToProducts, onRedirectToCreatePr
 
     setInlineUploadingBrandId(brand.id);
     try {
+      // Khai báo biến/hằng số: res - Dùng trong logic xử lý của component
       const res = await productService.uploadLocalImage(file, 'brands');
       if (res && res.url) {
         let finalUrl = res.url;
         if (finalUrl.startsWith('/')) {
+          // Khai báo biến/hằng số: apiBase - Dùng trong logic xử lý của component
           const apiBase = import.meta.env.VITE_API_URL || 'https://localhost:5001/api';
+          // Khai báo biến/hằng số: hostBase - Dùng trong logic xử lý của component
           const hostBase = apiBase.replace('/api', '');
           finalUrl = `${hostBase}${finalUrl}`;
         }
         
+        // Khai báo biến/hằng số: payload - Dùng trong logic xử lý của component
         const payload = {
           name: brand.name,
           slug: brand.slug,
@@ -373,6 +428,7 @@ export default function AdminBrands({ onRedirectToProducts, onRedirectToCreatePr
       }
     } catch (err) {
       console.error(err);
+      // Khai báo biến/hằng số: parsed - Dùng trong logic xử lý của component
       const parsed = parseError(err);
       showToast('error', 'Lỗi cập nhật logo', parsed.message);
     } finally {
@@ -380,6 +436,7 @@ export default function AdminBrands({ onRedirectToProducts, onRedirectToCreatePr
     }
   };
 
+  // Hàm xử lý logic/sự kiện: handleDelete
   const handleDelete = async (brand) => {
     if (brand.productsCount > 0) {
       return showToast('warning', 'Không thể xóa', `Thương hiệu ${brand.name} đang chứa ${brand.productsCount} sản phẩm. Vui lòng di chuyển hoặc xóa sản phẩm trước.`);
@@ -393,6 +450,7 @@ export default function AdminBrands({ onRedirectToProducts, onRedirectToCreatePr
       fetchBrands();
     } catch (err) {
       console.error(err);
+      // Khai báo biến/hằng số: parsed - Dùng trong logic xử lý của component
       const parsed = parseError(err);
       showToast('error', 'Lỗi xóa thương hiệu', parsed.message);
     }

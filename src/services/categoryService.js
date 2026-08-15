@@ -1,5 +1,6 @@
 import api from './api';
 
+// Cấu hình/Hằng số/Dịch vụ dữ liệu: categoryService
 export const categoryService = {
   getAll: (includeInactive = false) => api.get(`/Category?includeInactive=${includeInactive}`),
   

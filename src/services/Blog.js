@@ -1,5 +1,6 @@
 import api from './api';
 
+// Cấu hình/Hằng số/Dịch vụ dữ liệu: blogService
 export const blogService = {
     // ── LẤY DANH SÁCH BÀI VIẾT ──
     getBlogs: (params) => api.get('/Blog', { params }),

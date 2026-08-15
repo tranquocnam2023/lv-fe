@@ -11,8 +11,11 @@ export default function SearchableSelect({
   required = false,
   className = ''
 }) {
+  // State: isOpen - Quản lý trạng thái và dữ liệu của isOpen trong giao diện
   const [isOpen, setIsOpen] = useState(false);
+  // State: search - Quản lý trạng thái và dữ liệu của search trong giao diện
   const [search, setSearch] = useState('');
+  // Reference (useRef): containerRef - Lưu vết tham chiếu DOM hoặc giá trị không gây re-render
   const containerRef = useRef(null);
 
   // Close dropdown when clicking outside
@@ -33,15 +36,21 @@ export default function SearchableSelect({
     }
   }, [isOpen]);
 
+  // Hàm thực thi logic: selectedOption
   const selectedOption = options.find(opt => String(opt.id) === String(value));
+  // Khai báo biến/hằng số: displayLabel - Dùng trong logic xử lý của component
   const displayLabel = selectedOption ? (selectedOption.fullName || selectedOption.name) : placeholder;
 
+  // Hàm thực thi logic: filteredOptions
   const filteredOptions = options.filter(opt => {
+    // Khai báo biến/hằng số: optName - Dùng trong logic xử lý của component
     const optName = (opt.fullName || opt.name || '').toLowerCase();
+    // Khai báo biến/hằng số: searchLower - Dùng trong logic xử lý của component
     const searchLower = search.toLowerCase();
     return optName.includes(searchLower) || String(opt.id) === String(value);
   });
 
+  // Hàm xử lý logic/sự kiện: handleSelect
   const handleSelect = (optionId) => {
     if (onChange) {
       onChange(optionId);
@@ -86,6 +95,7 @@ export default function SearchableSelect({
           <div className="flex-1 overflow-y-auto py-1">
             {filteredOptions.length > 0 ? (
               filteredOptions.map((opt) => {
+                // Khai báo biến/hằng số: isSelected - Dùng trong logic xử lý của component
                 const isSelected = String(opt.id) === String(value);
                 return (
                   <button

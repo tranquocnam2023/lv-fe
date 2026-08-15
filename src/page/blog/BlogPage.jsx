@@ -7,12 +7,18 @@ import {
 import { blogService } from '../../services/Blog';
 
 export default function BlogPage() {
+  // State: searchParams - Quản lý trạng thái và dữ liệu của searchParams trong giao diện
   const [searchParams, setSearchParams] = useSearchParams();
+  // Khai báo biến/hằng số: activeCategoryParam - Dùng trong logic xử lý của component
   const activeCategoryParam = searchParams.get('category') || 'ALL';
 
+  // State: blogs - Quản lý trạng thái và dữ liệu của blogs trong giao diện
   const [blogs, setBlogs] = useState([]);
+  // State: loading - Quản lý trạng thái và dữ liệu của loading trong giao diện
   const [loading, setLoading] = useState(true);
+  // State: searchQuery - Quản lý trạng thái và dữ liệu của searchQuery trong giao diện
   const [searchQuery, setSearchQuery] = useState('');
+  // State: activeCategory - Quản lý trạng thái và dữ liệu của activeCategory trong giao diện
   const [activeCategory, setActiveCategory] = useState(activeCategoryParam);
 
   // Sync category param with URL
@@ -30,11 +36,15 @@ export default function BlogPage() {
     { id: 'Chuyên mục khác', name: 'Chuyên mục khác', icon: Folder },
   ];
 
+  // Hàm xử lý logic/sự kiện: fetchBlogs
   const fetchBlogs = async () => {
     try {
       setLoading(true);
+      // Khai báo biến/hằng số: res - Dùng trong logic xử lý của component
       const res = await blogService.getBlogs();
+      // Cấu hình/Hằng số/Dịch vụ dữ liệu: data
       const data = res.data || res;
+      // Cấu hình/Hằng số/Dịch vụ dữ liệu: list
       const list = Array.isArray(data) ? data : (data.items || []);
       setBlogs(list);
     } catch (err) {
@@ -48,6 +58,7 @@ export default function BlogPage() {
     fetchBlogs();
   }, []);
 
+  // Hàm xử lý logic/sự kiện: handleCategorySelect
   const handleCategorySelect = (catId) => {
     setActiveCategory(catId);
     if (catId === 'ALL') {
@@ -59,15 +70,19 @@ export default function BlogPage() {
 
   // Filtered blogs by search and category
   const filteredBlogs = blogs.filter(item => {
+    // Khai báo biến/hằng số: titleMatch - Dùng trong logic xử lý của component
     const titleMatch = (item.title || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
       (item.summary || '').toLowerCase().includes(searchQuery.toLowerCase());
     if (!titleMatch) return false;
 
     if (activeCategory !== 'ALL') {
+      // Khai báo biến/hằng số: itemCat - Dùng trong logic xử lý của component
       const itemCat = (item.category || '').toLowerCase().trim();
+      // Khai báo biến/hằng số: targetCat - Dùng trong logic xử lý của component
       const targetCat = activeCategory.toLowerCase().trim();
 
       if (activeCategory === 'Chuyên mục khác') {
+        // Khai báo biến/hằng số: knownCats - Dùng trong logic xử lý của component
         const knownCats = ['tin công nghệ', 'đánh giá sản phẩm', 'mẹo hay & thủ thuật', 'khuyến mãi & ưu đãi'];
         if (knownCats.includes(itemCat)) return false;
       } else {
@@ -80,6 +95,7 @@ export default function BlogPage() {
 
   // Featured post (big banner card)
   const featuredPost = blogs.find(b => b.isFeatured) || blogs[0];
+  // Hàm thực thi logic: regularPosts
   const regularPosts = filteredBlogs.filter(b => b.id !== featuredPost?.id);
 
   return (
@@ -109,7 +125,9 @@ export default function BlogPage() {
 
             <nav className="space-y-1">
               {categories.map((cat) => {
+                // Khai báo biến/hằng số: IconComponent - Dùng trong logic xử lý của component
                 const IconComponent = cat.icon;
+                // Khai báo biến/hằng số: isActive - Dùng trong logic xử lý của component
                 const isActive = activeCategory === cat.id;
 
                 return (
@@ -276,7 +294,9 @@ export default function BlogPage() {
 
             <nav className="space-y-1">
               {categories.map((cat) => {
+                // Khai báo biến/hằng số: IconComponent - Dùng trong logic xử lý của component
                 const IconComponent = cat.icon;
+                // Khai báo biến/hằng số: isActive - Dùng trong logic xử lý của component
                 const isActive = activeCategory === cat.id;
 
                 return (

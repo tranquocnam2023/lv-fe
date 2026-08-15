@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { Trash2, ShoppingBag } from 'lucide-react';
 
 export default function CartItemsList({ cartItems, updateQuantity, removeFromCart, cartTotal }) {
+  // Khai báo biến/hằng số: cartSavings - Dùng trong logic xử lý của component
   const cartSavings = cartItems.reduce(
     (total, item) => total + ((item.originalBasePrice || item.price) - item.price) * item.quantity,
     0
@@ -19,7 +20,9 @@ export default function CartItemsList({ cartItems, updateQuantity, removeFromCar
 
       <div className="divide-y divide-gray-100">
         {(() => {
+          // Khai báo biến/hằng số: standaloneItems - Dùng trong logic xử lý của component
           const standaloneItems = [];
+          // Khai báo biến/hằng số: addonItems - Dùng trong logic xử lý của component
           const addonItems = [];
 
           cartItems.forEach(item => {
@@ -30,6 +33,7 @@ export default function CartItemsList({ cartItems, updateQuantity, removeFromCar
             }
           });
 
+          // Hàm xử lý logic/sự kiện: renderItem
           const renderItem = (item) => (
             <div key={item.cartId} className="flex gap-4 py-4 first:pt-0 last:pb-0">
               {/* Image */}

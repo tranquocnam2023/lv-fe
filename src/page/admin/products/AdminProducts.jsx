@@ -10,13 +10,21 @@ import { useFormat } from '../../../hooks/useFormat';
 
 
 export default function AdminProducts({ onCreate, onEdit, defaultBrandFilter, clearBrandFilter }) {
+  // State: categories - Quản lý trạng thái và dữ liệu của categories trong giao diện
   const [categories, setCategories] = useState([]); // Sidebar brands
+  // State: dbCategories - Quản lý trạng thái và dữ liệu của dbCategories trong giao diện
   const [dbCategories, setDbCategories] = useState([]); // Database categories
+  // State: products - Quản lý trạng thái và dữ liệu của products trong giao diện
   const [products, setProducts] = useState([]);
+  // State: selectedBrand - Quản lý trạng thái và dữ liệu của selectedBrand trong giao diện
   const [selectedBrand, setSelectedBrand] = useState('ALL');
+  // State: selectedCategory - Quản lý trạng thái và dữ liệu của selectedCategory trong giao diện
   const [selectedCategory, setSelectedCategory] = useState('ALL');
+  // State: isActiveFilter - Quản lý trạng thái và dữ liệu của isActiveFilter trong giao diện
   const [isActiveFilter, setIsActiveFilter] = useState('ALL'); // 'ALL', 'TRUE', 'FALSE'
+  // State: isFeaturedFilter - Quản lý trạng thái và dữ liệu của isFeaturedFilter trong giao diện
   const [isFeaturedFilter, setIsFeaturedFilter] = useState('ALL'); // 'ALL', 'TRUE', 'FALSE'
+  // State: searchQuery - Quản lý trạng thái và dữ liệu của searchQuery trong giao diện
   const [searchQuery, setSearchQuery] = useState('');
 
   React.useEffect(() => {
@@ -31,6 +39,7 @@ export default function AdminProducts({ onCreate, onEdit, defaultBrandFilter, cl
   // Đệ quy lấy tất cả ID của danh mục con
   const getAllCategoryIds = (parentId, categoriesList) => {
     let ids = [String(parentId)];
+    // Hàm thực thi logic: children
     const children = categoriesList.filter(c => String(c.parentId) === String(parentId));
     for (const child of children) {
       ids = ids.concat(getAllCategoryIds(child.id, categoriesList));
@@ -44,16 +53,19 @@ export default function AdminProducts({ onCreate, onEdit, defaultBrandFilter, cl
     if (selectedBrand !== 'ALL' && String(p.brandId) !== String(selectedBrand)) match = false;
     
     if (selectedCategory !== 'ALL') {
+      // Khai báo biến/hằng số: allowedCatIds - Dùng trong logic xử lý của component
       const allowedCatIds = getAllCategoryIds(selectedCategory, dbCategories);
       if (!allowedCatIds.includes(String(p.categoryId))) {
         match = false;
       }
     }
     if (isActiveFilter !== 'ALL') {
+      // Khai báo biến/hằng số: activeValue - Dùng trong logic xử lý của component
       const activeValue = isActiveFilter === 'TRUE';
       if (p.isActive !== activeValue) match = false;
     }
     if (isFeaturedFilter !== 'ALL') {
+      // Khai báo biến/hằng số: featuredValue - Dùng trong logic xử lý của component
       const featuredValue = isFeaturedFilter === 'TRUE';
       if (p.isFeatured !== featuredValue) match = false;
     }
@@ -63,6 +75,7 @@ export default function AdminProducts({ onCreate, onEdit, defaultBrandFilter, cl
     return match;
   });
 
+  // Khai báo giải nén các thuộc tính/hàm (formatCurrency, formatNumber) từ Hook / Context / Props
   const { formatCurrency, formatNumber } = useFormat();
   const {
     currentData: paginatedProducts,
@@ -76,8 +89,10 @@ export default function AdminProducts({ onCreate, onEdit, defaultBrandFilter, cl
     totalItems
   } = usePagination(filteredProducts, 10); // Hiển thị 10 sản phẩm mỗi trang
 
+  // Hàm xử lý logic/sự kiện: fetchProducts
   const fetchProducts = async () => {
     try {
+      // Khai báo biến/hằng số: allProducts - Dùng trong logic xử lý của component
       const allProducts = await productService.getAll(true);
       if (Array.isArray(allProducts)) {
         setProducts(allProducts);
@@ -91,8 +106,10 @@ export default function AdminProducts({ onCreate, onEdit, defaultBrandFilter, cl
   };
 
   useEffect(() => {
+    // Hàm xử lý logic/sự kiện: fetchCategoriesData
     const fetchCategoriesData = async () => {
       try {
+        // State: brandsData - Quản lý trạng thái và dữ liệu của brandsData trong giao diện
         const [brandsData, catsData] = await Promise.all([
           brandService.getAll(),
           categoryService.getAll(true)
@@ -118,6 +135,7 @@ export default function AdminProducts({ onCreate, onEdit, defaultBrandFilter, cl
     fetchProducts();
   }, []);
 
+  // Khai báo biến/hằng số: stats - Dùng trong logic xử lý của component
   const stats = [
     { label: 'Tổng sản phẩm', value: products.length, icon: 'Package', bgColor: '#FFFFFF', textColor: 'var(--color-admin-text-main)', iconColor: 'var(--color-primary)' },
     { label: 'Giá trị tồn kho', value: products.reduce((acc, p) => acc + ((p.basePrice || p.price || 0) * (p.totalStock ?? p.stock ?? p.stockQuantity ?? 0)), 0), icon: 'Layout', bgColor: '#FFFFFF', textColor: 'var(--color-admin-text-main)', isCurrency: true, iconColor: 'var(--color-success)' },
@@ -127,6 +145,7 @@ export default function AdminProducts({ onCreate, onEdit, defaultBrandFilter, cl
 
 
 
+  // Hàm xử lý logic/sự kiện: handleDeleteProduct
   const handleDeleteProduct = async (id) => {
     if (window.confirm('Bạn có chắc chắn muốn xóa sản phẩm này?')) {
       try {
@@ -139,8 +158,10 @@ export default function AdminProducts({ onCreate, onEdit, defaultBrandFilter, cl
     }
   };
 
+  // Hàm xử lý logic/sự kiện: handleToggleActive
   const handleToggleActive = async (product) => {
     try {
+      // Cấu hình/Hằng số/Dịch vụ dữ liệu: updatedData
       const updatedData = {
         name: product.name,
         slug: product.slug,
@@ -314,11 +335,16 @@ export default function AdminProducts({ onCreate, onEdit, defaultBrandFilter, cl
               <tbody className="text-sm">
                 {paginatedProducts.length > 0 ? (
                   paginatedProducts.map((product) => {
+                    // Hàm thực thi logic: brandName
                     const brandName = categories.find(c => c.id === product.brandId)?.name || product.brandName || 'N/A';
+                    // Hàm thực thi logic: categoryName
                     const categoryName = dbCategories.find(c => c.id === product.categoryId)?.name || 'N/A';
 
+                    // Khai báo biến/hằng số: showBrandDisabledBadge - Dùng trong logic xử lý của component
                     const showBrandDisabledBadge = product.isActive !== false && product.brandIsActive === false;
+                    // Khai báo biến/hằng số: showCategoryDisabledBadge - Dùng trong logic xử lý của component
                     const showCategoryDisabledBadge = product.isActive !== false && product.isAvailable === false && !showBrandDisabledBadge;
+                    // Khai báo biến/hằng số: isInheritedInactive - Dùng trong logic xử lý của component
                     const isInheritedInactive = showCategoryDisabledBadge || showBrandDisabledBadge;
 
                     return (
@@ -359,6 +385,7 @@ export default function AdminProducts({ onCreate, onEdit, defaultBrandFilter, cl
                         <td className="py-4 px-2 font-bold text-admin-text-main text-right">{formatCurrency(product.basePrice ?? product.price ?? 0)}</td>
                         <td className="py-4 px-2 text-center font-bold text-admin-text-main">
                           {(() => {
+                            // Khai báo biến/hằng số: stock - Dùng trong logic xử lý của component
                             const stock = product.totalStock ?? product.stock ?? product.stockQuantity ?? 0;
                             if (stock === 0) {
                               return <span className="px-2 py-1 bg-admin-danger/10 text-admin-danger rounded-md text-xs whitespace-nowrap">Hết hàng</span>;

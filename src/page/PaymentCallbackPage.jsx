@@ -5,16 +5,26 @@ import { CheckCircle2, XCircle, Loader2, ArrowRight, ShieldCheck, CreditCard, Sh
 import { useLoading } from '../context/LoadingContext';
 
 export default function PaymentCallbackPage() {
+  // Khai báo giải nén các thuộc tính/hàm (stopLoading) từ Hook / Context / Props
   const { stopLoading } = useLoading();
+  // State: searchParams - Quản lý trạng thái và dữ liệu của searchParams trong giao diện
   const [searchParams] = useSearchParams();
+  // Hook điều hướng trang (useNavigate) để chuyển hướng Route
   const navigate = useNavigate();
+  // State: loading - Quản lý trạng thái và dữ liệu của loading trong giao diện
   const [loading, setLoading] = useState(true);
+  // State: status - Quản lý trạng thái và dữ liệu của status trong giao diện
   const [status, setStatus] = useState('verifying'); // 'verifying' | 'success' | 'failed'
+  // State: message - Quản lý trạng thái và dữ liệu của message trong giao diện
   const [message, setMessage] = useState('');
+  // State: orderId - Quản lý trạng thái và dữ liệu của orderId trong giao diện
   const [orderId, setOrderId] = useState(null);
 
+  // Khai báo biến/hằng số: sessionId - Dùng trong logic xử lý của component
   const sessionId = searchParams.get('session_id') || searchParams.get('vnp_TxnRef');
+  // Khai báo biến/hằng số: provider - Dùng trong logic xử lý của component
   const provider = searchParams.get('provider') || 'stripe';
+  // Khai báo biến/hằng số: isCancel - Dùng trong logic xử lý của component
   const isCancel = searchParams.get('cancel') === 'true';
 
   useEffect(() => {
@@ -25,6 +35,7 @@ export default function PaymentCallbackPage() {
 
   useEffect(() => {
     if (isCancel) {
+      // Hàm thực thi logic: reportCancel
       const reportCancel = async () => {
         try {
           if (sessionId) {
@@ -49,13 +60,16 @@ export default function PaymentCallbackPage() {
       return;
     }
 
+    // Hàm thực thi logic: verifyPayment
     const verifyPayment = async () => {
       try {
+        // Khai báo biến/hằng số: query - Dùng trong logic xử lý của component
         const query = new URLSearchParams(searchParams);
         if (!query.get('session_id') && sessionId) {
           query.set('session_id', sessionId);
         }
         query.set('provider', provider);
+        // Khai báo biến/hằng số: res - Dùng trong logic xử lý của component
         const res = await api.get(`/Payment/verify-session?${query.toString()}`);
         if (res) {
           setStatus('success');

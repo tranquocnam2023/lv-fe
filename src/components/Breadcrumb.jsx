@@ -3,7 +3,9 @@ import { Link } from 'react-router-dom';
 export default function Breadcrumb({ items }) {
   // Filter out any duplicate root 'Trang chủ' link if it's passed in the items array
   const cleanItems = items ? items.filter(item => {
+    // Khai báo biến/hằng số: isRootLabel - Dùng trong logic xử lý của component
     const isRootLabel = item.label && (item.label.toLowerCase() === 'trang chủ' || item.label.toLowerCase() === 'trang chu');
+    // Khai báo biến/hằng số: isRootLink - Dùng trong logic xử lý của component
     const isRootLink = item.path === '/' || item.link === '/';
     return !(isRootLabel || isRootLink);
   }) : [];

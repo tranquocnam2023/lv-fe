@@ -8,6 +8,7 @@ const formatVND = (price) => {
 };
 
 export default function ProductComparison() {
+  // State: compareList - Quản lý trạng thái và dữ liệu của compareList trong giao diện
   const [compareList, setCompareList] = useState(() => {
     try {
       return JSON.parse(localStorage.getItem('compare_products') || '[]');
@@ -16,11 +17,13 @@ export default function ProductComparison() {
       return [];
     }
   });
+  // State: isOpen - Quản lý trạng thái và dữ liệu của isOpen trong giao diện
   const [isOpen, setIsOpen] = useState(false);
 
   // Sync compare items from localStorage
   const loadCompareList = () => {
     try {
+      // Khai báo biến/hằng số: items - Dùng trong logic xử lý của component
       const items = JSON.parse(localStorage.getItem('compare_products') || '[]');
       setCompareList(items);
     } catch (e) {
@@ -32,6 +35,7 @@ export default function ProductComparison() {
 
     // Listen for custom events to add products to comparison
     const handleAddCompare = (e) => {
+      // Khai báo biến/hằng số: product - Dùng trong logic xử lý của component
       const product = e.detail;
       setCompareList(prev => {
         if (prev.some(item => item.id === product.id)) {
@@ -42,6 +46,7 @@ export default function ProductComparison() {
           alert('Bạn chỉ có thể so sánh tối đa 3 sản phẩm cùng lúc!');
           return prev;
         }
+        // Cấu hình/Hằng số/Dịch vụ dữ liệu: newList
         const newList = [...prev, product];
         localStorage.setItem('compare_products', JSON.stringify(newList));
         return newList;
@@ -56,12 +61,15 @@ export default function ProductComparison() {
     };
   }, []);
 
+  // Hàm thực thi logic: removeFromCompare
   const removeFromCompare = (productId) => {
+    // Hàm thực thi logic: newList
     const newList = compareList.filter(item => item.id !== productId);
     localStorage.setItem('compare_products', JSON.stringify(newList));
     setCompareList(newList);
   };
 
+  // Hàm thực thi logic: clearAll
   const clearAll = () => {
     localStorage.setItem('compare_products', '[]');
     setCompareList([]);

@@ -3,7 +3,9 @@ import { Plus, Trash2, FolderPlus, PlusCircle, LayoutGrid, Layers } from 'lucide
 import { useProductFormContext } from '../../../context/ProductFormContext';
 
 export default function ProductSpecsBuilder() {
+  // Khai báo giải nén các thuộc tính/hàm (formData, setFormData) từ Hook / Context / Props
   const { formData, setFormData } = useProductFormContext();
+  // State: activeTabIdx - Quản lý trạng thái và dữ liệu của activeTabIdx trong giao diện
   const [activeTabIdx, setActiveTabIdx] = useState(0);
 
   // Chuẩn hóa specs về dạng mảng
@@ -11,9 +13,11 @@ export default function ProductSpecsBuilder() {
     if (!val) return [];
     if (Array.isArray(val)) return val;
     if (typeof val === 'string') {
+      // Khai báo biến/hằng số: trimmed - Dùng trong logic xử lý của component
       const trimmed = val.trim();
       if (trimmed === '' || trimmed === '[]') return [];
       try {
+        // Khai báo biến/hằng số: parsed - Dùng trong logic xử lý của component
         const parsed = JSON.parse(trimmed);
         return Array.isArray(parsed) ? parsed : [];
       } catch (e) {
@@ -23,8 +27,10 @@ export default function ProductSpecsBuilder() {
     return [];
   };
 
+  // Khai báo biến/hằng số: specsGroups - Dùng trong logic xử lý của component
   const specsGroups = getNormalizedSpecs(formData.specs);
 
+  // Hàm thực thi logic: updateSpecs
   const updateSpecs = (newSpecs) => {
     setFormData(prev => ({
       ...prev,
@@ -34,6 +40,7 @@ export default function ProductSpecsBuilder() {
 
   // Actions
   const addGroup = () => {
+    // Khai báo biến/hằng số: nextSpecs - Dùng trong logic xử lý của component
     const nextSpecs = [
       ...specsGroups,
       //{ groupName: '', items: [{ key: '', value: '' }] }
@@ -51,8 +58,10 @@ export default function ProductSpecsBuilder() {
     setActiveTabIdx(nextSpecs.length - 1); // Tự chuyển sang tab mới
   };
 
+  // Hàm thực thi logic: removeGroup
   const removeGroup = (gIdx) => {
     if (window.confirm("Bạn có chắc chắn muốn xóa toàn bộ nhóm thông số này?")) {
+      // Hàm thực thi logic: nextSpecs
       const nextSpecs = specsGroups.filter((_, idx) => idx !== gIdx);
       updateSpecs(nextSpecs);
       setActiveTabIdx(prev => {
@@ -64,14 +73,18 @@ export default function ProductSpecsBuilder() {
     }
   };
 
+  // Hàm thực thi logic: updateGroupName
   const updateGroupName = (gIdx, value) => {
+    // Hàm thực thi logic: nextSpecs
     const nextSpecs = specsGroups.map((g, idx) => 
       idx === gIdx ? { ...g, groupName: value } : g
     );
     updateSpecs(nextSpecs);
   };
 
+  // Hàm thực thi logic: addSpecItem
   const addSpecItem = (gIdx) => {
+    // Hàm thực thi logic: nextSpecs
     const nextSpecs = specsGroups.map((g, idx) => {
       if (idx === gIdx) {
         return {
@@ -84,7 +97,9 @@ export default function ProductSpecsBuilder() {
     updateSpecs(nextSpecs);
   };
 
+  // Hàm thực thi logic: removeSpecItem
   const removeSpecItem = (gIdx, iIdx) => {
+    // Hàm thực thi logic: nextSpecs
     const nextSpecs = specsGroups.map((g, idx) => {
       if (idx === gIdx) {
         return {
@@ -97,9 +112,12 @@ export default function ProductSpecsBuilder() {
     updateSpecs(nextSpecs);
   };
 
+  // Hàm thực thi logic: updateSpecItemField
   const updateSpecItemField = (gIdx, iIdx, field, value) => {
+    // Hàm thực thi logic: nextSpecs
     const nextSpecs = specsGroups.map((g, idx) => {
       if (idx === gIdx) {
+        // Hàm thực thi logic: newItems
         const newItems = g.items.map((item, itemIdx) => 
           itemIdx === iIdx ? { ...item, [field]: value } : item
         );
@@ -114,7 +132,9 @@ export default function ProductSpecsBuilder() {
   const handleValueKeyDown = (e) => {
     if (e.key === 'Enter') {
       e.preventDefault();
+      // Khai báo biến/hằng số: inputs - Dùng trong logic xử lý của component
       const inputs = Array.from(document.querySelectorAll('.specs-value-input'));
+      // Khai báo biến/hằng số: currentIndex - Dùng trong logic xử lý của component
       const currentIndex = inputs.indexOf(e.target);
       if (currentIndex !== -1 && currentIndex < inputs.length - 1) {
         inputs[currentIndex + 1].focus();
@@ -122,7 +142,9 @@ export default function ProductSpecsBuilder() {
       }
     } else if (e.key === 'ArrowDown') {
       e.preventDefault();
+      // Khai báo biến/hằng số: inputs - Dùng trong logic xử lý của component
       const inputs = Array.from(document.querySelectorAll('.specs-value-input'));
+      // Khai báo biến/hằng số: currentIndex - Dùng trong logic xử lý của component
       const currentIndex = inputs.indexOf(e.target);
       if (currentIndex !== -1 && currentIndex < inputs.length - 1) {
         inputs[currentIndex + 1].focus();
@@ -130,7 +152,9 @@ export default function ProductSpecsBuilder() {
       }
     } else if (e.key === 'ArrowUp') {
       e.preventDefault();
+      // Khai báo biến/hằng số: inputs - Dùng trong logic xử lý của component
       const inputs = Array.from(document.querySelectorAll('.specs-value-input'));
+      // Khai báo biến/hằng số: currentIndex - Dùng trong logic xử lý của component
       const currentIndex = inputs.indexOf(e.target);
       if (currentIndex !== -1 && currentIndex > 0) {
         inputs[currentIndex - 1].focus();
@@ -141,6 +165,7 @@ export default function ProductSpecsBuilder() {
 
   // Chỉ số tab hiện tại hợp lệ
   const safeActiveTabIdx = Math.min(activeTabIdx, Math.max(0, specsGroups.length - 1));
+  // Khai báo biến/hằng số: activeGroup - Dùng trong logic xử lý của component
   const activeGroup = specsGroups[safeActiveTabIdx];
 
   return (
@@ -175,7 +200,9 @@ export default function ProductSpecsBuilder() {
           {/* THANH TAB LIÊN KẾT */}
           <div className="flex flex-wrap gap-2 border-b border-admin-border pb-3">
             {specsGroups.map((group, idx) => {
+              // Khai báo biến/hằng số: name - Dùng trong logic xử lý của component
               const name = group.groupName.trim() || `Nhóm ${idx + 1}`;
+              // Khai báo biến/hằng số: isActive - Dùng trong logic xử lý của component
               const isActive = safeActiveTabIdx === idx;
               return (
                 <button

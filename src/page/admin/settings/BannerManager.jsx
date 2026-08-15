@@ -40,17 +40,25 @@ const DEFAULT_BANNERS = [
 ];
 
 export default function BannerManager() {
+  // State: activeTab - Quản lý trạng thái và dữ liệu của activeTab trong giao diện
   const [activeTab, setActiveTab] = useState('slider');
+  // State: publishedBanners - Quản lý trạng thái và dữ liệu của publishedBanners trong giao diện
   const [publishedBanners, setPublishedBanners] = useState([]);
+  // State: draftBanners - Quản lý trạng thái và dữ liệu của draftBanners trong giao diện
   const [draftBanners, setDraftBanners] = useState([]);
+  // State: draggedIndex - Quản lý trạng thái và dữ liệu của draggedIndex trong giao diện
   const [draggedIndex, setDraggedIndex] = useState(null);
+  // State: alertMsg - Quản lý trạng thái và dữ liệu của alertMsg trong giao diện
   const [alertMsg, setAlertMsg] = useState(null); // { type: 'success' | 'info', text: '' }
+  // Reference (useRef): addSliderInputRef - Lưu vết tham chiếu DOM hoặc giá trị không gây re-render
   const addSliderInputRef = useRef(null);
 
   // Khởi tạo dữ liệu từ backend API với fallback localStorage
   const loadBannersFromBackend = async () => {
     try {
+      // Khai báo biến/hằng số: drafts - Dùng trong logic xử lý của component
       const drafts = await bannerService.getDraftBanners();
+      // Khai báo biến/hằng số: published - Dùng trong logic xử lý của component
       const published = await bannerService.getPublishedBanners();
       setDraftBanners(drafts || []);
       setPublishedBanners(published || []);
@@ -82,15 +90,19 @@ export default function BannerManager() {
   const hasChanges = (() => {
     if (draftBanners.length !== publishedBanners.length) return true;
 
+    // Hàm thực thi logic: sortedDrafts
     const sortedDrafts = [...draftBanners].sort((a, b) => 
       a.type.localeCompare(b.type) || (a.position || 0) - (b.position || 0)
     );
+    // Hàm thực thi logic: sortedPublished
     const sortedPublished = [...publishedBanners].sort((a, b) => 
       a.type.localeCompare(b.type) || (a.position || 0) - (b.position || 0)
     );
 
     for (let i = 0; i < sortedDrafts.length; i++) {
+      // Khai báo biến/hằng số: d - Dùng trong logic xử lý của component
       const d = sortedDrafts[i];
+      // Khai báo biến/hằng số: p - Dùng trong logic xử lý của component
       const p = sortedPublished[i];
       if (
         d.imageUrl !== p.imageUrl ||
@@ -110,6 +122,7 @@ export default function BannerManager() {
     setDraftBanners(newDraft);
     localStorage.setItem('draftBanners', JSON.stringify(newDraft));
     try {
+      // Hàm thực thi logic: payload
       const payload = newDraft.map((item, idx) => ({
         imageUrl: item.imageUrl,
         linkUrl: item.linkUrl || '',
@@ -127,6 +140,7 @@ export default function BannerManager() {
   const handlePublish = async () => {
     try {
       showAlert('info', 'Đang xuất bản các thay đổi...');
+      // Khai báo biến/hằng số: res - Dùng trong logic xử lý của component
       const res = await bannerService.publishBanners();
       if (res && res.banners) {
         setPublishedBanners(res.banners);
@@ -152,6 +166,7 @@ export default function BannerManager() {
     if (window.confirm("Bạn có chắc chắn muốn hủy bỏ toàn bộ các thay đổi nháp hiện tại và quay về dữ liệu đang hiển thị ngoài website?")) {
       try {
         showAlert('info', 'Đang hủy bỏ các thay đổi nháp...');
+        // Khai báo biến/hằng số: res - Dùng trong logic xử lý của component
         const res = await bannerService.discardBanners();
         if (res && res.banners) {
           setDraftBanners(res.banners);
@@ -168,6 +183,7 @@ export default function BannerManager() {
     }
   };
 
+  // Hàm thực thi logic: showAlert
   const showAlert = (type, text) => {
     setAlertMsg({ type, text });
     setTimeout(() => {
@@ -189,11 +205,14 @@ export default function BannerManager() {
     e.dataTransfer.setData('text/plain', index);
   };
 
+  // Hàm xử lý logic/sự kiện: handleDragOver
   const handleDragOver = (e, index) => {
     e.preventDefault();
     if (draggedIndex === null || draggedIndex === index) return;
 
+    // Khai báo biến/hằng số: currentSliders - Dùng trong logic xử lý của component
     const currentSliders = [...sliderItems];
+    // Khai báo biến/hằng số: draggedItem - Dùng trong logic xử lý của component
     const draggedItem = currentSliders[draggedIndex];
 
     // Tráo đổi vị trí
@@ -213,12 +232,14 @@ export default function BannerManager() {
     saveDraft([...updatedSliders, ...nonSliders]);
   };
 
+  // Hàm xử lý logic/sự kiện: handleDragEnd
   const handleDragEnd = () => {
     setDraggedIndex(null);
   };
 
   // Bật/tắt banner
   const handleToggleActive = (id) => {
+    // Hàm thực thi logic: updated
     const updated = draftBanners.map(b =>
       b.id === id ? { ...b, isActive: !b.isActive } : b
     );
@@ -227,6 +248,7 @@ export default function BannerManager() {
 
   // Sửa URL link liên kết
   const handleLinkChange = (id, newLink) => {
+    // Hàm thực thi logic: updated
     const updated = draftBanners.map(b =>
       b.id === id ? { ...b, linkUrl: newLink } : b
     );
@@ -235,9 +257,11 @@ export default function BannerManager() {
 
   // Thay thế ảnh mới qua file upload (Tải lên local backend)
   const handleReplaceImage = async (e, id) => {
+    // Khai báo biến/hằng số: file - Dùng trong logic xử lý của component
     const file = e.target.files[0];
     if (!file) return;
 
+    // Khai báo biến/hằng số: validExtensions - Dùng trong logic xử lý của component
     const validExtensions = ['image/svg+xml', 'image/webp', 'image/png', 'image/jpeg', 'image/jpg'];
     if (!validExtensions.includes(file.type)) {
       alert("Hệ thống chỉ hỗ trợ các định dạng: SVG, WebP, PNG, JPG/JPEG.");
@@ -251,15 +275,19 @@ export default function BannerManager() {
 
     try {
       showAlert('info', 'Đang tải ảnh lên hệ thống...');
+      // Khai báo biến/hằng số: res - Dùng trong logic xử lý của component
       const res = await productService.uploadLocalImage(file, 'banners');
       if (res && res.url) {
         let finalUrl = res.url;
         if (finalUrl.startsWith('/')) {
+          // Khai báo biến/hằng số: apiBase - Dùng trong logic xử lý của component
           const apiBase = import.meta.env.VITE_API_URL || 'https://localhost:5001/api';
+          // Khai báo biến/hằng số: hostBase - Dùng trong logic xử lý của component
           const hostBase = apiBase.replace('/api', '');
           finalUrl = `${hostBase}${finalUrl}`;
         }
 
+        // Hàm thực thi logic: updated
         const updated = draftBanners.map(b =>
           b.id === id ? { ...b, imageUrl: finalUrl } : b
         );
@@ -280,9 +308,11 @@ export default function BannerManager() {
 
   // Tải ảnh mới lên backend và thêm slide mới trực tiếp từ tệp
   const handleUploadAndAddSlider = async (e) => {
+    // Khai báo biến/hằng số: file - Dùng trong logic xử lý của component
     const file = e.target.files[0];
     if (!file) return;
 
+    // Khai báo biến/hằng số: validExtensions - Dùng trong logic xử lý của component
     const validExtensions = ['image/svg+xml', 'image/webp', 'image/png', 'image/jpeg', 'image/jpg'];
     if (!validExtensions.includes(file.type)) {
       alert("Hệ thống chỉ hỗ trợ các định dạng: SVG, WebP, PNG, JPG/JPEG.");
@@ -296,15 +326,19 @@ export default function BannerManager() {
 
     try {
       showAlert('info', 'Đang tải ảnh banner mới lên...');
+      // Khai báo biến/hằng số: res - Dùng trong logic xử lý của component
       const res = await productService.uploadLocalImage(file, 'banners');
       if (res && res.url) {
         let finalUrl = res.url;
         if (finalUrl.startsWith('/')) {
+          // Khai báo biến/hằng số: apiBase - Dùng trong logic xử lý của component
           const apiBase = import.meta.env.VITE_API_URL || 'https://localhost:5001/api';
+          // Khai báo biến/hằng số: hostBase - Dùng trong logic xử lý của component
           const hostBase = apiBase.replace('/api', '');
           finalUrl = `${hostBase}${finalUrl}`;
         }
 
+        // Khai báo biến/hằng số: newSlide - Dùng trong logic xử lý của component
         const newSlide = {
           id: 's_new_' + Date.now(),
           imageUrl: finalUrl,
@@ -313,6 +347,7 @@ export default function BannerManager() {
           isActive: true,
           position: sliderItems.length
         };
+        // Khai báo biến/hằng số: updated - Dùng trong logic xử lý của component
         const updated = [...draftBanners, newSlide];
         saveDraft(updated);
         showAlert('success', 'Đã thêm một ảnh Slider mới tải lên từ máy tính.');
@@ -330,6 +365,7 @@ export default function BannerManager() {
   // Xóa ảnh slider
   const handleDeleteSlider = (id) => {
     if (window.confirm("Bạn có chắc chắn muốn xóa banner slider này?")) {
+      // Hàm thực thi logic: filtered
       const filtered = draftBanners.filter(b => b.id !== id);
 
       // Sắp xếp lại position của slider
@@ -338,6 +374,7 @@ export default function BannerManager() {
         .sort((a, b) => a.position - b.position)
         .map((b, idx) => ({ ...b, position: idx }));
 
+      // Hàm thực thi logic: nonSliders
       const nonSliders = filtered.filter(b => b.type !== 'Slider');
       saveDraft([...remainingSliders, ...nonSliders]);
       showAlert('info', 'Đã xóa banner khỏi danh sách nháp.');
@@ -351,6 +388,7 @@ export default function BannerManager() {
 
   // Update banner cố định cụ thể vào trạng thái nháp chung
   const handleUpdateFixedBanner = (type, localImage, localLink) => {
+    // Hàm thực thi logic: updated
     const updated = draftBanners.map(b => {
       if (b.type === type) {
         return {

@@ -9,11 +9,13 @@
 export const getProductCategory = (product) => {
   if (!product) return 'điện thoại';
   
+  // Khai báo biến/hằng số: desc - Dùng trong logic xử lý của component
   const desc = product.description || '';
   
   // 0. Trích xuất từ tag [Category: ...] trong mô tả nếu có
   const match = desc.match(/\[Category:\s*([^\]]+)\]/i);
   if (match && match[1]) {
+    // Khai báo biến/hằng số: matchedCat - Dùng trong logic xử lý của component
     const matchedCat = match[1].trim();
     // Chuẩn hóa tên ngành hàng
     if (matchedCat.toLowerCase() === 'điện thoại') return 'điện thoại';
@@ -22,6 +24,7 @@ export const getProductCategory = (product) => {
     if (matchedCat.toLowerCase() === 'phụ kiện') return 'Phụ kiện';
   }
   
+  // Khai báo biến/hằng số: name - Dùng trong logic xử lý của component
   const name = (product.name || '').toLowerCase();
   
   // 1. Phân loại Tablet

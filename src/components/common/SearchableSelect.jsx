@@ -13,14 +13,19 @@ export default function SearchableSelect({
   colorTheme = 'blue',
   disabled = false
 }) {
+  // State: isOpen - Quản lý trạng thái và dữ liệu của isOpen trong giao diện
   const [isOpen, setIsOpen] = useState(false);
+  // State: searchTerm - Quản lý trạng thái và dữ liệu của searchTerm trong giao diện
   const [searchTerm, setSearchTerm] = useState('');
+  // Reference (useRef): containerRef - Lưu vết tham chiếu DOM hoặc giá trị không gây re-render
   const containerRef = useRef(null);
 
+  // Hàm thực thi logic: selectedOption
   const selectedOption = options.find(o => String(o.id) === String(value));
 
   // Tự động đóng dropdown khi click ra ngoài
   useEffect(() => {
+    // Hàm xử lý logic/sự kiện: handleClickOutside
     const handleClickOutside = (e) => {
       if (containerRef.current && !containerRef.current.contains(e.target)) {
         setIsOpen(false);
@@ -36,6 +41,7 @@ export default function SearchableSelect({
     (o.id ? String(o.id) : '').includes(searchTerm)
   );
 
+  // Khai báo biến/hằng số: activeBorderColor - Dùng trong logic xử lý của component
   const activeBorderColor = colorTheme === 'amber' ? 'focus:border-amber-500' : 'focus:border-blue-500';
 
   return (

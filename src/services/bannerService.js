@@ -1,5 +1,6 @@
 import api from './api';
 
+// Cấu hình/Hằng số/Dịch vụ dữ liệu: bannerService
 export const bannerService = {
   // Client/homepage: get published active banners
   getBanners: () => api.get('/Banner'),

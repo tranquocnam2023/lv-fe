@@ -16,6 +16,7 @@ import ImportCsvModal from './components/ImportCsvModal';
 import TransactionModal from './components/TransactionModal';
 import StockProductDetailModal from './components/StockProductDetailModal';
 
+// Khai báo biến/hằng số: TRANSACTIONS - Dùng trong logic xử lý của component
 const TRANSACTIONS = [
   { id: 'IMPORT_SUPPLIER', name: 'Nhập từ nhà cung cấp', type: 'IN', bgColor: '#E0E7FF', textColor: 'var(--color-primary)', borderColor: 'var(--color-primary)' },
   { id: 'IMPORT_RETURN', name: 'Nhập hàng khách trả', type: 'IN', bgColor: '#D1FAE5', textColor: 'var(--color-success)', borderColor: 'var(--color-success)' },
@@ -24,38 +25,59 @@ const TRANSACTIONS = [
 ];
 
 export default function AdminInventory() {
+  // State: products - Quản lý trạng thái và dữ liệu của products trong giao diện
   const [products, setProducts] = useState([]);
+  // State: txHistory - Quản lý trạng thái và dữ liệu của txHistory trong giao diện
   const [txHistory, setTxHistory] = useState([]);
+  // State: brands - Quản lý trạng thái và dữ liệu của brands trong giao diện
   const [brands, setBrands] = useState([]);
+  // State: stockHistory - Quản lý trạng thái và dữ liệu của stockHistory trong giao diện
   const [stockHistory, setStockHistory] = useState([]);
   //const [viewMode, setViewMode] = useState('TRANSACTIONS'); //MẶC ĐỊNH HIỆN BẢNG: 'TRANSACTIONS' (Lịch sử giao dịch)
   const [viewMode, setViewMode] = useState('STOCK'); // MẶC ĐỊNH HIỆN BẢNG: 'STOCK' (Tồn kho chi tiết)
+  // State: stockBrandFilter - Quản lý trạng thái và dữ liệu của stockBrandFilter trong giao diện
   const [stockBrandFilter, setStockBrandFilter] = useState('ALL');
+  // State: categories - Quản lý trạng thái và dữ liệu của categories trong giao diện
   const [categories, setCategories] = useState([]);
+  // State: stockCategoryFilter - Quản lý trạng thái và dữ liệu của stockCategoryFilter trong giao diện
   const [stockCategoryFilter, setStockCategoryFilter] = useState('ALL');
+  // State: stockStatusFilter - Quản lý trạng thái và dữ liệu của stockStatusFilter trong giao diện
   const [stockStatusFilter, setStockStatusFilter] = useState('ALL'); // 'ALL', 'IN_STOCK', 'LOW_STOCK', 'OUT_OF_STOCK'
+  // State: loading - Quản lý trạng thái và dữ liệu của loading trong giao diện
   const [loading, setLoading] = useState(false);
+  // State: error - Quản lý trạng thái và dữ liệu của error trong giao diện
   const [error, setError] = useState(null);
+  // State: searchParams - Quản lý trạng thái và dữ liệu của searchParams trong giao diện
   const [searchParams, setSearchParams] = useSearchParams();
+  // Khai báo biến/hằng số: urlProductId - Dùng trong logic xử lý của component
   const urlProductId = searchParams.get('productId');
+  // Khai báo biến/hằng số: urlAction - Dùng trong logic xử lý của component
   const urlAction = searchParams.get('action');
 
   // Form states for transaction
   const [activeTxTab, setActiveTxTab] = useState(null);
+  // State: isTxDropdownOpen - Quản lý trạng thái và dữ liệu của isTxDropdownOpen trong giao diện
   const [isTxDropdownOpen, setIsTxDropdownOpen] = useState(false);
 
   // Excel import state
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
+  // State: isExporting - Quản lý trạng thái và dữ liệu của isExporting trong giao diện
   const [isExporting, setIsExporting] = useState(false);
 
   // Filter states
   const [searchQuery, setSearchQuery] = useState('');
+  // State: txStartDate - Quản lý trạng thái và dữ liệu của txStartDate trong giao diện
   const [txStartDate, setTxStartDate] = useState('');
+  // State: txEndDate - Quản lý trạng thái và dữ liệu của txEndDate trong giao diện
   const [txEndDate, setTxEndDate] = useState('');
+  // State: typeFilter - Quản lý trạng thái và dữ liệu của typeFilter trong giao diện
   const [typeFilter, setTypeFilter] = useState('ALL');
+  // State: selectedTxGroup - Quản lý trạng thái và dữ liệu của selectedTxGroup trong giao diện
   const [selectedTxGroup, setSelectedTxGroup] = useState(null);
+  // State: selectedStockProduct - Quản lý trạng thái và dữ liệu của selectedStockProduct trong giao diện
   const [selectedStockProduct, setSelectedStockProduct] = useState(null);
 
+  // Khai báo giải nén các thuộc tính/hàm (formatCurrency) từ Hook / Context / Props
   const { formatCurrency } = useFormat();
 
   // Load products & history
@@ -63,6 +85,7 @@ export default function AdminInventory() {
     setLoading(true);
     setError(null);
     try {
+      // State: productsData - Quản lý trạng thái và dữ liệu của productsData trong giao diện
       const [productsData, historyData, brandsData, stockData, categoriesData] = await Promise.all([
         productService.getAll(true),
         inventoryService.getAll(),
@@ -104,6 +127,7 @@ export default function AdminInventory() {
     // Sort descending by ID
     const sorted = [...txHistory].sort((a, b) => b.id - a.id);
 
+    // Khai báo biến/hằng số: groups - Dùng trong logic xử lý của component
     const groups = [];
     let currentGroup = null;
 
@@ -124,9 +148,13 @@ export default function AdminInventory() {
         };
         groups.push(currentGroup);
       } else {
+        // Khai báo biến/hằng số: timeDiff - Dùng trong logic xử lý của component
         const timeDiff = Math.abs(new Date(currentGroup.createdAt) - new Date(tx.createdAt));
+        // Khai báo biến/hằng số: sameType - Dùng trong logic xử lý của component
         const sameType = currentGroup.transactionType === tx.transactionType;
+        // Khai báo biến/hằng số: sameUser - Dùng trong logic xử lý của component
         const sameUser = currentGroup.createdByUsername === tx.createdByUsername;
+        // Khai báo biến/hằng số: sameNote - Dùng trong logic xử lý của component
         const sameNote = currentGroup.note === tx.note;
 
         // Group transactions within 5 seconds with same metadata
@@ -165,26 +193,36 @@ export default function AdminInventory() {
 
     // Lọc theo khoảng ngày (Từ ngày - Đến ngày)
     if (txStartDate) {
+      // Khai báo biến/hằng số: start - Dùng trong logic xử lý của component
       const start = new Date(txStartDate);
       start.setHours(0, 0, 0, 0);
+      // Khai báo biến/hằng số: groupDate - Dùng trong logic xử lý của component
       const groupDate = new Date(group.createdAt);
       if (groupDate < start) match = false;
     }
 
     if (txEndDate) {
+      // Khai báo biến/hằng số: end - Dùng trong logic xử lý của component
       const end = new Date(txEndDate);
       end.setHours(23, 59, 59, 999);
+      // Khai báo biến/hằng số: groupDate - Dùng trong logic xử lý của component
       const groupDate = new Date(group.createdAt);
       if (groupDate > end) match = false;
     }
 
     if (searchQuery) {
+      // Khai báo biến/hằng số: query - Dùng trong logic xử lý của component
       const query = searchQuery.toLowerCase();
+      // Khai báo biến/hằng số: matchNote - Dùng trong logic xử lý của component
       const matchNote = group.note?.toLowerCase().includes(query);
+      // Khai báo biến/hằng số: matchUser - Dùng trong logic xử lý của component
       const matchUser = group.createdByUsername?.toLowerCase().includes(query);
+      // Khai báo biến/hằng số: matchId - Dùng trong logic xử lý của component
       const matchId = group.batchId.toLowerCase().includes(query);
+      // Khai báo biến/hằng số: matchOrder - Dùng trong logic xử lý của component
       const matchOrder = group.orderId && String(group.orderId).includes(query);
 
+      // Hàm thực thi logic: matchProduct
       const matchProduct = group.items.some(tx =>
         tx.productName?.toLowerCase().includes(query) ||
         tx.variantName?.toLowerCase().includes(query)
@@ -201,16 +239,22 @@ export default function AdminInventory() {
   const groupedProductStock = useMemo(() => {
     if ((!stockHistory || stockHistory.length === 0) && (!products || products.length === 0)) return [];
 
+    // Cấu hình/Hằng số/Dịch vụ dữ liệu: productMap
     const productMap = {};
 
     // 1. Map existing stock batches from stockHistory (Lô hàng nhập kho)
     (stockHistory || []).forEach(item => {
+      // Khai báo biến/hằng số: pId - Dùng trong logic xử lý của component
       const pId = item.productId;
+      // Hàm thực thi logic: productInfo
       const productInfo = products.find(p => p.id === pId);
+      // Hàm thực thi logic: brandInfo
       const brandInfo = brands.find(b => b.id === (productInfo?.brandId || item.brandId));
+      // Hàm thực thi logic: categoryInfo
       const categoryInfo = categories.find(c => c.id === (productInfo?.categoryId || item.categoryId));
 
       if (!productMap[pId]) {
+        // Khai báo biến/hằng số: baseName - Dùng trong logic xử lý của component
         const baseName = productInfo?.name || item.productName?.split(' - ')[0] || item.productName || `Sản phẩm #${pId}`;
 
         productMap[pId] = {
@@ -228,11 +272,13 @@ export default function AdminInventory() {
         };
       }
 
+      // Khai báo biến/hằng số: grp - Dùng trong logic xử lý của component
       const grp = productMap[pId];
       grp.totalQuantityIn += (item.quantityIn || 0);
       grp.totalQuantityRemaining += (item.quantityRemaining || 0);
       grp.totalStockValue += ((item.quantityRemaining || 0) * (item.price || 0));
 
+      // Khai báo biến/hằng số: vKey - Dùng trong logic xử lý của component
       const vKey = item.variantId || item.productVariantId || item.inventoryDetailId;
       if (!grp.variantMap[vKey]) {
         grp.variantMap[vKey] = {
@@ -250,20 +296,30 @@ export default function AdminInventory() {
 
     // 2. Include all products from products list (Sản phẩm từ DB chưa có lô nhập kho riêng)
     (products || []).forEach(prod => {
+      // Khai báo biến/hằng số: pId - Dùng trong logic xử lý của component
       const pId = prod.id;
+      // Hàm thực thi logic: brandInfo
       const brandInfo = brands.find(b => b.id === prod.brandId);
+      // Hàm thực thi logic: categoryInfo
       const categoryInfo = categories.find(c => c.id === prod.categoryId);
 
       if (!productMap[pId]) {
+        // Khai báo biến/hằng số: totalQty - Dùng trong logic xử lý của component
         const totalQty = prod.totalStock ?? prod.stock ?? prod.stockQuantity ?? 0;
+        // Khai báo biến/hằng số: price - Dùng trong logic xử lý của component
         const price = prod.basePrice || prod.price || 0;
+        // Khai báo biến/hằng số: variants - Dùng trong logic xử lý của component
         const variants = prod.variants || prod.productVariants || [];
 
+        // Cấu hình/Hằng số/Dịch vụ dữ liệu: variantMap
         const variantMap = {};
         if (variants.length > 0) {
           variants.forEach(v => {
+            // Khai báo biến/hằng số: vKey - Dùng trong logic xử lý của component
             const vKey = v.id;
+            // Khai báo biến/hằng số: vQty - Dùng trong logic xử lý của component
             const vQty = v.totalStock ?? v.stock ?? v.stockQuantity ?? totalQty;
+            // Khai báo biến/hằng số: vPrice - Dùng trong logic xử lý của component
             const vPrice = v.price || price;
             variantMap[vKey] = {
               variantId: v.id,
@@ -285,7 +341,9 @@ export default function AdminInventory() {
           };
         }
 
+        // Hàm thực thi logic: sumQtyRem
         const sumQtyRem = Object.values(variantMap).reduce((sum, v) => sum + v.quantityRemaining, 0);
+        // Hàm thực thi logic: sumVal
         const sumVal = Object.values(variantMap).reduce((sum, v) => sum + (v.quantityRemaining * v.price), 0);
 
         productMap[pId] = {
@@ -326,11 +384,17 @@ export default function AdminInventory() {
     return groupedProductStock.filter(prod => {
       // 1. Search Query
       if (searchQuery) {
+        // Khai báo biến/hằng số: query - Dùng trong logic xử lý của component
         const query = searchQuery.toLowerCase();
+        // Khai báo biến/hằng số: matchName - Dùng trong logic xử lý của component
         const matchName = prod.productName?.toLowerCase().includes(query);
+        // Khai báo biến/hằng số: matchId - Dùng trong logic xử lý của component
         const matchId = String(prod.productId).includes(query);
+        // Khai báo biến/hằng số: matchBrand - Dùng trong logic xử lý của component
         const matchBrand = prod.brandName?.toLowerCase().includes(query);
+        // Khai báo biến/hằng số: matchCategory - Dùng trong logic xử lý của component
         const matchCategory = prod.categoryName?.toLowerCase().includes(query);
+        // Hàm thực thi logic: matchVariant
         const matchVariant = prod.variants.some(v => v.variantName?.toLowerCase().includes(query));
         if (!matchName && !matchId && !matchBrand && !matchCategory && !matchVariant) {
           return false;
@@ -364,6 +428,7 @@ export default function AdminInventory() {
     });
   }, [groupedProductStock, searchQuery, stockBrandFilter, stockCategoryFilter, stockStatusFilter]);
 
+  // Cấu hình/Hằng số/Dịch vụ dữ liệu: activeDataList
   const activeDataList = viewMode === 'TRANSACTIONS' ? filteredHistory : filteredGroupedStock;
 
   // Pagination for active view list
@@ -395,9 +460,11 @@ export default function AdminInventory() {
     }
   };
 
+  // Hàm xử lý logic/sự kiện: handleExportExcel
   const handleExportExcel = async () => {
     setIsExporting(true);
     try {
+      // Khai báo giải nén các thuộc tính/hàm (excelService) từ Hook / Context / Props
       const { excelService } = await import('../../../utils/excelService');
       await excelService.exportInventoryReport(products, brands);
     } catch (err) {
@@ -752,6 +819,7 @@ export default function AdminInventory() {
           formatCurrency={formatCurrency}
           onOpenImportTx={(prodId) => {
             setSearchParams(prev => {
+              // Khai báo biến/hằng số: p - Dùng trong logic xử lý của component
               const p = new URLSearchParams(prev);
               p.set('tab', 'inventory');
               p.set('productId', String(prodId));

@@ -3,6 +3,7 @@ import { useParams, Link } from 'react-router-dom';
 import Breadcrumb from '../components/Breadcrumb';
 import { useLoading } from '../context/LoadingContext';
 
+// Cấu hình/Hằng số/Dịch vụ dữ liệu: POLICY_DATA
 const POLICY_DATA = {
   'bao-hanh': {
     title: 'TRUNG TÂM HỖ TRỢ TRA CỨU THÔNG TIN, CHÍNH SÁCH BẢO HÀNH SẢN PHẨM CHÍNH HÃNG',
@@ -69,14 +70,18 @@ const POLICY_DATA = {
 };
 
 export default function PolicyPage() {
+  // Khai báo giải nén các thuộc tính/hàm (stopLoading) từ Hook / Context / Props
   const { stopLoading } = useLoading();
+  // Khai báo giải nén các thuộc tính/hàm (type) từ Hook / Context / Props
   const { type } = useParams();
+  // Khai báo biến/hằng số: policy - Dùng trong logic xử lý của component
   const policy = POLICY_DATA[type] || POLICY_DATA['bao-hanh'];
 
   useEffect(() => {
     stopLoading();
   }, [type, stopLoading]);
 
+  // Khai báo biến/hằng số: breadcrumbItems - Dùng trong logic xử lý của component
   const breadcrumbItems = [
     { label: 'Trang chủ', link: '/' },
     { label: 'Chính sách' },
