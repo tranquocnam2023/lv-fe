@@ -10,12 +10,12 @@ import ProductComparison from './components/ProductComparison';
 import BottomNav from './components/common/BottomNav';
 import ChatbotWidget from './components/ChatbotWidget';
 
-// A tiny, premium loading bar at the very top of the page shown only during chunk downloads (like CellphoneS / TGDĐ)
+// Thanh tiến trình hiệu ứng loading nhỏ chạy trên cùng màn hình khi tải dữ liệu trang
 const TopBarProgress = () => (
   <div className="fixed top-0 left-0 right-0 h-[3px] bg-indigo-600 z-[99999] animate-pulse" />
 );
 
-// Dynamic Import (Lazy Loading) for pages to reduce initial bundle size and boost SEO
+// Kỹ thuật nạp trang động (Lazy Loading) giúp giảm dung lượng tải trang ban đầu và tối ưu SEO
 const HomePage = React.lazy(() => import('./page/HomePage'));
 // Component React: AuthPage - Quản lý giao diện và logic xử lý của AuthPage
 const AuthPage = React.lazy(() => import('./page/AuthPage'));
