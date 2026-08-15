@@ -3,6 +3,7 @@ import { useProductFormContext } from '../../../context/ProductFormContext';
 import SharedLocalImageUpload from '../../SharedLocalImageUpload';
 
 export default function ProductImageUpload() {
+  // Khai báo giải nén các thuộc tính/hàm (formData, setFormData) từ Hook / Context / Props
   const { formData, setFormData } = useProductFormContext();
 
   return (

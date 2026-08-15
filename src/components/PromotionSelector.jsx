@@ -9,15 +9,22 @@ import { Tag, X, AlertCircle, Gift } from 'lucide-react';
 import { promotionService } from '../services/promotionService';
 
 export default function PromotionSelector({ subTotal, onApplyPromotion }) {
+  // State: promoInput - Quản lý trạng thái và dữ liệu của promoInput trong giao diện
   const [promoInput, setPromoInput] = useState('');
+  // State: isModalOpen - Quản lý trạng thái và dữ liệu của isModalOpen trong giao diện
   const [isModalOpen, setIsModalOpen] = useState(false);
+  // State: coupons - Quản lý trạng thái và dữ liệu của coupons trong giao diện
   const [coupons, setCoupons] = useState([]);
+  // State: usedCouponCodes - Quản lý trạng thái và dữ liệu của usedCouponCodes trong giao diện
   const [usedCouponCodes, setUsedCouponCodes] = useState([]);
+  // State: isLoading - Quản lý trạng thái và dữ liệu của isLoading trong giao diện
   const [isLoading, setIsLoading] = useState(false);
   
   // Trạng thái nhập mã thủ công và thông báo lỗi/thành công trong Modal
   const [manualInputCode, setManualInputCode] = useState('');
+  // State: modalError - Quản lý trạng thái và dữ liệu của modalError trong giao diện
   const [modalError, setModalError] = useState('');
+  // State: modalSuccess - Quản lý trạng thái và dữ liệu của modalSuccess trong giao diện
   const [modalSuccess, setModalSuccess] = useState('');
   
   // Trạng thái lưu mã được chọn tạm thời trong Modal trước khi nhấn "Đồng ý"
@@ -25,8 +32,10 @@ export default function PromotionSelector({ subTotal, onApplyPromotion }) {
 
   // Trạng thái lỗi/thành công hiển thị ở màn hình chính
   const [validationError, setValidationError] = useState('');
+  // State: successMessage - Quản lý trạng thái và dữ liệu của successMessage trong giao diện
   const [successMessage, setSuccessMessage] = useState('');
 
+  // Khai báo biến/hằng số: isLoggedIn - Dùng trong logic xử lý của component
   const isLoggedIn = !!localStorage.getItem('token');
 
   // Tải danh sách mã khuyến mãi khi component mount
@@ -59,12 +68,15 @@ export default function PromotionSelector({ subTotal, onApplyPromotion }) {
   const fetchPromotionsData = async () => {
     setIsLoading(true);
     try {
+      // Khai báo biến/hằng số: allPromos - Dùng trong logic xử lý của component
       const allPromos = await promotionService.getAll();
       setCoupons(Array.isArray(allPromos) ? allPromos : []);
 
       if (isLoggedIn) {
+        // Khai báo biến/hằng số: myUsages - Dùng trong logic xử lý của component
         const myUsages = await promotionService.getMyUsages();
         if (Array.isArray(myUsages)) {
+          // Hàm thực thi logic: usedCodes
           const usedCodes = myUsages.map(u => (u.promotionCode || '').toUpperCase());
           setUsedCouponCodes(usedCodes);
         }
@@ -78,6 +90,7 @@ export default function PromotionSelector({ subTotal, onApplyPromotion }) {
 
   // HÀM GỬI MÃ GIẢM GIÁ LÊN SERVER ĐỂ XÁC THỰC (VALIDATE)
   const validateCoupon = async (code, shouldCloseModal = true) => {
+    // Khai báo biến/hằng số: uppercaseCode - Dùng trong logic xử lý của component
     const uppercaseCode = code.trim().toUpperCase();
     
     if (!uppercaseCode) {
@@ -90,8 +103,10 @@ export default function PromotionSelector({ subTotal, onApplyPromotion }) {
     }
 
     try {
+      // Khai báo biến/hằng số: res - Dùng trong logic xử lý của component
       const res = await promotionService.validate(uppercaseCode, subTotal);
       if (res && res.code) {
+        // Khai báo biến/hằng số: discountAmount - Dùng trong logic xử lý của component
         const discountAmount = res.discountAmount || 0;
         setValidationError('');
         setSuccessMessage(`Áp dụng thành công! Giảm -${discountAmount.toLocaleString('vi-VN')}₫`);
@@ -120,6 +135,7 @@ export default function PromotionSelector({ subTotal, onApplyPromotion }) {
 
   // HÀM XÁC THỰC MÃ THỦ CÔNG TRONG MODAL
   const handleApplyManualCode = async () => {
+    // Khai báo biến/hằng số: uppercaseCode - Dùng trong logic xử lý của component
     const uppercaseCode = manualInputCode.trim().toUpperCase();
     if (!uppercaseCode) {
       setModalError('Vui lòng nhập mã giảm giá.');
@@ -128,9 +144,11 @@ export default function PromotionSelector({ subTotal, onApplyPromotion }) {
     }
 
     try {
+      // Khai báo biến/hằng số: res - Dùng trong logic xử lý của component
       const res = await promotionService.validate(uppercaseCode, subTotal);
       if (res && res.code) {
         setModalError('');
+        // Khai báo biến/hằng số: discountAmount - Dùng trong logic xử lý của component
         const discountAmount = res.discountAmount || 0;
         setModalSuccess(`Hợp lệ! Giảm -${discountAmount.toLocaleString('vi-VN')}₫`);
         setTempSelectedCode(res.code); // Tự động tick chọn mã vừa nhập thành công
@@ -164,14 +182,18 @@ export default function PromotionSelector({ subTotal, onApplyPromotion }) {
 
   // ─── LỌC SẠCH MÃ HẾT HẠN SỬ DỤNG HOẶC CHƯA BẮT ĐẦU HOẶC BỊ TẮT ACTIVE ───
   const now = new Date();
+  // Hàm thực thi logic: activeCoupons
   const activeCoupons = coupons.filter(coupon => {
+    // Khai báo biến/hằng số: isExpired - Dùng trong logic xử lý của component
     const isExpired = new Date(coupon.endDate) < now;
+    // Khai báo biến/hằng số: isStarted - Dùng trong logic xử lý của component
     const isStarted = new Date(coupon.startDate) <= now;
     return coupon.isActive && isStarted && !isExpired;
   });
 
   // Phân chia danh mục mã ưu tiên từ danh sách mã hợp lệ
   const privilegeCoupons = isLoggedIn && activeCoupons.length > 0 ? activeCoupons.slice(0, 1) : [];
+  // Khai báo biến/hằng số: publicCoupons - Dùng trong logic xử lý của component
   const publicCoupons = isLoggedIn && activeCoupons.length > 0 ? activeCoupons.slice(1) : activeCoupons;
 
   return (
@@ -397,7 +419,9 @@ export default function PromotionSelector({ subTotal, onApplyPromotion }) {
 
 // Sub-component: Card Voucher thiết kế kiểu Cuống Vé TGDĐ
 function VoucherCard({ coupon, isUsed, isSelected, onSelect, subTotal, isVIP }) {
+  // Khai báo biến/hằng số: endDate - Dùng trong logic xử lý của component
   const endDate = new Date(coupon.endDate);
+  // Khai báo biến/hằng số: formattedDate - Dùng trong logic xử lý của component
   const formattedDate = endDate.toLocaleDateString('vi-VN', {
     day: '2-digit',
     month: '2-digit',
@@ -407,22 +431,28 @@ function VoucherCard({ coupon, isUsed, isSelected, onSelect, subTotal, isVIP }) 
   // Tính toán thời hạn động
   // ── LOGIC HIỂN THỊ NGÀY / HẠN DÙNG: Tính toán hạn dùng dựa trên ngày kết thúc của Voucher ──
   const getExpiryStatus = () => {
+    // Khai báo biến/hằng số: end - Dùng trong logic xử lý của component
     const end = new Date(coupon.endDate);
+    // Khai báo biến/hằng số: now - Dùng trong logic xử lý của component
     const now = new Date();
+    // Khai báo biến/hằng số: diffMs - Dùng trong logic xử lý của component
     const diffMs = end - now;
     if (diffMs <= 0) return 'Đã hết hạn';
     
+    // Khai báo biến/hằng số: diffDays - Dùng trong logic xử lý của component
     const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
     if (diffDays > 3) {
       return `Hạn dùng: ${formattedDate}`;
     } else if (diffDays > 1) {
       return `Hết hạn sau ${diffDays} ngày`;
     } else {
+      // Khai báo biến/hằng số: diffHours - Dùng trong logic xử lý của component
       const diffHours = Math.ceil(diffMs / (1000 * 60 * 60));
       return `Hết hạn sau ${diffHours} giờ`;
     }
   };
 
+  // Cấu hình/Hằng số/Dịch vụ dữ liệu: expiryStatus
   const expiryStatus = getExpiryStatus();
 
   let discountDesc = coupon.discountType.toUpperCase() === 'PERCENTAGE'
@@ -441,6 +471,7 @@ function VoucherCard({ coupon, isUsed, isSelected, onSelect, subTotal, isVIP }) 
   // 3. Voucher khả dụng khi chưa từng dùng, đủ tiền đơn tối thiểu và chưa bị hết lượt (isSoldOut)
   const isAvailable = !isUsed && meetsMinOrder && !isSoldOut;
 
+  // Khai báo biến/hằng số: conditions - Dùng trong logic xử lý của component
   const conditions = [];
   if (coupon.minOrderAmount) {
     conditions.push(`Đơn tối thiểu ${coupon.minOrderAmount.toLocaleString('vi-VN')}₫`);

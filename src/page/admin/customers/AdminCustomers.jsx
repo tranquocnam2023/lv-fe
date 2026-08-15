@@ -6,12 +6,14 @@ import { authService } from '../../../services/authService';
 import { usePagination } from '../../../hooks/usePagination';
 import { useFormat } from '../../../hooks/useFormat';
 
+// Khai báo biến/hằng số: CUSTOMER_TABS - Dùng trong logic xử lý của component
 const CUSTOMER_TABS = [
   { id: 'all', name: 'Tất cả', count: 0, icon: Users, color: 'text-admin-text-muted', bgColor: 'bg-admin-bg' },
   { id: 'User', name: 'Khách hàng', count: 0, icon: UserCheck, color: 'text-success', bgColor: 'bg-success/10' },
   { id: 'Admin', name: 'Quản trị viên', count: 0, icon: Award, color: 'text-primary', bgColor: 'bg-primary/10' },
 ];
 
+// Cấu hình/Hằng số/Dịch vụ dữ liệu: CUSTOMER_STATS_CONFIG
 const CUSTOMER_STATS_CONFIG = [
   { label: 'Tổng người dùng', countKey: 'all', icon: Users, bgColor: '#FFFFFF', textColor: 'var(--color-admin-text-main)', iconColor: 'var(--color-primary)' },
   { label: 'Khách hàng (User)', countKey: 'User', icon: UserCheck, bgColor: '#FFFFFF', textColor: 'var(--color-admin-text-main)', iconColor: 'var(--color-success)' },
@@ -19,22 +21,30 @@ const CUSTOMER_STATS_CONFIG = [
 ];
 
 export default function AdminCustomers() {
+  // State: customers - Quản lý trạng thái và dữ liệu của customers trong giao diện
   const [customers, setCustomers] = useState([]);
+  // State: activeTab - Quản lý trạng thái và dữ liệu của activeTab trong giao diện
   const [activeTab, setActiveTab] = useState('all');
+  // State: searchTerm - Quản lý trạng thái và dữ liệu của searchTerm trong giao diện
   const [searchTerm, setSearchTerm] = useState('');
+  // State: loading - Quản lý trạng thái và dữ liệu của loading trong giao diện
   const [loading, setLoading] = useState(false);
 
   // Add User Modal State
   const [isModalOpen, setIsModalOpen] = useState(false);
+  // State: formData - Quản lý trạng thái và dữ liệu của formData trong giao diện
   const [formData, setFormData] = useState({
     username: '',
     email: '',
     password: ''
   });
+  // State: modalLoading - Quản lý trạng thái và dữ liệu của modalLoading trong giao diện
   const [modalLoading, setModalLoading] = useState(false);
 
+  // Khai báo giải nén các thuộc tính/hàm (formatDate) từ Hook / Context / Props
   const { formatDate } = useFormat();
 
+  // Hàm xử lý logic/sự kiện: fetchUsers
   const fetchUsers = () => {
     setLoading(true);
     userService.getAll()
@@ -58,10 +68,13 @@ export default function AdminCustomers() {
     fetchUsers();
   }, []);
 
+  // Hàm xử lý logic/sự kiện: handleToggleStatus
   const handleToggleStatus = async (id, username, isActive) => {
+    // Khai báo biến/hằng số: actionText - Dùng trong logic xử lý của component
     const actionText = isActive ? 'KHÓA' : 'MỞ KHÓA';
     if (window.confirm(`Bạn có chắc chắn muốn ${actionText} tài khoản của "${username}"?`)) {
       try {
+        // Khai báo biến/hằng số: msg - Dùng trong logic xử lý của component
         const msg = await userService.toggleStatus(id);
         alert(msg || 'Thực hiện thao tác thành công!');
         fetchUsers();
@@ -72,11 +85,13 @@ export default function AdminCustomers() {
     }
   };
 
+  // Hàm xử lý logic/sự kiện: handleOpenModal
   const handleOpenModal = () => {
     setFormData({ username: '', email: '', password: '' });
     setIsModalOpen(true);
   };
 
+  // Hàm xử lý logic/sự kiện: handleCreateUser
   const handleCreateUser = async (e) => {
     e.preventDefault();
     setModalLoading(true);
@@ -99,7 +114,9 @@ export default function AdminCustomers() {
 
   // Filter logic
   const filteredCustomers = customers.filter(customer => {
+    // Khai báo biến/hằng số: matchesTab - Dùng trong logic xử lý của component
     const matchesTab = activeTab === 'all' || customer.role === activeTab;
+    // Khai báo biến/hằng số: matchesSearch - Dùng trong logic xử lý của component
     const matchesSearch = (customer.id || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
       (customer.username || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
       (customer.email || '').toLowerCase().includes(searchTerm.toLowerCase());
@@ -125,6 +142,7 @@ export default function AdminCustomers() {
     Admin: customers.filter(c => c.role === 'Admin').length,
   };
 
+  // Hàm xử lý logic/sự kiện: getRoleBadgeStyle
   const getRoleBadgeStyle = (role) => {
     switch (role) {
       case 'Admin': return 'bg-primary/10 text-primary border border-primary/20';
@@ -133,6 +151,7 @@ export default function AdminCustomers() {
     }
   };
 
+  // Hàm xử lý logic/sự kiện: getRankBadgeStyle
   const getRankBadgeStyle = (points) => {
     if (points >= 5000) return 'bg-amber-100 text-amber-800 border border-amber-200';
     if (points >= 1000) return 'bg-slate-100 text-slate-800 border border-slate-200';
@@ -146,6 +165,7 @@ export default function AdminCustomers() {
     return 'Đồng';
   };
 
+  // Hàm xử lý logic/sự kiện: getRankColorClass
   const getRankColorClass = (points) => {
     if (points >= 5000) return 'text-amber-600';
     if (points >= 1000) return 'text-slate-500';
@@ -186,7 +206,9 @@ export default function AdminCustomers() {
       {/* Stats Overview */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
         {CUSTOMER_STATS_CONFIG.map((item, i) => {
+          // Khai báo biến/hằng số: Icon - Dùng trong logic xử lý của component
           const Icon = item.icon;
+          // Khai báo biến/hằng số: count - Dùng trong logic xử lý của component
           const count = tabCounts[item.countKey];
           return (
             <div
@@ -212,8 +234,11 @@ export default function AdminCustomers() {
       {/* Tabs */}
       <div className="flex overflow-x-auto pb-2 gap-3 no-scrollbar">
         {CUSTOMER_TABS.map((tab) => {
+          // Khai báo biến/hằng số: Icon - Dùng trong logic xử lý của component
           const Icon = tab.icon;
+          // Khai báo biến/hằng số: isActive - Dùng trong logic xử lý của component
           const isActive = activeTab === tab.id;
+          // Khai báo biến/hằng số: count - Dùng trong logic xử lý của component
           const count = tabCounts[tab.id];
           return (
             <button

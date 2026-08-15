@@ -12,9 +12,13 @@ export default function OtpVerification({
   title = 'Xác thực mã OTP',
   description = 'Vui lòng nhập mã OTP đã được gửi đến email của bạn để tiếp tục.'
 }) {
+  // State: otpValues - Quản lý trạng thái và dữ liệu của otpValues trong giao diện
   const [otpValues, setOtpValues] = useState(['', '', '', '', '', '']);
+  // State: timer - Quản lý trạng thái và dữ liệu của timer trong giao diện
   const [timer, setTimer] = useState(60);
+  // State: canResend - Quản lý trạng thái và dữ liệu của canResend trong giao diện
   const [canResend, setCanResend] = useState(false);
+  // Reference (useRef): inputRefs - Lưu vết tham chiếu DOM hoặc giá trị không gây re-render
   const inputRefs = useRef([]);
 
   // Countdown timer logic
@@ -36,6 +40,7 @@ export default function OtpVerification({
     // Only accept numeric inputs
     if (value && !/^\d+$/.test(value)) return;
 
+    // Khai báo biến/hằng số: newOtpValues - Dùng trong logic xử lý của component
     const newOtpValues = [...otpValues];
     newOtpValues[index] = value.substring(value.length - 1); // Get last typed char
     setOtpValues(newOtpValues);
@@ -62,8 +67,10 @@ export default function OtpVerification({
   // Handle paste events
   const handlePaste = (e) => {
     e.preventDefault();
+    // Cấu hình/Hằng số/Dịch vụ dữ liệu: pastedData
     const pastedData = e.clipboardData.getData('text').trim();
     if (/^\d{6}$/.test(pastedData)) {
+      // Khai báo biến/hằng số: chars - Dùng trong logic xử lý của component
       const chars = pastedData.split('');
       setOtpValues(chars);
       inputRefs.current[5].focus();
@@ -80,8 +87,10 @@ export default function OtpVerification({
     if (onResend) onResend();
   };
 
+  // Hàm xử lý logic/sự kiện: handleSubmit
   const handleSubmit = (e) => {
     if (e) e.preventDefault();
+    // Khai báo biến/hằng số: otpCode - Dùng trong logic xử lý của component
     const otpCode = otpValues.join('');
     if (otpCode.length < 6) return;
     onVerify(otpCode);

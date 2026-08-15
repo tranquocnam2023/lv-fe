@@ -4,9 +4,12 @@ import api from '../services/api';
 import { Check } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
+// Khởi tạo/Sử dụng Context (CartContext) để chia sẻ dữ liệu toàn cục
 const CartContext = createContext();
 
+// Custom Hook: useCart - Quản lý logic tái sử dụng useCart
 export const useCart = () => {
+  // Khởi tạo/Sử dụng Context (context) để chia sẻ dữ liệu toàn cục
   const context = useContext(CartContext);
   if (!context) {
     throw new Error('useCart must be used within a CartProvider');
@@ -15,10 +18,13 @@ export const useCart = () => {
 };
 //Lưu dữ liệu vào LocalStorage
 export const CartProvider = ({ children }) => {
+  // State: cartItems - Quản lý trạng thái và dữ liệu của cartItems trong giao diện
   const [cartItems, setCartItems] = useState(() => {
     try {
+      // Khai báo biến/hằng số: savedCart - Dùng trong logic xử lý của component
       const savedCart = localStorage.getItem('cart');
       if (!savedCart) return [];
+      // Khai báo biến/hằng số: parsed - Dùng trong logic xử lý của component
       const parsed = JSON.parse(savedCart);
       if (Array.isArray(parsed)) return parsed;
       if (parsed && Array.isArray(parsed.items)) return parsed.items;
@@ -28,19 +34,23 @@ export const CartProvider = ({ children }) => {
       return [];
     }
   });
+  // State: toast - Quản lý trạng thái và dữ liệu của toast trong giao diện
   const [toast, setToast] = useState(null);
 
   useEffect(() => {
     if (toast) {
+      // Hàm thực thi logic: timer
       const timer = setTimeout(() => setToast(null), 3000);
       return () => clearTimeout(timer);
     }
   }, [toast]);
 
+  // Hàm thực thi logic: showToast
   const showToast = (message) => {
     setToast({ message });
   };
 
+  // Khai báo biến/hằng số: safeCartItems - Dùng trong logic xử lý của component
   const safeCartItems = Array.isArray(cartItems) ? cartItems : [];
 
   useEffect(() => {
@@ -50,6 +60,7 @@ export const CartProvider = ({ children }) => {
     // Nếu KHÔNG có sản phẩm chính, nhưng lại CÓ phụ kiện mua kèm (isAddon = true)
     if (!hasMainProduct && safeCartItems.some(item => item.isAddon)) {
       setCartItems((prevItems) => {
+        // Khai báo biến/hằng số: currentArr - Dùng trong logic xử lý của component
         const currentArr = Array.isArray(prevItems) ? prevItems : [];
         return currentArr.map((item) => {
           if (item.isAddon) {
@@ -73,16 +84,21 @@ export const CartProvider = ({ children }) => {
     localStorage.setItem('cart', JSON.stringify(safeCartItems));
   }, [safeCartItems]);
 
+  // Hàm thực thi logic: addToCart
   const addToCart = (product, quantity = 1) => {
     setCartItems((prevItems) => {
+      // Khai báo biến/hằng số: currentArr - Dùng trong logic xử lý của component
       const currentArr = Array.isArray(prevItems) ? prevItems : [];
+      // Khai báo biến/hằng số: cartId - Dùng trong logic xử lý của component
       const cartId = product.isAddon && product.appliedCampaignId
         ? `addon-${product.appliedCampaignId}-${product.id}-${product.selectedStorage || ''}-${product.selectedColor || ''}`
         : `${product.id}-${product.selectedStorage || ''}-${product.selectedColor || ''}${product.selectedWarranty ? `-${product.selectedWarranty.id}` : ''}`;
 
+      // Hàm thực thi logic: existingItemIndex
       const existingItemIndex = currentArr.findIndex(item => item.cartId === cartId);
 
       if (existingItemIndex >= 0) {
+        // Khai báo biến/hằng số: newItems - Dùng trong logic xử lý của component
         const newItems = [...currentArr];
         newItems[existingItemIndex].quantity += quantity;
         return newItems;
@@ -102,16 +118,20 @@ export const CartProvider = ({ children }) => {
     showToast(`Đã thêm "${product.name}" vào giỏ hàng thành công!`);
   };
 
+  // Hàm thực thi logic: removeFromCart
   const removeFromCart = (cartId) => {
     setCartItems((prevItems) => {
+      // Khai báo biến/hằng số: currentArr - Dùng trong logic xử lý của component
       const currentArr = Array.isArray(prevItems) ? prevItems : [];
       return currentArr.filter((item) => item.cartId !== cartId);
     });
   };
 
+  // Hàm thực thi logic: updateQuantity
   const updateQuantity = (cartId, quantity) => {
     if (quantity < 1) return;
     setCartItems((prevItems) => {
+      // Khai báo biến/hằng số: currentArr - Dùng trong logic xử lý của component
       const currentArr = Array.isArray(prevItems) ? prevItems : [];
       return currentArr.map((item) =>
         item.cartId === cartId ? { ...item, quantity } : item
@@ -119,6 +139,7 @@ export const CartProvider = ({ children }) => {
     });
   };
 
+  // Hàm thực thi logic: clearCart
   const clearCart = () => {
     setCartItems([]);
   };
@@ -129,6 +150,7 @@ export const CartProvider = ({ children }) => {
     0
   );
 
+  // Hàm thực thi logic: cartCount
   const cartCount = safeCartItems.reduce((count, item) => count + (item.quantity || 1), 0);
 
   return (

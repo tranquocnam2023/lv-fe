@@ -39,17 +39,26 @@ const generateSkuFromName = (name) => {
 };
 
 export default function AdminProductVariants() {
+  // State: variants - Quản lý trạng thái và dữ liệu của variants trong giao diện
   const [variants, setVariants] = useState([]);
+  // State: products - Quản lý trạng thái và dữ liệu của products trong giao diện
   const [products, setProducts] = useState([]);
+  // State: searchTerm - Quản lý trạng thái và dữ liệu của searchTerm trong giao diện
   const [searchTerm, setSearchTerm] = useState('');
+  // State: showModal - Quản lý trạng thái và dữ liệu của showModal trong giao diện
   const [showModal, setShowModal] = useState(false);
+  // State: editingVariant - Quản lý trạng thái và dữ liệu của editingVariant trong giao diện
   const [editingVariant, setEditingVariant] = useState(null);
 
   // Form states
   const [selectedProductId, setSelectedProductId] = useState('');
+  // State: variantPrice - Quản lý trạng thái và dữ liệu của variantPrice trong giao diện
   const [variantPrice, setVariantPrice] = useState('');
+  // State: variantStock - Quản lý trạng thái và dữ liệu của variantStock trong giao diện
   const [variantStock, setVariantStock] = useState('0');
+  // State: variantImage - Quản lý trạng thái và dữ liệu của variantImage trong giao diện
   const [variantImage, setVariantImage] = useState('');
+  // State: isActive - Quản lý trạng thái và dữ liệu của isActive trong giao diện
   const [isActive, setIsActive] = useState(true);
 
   // Dynamic attributes list [{ key: '', value: '' }]
@@ -58,8 +67,11 @@ export default function AdminProductVariants() {
   // Dynamic specs override list [{ key: '', value: '' }]
   const [specsOverride, setSpecsOverride] = useState([]);
 
+  // State: imageInputMethod - Quản lý trạng thái và dữ liệu của imageInputMethod trong giao diện
   const [imageInputMethod, setImageInputMethod] = useState('url'); // 'url' | 'upload'
+  // State: uploading - Quản lý trạng thái và dữ liệu của uploading trong giao diện
   const [uploading, setUploading] = useState(false);
+  // State: inlineUploadingVariantId - Quản lý trạng thái và dữ liệu của inlineUploadingVariantId trong giao diện
   const [inlineUploadingVariantId, setInlineUploadingVariantId] = useState(null);
 
   // Load products and variants
@@ -81,10 +93,12 @@ export default function AdminProductVariants() {
     loadData();
   }, []);
 
+  // Hàm xử lý logic/sự kiện: getProductById
   const getProductById = (id) => {
     return products.find(p => p.id === id);
   };
 
+  // Hàm xử lý logic/sự kiện: handleOpenModal
   const handleOpenModal = (v = null) => {
     if (v) {
       setEditingVariant(v);
@@ -101,6 +115,7 @@ export default function AdminProductVariants() {
         console.error("Lỗi parse attributes", e);
       }
 
+      // Cấu hình/Hằng số/Dịch vụ dữ liệu: attrList
       const attrList = Object.entries(parsedAttributes)
         .filter(([key]) => key !== 'SKU')
         .map(([key, value]) => ({ key, value }));
@@ -117,6 +132,7 @@ export default function AdminProductVariants() {
       } catch (e) {
         console.error("Lỗi parse specsOverride", e);
       }
+      // Hàm thực thi logic: specsOverrideList
       const specsOverrideList = Object.entries(parsedSpecsOverride).map(([key, value]) => ({ key, value }));
       setSpecsOverride(specsOverrideList);
     } else {
@@ -135,47 +151,62 @@ export default function AdminProductVariants() {
     setShowModal(true);
   };
 
+  // Hàm xử lý logic/sự kiện: handleAddAttribute
   const handleAddAttribute = () => {
     setAttributes([...attributes, { key: '', value: '' }]);
   };
 
+  // Hàm xử lý logic/sự kiện: handleRemoveAttribute
   const handleRemoveAttribute = (index) => {
+    // Hàm thực thi logic: updated
     const updated = attributes.filter((_, i) => i !== index);
     setAttributes(updated.length > 0 ? updated : [{ key: '', value: '' }]);
   };
 
+  // Hàm xử lý logic/sự kiện: handleAttributeChange
   const handleAttributeChange = (index, field, val) => {
+    // Khai báo biến/hằng số: updated - Dùng trong logic xử lý của component
     const updated = [...attributes];
     updated[index][field] = val;
     setAttributes(updated);
   };
 
+  // Hàm xử lý logic/sự kiện: handleAddSpecOverride
   const handleAddSpecOverride = () => {
     setSpecsOverride([...specsOverride, { key: '', value: '' }]);
   };
 
+  // Hàm xử lý logic/sự kiện: handleRemoveSpecOverride
   const handleRemoveSpecOverride = (index) => {
+    // Hàm thực thi logic: updated
     const updated = specsOverride.filter((_, i) => i !== index);
     setSpecsOverride(updated);
   };
 
+  // Hàm xử lý logic/sự kiện: handleSpecOverrideChange
   const handleSpecOverrideChange = (index, field, val) => {
+    // Khai báo biến/hằng số: updated - Dùng trong logic xử lý của component
     const updated = [...specsOverride];
     updated[index][field] = val;
     setSpecsOverride(updated);
   };
 
+  // Hàm xử lý logic/sự kiện: handleFileChange
   const handleFileChange = async (e) => {
+    // Khai báo biến/hằng số: file - Dùng trong logic xử lý của component
     const file = e.target.files[0];
     if (!file) return;
 
     setUploading(true);
     try {
+      // Khai báo biến/hằng số: res - Dùng trong logic xử lý của component
       const res = await productService.uploadLocalImage(file, 'variants');
       if (res && res.url) {
         let finalUrl = res.url;
         if (finalUrl.startsWith('/')) {
+          // Khai báo biến/hằng số: apiBase - Dùng trong logic xử lý của component
           const apiBase = import.meta.env.VITE_API_URL || 'https://localhost:5001/api';
+          // Khai báo biến/hằng số: hostBase - Dùng trong logic xử lý của component
           const hostBase = apiBase.replace('/api', '');
           finalUrl = `${hostBase}${finalUrl}`;
         }
@@ -192,10 +223,14 @@ export default function AdminProductVariants() {
 
   // Auto-calculated fields
   const selectedProduct = getProductById(parseInt(selectedProductId));
+  // Hàm thực thi logic: attributeValuesStr
   const attributeValuesStr = attributes.map(a => a.value.trim()).filter(Boolean).join(' ');
+  // Khai báo biến/hằng số: generatedVariantName - Dùng trong logic xử lý của component
   const generatedVariantName = selectedProduct ? (attributeValuesStr ? `${selectedProduct.name} ${attributeValuesStr}` : selectedProduct.name) : '';
+  // Khai báo biến/hằng số: generatedSku - Dùng trong logic xử lý của component
   const generatedSku = generateSkuFromName(generatedVariantName);
 
+  // Hàm xử lý logic/sự kiện: handleSave
   const handleSave = async (e) => {
     e.preventDefault();
     if (!selectedProduct) {
@@ -219,6 +254,7 @@ export default function AdminProductVariants() {
         }
       });
 
+      // Khai báo biến/hằng số: dbAttrs - Dùng trong logic xử lý của component
       const dbAttrs = {};
       Object.entries(parsedAttr).forEach(([k, val]) => {
         if (k !== 'SKU') {
@@ -226,7 +262,9 @@ export default function AdminProductVariants() {
         }
       });
 
+      // Khai báo biến/hằng số: currentKeys - Dùng trong logic xử lý của component
       const currentKeys = Object.keys(currentAttrs);
+      // Khai báo biến/hằng số: dbKeys - Dùng trong logic xử lý của component
       const dbKeys = Object.keys(dbAttrs);
 
       if (currentKeys.length !== dbKeys.length) return false;
@@ -244,6 +282,7 @@ export default function AdminProductVariants() {
       priceVal = selectedProduct.basePrice || selectedProduct.price || 0;
     }
 
+    // Khai báo biến/hằng số: attributesObj - Dùng trong logic xử lý của component
     const attributesObj = {};
     attributes.forEach(a => {
       if (a.key.trim() && a.value.trim()) {
@@ -254,6 +293,7 @@ export default function AdminProductVariants() {
       attributesObj["SKU"] = generatedSku;
     }
 
+    // Khai báo biến/hằng số: specsOverrideObj - Dùng trong logic xử lý của component
     const specsOverrideObj = {};
     specsOverride.forEach(s => {
       if (s.key.trim() && s.value.trim()) {
@@ -261,6 +301,7 @@ export default function AdminProductVariants() {
       }
     });
 
+    // Khai báo biến/hằng số: payload - Dùng trong logic xử lý của component
     const payload = {
       name: generatedVariantName,
       price: priceVal,
@@ -288,10 +329,13 @@ export default function AdminProductVariants() {
     }
   };
 
+  // Hàm xử lý logic/sự kiện: handleUploadImageInline
   const handleUploadImageInline = async (e, variant) => {
+    // Khai báo biến/hằng số: file - Dùng trong logic xử lý của component
     const file = e.target.files[0];
     if (!file) return;
 
+    // Khai báo biến/hằng số: validExtensions - Dùng trong logic xử lý của component
     const validExtensions = ['image/svg+xml', 'image/webp', 'image/png', 'image/jpeg', 'image/jpg'];
     if (!validExtensions.includes(file.type)) {
       return alert('Hệ thống chỉ hỗ trợ SVG, WebP, PNG, JPG/JPEG.');
@@ -303,15 +347,19 @@ export default function AdminProductVariants() {
 
     setInlineUploadingVariantId(variant.id);
     try {
+      // Khai báo biến/hằng số: res - Dùng trong logic xử lý của component
       const res = await productService.uploadLocalImage(file, 'variants');
       if (res && res.url) {
         let finalUrl = res.url;
         if (finalUrl.startsWith('/')) {
+          // Khai báo biến/hằng số: apiBase - Dùng trong logic xử lý của component
           const apiBase = import.meta.env.VITE_API_URL || 'https://localhost:5001/api';
+          // Khai báo biến/hằng số: hostBase - Dùng trong logic xử lý của component
           const hostBase = apiBase.replace('/api', '');
           finalUrl = `${hostBase}${finalUrl}`;
         }
         
+        // Khai báo biến/hằng số: payload - Dùng trong logic xử lý của component
         const payload = {
           name: variant.name,
           price: variant.price,
@@ -333,12 +381,14 @@ export default function AdminProductVariants() {
     }
   };
 
+  // Hàm xử lý logic/sự kiện: handleDeleteImageInline
   const handleDeleteImageInline = async (e, variant) => {
     e.stopPropagation();
     e.preventDefault();
     if (!window.confirm(`Bạn có chắc chắn muốn xóa hình ảnh của biến thể này?`)) return;
 
     try {
+      // Khai báo biến/hằng số: payload - Dùng trong logic xử lý của component
       const payload = {
         name: variant.name,
         price: variant.price,
@@ -357,6 +407,7 @@ export default function AdminProductVariants() {
     }
   };
 
+  // Hàm xử lý logic/sự kiện: handleDelete
   const handleDelete = async (id) => {
     if (window.confirm('Bạn có chắc chắn muốn xóa biến thể này?')) {
       try {
@@ -372,17 +423,22 @@ export default function AdminProductVariants() {
 
   // Search filtering
   const filteredVariants = variants.filter(v => {
+    // Khai báo biến/hằng số: product - Dùng trong logic xử lý của component
     const product = getProductById(v.productId);
+    // Khai báo biến/hằng số: prodName - Dùng trong logic xử lý của component
     const prodName = product ? product.name.toLowerCase() : '';
+    // Khai báo biến/hằng số: varName - Dùng trong logic xử lý của component
     const varName = v.name ? v.name.toLowerCase() : '';
     let sku = '';
     try {
+      // Khai báo biến/hằng số: parsed - Dùng trong logic xử lý của component
       const parsed = v.attributes ? JSON.parse(v.attributes) : {};
       sku = (parsed["SKU"] || '').toLowerCase();
     } catch {
       /* ignore invalid JSON attributes */
     }
 
+    // Khai báo biến/hằng số: query - Dùng trong logic xử lý của component
     const query = searchTerm.toLowerCase();
     return prodName.includes(query) || varName.includes(query) || sku.includes(query);
   });

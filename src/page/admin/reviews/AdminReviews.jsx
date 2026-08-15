@@ -4,8 +4,10 @@ import { Search, Trash2, Star, Calendar, MessageSquare, Filter, Eye, EyeOff, Cor
 // import { MOCK_REVIEWS } from '../utils/mockData'; // Removed mock data
 import { reviewService } from '../../../services/reviewService';
 
+// Hàm thực thi logic: decodeHtml
 const decodeHtml = (html) => {
   if (!html) return '';
+  // Khai báo biến/hằng số: txt - Dùng trong logic xử lý của component
   const txt = document.createElement('textarea');
   txt.innerHTML = html;
   return txt.value;
@@ -13,11 +15,16 @@ const decodeHtml = (html) => {
 
 
 export default function AdminReviews() {
+  // State: reviews - Quản lý trạng thái và dữ liệu của reviews trong giao diện
   const [reviews, setReviews] = useState([]);
+  // State: searchTerm - Quản lý trạng thái và dữ liệu của searchTerm trong giao diện
   const [searchTerm, setSearchTerm] = useState('');
+  // State: replyingId - Quản lý trạng thái và dữ liệu của replyingId trong giao diện
   const [replyingId, setReplyingId] = useState(null);
+  // State: replyText - Quản lý trạng thái và dữ liệu của replyText trong giao diện
   const [replyText, setReplyText] = useState('');
 
+  // Hàm xử lý logic/sự kiện: fetchReviews
   const fetchReviews = () => {
     reviewService.getAll()
       .then(data => setReviews(Array.isArray(data) ? data : []))
@@ -31,6 +38,7 @@ export default function AdminReviews() {
     fetchReviews();
   }, []);
 
+  // Hàm xử lý logic/sự kiện: handleDelete
   const handleDelete = (id) => {
     if (window.confirm('Bạn có chắc muốn xóa đánh giá này?')) {
       reviewService.delete(id).then(() => {
@@ -42,6 +50,7 @@ export default function AdminReviews() {
     }
   };
 
+  // Hàm xử lý logic/sự kiện: handleToggleVisibility
   const handleToggleVisibility = (id) => {
     reviewService.toggleVisibility(id)
       .then(res => {
@@ -53,6 +62,7 @@ export default function AdminReviews() {
       });
   };
 
+  // Hàm xử lý logic/sự kiện: handleSendReply
   const handleSendReply = (id) => {
     if (!replyText.trim()) {
       alert('Vui lòng nhập nội dung phản hồi!');
@@ -70,6 +80,7 @@ export default function AdminReviews() {
       });
   };
 
+  // Hàm thực thi logic: filteredReviews
   const filteredReviews = reviews.filter(rev =>
     String(rev.username || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
     String(decodeHtml(rev.comment) || '').toLowerCase().includes(searchTerm.toLowerCase()) ||

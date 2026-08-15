@@ -22,8 +22,11 @@ export default function OrderTimeline({
 
         {/* Render Steps */}
         {steps.map((step, idx) => {
+          // Khai báo biến/hằng số: stepNum - Dùng trong logic xử lý của component
           const stepNum = idx + 1;
+          // Khai báo biến/hằng số: isCompleted - Dùng trong logic xử lý của component
           const isCompleted = currentStep >= stepNum;
+          // Khai báo biến/hằng số: stepTime - Dùng trong logic xử lý của component
           const stepTime = getStepTime(order.createdAt, stepNum);
 
           return (

@@ -17,24 +17,40 @@ const TopBarProgress = () => (
 
 // Dynamic Import (Lazy Loading) for pages to reduce initial bundle size and boost SEO
 const HomePage = React.lazy(() => import('./page/HomePage'));
+// Component React: AuthPage - Quản lý giao diện và logic xử lý của AuthPage
 const AuthPage = React.lazy(() => import('./page/AuthPage'));
+// Component React: CartPage - Quản lý giao diện và logic xử lý của CartPage
 const CartPage = React.lazy(() => import('./page/CartPage'));
+// Component React: AdminPage - Quản lý giao diện và logic xử lý của AdminPage
 const AdminPage = React.lazy(() => import('./page/admin/AdminPage'));
+// Component React: DonatePage - Quản lý giao diện và logic xử lý của DonatePage
 const DonatePage = React.lazy(() => import('./page/DonatePage'));
+// Component React: TermsOfServicePage - Quản lý giao diện và logic xử lý của TermsOfServicePage
 const TermsOfServicePage = React.lazy(() => import('./page/Termsofservice'));
+// Component React: ProductDetailPage - Quản lý giao diện và logic xử lý của ProductDetailPage
 const ProductDetailPage = React.lazy(() => import('./page/ProductDetailPage'));
+// Component React: PolicyPage - Quản lý giao diện và logic xử lý của PolicyPage
 const PolicyPage = React.lazy(() => import('./page/PolicyPage'));
+// Component React: CheckoutPage - Quản lý giao diện và logic xử lý của CheckoutPage
 const CheckoutPage = React.lazy(() => import('./page/CheckoutPage'));
+// Component React: OrderTrackingPage - Quản lý giao diện và logic xử lý của OrderTrackingPage
 const OrderTrackingPage = React.lazy(() => import('./page/OrderTrackingPage'));
+// Component React: PaymentCallbackPage - Quản lý giao diện và logic xử lý của PaymentCallbackPage
 const PaymentCallbackPage = React.lazy(() => import('./page/PaymentCallbackPage'));
+// Component React: WarrantyPurchasePage - Quản lý giao diện và logic xử lý của WarrantyPurchasePage
 const WarrantyPurchasePage = React.lazy(() => import('./page/WarrantyPurchasePage'));
+// Component React: BlogPage - Quản lý giao diện và logic xử lý của BlogPage
 const BlogPage = React.lazy(() => import('./page/blog/BlogPage'));
+// Component React: BlogDetailPage - Quản lý giao diện và logic xử lý của BlogDetailPage
 const BlogDetailPage = React.lazy(() => import('./page/blogdetail/BlogDetail'));
 
 function App() {
+  // Hook lấy thông tin đường dẫn/location hiện tại (useLocation)
   const location = useLocation();
+  // Khai báo biến/hằng số: isAdminPath - Dùng trong logic xử lý của component
   const isAdminPath = location.pathname.startsWith('/admin');
 
+  // State: selectedLocation - Quản lý trạng thái và dữ liệu của selectedLocation trong giao diện
   const [selectedLocation, setSelectedLocation] = useState(() => localStorage.getItem('selectedLocation') || 'Toàn quốc');
 
 
@@ -51,6 +67,7 @@ function App() {
     );
   }
 
+  // Khai báo biến/hằng số: isCartOrCheckout - Dùng trong logic xử lý của component
   const isCartOrCheckout = location.pathname === '/cart' || location.pathname === '/checkout' || location.pathname === '/payment-callback';
 
   return (

@@ -13,25 +13,40 @@ export default function InstallmentModal({
 }) {
   if (!isOpen || !product) return null;
 
+  // State: type - Quản lý trạng thái và dữ liệu của type trong giao diện
   const [type, setType] = useState(initialType); // 'company' | 'card'
+  // State: prepayPercent - Quản lý trạng thái và dữ liệu của prepayPercent trong giao diện
   const [prepayPercent, setPrepayPercent] = useState(30); // 20%, 30%, 50%
+  // State: months - Quản lý trạng thái và dữ liệu của months trong giao diện
   const [months, setMonths] = useState(6); // 6, 9, 12 tháng
+  // State: provider - Quản lý trạng thái và dữ liệu của provider trong giao diện
   const [provider, setProvider] = useState('Home Credit'); // 'Home Credit', 'FE Credit', 'MCredit'
+  // State: bank - Quản lý trạng thái và dữ liệu của bank trong giao diện
   const [bank, setBank] = useState('Techcombank'); // 'Techcombank', 'VPBank', 'Vietcombank', 'Sacombank'
 
+  // State: customerName - Quản lý trạng thái và dữ liệu của customerName trong giao diện
   const [customerName, setCustomerName] = useState('');
+  // State: customerPhone - Quản lý trạng thái và dữ liệu của customerPhone trong giao diện
   const [customerPhone, setCustomerPhone] = useState('');
+  // State: customerAddress - Quản lý trạng thái và dữ liệu của customerAddress trong giao diện
   const [customerAddress, setCustomerAddress] = useState('');
+  // State: error - Quản lý trạng thái và dữ liệu của error trong giao diện
   const [error, setError] = useState('');
 
   // Tính toán tiền trả góp
   const totalPrice = (displayPrice || 0) + (selectedWarranty?.price || 0);
+  // Khai báo biến/hằng số: prepayAmount - Dùng trong logic xử lý của component
   const prepayAmount = Math.round((totalPrice * prepayPercent) / 100);
+  // Khai báo biến/hằng số: remainingAmount - Dùng trong logic xử lý của component
   const remainingAmount = totalPrice - prepayAmount;
+  // Khai báo biến/hằng số: monthlyPayment - Dùng trong logic xử lý của component
   const monthlyPayment = Math.round(remainingAmount / months);
+  // Khai báo biến/hằng số: totalInstallmentPaid - Dùng trong logic xử lý của component
   const totalInstallmentPaid = prepayAmount + (monthlyPayment * months);
+  // Khai báo biến/hằng số: differenceAmount - Dùng trong logic xử lý của component
   const differenceAmount = totalInstallmentPaid - totalPrice;
 
+  // Hàm xử lý logic/sự kiện: handleConfirm
   const handleConfirm = (e) => {
     e.preventDefault();
     if (!customerName.trim() || !customerPhone.trim()) {
@@ -39,6 +54,7 @@ export default function InstallmentModal({
       return;
     }
 
+    // Khai báo biến/hằng số: installmentDetails - Dùng trong logic xử lý của component
     const installmentDetails = {
       type: type === 'company' ? `Trả góp qua ${provider}` : `Trả góp qua thẻ ${bank}`,
       prepayPercent,

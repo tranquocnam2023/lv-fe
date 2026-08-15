@@ -66,8 +66,10 @@ const parseSpecs = (specsInput, priorityKeys = []) => {
         'Pin',
         'Hệ điều hành'
       ];
+  // Hàm thực thi logic: searchKeys
   const searchKeys = rawKeys.map(k => k.toLowerCase());
 
+  // Khai báo biến/hằng số: tags - Dùng trong logic xử lý của component
   const tags = [];
   
   // 1. Try to find values matching priority keys in order
@@ -75,6 +77,7 @@ const parseSpecs = (specsInput, priorityKeys = []) => {
   // Dùng exact match trước, fallback sang partial (searchKey chứa item.key)
   searchKeys.forEach(searchKey => {
     if (tags.length >= 3) return;
+    // Khai báo biến/hằng số: match - Dùng trong logic xử lý của component
     const match =
       allItems.find(item => item.key === searchKey) ||
       allItems.find(item => searchKey.includes(item.key) && item.key.length > 2);
@@ -112,6 +115,7 @@ export default function ProductCard({
   reviewCount = 0,
   prioritySpecKeys = []
 }) {
+  // Khai báo biến/hằng số: specTags - Dùng trong logic xử lý của component
   const specTags = parseSpecs(specs, prioritySpecKeys);
 
   return (

@@ -4,16 +4,24 @@ import api from '../../../services/api';
 import { useCart } from '../../../context/CartContext';
 
 export default function AccessoryVariantModal({ isOpen, onClose, productId, basePrice, comboPrice, campaignId, maxQuantityAllowed = 5, hideQuantity = false }) {
+  // State: product - Quản lý trạng thái và dữ liệu của product trong giao diện
   const [product, setProduct] = useState(null);
+  // State: variants - Quản lý trạng thái và dữ liệu của variants trong giao diện
   const [variants, setVariants] = useState([]);
+  // State: attributeOptions - Quản lý trạng thái và dữ liệu của attributeOptions trong giao diện
   const [attributeOptions, setAttributeOptions] = useState({});
+  // State: selectedAttributes - Quản lý trạng thái và dữ liệu của selectedAttributes trong giao diện
   const [selectedAttributes, setSelectedAttributes] = useState({});
+  // State: quantity - Quản lý trạng thái và dữ liệu của quantity trong giao diện
   const [quantity, setQuantity] = useState(1);
+  // State: loading - Quản lý trạng thái và dữ liệu của loading trong giao diện
   const [loading, setLoading] = useState(true);
+  // Khai báo giải nén các thuộc tính/hàm (addToCart) từ Hook / Context / Props
   const { addToCart } = useCart();
 
   useEffect(() => {
     if (isOpen) {
+      // Khai báo biến/hằng số: originalStyle - Dùng trong logic xử lý của component
       const originalStyle = window.getComputedStyle(document.body).overflow;
       document.body.style.overflow = 'hidden';
       return () => {
@@ -30,10 +38,13 @@ export default function AccessoryVariantModal({ isOpen, onClose, productId, base
       api.get(`/Product/${productId}`),
       api.get(`/ProductVariant?productId=${productId}`)
     ]).then(([prodRes, varRes]) => {
+      // Khai báo biến/hằng số: prod - Dùng trong logic xử lý của component
       const prod = prodRes.data || prodRes;
       setProduct(prod);
+      // Khai báo biến/hằng số: vars - Dùng trong logic xử lý của component
       const vars = varRes.data || varRes || [];
 
+      // Hàm thực thi logic: parsedVars
       const parsedVars = vars.map(v => {
         let attrs = {};
         if (v.attributes) {
@@ -41,6 +52,7 @@ export default function AccessoryVariantModal({ isOpen, onClose, productId, base
             attrs = JSON.parse(v.attributes);
           } catch (e) { }
         } else if (v.name && v.name.includes(' - ')) {
+          // Khai báo biến/hằng số: parts - Dùng trong logic xử lý của component
           const parts = v.name.split(' - ');
           if (parts.length > 1) attrs['Phiên bản'] = parts[1];
           if (parts.length > 2) attrs['Màu sắc'] = parts[2];
@@ -51,6 +63,7 @@ export default function AccessoryVariantModal({ isOpen, onClose, productId, base
         };
       });
 
+      // Cấu hình/Hằng số/Dịch vụ dữ liệu: options
       const options = {};
       parsedVars.forEach(v => {
         Object.entries(v.parsedAttrs).forEach(([key, val]) => {
@@ -61,7 +74,9 @@ export default function AccessoryVariantModal({ isOpen, onClose, productId, base
         });
       });
 
+      // Cấu hình/Hằng số/Dịch vụ dữ liệu: finalOptions
       const finalOptions = {};
+      // Khai báo biến/hằng số: initialSelected - Dùng trong logic xử lý của component
       const initialSelected = {};
       Object.keys(options).forEach(k => {
         finalOptions[k] = [...options[k]];
@@ -80,13 +95,16 @@ export default function AccessoryVariantModal({ isOpen, onClose, productId, base
 
   if (!isOpen) return null;
 
+  // Hàm xử lý logic/sự kiện: handleAddToCart
   const handleAddToCart = () => {
+    // Hàm thực thi logic: selectedVar
     const selectedVar = variants.find(v => {
       return Object.entries(selectedAttributes).every(([k, val]) => v.parsedAttrs[k] === val);
     }) || variants[0];
 
     // Tìm key tương ứng với màu và dung lượng để truyền vào cartItem
     const colorKey = Object.keys(selectedAttributes).find(k => k.toLowerCase().includes('màu') || k.toLowerCase().includes('color'));
+    // Hàm thực thi logic: storageKey
     const storageKey = Object.keys(selectedAttributes).find(k => k.toLowerCase().includes('dung lượng') || k.toLowerCase().includes('storage') || k.toLowerCase().includes('ram') || k.toLowerCase().includes('phiên bản'));
 
     addToCart({

@@ -13,11 +13,17 @@ export default function GoongAutocomplete({
   error = '',
   addressContext = ''
 }) {
+  // State: query - Quản lý trạng thái và dữ liệu của query trong giao diện
   const [query, setQuery] = useState(value || '');
+  // State: suggestions - Quản lý trạng thái và dữ liệu của suggestions trong giao diện
   const [suggestions, setSuggestions] = useState([]);
+  // State: isLoading - Quản lý trạng thái và dữ liệu của isLoading trong giao diện
   const [isLoading, setIsLoading] = useState(false);
+  // State: isOpen - Quản lý trạng thái và dữ liệu của isOpen trong giao diện
   const [isOpen, setIsOpen] = useState(false);
+  // Reference (useRef): wrapperRef - Lưu vết tham chiếu DOM hoặc giá trị không gây re-render
   const wrapperRef = useRef(null);
+  // Reference (useRef): debounceRef - Lưu vết tham chiếu DOM hoặc giá trị không gây re-render
   const debounceRef = useRef(null);
 
   // Đọc API Key của Goong Maps cấu hình trong môi trường .env
@@ -56,7 +62,9 @@ export default function GoongAutocomplete({
       // Tự động bổ sung ngữ cảnh địa chỉ (Phường/Xã, Tỉnh/Thành) để thu hẹp phạm vi tìm kiếm chính xác hơn
       let finalInput = searchQuery;
       if (addressContext) {
+        // Khai báo biến/hằng số: cleanInput - Dùng trong logic xử lý của component
         const cleanInput = searchQuery.toLowerCase();
+        // Khai báo biến/hằng số: cleanContext - Dùng trong logic xử lý của component
         const cleanContext = addressContext.toLowerCase();
         // Chỉ ghép thêm ngữ cảnh nếu người dùng chưa tự tay gõ cụm từ đó
         if (!cleanInput.includes(cleanContext)) {
@@ -75,6 +83,7 @@ export default function GoongAutocomplete({
       if (response.data && response.data.predictions) {
         // Lọc bỏ các kết quả chỉ là đơn vị hành chính chung chung (Tỉnh, Huyện, Xã) mà không phải là số nhà/tên đường cụ thể
         let filteredPredictions = response.data.predictions.filter(p => {
+          // Khai báo biến/hằng số: mainText - Dùng trong logic xử lý của component
           const mainText = p.structured_formatting?.main_text || p.description;
           
           // Loại bỏ nếu kết quả là Phường/Xã/Quận/Huyện/Tỉnh đơn thuần
@@ -89,6 +98,7 @@ export default function GoongAutocomplete({
           return true;
         });
 
+        // Khai báo biến/hằng số: listToUse - Dùng trong logic xử lý của component
         const listToUse = filteredPredictions.length > 0 ? filteredPredictions : response.data.predictions;
         // Chỉ lấy tối đa 5 kết quả tối ưu nhất sau khi lọc để hiển thị lên dropdown
         setSuggestions(listToUse.slice(0, 5));
@@ -103,6 +113,7 @@ export default function GoongAutocomplete({
 
   // HÀM XỬ LÝ KHI THAY ĐỔI Ô NHẬP LIỆU (ÁP DỤNG KỸ THUẬT DEBOUNCE)
   const handleInputChange = (e) => {
+    // Khai báo biến/hằng số: val - Dùng trong logic xử lý của component
     const val = e.target.value;
     setQuery(val);
     onChange(val);
@@ -137,7 +148,9 @@ export default function GoongAutocomplete({
       });
 
       if (response.data && response.data.result) {
+        // Khai báo biến/hằng số: result - Dùng trong logic xử lý của component
         const result = response.data.result;
+        // Khai báo biến/hằng số: location - Dùng trong logic xử lý của component
         const location = result.geometry?.location;
         if (location) {
           // Trả dữ liệu địa chỉ sạch kèm tọa độ lat, lng truyền ngược lại cho component cha quản lý

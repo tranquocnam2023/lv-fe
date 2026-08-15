@@ -7,27 +7,37 @@ import { usePagination } from '../../../hooks/usePagination';
 import { useFormat } from '../../../hooks/useFormat';
 
 export default function AdminPayments() {
+  // State: payments - Quản lý trạng thái và dữ liệu của payments trong giao diện
   const [payments, setPayments] = useState([]);
+  // State: loading - Quản lý trạng thái và dữ liệu của loading trong giao diện
   const [loading, setLoading] = useState(true);
+  // State: error - Quản lý trạng thái và dữ liệu của error trong giao diện
   const [error, setError] = useState(null);
+  // State: searchParams - Quản lý trạng thái và dữ liệu của searchParams trong giao diện
   const [searchParams, setSearchParams] = useSearchParams();
 
   // Filters
   const [searchTerm, setSearchTerm] = useState('');
+  // State: statusFilter - Quản lý trạng thái và dữ liệu của statusFilter trong giao diện
   const [statusFilter, setStatusFilter] = useState('all');
+  // State: providerFilter - Quản lý trạng thái và dữ liệu của providerFilter trong giao diện
   const [providerFilter, setProviderFilter] = useState('all');
+  // State: copiedId - Quản lý trạng thái và dữ liệu của copiedId trong giao diện
   const [copiedId, setCopiedId] = useState(null);
 
+  // Khai báo giải nén các thuộc tính/hàm (formatCurrency, formatDate) từ Hook / Context / Props
   const { formatCurrency, formatDate } = useFormat();
 
   useEffect(() => {
     fetchPayments();
   }, []);
 
+  // Hàm xử lý logic/sự kiện: fetchPayments
   const fetchPayments = async () => {
     setLoading(true);
     setError(null);
     try {
+      // Cấu hình/Hằng số/Dịch vụ dữ liệu: data
       const data = await paymentService.getAll();
       if (Array.isArray(data)) {
         setPayments(data);
@@ -42,6 +52,7 @@ export default function AdminPayments() {
     }
   };
 
+  // Hàm xử lý logic/sự kiện: handleCopy
   const handleCopy = (text, id) => {
     navigator.clipboard.writeText(text);
     setCopiedId(id);
@@ -50,10 +61,14 @@ export default function AdminPayments() {
 
   // Filter logic
   const filteredPayments = payments.filter((p) => {
+    // Cấu hình/Hằng số/Dịch vụ dữ liệu: matchesStatus
     const matchesStatus = statusFilter === 'all' || p.status?.toLowerCase() === statusFilter.toLowerCase();
+    // Khai báo biến/hằng số: matchesProvider - Dùng trong logic xử lý của component
     const matchesProvider = providerFilter === 'all' || p.provider?.toLowerCase() === providerFilter.toLowerCase();
 
+    // Khai báo biến/hằng số: term - Dùng trong logic xử lý của component
     const term = searchTerm.trim().toLowerCase();
+    // Khai báo biến/hằng số: matchesSearch - Dùng trong logic xử lý của component
     const matchesSearch =
       !term ||
       String(p.orderId).includes(term) ||
@@ -79,11 +94,16 @@ export default function AdminPayments() {
 
   // Statistics calculation
   const stats = React.useMemo(() => {
+    // Khai báo biến/hằng số: totalCount - Dùng trong logic xử lý của component
     const totalCount = payments.length;
+    // Hàm thực thi logic: succeededCount
     const succeededCount = payments.filter(p => p.status?.toLowerCase() === 'succeeded').length;
+    // Hàm thực thi logic: pendingCount
     const pendingCount = payments.filter(p => p.status?.toLowerCase() === 'pending').length;
+    // Hàm thực thi logic: failedCount
     const failedCount = payments.filter(p => p.status?.toLowerCase() === 'failed').length;
 
+    // Khai báo biến/hằng số: totalRevenue - Dùng trong logic xử lý của component
     const totalRevenue = payments
       .filter(p => p.status?.toLowerCase() === 'succeeded')
       .reduce((sum, p) => sum + (p.amount || 0), 0);
@@ -97,6 +117,7 @@ export default function AdminPayments() {
     };
   }, [payments]);
 
+  // Hàm xử lý logic/sự kiện: getStatusBadgeStyle
   const getStatusBadgeStyle = (status) => {
     switch (status?.toLowerCase()) {
       case 'succeeded':
@@ -114,6 +135,7 @@ export default function AdminPayments() {
     }
   };
 
+  // Hàm xử lý logic/sự kiện: getStatusText
   const getStatusText = (status) => {
     switch (status?.toLowerCase()) {
       case 'succeeded': return 'Thành công';
@@ -125,6 +147,7 @@ export default function AdminPayments() {
     }
   };
 
+  // Hàm xử lý logic/sự kiện: getProviderBadgeStyle
   const getProviderBadgeStyle = (provider) => {
     switch (provider?.toLowerCase()) {
       case 'stripe':
@@ -138,6 +161,7 @@ export default function AdminPayments() {
     }
   };
 
+  // Hàm xử lý logic/sự kiện: getProviderName
   const getProviderName = (provider) => {
     switch (provider?.toLowerCase()) {
       case 'stripe': return 'Stripe Card';

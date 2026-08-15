@@ -14,16 +14,21 @@ import { ShieldCheck, HelpCircle, XCircle } from 'lucide-react';
  * ============================================================================
  */
 export default function WarrantySelector({ variantId, selectedWarranty, onSelectWarranty }) {
+  // State: warranties - Quản lý trạng thái và dữ liệu của warranties trong giao diện
   const [warranties, setWarranties] = useState([]);
+  // State: loading - Quản lý trạng thái và dữ liệu của loading trong giao diện
   const [loading, setLoading] = useState(false);
+  // State: activeTerms - Quản lý trạng thái và dữ liệu của activeTerms trong giao diện
   const [activeTerms, setActiveTerms] = useState(null); // Lưu thông tin gói đang xem điều khoản trong modal
 
   useEffect(() => {
     if (!variantId) return;
 
+    // Hàm xử lý logic/sự kiện: fetchWarranties
     const fetchWarranties = async () => {
       setLoading(true);
       try {
+        // Khai báo biến/hằng số: res - Dùng trong logic xử lý của component
         const res = await warrantyService.getWarrantiesForVariant(variantId);
         if (res && res.data) {
           setWarranties(res.data);
@@ -64,6 +69,7 @@ export default function WarrantySelector({ variantId, selectedWarranty, onSelect
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         {warranties.map((w) => {
+          // Khai báo biến/hằng số: isSelected - Dùng trong logic xử lý của component
           const isSelected = selectedWarranty && selectedWarranty.id === w.id;
           return (
             <div

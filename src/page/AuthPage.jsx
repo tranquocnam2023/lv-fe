@@ -21,34 +21,54 @@ import ProfileWarrantyDevicesTab from './auth/components/ProfileWarrantyDevicesT
 import ProfileTrackOrderTab from './auth/components/ProfileTrackOrderTab';
 
 export default function AuthPage() {
+  // Khai báo giải nén các thuộc tính/hàm (stopLoading) từ Hook / Context / Props
   const { stopLoading } = useLoading();
+  // Hook lấy thông tin đường dẫn/location hiện tại (useLocation)
   const location = useLocation();
+  // Hook điều hướng trang (useNavigate) để chuyển hướng Route
   const navigate = useNavigate();
 
   // Auth state
   const [isLogin, setIsLogin] = useState(true);
+  // State: username - Quản lý trạng thái và dữ liệu của username trong giao diện
   const [username, setUsername] = useState('');
+  // State: email - Quản lý trạng thái và dữ liệu của email trong giao diện
   const [email, setEmail] = useState('');
+  // State: password - Quản lý trạng thái và dữ liệu của password trong giao diện
   const [password, setPassword] = useState('');
+  // State: confirmPassword - Quản lý trạng thái và dữ liệu của confirmPassword trong giao diện
   const [confirmPassword, setConfirmPassword] = useState('');
+  // State: loading - Quản lý trạng thái và dữ liệu của loading trong giao diện
   const [loading, setLoading] = useState(false);
+  // State: error - Quản lý trạng thái và dữ liệu của error trong giao diện
   const [error, setError] = useState('');
 
   // Forgot password state
   const [isForgotPassword, setIsForgotPassword] = useState(false);
+  // State: resetUsername - Quản lý trạng thái và dữ liệu của resetUsername trong giao diện
   const [resetUsername, setResetUsername] = useState('');
+  // State: resetEmail - Quản lý trạng thái và dữ liệu của resetEmail trong giao diện
   const [resetEmail, setResetEmail] = useState('');
+  // State: resetNewPassword - Quản lý trạng thái và dữ liệu của resetNewPassword trong giao diện
   const [resetNewPassword, setResetNewPassword] = useState('');
+  // State: resetConfirmPassword - Quản lý trạng thái và dữ liệu của resetConfirmPassword trong giao diện
   const [resetConfirmPassword, setResetConfirmPassword] = useState('');
+  // State: forgotPasswordStep - Quản lý trạng thái và dữ liệu của forgotPasswordStep trong giao diện
   const [forgotPasswordStep, setForgotPasswordStep] = useState(1);
+  // State: forgotPasswordOtp - Quản lý trạng thái và dữ liệu của forgotPasswordOtp trong giao diện
   const [forgotPasswordOtp, setForgotPasswordOtp] = useState('');
+  // State: enteredOtp - Quản lý trạng thái và dữ liệu của enteredOtp trong giao diện
   const [enteredOtp, setEnteredOtp] = useState('');
+  // State: forgotPasswordError - Quản lý trạng thái và dữ liệu của forgotPasswordError trong giao diện
   const [forgotPasswordError, setForgotPasswordError] = useState('');
 
   // Check login state
   const token = localStorage.getItem('token');
+  // Khai báo biến/hằng số: userJson - Dùng trong logic xử lý của component
   const userJson = localStorage.getItem('user');
+  // Khai báo biến/hằng số: initialUser - Dùng trong logic xử lý của component
   const initialUser = userJson ? JSON.parse(userJson) : null;
+  // Khai báo biến/hằng số: isLoggedIn - Dùng trong logic xử lý của component
   const isLoggedIn = !!(initialUser && token);
 
   // Profile management state
@@ -70,7 +90,9 @@ export default function AuthPage() {
   }, [isLoggedIn, stopLoading]);
 
   useEffect(() => {
+    // Khai báo biến/hằng số: searchParams - Dùng trong logic xử lý của component
     const searchParams = new URLSearchParams(location.search);
+    // Khai báo biến/hằng số: redirectUrl - Dùng trong logic xử lý của component
     const redirectUrl = searchParams.get('redirect');
     if (isLoggedIn && redirectUrl) {
       navigate(redirectUrl);
@@ -93,17 +115,23 @@ export default function AuthPage() {
     }
   }, [location.search, isLoggedIn, navigate]);
 
+  // State: userProfile - Quản lý trạng thái và dữ liệu của userProfile trong giao diện
   const [userProfile, setUserProfile] = useState(initialUser);
+  // State: shippingInfos - Quản lý trạng thái và dữ liệu của shippingInfos trong giao diện
   const [shippingInfos, setShippingInfos] = useState([]);
+  // State: infoLoading - Quản lý trạng thái và dữ liệu của infoLoading trong giao diện
   const [infoLoading, setInfoLoading] = useState(false);
 
   // Lịch sử đơn hàng
   const [orders, setOrders] = useState([]);
+  // State: ordersLoading - Quản lý trạng thái và dữ liệu của ordersLoading trong giao diện
   const [ordersLoading, setOrdersLoading] = useState(false);
+  // State: selectedOrder - Quản lý trạng thái và dữ liệu của selectedOrder trong giao diện
   const [selectedOrder, setSelectedOrder] = useState(null);
 
   // Profile edit state
   const [editProfileData, setEditProfileData] = useState({ username: '', email: '' });
+  // State: isEditingProfile - Quản lý trạng thái và dữ liệu của isEditingProfile trong giao diện
   const [isEditingProfile, setIsEditingProfile] = useState(false);
 
   // Password change state
@@ -111,10 +139,15 @@ export default function AuthPage() {
 
   // Address Form state
   const [isAddressFormOpen, setIsAddressFormOpen] = useState(false);
+  // State: editingAddressId - Quản lý trạng thái và dữ liệu của editingAddressId trong giao diện
   const [editingAddressId, setEditingAddressId] = useState(null);
+  // State: provinces - Quản lý trạng thái và dữ liệu của provinces trong giao diện
   const [provinces, setProvinces] = useState([]);
+  // State: wards - Quản lý trạng thái và dữ liệu của wards trong giao diện
   const [wards, setWards] = useState([]);
+  // State: selectedProvinceId - Quản lý trạng thái và dữ liệu của selectedProvinceId trong giao diện
   const [selectedProvinceId, setSelectedProvinceId] = useState('');
+  // State: addressForm - Quản lý trạng thái và dữ liệu của addressForm trong giao diện
   const [addressForm, setAddressForm] = useState({
     recipientName: '',
     phoneNumber: '',
@@ -123,6 +156,7 @@ export default function AuthPage() {
     isDefault: false
   });
 
+  // Khai báo giải nén các thuộc tính/hàm (formatDate) từ Hook / Context / Props
   const { formatDate } = useFormat();
 
   // Fetch user profile from API to sync
@@ -193,6 +227,7 @@ export default function AuthPage() {
     }
   }, [selectedProvinceId]);
 
+  // Hàm xử lý logic/sự kiện: fetchMyOrders
   const fetchMyOrders = (updatedSelectedId = null) => {
     if (!isLoggedIn) return;
     setOrdersLoading(true);
@@ -201,6 +236,7 @@ export default function AuthPage() {
         if (Array.isArray(res)) {
           setOrders(res);
           if (updatedSelectedId) {
+            // Hàm thực thi logic: updated
             const updated = res.find(o => o.id === updatedSelectedId);
             if (updated) setSelectedOrder(updated);
           }
@@ -218,23 +254,30 @@ export default function AuthPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [profileTab, isLoggedIn]);
 
+  // Hàm xử lý logic/sự kiện: handleGoogleLoginSuccess
   const handleGoogleLoginSuccess = async (response) => {
     setLoading(true);
     setError('');
     try {
+      // Khai báo biến/hằng số: idToken - Dùng trong logic xử lý của component
       const idToken = response.credential;
+      // Cấu hình/Hằng số/Dịch vụ dữ liệu: loginData
       const loginData = await authService.googleLogin(idToken);
+      // Khai báo biến/hằng số: token - Dùng trong logic xử lý của component
       const token = loginData.token || loginData.accessToken || (loginData.data && loginData.data.token);
       if (token) {
         localStorage.setItem('token', token);
 
         // Giải mã JWT của Google để lấy Tên và Email người dùng
         const base64Url = idToken.split('.')[1];
+        // Khai báo biến/hằng số: base64 - Dùng trong logic xử lý của component
         const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+        // Hàm thực thi logic: jsonPayload
         const jsonPayload = decodeURIComponent(atob(base64).split('').map(function (c) {
           return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
         }).join(''));
 
+        // Khai báo biến/hằng số: googlePayload - Dùng trong logic xử lý của component
         const googlePayload = JSON.parse(jsonPayload);
 
         localStorage.setItem('user', JSON.stringify({
@@ -268,13 +311,16 @@ export default function AuthPage() {
 
   useEffect(() => {
     if (!isLoggedIn) {
+      // Hàm thực thi logic: initGoogleBtn
       const initGoogleBtn = () => {
         if (window.google) {
+          // Khai báo biến/hằng số: googleClientId - Dùng trong logic xử lý của component
           const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID || "702529174883-k7q714ds1n185oaabhl85hfhhqhqg7dq.apps.googleusercontent.com";
           window.google.accounts.id.initialize({
             client_id: googleClientId,
             callback: handleGoogleLoginSuccess
           });
+          // Khai báo biến/hằng số: btnParent - Dùng trong logic xử lý của component
           const btnParent = document.getElementById("google-signin-btn");
           if (btnParent) {
             window.google.accounts.id.renderButton(
@@ -287,6 +333,7 @@ export default function AuthPage() {
 
       initGoogleBtn();
 
+      // Hàm thực thi logic: timer
       const timer = setInterval(() => {
         if (window.google) {
           initGoogleBtn();
@@ -312,9 +359,13 @@ export default function AuthPage() {
 
     try {
       if (isLogin) {
+        // Khai báo biến/hằng số: res - Dùng trong logic xử lý của component
         const res = await authService.login({ username, password });
+        // Khai báo biến/hằng số: token - Dùng trong logic xử lý của component
         const token = res?.token || res?.accessToken || res?.data?.token;
+        // Khai báo biến/hằng số: id - Dùng trong logic xử lý của component
         const id = res?.id || res?.data?.id;
+        // Khai báo biến/hằng số: role - Dùng trong logic xử lý của component
         const role = res?.role || res?.data?.role;
 
         if (!token) {
@@ -326,7 +377,9 @@ export default function AuthPage() {
         localStorage.setItem('user', JSON.stringify({ id, username, role }));
 
         try {
+          // Khai báo biến/hằng số: cartRes - Dùng trong logic xử lý của component
           const cartRes = await api.get('/Cart');
+          // Cấu hình/Hằng số/Dịch vụ dữ liệu: cartData
           const cartData = cartRes?.data || cartRes;
           if (cartData) {
             localStorage.setItem('cart', JSON.stringify(cartData));
@@ -337,7 +390,9 @@ export default function AuthPage() {
 
         window.dispatchEvent(new Event('auth-change'));
 
+        // Khai báo biến/hằng số: searchParams - Dùng trong logic xử lý của component
         const searchParams = new URLSearchParams(location.search);
+        // Khai báo biến/hằng số: redirectUrl - Dùng trong logic xử lý của component
         const redirectUrl = searchParams.get('redirect');
         if (redirectUrl) {
           navigate(redirectUrl);
@@ -354,6 +409,7 @@ export default function AuthPage() {
         setConfirmPassword('');
       }
     } catch (err) {
+      // Khai báo biến/hằng số: msg - Dùng trong logic xử lý của component
       const msg = typeof err === 'string' ? err : (err?.message || err?.response?.data || 'Đăng nhập thất bại. Vui lòng kiểm tra lại.');
       setError(msg);
     } finally {
@@ -364,6 +420,7 @@ export default function AuthPage() {
   // Step 1: Send Reset OTP via SMTP API
   const handleSendResetOtp = async (e) => {
     if (e) e.preventDefault();
+    // Khai báo biến/hằng số: targetInput - Dùng trong logic xử lý của component
     const targetInput = resetEmail.trim() || resetUsername.trim();
     if (!targetInput) {
       setError('Vui lòng nhập Email hoặc Tên đăng nhập.');
@@ -373,7 +430,9 @@ export default function AuthPage() {
     setError('');
 
     try {
+      // Khai báo biến/hằng số: res - Dùng trong logic xử lý của component
       const res = await authService.sendForgotPasswordOtp(targetInput);
+      // Khai báo biến/hằng số: emailRes - Dùng trong logic xử lý của component
       const emailRes = res?.email || res?.data?.email;
       if (emailRes) {
         setResetEmail(emailRes);
@@ -381,6 +440,7 @@ export default function AuthPage() {
       setForgotPasswordOtp(''); // Set rỗng để ẨN Trình giả lập Email (Demo)
       setForgotPasswordStep(2);
     } catch (err) {
+      // Khai báo biến/hằng số: msg - Dùng trong logic xử lý của component
       const msg = typeof err === 'string' ? err : (err?.message || err?.response?.data || 'Không thể gửi mã OTP qua Email.');
       setError(msg);
     } finally {
@@ -401,6 +461,7 @@ export default function AuthPage() {
 
   // Resend OTP
   const handleResendResetOtp = async () => {
+    // Khai báo biến/hằng số: targetInput - Dùng trong logic xử lý của component
     const targetInput = resetEmail.trim() || resetUsername.trim();
     if (!targetInput) return;
     setLoading(true);
@@ -444,6 +505,7 @@ export default function AuthPage() {
       setResetNewPassword('');
       setResetConfirmPassword('');
     } catch (err) {
+      // Khai báo biến/hằng số: msg - Dùng trong logic xử lý của component
       const msg = typeof err === 'string' ? err : (err?.message || err?.response?.data || 'Đặt lại mật khẩu thất bại.');
       setError(msg);
     } finally {
@@ -526,6 +588,7 @@ export default function AuthPage() {
     setIsAddressFormOpen(true);
   };
 
+  // Hàm xử lý logic/sự kiện: handleProvinceChange
   const handleProvinceChange = (provinceId) => {
     setSelectedProvinceId(provinceId);
     setAddressForm(prev => ({
@@ -534,6 +597,7 @@ export default function AuthPage() {
     }));
   };
 
+  // Hàm xử lý logic/sự kiện: handleWardChange
   const handleWardChange = (wardId) => {
     setAddressForm(prev => ({
       ...prev,
@@ -541,6 +605,7 @@ export default function AuthPage() {
     }));
   };
 
+  // Hàm xử lý logic/sự kiện: handleSaveAddress
   const handleSaveAddress = async (e) => {
     e.preventDefault();
     if (!addressForm.wardId) {
@@ -549,6 +614,7 @@ export default function AuthPage() {
     }
     setLoading(true);
     try {
+      // Khai báo biến/hằng số: payload - Dùng trong logic xử lý của component
       const payload = {
         recipientName: addressForm.recipientName,
         phoneNumber: addressForm.phoneNumber,
@@ -573,6 +639,7 @@ export default function AuthPage() {
     }
   };
 
+  // Hàm xử lý logic/sự kiện: handleDeleteAddress
   const handleDeleteAddress = async (id) => {
     if (window.confirm('Bạn có chắc chắn muốn xóa địa chỉ này?')) {
       try {

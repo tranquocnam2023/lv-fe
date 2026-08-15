@@ -5,6 +5,7 @@ import { Package, Activity, FileText, AlertCircle, Award, ShoppingCart, Trending
 import { useFormat } from '../../../../hooks/useFormat';
 
 export default function InventoryStats({ products, txHistory }) {
+  // Khai báo giải nén các thuộc tính/hàm (formatCurrency) từ Hook / Context / Props
   const { formatCurrency } = useFormat();
 
   // ─── 1. TÍNH TOÁN CÁC CHỈ SỐ TỒN KHO CƠ BẢN ───────────────────────────
@@ -38,7 +39,9 @@ export default function InventoryStats({ products, txHistory }) {
 
   // Xác định mốc thời gian 30 ngày tính ngược từ giao dịch mới nhất (tránh lỗi lệch ngày hệ thống)
   const times = txHistory.map(t => new Date(t.createdAt).getTime());
+  // Khai báo biến/hằng số: maxTime - Dùng trong logic xử lý của component
   const maxTime = times.length > 0 ? Math.max(...times) : new Date().getTime();
+  // Khai báo biến/hằng số: oneMonthAgo - Dùng trong logic xử lý của component
   const oneMonthAgo = maxTime - 30 * 24 * 60 * 60 * 1000;
 
   // LƯỢC LỌC GIAO DỊCH XUẤT BÁN HÀNG THÀNH CÔNG (EXPORT_SELL(xuất bán) VÀ KHÔNG BỊ HỦY) TRONG 30 NGÀY GẦN NHẤT CỦA 2 BẢNG PHỤ
@@ -51,11 +54,13 @@ export default function InventoryStats({ products, txHistory }) {
   // GOM NHÓM TỔNG SỐ LƯỢNG ĐÃ BÁN VÀ TỔNG DOANH THU THEO TỪNG PRODUCT ID TRONG 30 NGÀY
   const salesMap = {};
   recentSales.forEach(tx => {
+    // Khai báo biến/hằng số: prodId - Dùng trong logic xử lý của component
     const prodId = tx.productId;
     // qty: Số lượng sản phẩm bán ra trong giao dịch này (lấy trị tuyệt đối của biến động số lượng kho)
     const qty = Math.abs(tx.quantityChanged || 0);
     // revenue: Tính doanh thu bán lẻ thu về từ khách hàng của giao dịch này (Số lượng * Giá bán lẻ, CHƯA trừ đi giá vốn hay chi phí nhập hàng)
     const revenue = qty * (tx.price || 0);
+    // Hàm thực thi logic: product
     const product = products.find(p => p.id === prodId);
 
     if (!salesMap[prodId]) {
@@ -72,6 +77,7 @@ export default function InventoryStats({ products, txHistory }) {
     salesMap[prodId].totalRevenue += revenue; // Cộng dồn doanh thu bán lẻ
   });
 
+  // Khai báo biến/hằng số: allSales - Dùng trong logic xử lý của component
   const allSales = Object.values(salesMap);
   // HÀm kiểm tra xem là điện thoại
   // PHÂN TÁCH: LỌC TOP 5 SẢN PHẨM CHÍNH BÁN CHẠY NHẤT (ĐIỆN THOẠI...)
@@ -102,12 +108,15 @@ export default function InventoryStats({ products, txHistory }) {
 
   // HELPER HIỂN THỊ BADGE - MÀU SẮC THỨ HẠNG TRỰC QUAN (VÀNG, BẠC, ĐỒNG...)
   const renderRankBadge = (index) => {
+    // Khai báo biến/hằng số: badges - Dùng trong logic xử lý của component
     const badges = [
       { bg: 'bg-amber-100 text-amber-700 border-amber-200', text: '1' },
       { bg: 'bg-slate-100 text-slate-700 border-slate-200', text: '2' },
       { bg: 'bg-orange-100 text-orange-700 border-orange-200', text: '3' },
     ];
+    // Khai báo biến/hằng số: defaultBadge - Dùng trong logic xử lý của component
     const defaultBadge = 'bg-gray-50 text-gray-500 border-gray-150';
+    // Khai báo biến/hằng số: badge - Dùng trong logic xử lý của component
     const badge = badges[index] || { bg: defaultBadge, text: String(index + 1) };
 
     return (
@@ -123,6 +132,7 @@ export default function InventoryStats({ products, txHistory }) {
       {/* ─── HIỂN THỊ 4 THẺ CHỈ SỐ TỒN KHO CƠ BẢN ──────────────────────── */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
         {STATS_CONFIG.map((item, i) => {
+          // Khai báo biến/hằng số: Icon - Dùng trong logic xử lý của component
           const Icon = item.icon;
           return (
             <div key={i} className="p-5 rounded-md flex items-center justify-between h-28 bg-white border border-admin-border/50 shadow-sm hover:shadow-md transition-all duration-300">

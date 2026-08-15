@@ -28,12 +28,17 @@ export default function ProfileAddressTab({
   handleSaveAddress,
   loading
 }) {
+  // Hàm thực thi logic: selectedProvince
   const selectedProvince = provinces?.find(p => p.id === selectedProvinceId);
+  // Khai báo biến/hằng số: provinceName - Dùng trong logic xử lý của component
   const provinceName = selectedProvince ? (selectedProvince.fullName || selectedProvince.name) : '';
 
+  // Hàm thực thi logic: selectedWard
   const selectedWard = wards?.find(w => w.id === addressForm.wardId);
+  // Khai báo biến/hằng số: wardName - Dùng trong logic xử lý của component
   const wardName = selectedWard ? (selectedWard.fullName || selectedWard.name) : '';
 
+  // Khai báo biến/hằng số: addressContext - Dùng trong logic xử lý của component
   const addressContext = [wardName, provinceName].filter(Boolean).join(', ');
 
   return (

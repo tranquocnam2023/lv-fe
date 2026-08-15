@@ -4,7 +4,9 @@ import { useLoading } from '../context/LoadingContext';
 import { THEME } from '../utils/theme';
 
 export default function TermsOfServicePage() {
+    // Hook điều hướng trang (useNavigate) để chuyển hướng Route
     const navigate = useNavigate();
+    // Khai báo giải nén các thuộc tính/hàm (stopLoading) từ Hook / Context / Props
     const { stopLoading } = useLoading();
     
     useEffect(() => {

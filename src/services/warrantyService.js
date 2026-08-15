@@ -1,5 +1,6 @@
 import api from './api';
 
+// Cấu hình/Hằng số/Dịch vụ dữ liệu: warrantyService
 export const warrantyService = {
   // Lấy danh sách tất cả gói bảo hành khả dụng
   getAllWarranties: () => api.get('/Warranty'),

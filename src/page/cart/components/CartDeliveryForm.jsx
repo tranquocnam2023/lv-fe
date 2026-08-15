@@ -61,6 +61,7 @@ export default function CartDeliveryForm({
 
           <div className="grid grid-cols-1 gap-2">
             {userAddresses.map((addr) => {
+              // Khai báo biến/hằng số: isSelected - Dùng trong logic xử lý của component
               const isSelected =
                 formData.fullName === addr.recipientName &&
                 formData.phone === addr.phoneNumber &&

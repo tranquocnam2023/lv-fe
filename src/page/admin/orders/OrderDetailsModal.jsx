@@ -14,6 +14,7 @@ const getPaymentMethodLabel = (method) => {
   }
 };
 
+// Hàm xử lý logic/sự kiện: getShippingStatus
 const getShippingStatus = (status) => {
   switch (status) {
     case 'pending':
@@ -37,15 +38,22 @@ const getShippingStatus = (status) => {
 };
 
 export default function OrderDetailsModal({ order, onClose, onShipWithAhamove }) {
+  // Khai báo giải nén các thuộc tính/hàm (formatCurrency, formatDate) từ Hook / Context / Props
   const { formatCurrency, formatDate } = useFormat();
 
   if (!order) return null;
 
+  // Hàm thực thi logic: subTotal
   const subTotal = order.items?.reduce((sum, i) => sum + (i.quantity * (i.priceAtPurchase + (i.warrantyPrice || 0))), 0) || 0;
+  // Khai báo biến/hằng số: discountFromPoints - Dùng trong logic xử lý của component
   const discountFromPoints = order.discountFromPoints || 0;
+  // Khai báo biến/hằng số: totalPaid - Dùng trong logic xử lý của component
   const totalPaid = order.amount || 0;
+  // Khai báo biến/hằng số: diff - Dùng trong logic xử lý của component
   const diff = totalPaid - subTotal + discountFromPoints;
+  // Khai báo biến/hằng số: shippingFee - Dùng trong logic xử lý của component
   const shippingFee = diff > 0 ? diff : 0;
+  // Khai báo biến/hằng số: promoDiscount - Dùng trong logic xử lý của component
   const promoDiscount = diff < 0 ? -diff : 0;
 
   return (

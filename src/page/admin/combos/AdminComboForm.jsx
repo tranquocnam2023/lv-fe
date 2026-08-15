@@ -7,9 +7,12 @@ import { brandService } from '../../../services/brandService';
 import CampaignRuleGroup from './components/CampaignRuleGroup';
 
 export default function AdminComboForm({ comboId = null, onBack }) {
+  // Khai báo biến/hằng số: isEdit - Dùng trong logic xử lý của component
   const isEdit = Boolean(comboId);
 
+  // State: loading - Quản lý trạng thái và dữ liệu của loading trong giao diện
   const [loading, setLoading] = useState(false);
+  // State: fetchingData - Quản lý trạng thái và dữ liệu của fetchingData trong giao diện
   const [fetchingData, setFetchingData] = useState(true);
 
   // Form Basic Info
@@ -27,26 +30,34 @@ export default function AdminComboForm({ comboId = null, onBack }) {
 
   // Rules Arrays
   const [mainRules, setMainRules] = useState([]);
+  // State: addonRules - Quản lý trạng thái và dữ liệu của addonRules trong giao diện
   const [addonRules, setAddonRules] = useState([]);
 
   // Options for Selects
   const [products, setProducts] = useState([]);
+  // State: categories - Quản lý trạng thái và dữ liệu của categories trong giao diện
   const [categories, setCategories] = useState([]);
+  // State: brands - Quản lý trạng thái và dữ liệu của brands trong giao diện
   const [brands, setBrands] = useState([]);
 
   // Load Dropdown Options & Initial Edit Data
   useEffect(() => {
+    // Hàm thực thi logic: loadOptionsAndCampaign
     const loadOptionsAndCampaign = async () => {
       setFetchingData(true);
       try {
+        // State: prodRes - Quản lý trạng thái và dữ liệu của prodRes trong giao diện
         const [prodRes, catRes, brandRes] = await Promise.all([
           productService.getAll(true),
           categoryService.getAll(),
           brandService.getAll()
         ]);
 
+        // Khai báo biến/hằng số: rawProds - Dùng trong logic xử lý của component
         const rawProds = prodRes.data || prodRes || [];
+        // Khai báo biến/hằng số: rawCats - Dùng trong logic xử lý của component
         const rawCats = catRes.data || catRes || [];
+        // Khai báo biến/hằng số: rawBrands - Dùng trong logic xử lý của component
         const rawBrands = brandRes.data || brandRes || [];
 
         setProducts(Array.isArray(rawProds) ? rawProds : []);
@@ -55,10 +66,14 @@ export default function AdminComboForm({ comboId = null, onBack }) {
 
         // If Edit Mode, fetch campaign details
         if (comboId) {
+          // Khai báo biến/hằng số: campRes - Dùng trong logic xử lý của component
           const campRes = await api.get(`/PromotionCampaign/${comboId}`);
+          // Khai báo biến/hằng số: camp - Dùng trong logic xử lý của component
           const camp = campRes.data || campRes;
 
+          // Khai báo biến/hằng số: startIso - Dùng trong logic xử lý của component
           const startIso = camp.startDate ? new Date(camp.startDate).toISOString().slice(0, 16) : '';
+          // Khai báo biến/hằng số: endIso - Dùng trong logic xử lý của component
           const endIso = camp.endDate ? new Date(camp.endDate).toISOString().slice(0, 16) : '';
 
           setFormData({
@@ -91,6 +106,7 @@ export default function AdminComboForm({ comboId = null, onBack }) {
         } else {
           // Default dates: Now & +30 Days
           const now = new Date();
+          // Khai báo biến/hằng số: nextMonth - Dùng trong logic xử lý của component
           const nextMonth = new Date();
           nextMonth.setDate(now.getDate() + 30);
 
@@ -123,6 +139,7 @@ export default function AdminComboForm({ comboId = null, onBack }) {
   // Dynamic Cascading Filtering Helpers
   const getFilteredCategories = (brandId) => {
     if (!brandId) return categories;
+    // Khai báo biến/hằng số: catIdsWithBrand - Dùng trong logic xử lý của component
     const catIdsWithBrand = new Set(
       products
         .filter(p => String(p.brandId) === String(brandId))
@@ -131,8 +148,10 @@ export default function AdminComboForm({ comboId = null, onBack }) {
     return categories.filter(c => catIdsWithBrand.has(c.id));
   };
 
+  // Hàm xử lý logic/sự kiện: getFilteredBrands
   const getFilteredBrands = (categoryId) => {
     if (!categoryId) return brands;
+    // Khai báo biến/hằng số: brandIdsWithCat - Dùng trong logic xử lý của component
     const brandIdsWithCat = new Set(
       products
         .filter(p => String(p.categoryId) === String(categoryId))
@@ -146,16 +165,20 @@ export default function AdminComboForm({ comboId = null, onBack }) {
     setMainRules([...mainRules, { productId: '', categoryId: '', brandId: '' }]);
   };
 
+  // Hàm thực thi logic: removeMainRule
   const removeMainRule = (index) => {
     setMainRules(mainRules.filter((_, idx) => idx !== index));
   };
 
+  // Hàm thực thi logic: updateMainRule
   const updateMainRule = (index, field, value) => {
+    // Khai báo biến/hằng số: updated - Dùng trong logic xử lý của component
     const updated = [...mainRules];
     updated[index][field] = value;
 
     if (field === 'productId') {
       if (value) {
+        // Hàm thực thi logic: selectedProd
         const selectedProd = products.find(p => String(p.id) === String(value));
         if (selectedProd) {
           updated[index].categoryId = selectedProd.categoryId ? String(selectedProd.categoryId) : '';
@@ -168,6 +191,7 @@ export default function AdminComboForm({ comboId = null, onBack }) {
     }
 
     if (field === 'categoryId' && value && updated[index].brandId) {
+      // Hàm thực thi logic: validBrandIds
       const validBrandIds = getFilteredBrands(value).map(b => String(b.id));
       if (!validBrandIds.includes(String(updated[index].brandId))) {
         updated[index].brandId = '';
@@ -175,6 +199,7 @@ export default function AdminComboForm({ comboId = null, onBack }) {
     }
 
     if (field === 'brandId' && value && updated[index].categoryId) {
+      // Hàm thực thi logic: validCatIds
       const validCatIds = getFilteredCategories(value).map(c => String(c.id));
       if (!validCatIds.includes(String(updated[index].categoryId))) {
         updated[index].categoryId = '';
@@ -189,16 +214,20 @@ export default function AdminComboForm({ comboId = null, onBack }) {
     setAddonRules([...addonRules, { productId: '', categoryId: '', brandId: '' }]);
   };
 
+  // Hàm thực thi logic: removeAddonRule
   const removeAddonRule = (index) => {
     setAddonRules(addonRules.filter((_, idx) => idx !== index));
   };
 
+  // Hàm thực thi logic: updateAddonRule
   const updateAddonRule = (index, field, value) => {
+    // Khai báo biến/hằng số: updated - Dùng trong logic xử lý của component
     const updated = [...addonRules];
     updated[index][field] = value;
 
     if (field === 'productId') {
       if (value) {
+        // Hàm thực thi logic: selectedProd
         const selectedProd = products.find(p => String(p.id) === String(value));
         if (selectedProd) {
           updated[index].categoryId = selectedProd.categoryId ? String(selectedProd.categoryId) : '';
@@ -211,6 +240,7 @@ export default function AdminComboForm({ comboId = null, onBack }) {
     }
 
     if (field === 'categoryId' && value && updated[index].brandId) {
+      // Hàm thực thi logic: validBrandIds
       const validBrandIds = getFilteredBrands(value).map(b => String(b.id));
       if (!validBrandIds.includes(String(updated[index].brandId))) {
         updated[index].brandId = '';
@@ -218,6 +248,7 @@ export default function AdminComboForm({ comboId = null, onBack }) {
     }
 
     if (field === 'brandId' && value && updated[index].categoryId) {
+      // Hàm thực thi logic: validCatIds
       const validCatIds = getFilteredCategories(value).map(c => String(c.id));
       if (!validCatIds.includes(String(updated[index].categoryId))) {
         updated[index].categoryId = '';
@@ -249,6 +280,7 @@ export default function AdminComboForm({ comboId = null, onBack }) {
         brandId: r.brandId ? Number(r.brandId) : null
       }));
 
+    // Khai báo biến/hằng số: cleanAddonRules - Dùng trong logic xử lý của component
     const cleanAddonRules = addonRules
       .filter(r => r.productId || r.categoryId || r.brandId)
       .map(r => ({
@@ -265,6 +297,7 @@ export default function AdminComboForm({ comboId = null, onBack }) {
     // Kiểm tra chống trùng lặp dòng quy tắc Sản phẩm chính
     const seenMainKeys = new Set();
     for (let i = 0; i < cleanMainRules.length; i++) {
+      // Khai báo biến/hằng số: key - Dùng trong logic xử lý của component
       const key = `${cleanMainRules[i].productId || ''}_${cleanMainRules[i].categoryId || ''}_${cleanMainRules[i].brandId || ''}`;
       if (seenMainKeys.has(key)) {
         alert(`Cảnh báo trùng lặp: Nhóm điều kiện sản phẩm chính #${i + 1} bị trùng lặp hoàn toàn với một nhóm điều kiện khác. Vui lòng kiểm tra lại.`);
@@ -276,6 +309,7 @@ export default function AdminComboForm({ comboId = null, onBack }) {
     // Kiểm tra chống trùng lặp dòng quy tắc Phụ kiện mua kèm
     const seenAddonKeys = new Set();
     for (let i = 0; i < cleanAddonRules.length; i++) {
+      // Khai báo biến/hằng số: key - Dùng trong logic xử lý của component
       const key = `${cleanAddonRules[i].productId || ''}_${cleanAddonRules[i].categoryId || ''}_${cleanAddonRules[i].brandId || ''}`;
       if (seenAddonKeys.has(key)) {
         alert(`Cảnh báo trùng lặp: Nhóm phụ kiện ưu đãi #${i + 1} bị trùng lặp hoàn toàn với một nhóm phụ kiện khác. Vui lòng kiểm tra lại.`);
@@ -284,6 +318,7 @@ export default function AdminComboForm({ comboId = null, onBack }) {
       seenAddonKeys.add(key);
     }
 
+    // Khai báo biến/hằng số: payload - Dùng trong logic xử lý của component
     const payload = {
       name: formData.name.trim(),
       description: formData.description.trim(),

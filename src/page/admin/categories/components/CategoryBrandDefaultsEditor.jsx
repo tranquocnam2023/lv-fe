@@ -7,22 +7,33 @@ export default function CategoryBrandDefaultsEditor({ categoryId, specsTemplate 
   // Normalize categoryId to a clean integer to prevent malformed URLs (e.g. "1:1" composite keys)
   const normalizedCategoryId = categoryId ? parseInt(categoryId, 10) : null;
 
+  // State: brands - Quản lý trạng thái và dữ liệu của brands trong giao diện
   const [brands, setBrands] = useState([]);
+  // State: configuredDefaults - Quản lý trạng thái và dữ liệu của configuredDefaults trong giao diện
   const [configuredDefaults, setConfiguredDefaults] = useState([]);
+  // State: selectedBrandId - Quản lý trạng thái và dữ liệu của selectedBrandId trong giao diện
   const [selectedBrandId, setSelectedBrandId] = useState('');
+  // State: loading - Quản lý trạng thái và dữ liệu của loading trong giao diện
   const [loading, setLoading] = useState(false);
+  // State: expandedId - Quản lý trạng thái và dữ liệu của expandedId trong giao diện
   const [expandedId, setExpandedId] = useState(null);
+  // State: localDefaults - Quản lý trạng thái và dữ liệu của localDefaults trong giao diện
   const [localDefaults, setLocalDefaults] = useState({}); // map of { brandId: { specKey: value } }
+  // State: statusMsg - Quản lý trạng thái và dữ liệu của statusMsg trong giao diện
   const [statusMsg, setStatusMsg] = useState(null);
+  // State: searchQuery - Quản lý trạng thái và dữ liệu của searchQuery trong giao diện
   const [searchQuery, setSearchQuery] = useState('');
+  // State: editingKey - Quản lý trạng thái và dữ liệu của editingKey trong giao diện
   const [editingKey, setEditingKey] = useState({ brandId: null, keyName: null });
 
+  // Hàm xử lý logic/sự kiện: handleToggleExpand
   const handleToggleExpand = (brandId) => {
     setExpandedId(expandedId === brandId ? null : brandId);
     setSearchQuery('');
     setEditingKey({ brandId: null, keyName: null });
   };
 
+  // Hàm xử lý logic/sự kiện: handleAddSpecKey
   const handleAddSpecKey = (brandId, keyName) => {
     setLocalDefaults(prev => ({
       ...prev,
@@ -33,8 +44,10 @@ export default function CategoryBrandDefaultsEditor({ categoryId, specsTemplate 
     }));
   };
 
+  // Hàm xử lý logic/sự kiện: handleRemoveSpecKey
   const handleRemoveSpecKey = (brandId, keyName) => {
     setLocalDefaults(prev => {
+      // Khai báo biến/hằng số: brandSpecs - Dùng trong logic xử lý của component
       const brandSpecs = { ...(prev[brandId] || {}) };
       delete brandSpecs[keyName];
       return {
@@ -48,8 +61,10 @@ export default function CategoryBrandDefaultsEditor({ categoryId, specsTemplate 
   const templateKeys = React.useMemo(() => {
     if (!specsTemplate) return [];
     try {
+      // Khai báo biến/hằng số: parsed - Dùng trong logic xử lý của component
       const parsed = JSON.parse(specsTemplate);
       if (Array.isArray(parsed)) {
+        // Khai báo biến/hằng số: keys - Dùng trong logic xử lý của component
         const keys = [];
         parsed.forEach(group => {
           if (group.items && Array.isArray(group.items)) {
@@ -71,9 +86,11 @@ export default function CategoryBrandDefaultsEditor({ categoryId, specsTemplate 
   // Load brands and existing overrides
   useEffect(() => {
     if (!normalizedCategoryId || isNaN(normalizedCategoryId)) return;
+    // Hàm thực thi logic: loadData
     const loadData = async () => {
       setLoading(true);
       try {
+        // State: allBrands - Quản lý trạng thái và dữ liệu của allBrands trong giao diện
         const [allBrands, existingOverrides] = await Promise.all([
           brandService.getAll(),
           categoryBrandDefaultService.getByCategory(normalizedCategoryId)
@@ -81,6 +98,7 @@ export default function CategoryBrandDefaultsEditor({ categoryId, specsTemplate 
 
         setBrands(allBrands || []);
         
+        // Khai báo biến/hằng số: configured - Dùng trong logic xử lý của component
         const configured = existingOverrides || [];
         setConfiguredDefaults(configured);
 
@@ -103,14 +121,17 @@ export default function CategoryBrandDefaultsEditor({ categoryId, specsTemplate 
     loadData();
   }, [normalizedCategoryId]);
 
+  // Hàm thực thi logic: showStatus
   const showStatus = (type, text) => {
     setStatusMsg({ type, text });
     setTimeout(() => setStatusMsg(null), 4000);
   };
 
+  // Hàm xử lý logic/sự kiện: handleAddBrandConfig
   const handleAddBrandConfig = () => {
     if (!selectedBrandId) return;
     
+    // Khai báo biến/hằng số: brandIdInt - Dùng trong logic xử lý của component
     const brandIdInt = parseInt(selectedBrandId, 10);
     // Check if already configured
     if (configuredDefaults.some(d => d.brandId === brandIdInt)) {
@@ -118,9 +139,11 @@ export default function CategoryBrandDefaultsEditor({ categoryId, specsTemplate 
       return;
     }
 
+    // Hàm thực thi logic: brand
     const brand = brands.find(b => b.id === brandIdInt);
     if (!brand) return;
 
+    // Khai báo biến/hằng số: newConfigItem - Dùng trong logic xử lý của component
     const newConfigItem = {
       id: 0, // Temporary ID for unsaved items
       categoryId: normalizedCategoryId,
@@ -141,6 +164,7 @@ export default function CategoryBrandDefaultsEditor({ categoryId, specsTemplate 
     showStatus('success', `Đã thêm khung cấu hình cho hãng ${brand.name}. Nhớ điền thông tin và bấm Lưu!`);
   };
 
+  // Hàm xử lý logic/sự kiện: handleValueChange
   const handleValueChange = (brandId, keyName, val) => {
     setLocalDefaults(prev => ({
       ...prev,
@@ -151,7 +175,9 @@ export default function CategoryBrandDefaultsEditor({ categoryId, specsTemplate 
     }));
   };
 
+  // Hàm xử lý logic/sự kiện: handleSaveConfig
   const handleSaveConfig = async (brandId) => {
+    // Khai báo biến/hằng số: specsForBrand - Dùng trong logic xử lý của component
     const specsForBrand = localDefaults[brandId] || {};
     // Clean empty values
     const cleanedSpecs = {};
@@ -162,6 +188,7 @@ export default function CategoryBrandDefaultsEditor({ categoryId, specsTemplate 
     });
 
     try {
+      // Khai báo biến/hằng số: res - Dùng trong logic xử lý của component
       const res = await categoryBrandDefaultService.upsert({
         categoryId: normalizedCategoryId,
         brandId: parseInt(brandId, 10),
@@ -179,6 +206,7 @@ export default function CategoryBrandDefaultsEditor({ categoryId, specsTemplate 
     }
   };
 
+  // Hàm xử lý logic/sự kiện: handleDeleteConfig
   const handleDeleteConfig = async (configId, brandId, brandName) => {
     if (!window.confirm(`Bạn có chắc chắn muốn xóa cấu hình mặc định của hãng ${brandName}?`)) return;
 
@@ -189,6 +217,7 @@ export default function CategoryBrandDefaultsEditor({ categoryId, specsTemplate 
       
       setConfiguredDefaults(prev => prev.filter(item => item.brandId !== brandId));
       setLocalDefaults(prev => {
+        // Khai báo biến/hằng số: copy - Dùng trong logic xử lý của component
         const copy = { ...prev };
         delete copy[brandId];
         return copy;
@@ -281,8 +310,11 @@ export default function CategoryBrandDefaultsEditor({ categoryId, specsTemplate 
           ) : (
             <div className="space-y-3">
               {configuredDefaults.map((item) => {
+                // Khai báo biến/hằng số: isExpanded - Dùng trong logic xử lý của component
                 const isExpanded = expandedId === item.brandId;
+                // Khai báo biến/hằng số: currentVals - Dùng trong logic xử lý của component
                 const currentVals = localDefaults[item.brandId] || {};
+                // Hàm thực thi logic: filledCount
                 const filledCount = Object.values(currentVals).filter(v => v && v.trim() !== '').length;
 
                 return (
@@ -302,6 +334,7 @@ export default function CategoryBrandDefaultsEditor({ categoryId, specsTemplate 
                       <div className="flex items-center gap-3">
                         {/* Brand Logo */}
                         {(() => {
+                          // Hàm thực thi logic: brandInfo
                           const brandInfo = brands.find(b => b.id === item.brandId);
                           if (brandInfo?.imageUrl) {
                             return (
@@ -346,12 +379,14 @@ export default function CategoryBrandDefaultsEditor({ categoryId, specsTemplate 
 
                     {/* Accordion Content */}
                     {isExpanded && (() => {
+                      // Hàm thực thi logic: filteredKeys
                       const filteredKeys = templateKeys.filter(({ keyName, groupName }) => 
                         !searchQuery ||
                         keyName.toLowerCase().includes(searchQuery.toLowerCase()) ||
                         groupName.toLowerCase().includes(searchQuery.toLowerCase())
                       );
 
+                      // Khai báo biến/hằng số: groupedTemplateKeys - Dùng trong logic xử lý của component
                       const groupedTemplateKeys = {};
                       filteredKeys.forEach(({ groupName, keyName }) => {
                         if (!groupedTemplateKeys[groupName]) {
@@ -395,8 +430,11 @@ export default function CategoryBrandDefaultsEditor({ categoryId, specsTemplate 
                                   {/* Inline Edit and Add Chips (Right) */}
                                   <div className="flex-1 flex flex-wrap gap-2">
                                     {keys.map((keyName) => {
+                                      // Khai báo biến/hằng số: isActive - Dùng trong logic xử lý của component
                                       const isActive = Object.prototype.hasOwnProperty.call(currentVals, keyName);
+                                      // Khai báo biến/hằng số: val - Dùng trong logic xử lý của component
                                       const val = currentVals[keyName] || '';
+                                      // Khai báo biến/hằng số: isEditing - Dùng trong logic xử lý của component
                                       const isEditing = editingKey.brandId === item.brandId && editingKey.keyName === keyName;
 
                                       if (isActive) {

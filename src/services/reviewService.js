@@ -1,5 +1,6 @@
 import api from './api';
 
+// Cấu hình/Hằng số/Dịch vụ dữ liệu: reviewService
 export const reviewService = {
   getAll: () => api.get('/Review/admin/all'),
   getByProductId: (productId) => api.get(`/Review/product/${productId}`),

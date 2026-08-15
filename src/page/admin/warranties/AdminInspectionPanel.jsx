@@ -24,15 +24,22 @@ export default function AdminInspectionPanel() {
 
   // ================= STATE TAB 1: THẨM ĐỊNH THIẾT BỊ =================
   const [orders, setOrders] = useState([]);
+  // State: ordersLoading - Quản lý trạng thái và dữ liệu của ordersLoading trong giao diện
   const [ordersLoading, setOrdersLoading] = useState(false);
+  // State: orderSearchQuery - Quản lý trạng thái và dữ liệu của orderSearchQuery trong giao diện
   const [orderSearchQuery, setOrderSearchQuery] = useState('');
+  // State: orderStatusFilter - Quản lý trạng thái và dữ liệu của orderStatusFilter trong giao diện
   const [orderStatusFilter, setOrderStatusFilter] = useState('WAITING_CHECK'); // 'WAITING_CHECK' | 'PASSED' | 'FAILED' | 'ALL'
+  // State: selectedInspectionItem - Quản lý trạng thái và dữ liệu của selectedInspectionItem trong giao diện
   const [selectedInspectionItem, setSelectedInspectionItem] = useState(null);
+  // State: inspectionNote - Quản lý trạng thái và dữ liệu của inspectionNote trong giao diện
   const [inspectionNote, setInspectionNote] = useState('');
+  // State: inspectionSubmitting - Quản lý trạng thái và dữ liệu của inspectionSubmitting trong giao diện
   const [inspectionSubmitting, setInspectionSubmitting] = useState(false);
 
   // State các Modal nâng cao theo thiết kế
   const [imeiModal, setImeiModal] = useState({ isOpen: false, item: null, imei: '' });
+  // State: rejectModal - Quản lý trạng thái và dữ liệu của rejectModal trong giao diện
   const [rejectModal, setRejectModal] = useState({
     isOpen: false,
     item: null,
@@ -42,9 +49,13 @@ export default function AdminInspectionPanel() {
 
   // ================= STATE TAB 2: CRUD GÓI BẢO HÀNH =================
   const [packages, setPackages] = useState([]);
+  // State: packagesLoading - Quản lý trạng thái và dữ liệu của packagesLoading trong giao diện
   const [packagesLoading, setPackagesLoading] = useState(false);
+  // State: selectedPackage - Quản lý trạng thái và dữ liệu của selectedPackage trong giao diện
   const [selectedPackage, setSelectedPackage] = useState(null); // Gói đang chọn để sửa
+  // State: isAddingNew - Quản lý trạng thái và dữ liệu của isAddingNew trong giao diện
   const [isAddingNew, setIsAddingNew] = useState(false); // Đang mở form thêm mới
+  // State: packageFormData - Quản lý trạng thái và dữ liệu của packageFormData trong giao diện
   const [packageFormData, setPackageFormData] = useState({
     code: '',
     name: '',
@@ -62,23 +73,32 @@ export default function AdminInspectionPanel() {
       maxPrice: ''
     }
   });
+  // State: crudSubmitting - Quản lý trạng thái và dữ liệu của crudSubmitting trong giao diện
   const [crudSubmitting, setCrudSubmitting] = useState(false);
 
   // ================= STATE TAB 3: BẢO HÀNH KHÁCH HÀNG & IMEI =================
   const [customerWarranties, setCustomerWarranties] = useState([]);
+  // State: customersLoading - Quản lý trạng thái và dữ liệu của customersLoading trong giao diện
   const [customersLoading, setCustomersLoading] = useState(false);
+  // State: customerSearch - Quản lý trạng thái và dữ liệu của customerSearch trong giao diện
   const [customerSearch, setCustomerSearch] = useState('');
+  // State: customerStatusFilter - Quản lý trạng thái và dữ liệu của customerStatusFilter trong giao diện
   const [customerStatusFilter, setCustomerStatusFilter] = useState('ALL');
+  // State: editCustomerModal - Quản lý trạng thái và dữ liệu của editCustomerModal trong giao diện
   const [editCustomerModal, setEditCustomerModal] = useState({ isOpen: false, item: null, imei: '', note: '' });
+  // State: customerSubmitting - Quản lý trạng thái và dữ liệu của customerSubmitting trong giao diện
   const [customerSubmitting, setCustomerSubmitting] = useState(false);
 
+  // Hàm thực thi logic: loadCustomerWarranties
   const loadCustomerWarranties = async () => {
     setCustomersLoading(true);
     try {
+      // Khai báo biến/hằng số: res - Dùng trong logic xử lý của component
       const res = await warrantyService.getCustomerWarranties({
         search: customerSearch || undefined,
         status: customerStatusFilter !== 'ALL' ? customerStatusFilter : undefined
       });
+      // Cấu hình/Hằng số/Dịch vụ dữ liệu: data
       const data = res?.data || res;
       setCustomerWarranties(Array.isArray(data) ? data : []);
     } catch (err) {
@@ -94,6 +114,7 @@ export default function AdminInspectionPanel() {
     }
   }, [viewMode, customerSearch, customerStatusFilter]);
 
+  // Hàm xử lý logic/sự kiện: handleUpdateCustomerImeiSubmit
   const handleUpdateCustomerImeiSubmit = async (e) => {
     e.preventDefault();
     if (!editCustomerModal.item) return;
@@ -118,7 +139,9 @@ export default function AdminInspectionPanel() {
 
   // States các danh mục ràng buộc
   const [brands, setBrands] = useState([]);
+  // State: categories - Quản lý trạng thái và dữ liệu của categories trong giao diện
   const [categories, setCategories] = useState([]);
+  // State: products - Quản lý trạng thái và dữ liệu của products trong giao diện
   const [products, setProducts] = useState([]);
 
   // State thông báo chung
@@ -127,6 +150,7 @@ export default function AdminInspectionPanel() {
   // Tự động tắt thông báo sau 4 giây
   useEffect(() => {
     if (message) {
+      // Hàm thực thi logic: timer
       const timer = setTimeout(() => setMessage(null), 4000);
       return () => clearTimeout(timer);
     }
@@ -136,6 +160,7 @@ export default function AdminInspectionPanel() {
   const loadOrders = async () => {
     setOrdersLoading(true);
     try {
+      // Khai báo biến/hằng số: res - Dùng trong logic xử lý của component
       const res = await orderService.getAll();
       if (res && Array.isArray(res)) {
         setOrders(res);
@@ -153,6 +178,7 @@ export default function AdminInspectionPanel() {
   const loadPackages = async () => {
     setPackagesLoading(true);
     try {
+      // Khai báo biến/hằng số: res - Dùng trong logic xử lý của component
       const res = await warrantyService.getAllPackages();
       if (res && Array.isArray(res)) {
         setPackages(res);
@@ -186,6 +212,7 @@ export default function AdminInspectionPanel() {
 
   // ================= XỬ LÝ NGHIỆP VỤ TAB 1 (THẨM ĐỊNH) =================
   const getFilteredInspectionItems = () => {
+    // Cấu hình/Hằng số/Dịch vụ dữ liệu: list
     const list = [];
     orders.forEach(order => {
       if (order.items) {
@@ -207,14 +234,17 @@ export default function AdminInspectionPanel() {
     list.sort((a, b) => b.orderId - a.orderId);
 
     return list.filter(item => {
+      // Khai báo biến/hằng số: cleanQuery - Dùng trong logic xử lý của component
       const cleanQuery = orderSearchQuery.replace('#', '').trim().toLowerCase();
 
+      // Khai báo biến/hằng số: matchesSearch - Dùng trong logic xử lý của component
       const matchesSearch =
         String(item.orderId).includes(cleanQuery) ||
         (item.phoneNumber && item.phoneNumber.includes(cleanQuery)) ||
         (item.imeiOrSerial && item.imeiOrSerial.toLowerCase().includes(cleanQuery)) ||
         (item.productName && item.productName.toLowerCase().includes(cleanQuery));
 
+      // Cấu hình/Hằng số/Dịch vụ dữ liệu: matchesStatus
       const matchesStatus =
         orderStatusFilter === 'ALL' || item.inspectionStatus === orderStatusFilter;
 
@@ -222,6 +252,7 @@ export default function AdminInspectionPanel() {
     });
   };
 
+  // Khai báo biến/hằng số: filteredInspectionItems - Dùng trong logic xử lý của component
   const filteredInspectionItems = getFilteredInspectionItems();
 
   // Thẩm định trực tiếp qua API
@@ -254,7 +285,9 @@ export default function AdminInspectionPanel() {
 
   // Kịch bản click Duyệt (Đã có IMEI -> Duyệt thẳng; Chưa có -> Bật Modal)
   const handleApproveClick = (item) => {
+    // Khai báo biến/hằng số: cleanImei - Dùng trong logic xử lý của component
     const cleanImei = (item.imeiOrSerial || '').trim();
+    // Khai báo biến/hằng số: hasImei - Dùng trong logic xử lý của component
     const hasImei = cleanImei && cleanImei.toLowerCase() !== 'chưa cung cấp';
 
     if (hasImei) {
@@ -280,20 +313,25 @@ export default function AdminInspectionPanel() {
     });
   };
 
+  // Hàm xử lý logic/sự kiện: handleImeiSubmit
   const handleImeiSubmit = async (e) => {
     e.preventDefault();
+    // Khai báo biến/hằng số: cleanImei - Dùng trong logic xử lý của component
     const cleanImei = imeiModal.imei.trim();
     if (!/^\d{15}$/.test(cleanImei)) {
       alert('Mã IMEI phải chứa đúng 15 chữ số!');
       return;
     }
+    // Khai báo biến/hằng số: targetItem - Dùng trong logic xử lý của component
     const targetItem = imeiModal.item;
     setImeiModal({ isOpen: false, item: null, imei: '' });
     await handleUpdateInspectionDirect(targetItem, 'PASSED', 'Duyệt thẩm định kèm bổ sung IMEI thiết bị.', cleanImei);
   };
 
+  // Hàm xử lý logic/sự kiện: handleRejectSubmit
   const handleRejectSubmit = async (e) => {
     e.preventDefault();
+    // Khai báo biến/hằng số: finalReason - Dùng trong logic xử lý của component
     const finalReason = rejectModal.reason === 'Lý do khác'
       ? rejectModal.customReason.trim()
       : rejectModal.reason;
@@ -302,6 +340,7 @@ export default function AdminInspectionPanel() {
       alert('Vui lòng nhập hoặc chọn lý do từ chối cụ thể!');
       return;
     }
+    // Khai báo biến/hằng số: targetItem - Dùng trong logic xử lý của component
     const targetItem = rejectModal.item;
     setRejectModal({ isOpen: false, item: null, reason: 'Màn hình nứt vỡ', customReason: '' });
     await handleUpdateInspectionDirect(targetItem, 'FAILED', `Từ chối thẩm định: ${finalReason}`, null);
@@ -339,6 +378,7 @@ export default function AdminInspectionPanel() {
     });
   };
 
+  // Hàm xử lý logic/sự kiện: handleOpenEditForm
   const handleOpenEditForm = (pkg) => {
     setIsAddingNew(false);
     setSelectedPackage(pkg);
@@ -365,6 +405,7 @@ export default function AdminInspectionPanel() {
     });
   };
 
+  // Hàm xử lý logic/sự kiện: handleDeletePackage
   const handleDeletePackage = async (id) => {
     if (!window.confirm('Bạn có chắc chắn muốn xóa gói bảo hành này? Hành động này cũng sẽ xóa các quy tắc liên kết.')) {
       return;
@@ -383,25 +424,32 @@ export default function AdminInspectionPanel() {
     }
   };
 
+  // Hàm thực thi logic: generateWarrantyCode
   const generateWarrantyCode = (name) => {
     if (!name) return 'BH_' + Math.random().toString(36).substring(2, 10).toUpperCase();
+    // Khai báo biến/hằng số: cleanName - Dùng trong logic xử lý của component
     const cleanName = name
       .normalize('NFD')
       .replace(/[\u0300-\u036f]/g, '')
       .replace(/[^a-zA-Z0-9]/g, '_')
       .replace(/_+/g, '_')
       .toUpperCase();
+    // Khai báo biến/hằng số: truncated - Dùng trong logic xử lý của component
     const truncated = cleanName.substring(0, 35).replace(/(^_+|_+$)/g, '');
+    // Khai báo biến/hằng số: randomHex - Dùng trong logic xử lý của component
     const randomHex = Math.random().toString(36).substring(2, 8).toUpperCase();
     return `${truncated}_${randomHex}`.substring(0, 50);
   };
 
+  // Hàm xử lý logic/sự kiện: formatMoneyInput
   const formatMoneyInput = (val) => {
     if (val === '' || val === null || val === undefined) return '';
     return Number(val).toLocaleString('vi-VN').replace(/,/g, '.');
   };
 
+  // Hàm xử lý logic/sự kiện: handleMoneyChange
   const handleMoneyChange = (rawVal, fieldPath) => {
+    // Khai báo biến/hằng số: stringWithoutDots - Dùng trong logic xử lý của component
     const stringWithoutDots = rawVal.replace(/\./g, '');
     if (stringWithoutDots === '') {
       if (fieldPath === 'basePrice') {
@@ -415,6 +463,7 @@ export default function AdminInspectionPanel() {
     }
 
     if (/^\d+$/.test(stringWithoutDots)) {
+      // Khai báo biến/hằng số: parsed - Dùng trong logic xử lý của component
       const parsed = parseInt(stringWithoutDots, 10);
       if (fieldPath === 'basePrice') {
         setPackageFormData(prev => ({ ...prev, basePrice: parsed }));
@@ -426,6 +475,7 @@ export default function AdminInspectionPanel() {
     }
   };
 
+  // Hàm xử lý logic/sự kiện: handleSavePackage
   const handleSavePackage = async (e) => {
     e.preventDefault();
     if (!packageFormData.name.trim()) {
@@ -437,11 +487,16 @@ export default function AdminInspectionPanel() {
 
     // Đóng gói data gửi đi kèm rules định dạng số/null chuẩn xác
     const brandIdVal = packageFormData.rules.brandId ? parseInt(packageFormData.rules.brandId) : null;
+    // Khai báo biến/hằng số: categoryIdVal - Dùng trong logic xử lý của component
     const categoryIdVal = packageFormData.rules.categoryId ? parseInt(packageFormData.rules.categoryId) : null;
+    // Khai báo biến/hằng số: productIdVal - Dùng trong logic xử lý của component
     const productIdVal = packageFormData.rules.productId ? parseInt(packageFormData.rules.productId) : null;
+    // Khai báo biến/hằng số: minPriceVal - Dùng trong logic xử lý của component
     const minPriceVal = parseFloat(packageFormData.rules.minPrice) || 0;
+    // Khai báo biến/hằng số: maxPriceVal - Dùng trong logic xử lý của component
     const maxPriceVal = packageFormData.rules.maxPrice ? parseFloat(packageFormData.rules.maxPrice) : null;
 
+    // Khai báo biến/hằng số: rulesPayload - Dùng trong logic xử lý của component
     const rulesPayload = {
       brandId: brandIdVal,
       categoryId: categoryIdVal,
@@ -457,6 +512,7 @@ export default function AdminInspectionPanel() {
       MaxPrice: maxPriceVal
     };
 
+    // Cấu hình/Hằng số/Dịch vụ dữ liệu: submitData
     const submitData = {
       name: packageFormData.name,
       description: packageFormData.description,
@@ -997,6 +1053,7 @@ export default function AdminInspectionPanel() {
                     <select
                       value={packageFormData.rules.brandId}
                       onChange={(e) => {
+                        // Khai báo biến/hằng số: newBrandId - Dùng trong logic xử lý của component
                         const newBrandId = e.target.value;
                         setPackageFormData(prev => ({
                           ...prev,
@@ -1030,6 +1087,7 @@ export default function AdminInspectionPanel() {
                     <select
                       value={packageFormData.rules.categoryId}
                       onChange={(e) => {
+                        // Khai báo biến/hằng số: newCatId - Dùng trong logic xử lý của component
                         const newCatId = e.target.value;
                         setPackageFormData(prev => ({
                           ...prev,
@@ -1046,7 +1104,9 @@ export default function AdminInspectionPanel() {
                       {categories
                         .filter(c => {
                           if (!packageFormData.rules.brandId) return true;
+                          // Hàm thực thi logic: prodsInBrand
                           const prodsInBrand = products.filter(p => String(p.brandId || p.BrandId) === String(packageFormData.rules.brandId));
+                          // Hàm thực thi logic: validCatIds
                           const validCatIds = new Set(prodsInBrand.map(p => p.categoryId || p.CategoryId));
                           return validCatIds.has(c.id);
                         })
@@ -1064,7 +1124,9 @@ export default function AdminInspectionPanel() {
                       {(packageFormData.rules.brandId || packageFormData.rules.categoryId) && (
                         <span className="text-[10px] text-emerald-600 font-bold">
                           {products.filter(p => {
+                            // Khai báo biến/hằng số: pBrandId - Dùng trong logic xử lý của component
                             const pBrandId = p.brandId || p.BrandId;
+                            // Khai báo biến/hằng số: pCatId - Dùng trong logic xử lý của component
                             const pCatId = p.categoryId || p.CategoryId;
                             if (packageFormData.rules.brandId && String(pBrandId) !== String(packageFormData.rules.brandId)) return false;
                             if (packageFormData.rules.categoryId && String(pCatId) !== String(packageFormData.rules.categoryId)) return false;
@@ -1084,7 +1146,9 @@ export default function AdminInspectionPanel() {
                       <option value="">Tất cả sản phẩm (Không ràng buộc)</option>
                       {products
                         .filter(p => {
+                          // Khai báo biến/hằng số: pBrandId - Dùng trong logic xử lý của component
                           const pBrandId = p.brandId || p.BrandId;
+                          // Khai báo biến/hằng số: pCatId - Dùng trong logic xử lý của component
                           const pCatId = p.categoryId || p.CategoryId;
 
                           if (packageFormData.rules.brandId && String(pBrandId) !== String(packageFormData.rules.brandId)) {

@@ -2,7 +2,9 @@ import React from 'react';
 import { Check, X, ShoppingCart, ShieldCheck, Award, Gift, Truck, RefreshCw } from 'lucide-react';
 import WarrantySelector from '../../../components/product/WarrantySelector';
 
+// Hàm xử lý logic/sự kiện: getHexForColor
 const getHexForColor = (colorName) => {
+  // Khai báo biến/hằng số: c - Dùng trong logic xử lý của component
   const c = colorName.toLowerCase();
   if (c.includes('đen') || c.includes('black')) return '#18181b';
   if (c.includes('titan') || c.includes('xám') || c.includes('gray')) return '#64748b';
@@ -26,6 +28,7 @@ export default function ProductSummaryInfo({
   selectedWarranty,
   onSelectWarranty
 }) {
+  // Khai báo biến/hằng số: promotions - Dùng trong logic xử lý của component
   const promotions = [
     { title: "Thu cũ Đổi mới", desc: "Trợ giá lên đến 2.000.000₫" },
     { title: "Thanh toán VNPay-QR", desc: "Giảm thêm 500.000₫ cho đơn hàng từ 4.000.000₫" },
@@ -33,6 +36,7 @@ export default function ProductSummaryInfo({
     { title: "Mua kèm phụ kiện", desc: "Ưu đãi mua kèm Phụ kiện chính hãng giảm đến 30%" }
   ];
 
+  // Hàm xử lý logic/sự kiện: calculateDiscountPercent
   const calculateDiscountPercent = () => {
     if (displayDetails.originalPrice && displayDetails.originalPrice > displayDetails.price) {
       return Math.round(((displayDetails.originalPrice - displayDetails.price) / displayDetails.originalPrice) * 100);
@@ -40,6 +44,7 @@ export default function ProductSummaryInfo({
     return 0;
   };
 
+  // Khai báo biến/hằng số: discountPercent - Dùng trong logic xử lý của component
   const discountPercent = calculateDiscountPercent();
 
   return (
@@ -63,6 +68,7 @@ export default function ProductSummaryInfo({
 
         {/* THUỘC TÍNH BIẾN THỂ (MÀU SẮC / DUNG LƯỢNG) */}
         {Object.entries(attributesConfig).map(([attrKey, values]) => {
+          // Khai báo biến/hằng số: isColorAttr - Dùng trong logic xử lý của component
           const isColorAttr = attrKey.toLowerCase().includes('màu') || attrKey.toLowerCase().includes('color');
 
           if (isColorAttr) {
@@ -74,7 +80,9 @@ export default function ProductSummaryInfo({
                 </div>
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
                   {values.map((val) => {
+                    // Khai báo biến/hằng số: isSelected - Dùng trong logic xử lý của component
                     const isSelected = selectedAttributes[attrKey] === val;
+                    // Khai báo biến/hằng số: hexColor - Dùng trong logic xử lý của component
                     const hexColor = getHexForColor(val);
                     return (
                       <button
@@ -119,6 +127,7 @@ export default function ProductSummaryInfo({
               </div>
               <div className="grid grid-cols-3 gap-2">
                 {values.map((val) => {
+                  // Khai báo biến/hằng số: isSelected - Dùng trong logic xử lý của component
                   const isSelected = selectedAttributes[attrKey] === val;
                   return (
                     <button

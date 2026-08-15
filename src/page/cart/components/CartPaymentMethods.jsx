@@ -21,9 +21,13 @@ export default function CartPaymentMethods({
           <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider">Đơn vị vận chuyển</h3>
           <div className="space-y-2">
             {shippingOptions.map((option, idx) => {
+              // Khai báo biến/hằng số: carrier - Dùng trong logic xử lý của component
               const carrier = option.carrier || option.Carrier;
+              // Khai báo biến/hằng số: fee - Dùng trong logic xử lý của component
               const fee = Number(option.fee || option.Fee || 0);
+              // Khai báo biến/hằng số: isSelected - Dùng trong logic xử lý của component
               const isSelected = shippingCarrier === carrier;
+              // Khai báo biến/hằng số: estimatedDays - Dùng trong logic xử lý của component
               const estimatedDays = option.estimatedDeliveryDays || option.EstimatedDeliveryDays;
 
               return (
@@ -125,7 +129,9 @@ export default function CartPaymentMethods({
 
               <div className="grid grid-cols-4 gap-2 text-center">
                 {[3, 6, 9, 12].map((m) => {
+                  // Khai báo biến/hằng số: monthlyAmount - Dùng trong logic xử lý của component
                   const monthlyAmount = Math.round(finalTotalPay / m);
+                  // Khai báo biến/hằng số: isSelected - Dùng trong logic xử lý của component
                   const isSelected = installmentMonths === m;
                   return (
                     <button

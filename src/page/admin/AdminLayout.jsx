@@ -67,6 +67,7 @@ const TAB_TITLES = {
  *   children        – nội dung trang con (tab content)
  */
 export default function AdminLayout({ activeAdminTab, onTabChange, setSearchParams, children }) {
+  // Khai báo giải nén các thuộc tính/hàm (toggleTheme, isDark) từ Hook / Context / Props
   const { toggleTheme, isDark } = useTheme();
 
   // ── Sidebar mobile ──────────────────────────────────────────────────────────
@@ -74,24 +75,35 @@ export default function AdminLayout({ activeAdminTab, onTabChange, setSearchPara
 
   // các state cho thanh tìm kiếm toàn cục
   const [searchQuery, setSearchQuery] = useState('');
+  // State: allProducts - Quản lý trạng thái và dữ liệu của allProducts trong giao diện
   const [allProducts, setAllProducts] = useState([]);
+  // State: allOrders - Quản lý trạng thái và dữ liệu của allOrders trong giao diện
   const [allOrders, setAllOrders] = useState([]);
+  // State: allCustomers - Quản lý trạng thái và dữ liệu của allCustomers trong giao diện
   const [allCustomers, setAllCustomers] = useState([]);
+  // State: showSearchDropdown - Quản lý trạng thái và dữ liệu của showSearchDropdown trong giao diện
   const [showSearchDropdown, setShowSearchDropdown] = useState(false);
+  // Reference (useRef): searchRef - Lưu vết tham chiếu DOM hoặc giá trị không gây re-render
   const searchRef = useRef(null);
 
   // ── Notifications state ─────────────────────────────────────────────────────
   const [showNotifications, setShowNotifications] = useState(false);
+  // State: notificationFilter - Quản lý trạng thái và dữ liệu của notificationFilter trong giao diện
   const [notificationFilter, setNotificationFilter] = useState('all');
+  // Reference (useRef): notificationRef - Lưu vết tham chiếu DOM hoặc giá trị không gây re-render
   const notificationRef = useRef(null);
 
+  // Hàm thực thi logic: user
   const user = React.useMemo(() => {
     try { return JSON.parse(localStorage.getItem('user')); } catch { return null; }
   }, []);
 
+  // State: readNotificationIds - Quản lý trạng thái và dữ liệu của readNotificationIds trong giao diện
   const [readNotificationIds, setReadNotificationIds] = useState(() => {
     try {
+      // Khai báo biến/hằng số: key - Dùng trong logic xử lý của component
       const key = user?.id ? `admin_read_notifications_${user.id}` : 'admin_read_notifications';
+      // Khai báo biến/hằng số: saved - Dùng trong logic xử lý của component
       const saved = localStorage.getItem(key);
       return saved ? JSON.parse(saved) : [];
     } catch {
@@ -102,6 +114,7 @@ export default function AdminLayout({ activeAdminTab, onTabChange, setSearchPara
   // Sync to localStorage
   useEffect(() => {
     try {
+      // Khai báo biến/hằng số: key - Dùng trong logic xử lý của component
       const key = user?.id ? `admin_read_notifications_${user.id}` : 'admin_read_notifications';
       localStorage.setItem(key, JSON.stringify(readNotificationIds));
     } catch (err) {
@@ -113,6 +126,7 @@ export default function AdminLayout({ activeAdminTab, onTabChange, setSearchPara
   const [returnSignal, setReturnSignal] = useState(0);
 
   useEffect(() => {
+    // Hàm xử lý logic/sự kiện: handleReturnEvent
     const handleReturnEvent = () => setReturnSignal(prev => prev + 1);
     window.addEventListener('return_request_updated', handleReturnEvent);
     window.addEventListener('storage', handleReturnEvent);
@@ -122,11 +136,14 @@ export default function AdminLayout({ activeAdminTab, onTabChange, setSearchPara
     };
   }, []);
 
+  // Hàm thực thi logic: notifications
   const notifications = React.useMemo(() => {
+    // Cấu hình/Hằng số/Dịch vụ dữ liệu: list
     const list = [];
 
     // 1. Yêu cầu đổi trả từ khách hàng (PROJECT_RETURN_REQUESTS)
     try {
+      // Khai báo biến/hằng số: returnRequests - Dùng trong logic xử lý của component
       const returnRequests = JSON.parse(localStorage.getItem('PROJECT_RETURN_REQUESTS') || '{}');
       Object.values(returnRequests).forEach(req => {
         if (req && req.status === 'Pending') {
@@ -162,6 +179,7 @@ export default function AdminLayout({ activeAdminTab, onTabChange, setSearchPara
 
     // 3. Low stock products (< 5) hết hàng 
     allProducts.forEach(p => {
+      // Khai báo biến/hằng số: stock - Dùng trong logic xử lý của component
       const stock = p.totalStock ?? p.stock ?? p.stockQuantity ?? 0;
       if (stock < 5) {
         list.push({
@@ -175,7 +193,9 @@ export default function AdminLayout({ activeAdminTab, onTabChange, setSearchPara
         });
       }
     });
+    // Hàm thực thi logic: orders
     const orders = list.filter(n => n.type === 'order').sort((a, b) => new Date(b.time) - new Date(a.time));
+    // Hàm thực thi logic: stocks
     const stocks = list.filter(n => n.type === 'stock') ;
     return [...orders, ...stocks];
   }, 
@@ -184,6 +204,7 @@ export default function AdminLayout({ activeAdminTab, onTabChange, setSearchPara
   //bộ lọc tab thông báo
   const filteredNotifications = React.useMemo(() => {
     return notifications.filter(n => {
+      // Khai báo biến/hằng số: isRead - Dùng trong logic xử lý của component
       const isRead = readNotificationIds.includes(n.id);
       if (notificationFilter === 'unread') return !isRead;
       if (notificationFilter === 'order') return n.type === 'order';
@@ -193,18 +214,23 @@ export default function AdminLayout({ activeAdminTab, onTabChange, setSearchPara
     });
   }, [notifications, notificationFilter, readNotificationIds]);
 
+  // Hàm thực thi logic: unreadCount
   const unreadCount = React.useMemo(() => {
     return notifications.filter(n => !readNotificationIds.includes(n.id)).length;
   }, [notifications, readNotificationIds]);
 
+  // Hàm xử lý logic/sự kiện: handleMarkAllAsRead
   const handleMarkAllAsRead = () => {
+    // Hàm thực thi logic: allIds
     const allIds = notifications.map(n => n.id);
     setReadNotificationIds(prev => {
+      // Khai báo biến/hằng số: combined - Dùng trong logic xử lý của component
       const combined = [...new Set([...prev, ...allIds])];
       return combined;
     });
   };
 
+  // Hàm xử lý logic/sự kiện: handleNotificationClick
   const handleNotificationClick = (n) => {
     if (!readNotificationIds.includes(n.id)) {
       setReadNotificationIds(prev => [...prev, n.id]);
@@ -215,8 +241,10 @@ export default function AdminLayout({ activeAdminTab, onTabChange, setSearchPara
 
   // Tải dữ liệu cho thông báo và tìm kiếm toàn cục
   useEffect(() => {
+    // Hàm xử lý logic/sự kiện: fetchSearchData
     const fetchSearchData = async () => {
       try {
+        // State: productsData - Quản lý trạng thái và dữ liệu của productsData trong giao diện
         const [productsData, ordersData, customersData] = await Promise.all([
           productService.getAll(true).catch(() => []),
           orderService.getAll().catch(() => []),
@@ -227,6 +255,7 @@ export default function AdminLayout({ activeAdminTab, onTabChange, setSearchPara
         if (Array.isArray(productsData)) setAllProducts(productsData);
 
         if (Array.isArray(ordersData)) {
+          // Cấu hình/Hằng số/Dịch vụ dữ liệu: statusMap
           const statusMap = {
             1: 'Chờ xác nhận', 2: 'Đã xác nhận', 3: 'Đang giao',
             4: 'Đã giao', 5: 'Đã hủy', 6: 'Giao thất bại',
@@ -245,6 +274,7 @@ export default function AdminLayout({ activeAdminTab, onTabChange, setSearchPara
 
   // Đóng dropdown khi click ra ngoài
   useEffect(() => {
+    // Hàm xử lý logic/sự kiện: handleClickOutside
     const handleClickOutside = (e) => {
       if (searchRef.current && !searchRef.current.contains(e.target)) {
         setShowSearchDropdown(false);
@@ -259,24 +289,28 @@ export default function AdminLayout({ activeAdminTab, onTabChange, setSearchPara
 
   // ── Bộ lọc search ──────────────────────────────────────────────────────────
   const q = searchQuery.trim().toLowerCase();
+  // Khai báo biến/hằng số: filteredFunctions - Dùng trong logic xử lý của component
   const filteredFunctions = q
     ? ADMIN_FUNCTIONS.filter(f =>
       f.label.toLowerCase().includes(q) ||
       f.keywords.some(k => k.toLowerCase().includes(q))
     )
     : [];
+  // Khai báo biến/hằng số: filteredProducts - Dùng trong logic xử lý của component
   const filteredProducts = q
     ? allProducts.filter(p =>
       p.name.toLowerCase().includes(q) ||
       (p.brandName && p.brandName.toLowerCase().includes(q))
     )
     : [];
+  // Khai báo biến/hằng số: filteredCustomers - Dùng trong logic xử lý của component
   const filteredCustomers = q
     ? allCustomers.filter(c =>
       (c.username && c.username.toLowerCase().includes(q)) ||
       (c.email && c.email.toLowerCase().includes(q))
     )
     : [];
+  // Khai báo biến/hằng số: filteredOrders - Dùng trong logic xử lý của component
   const filteredOrders = q
     ? allOrders.filter(o =>
       String(o.id).includes(searchQuery.trim()) ||
@@ -284,6 +318,7 @@ export default function AdminLayout({ activeAdminTab, onTabChange, setSearchPara
       (o.phone && o.phone.includes(searchQuery.trim()))
     )
     : [];
+  // Khai báo biến/hằng số: noResults - Dùng trong logic xử lý của component
   const noResults =
     filteredFunctions.length === 0 &&
     filteredProducts.length === 0 &&
@@ -293,6 +328,7 @@ export default function AdminLayout({ activeAdminTab, onTabChange, setSearchPara
   // ── Auth helpers ────────────────────────────────────────────────────────────
   // user is defined at the top using React.useMemo
 
+  // Hàm xử lý logic/sự kiện: handleLogout
   const handleLogout = () => {
     if (window.confirm('Bạn có chắc muốn đăng xuất?')) {
       authService.logout();
@@ -529,6 +565,7 @@ export default function AdminLayout({ activeAdminTab, onTabChange, setSearchPara
                   {/* Tabs */}
                   <div className="flex border-b border-admin-border px-2 py-1 bg-gray-50/50 dark:bg-admin-bg/30">
                     {['all', 'unread', 'order', 'stock','logs'].map(tab => {
+                      // Khai báo biến/hằng số: labels - Dùng trong logic xử lý của component
                       const labels = {
                         all: 'Tất cả',
                         unread: 'Chưa đọc',
@@ -560,6 +597,7 @@ export default function AdminLayout({ activeAdminTab, onTabChange, setSearchPara
                       </div>
                     ) : (
                       filteredNotifications.map(n => {
+                        // Khai báo biến/hằng số: isRead - Dùng trong logic xử lý của component
                         const isRead = readNotificationIds.includes(n.id);
                         return (
                           <div

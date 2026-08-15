@@ -3,6 +3,7 @@ import { X, ExternalLink, Plus } from 'lucide-react';
 import AccessoryVariantModal from './AccessoryVariantModal';
 
 export default function MuaKemGiaSocModal({ isOpen, onClose, campaigns, initialTab = 0 }) {
+  // State: activeTab - Quản lý trạng thái và dữ liệu của activeTab trong giao diện
   const [activeTab, setActiveTab] = useState(initialTab);
 
   useEffect(() => {
@@ -11,6 +12,7 @@ export default function MuaKemGiaSocModal({ isOpen, onClose, campaigns, initialT
 
   useEffect(() => {
     if (isOpen) {
+      // Khai báo biến/hằng số: originalStyle - Dùng trong logic xử lý của component
       const originalStyle = window.getComputedStyle(document.body).overflow;
       document.body.style.overflow = 'hidden';
       return () => {
@@ -19,7 +21,9 @@ export default function MuaKemGiaSocModal({ isOpen, onClose, campaigns, initialT
     }
   }, [isOpen]);
 
+  // State: selectedAccessory - Quản lý trạng thái và dữ liệu của selectedAccessory trong giao diện
   const [selectedAccessory, setSelectedAccessory] = useState(null);
+  // State: variantModalOpen - Quản lý trạng thái và dữ liệu của variantModalOpen trong giao diện
   const [variantModalOpen, setVariantModalOpen] = useState(false);
 
   if (!isOpen || !campaigns || campaigns.length === 0) return null;
@@ -44,14 +48,21 @@ export default function MuaKemGiaSocModal({ isOpen, onClose, campaigns, initialT
     campData.addonProducts && campData.addonProducts.some(p => !p.isExplicitlyAdded)
   );
 
+  // Khai báo biến/hằng số: isFeaturedTab - Dùng trong logic xử lý của component
   const isFeaturedTab = activeTab === 0;
+  // Cấu hình/Hằng số/Dịch vụ dữ liệu: currentCampaignData
   const currentCampaignData = isFeaturedTab ? null : displayCampaigns[activeTab - 1];
+  // Khai báo biến/hằng số: currentCampaign - Dùng trong logic xử lý của component
   const currentCampaign = currentCampaignData ? currentCampaignData.campaign : null;
+  // Khai báo biến/hằng số: accessories - Dùng trong logic xử lý của component
   const accessories = isFeaturedTab ? featuredAccessories : (currentCampaignData?.addonProducts || []);
 
+  // Hàm xử lý logic/sự kiện: getDynamicPrice
   const getDynamicPrice = (item) => {
+    // Khai báo biến/hằng số: basePrice - Dùng trong logic xử lý của component
     const basePrice = item.basePrice;
     let comboPrice = basePrice;
+    // Khai báo biến/hằng số: campaignToApply - Dùng trong logic xử lý của component
     const campaignToApply = item._campaign || currentCampaign;
 
     if (campaignToApply) {
@@ -135,6 +146,7 @@ export default function MuaKemGiaSocModal({ isOpen, onClose, campaigns, initialT
             ) : (
               <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                 {accessories.map((item) => {
+                  // Khai báo giải nén các thuộc tính/hàm (basePrice, comboPrice, campaignToApply) từ Hook / Context / Props
                   const { basePrice, comboPrice, campaignToApply } = getDynamicPrice(item);
                   let discountBadgeText = '';
                   if (campaignToApply.discountType === 'Percentage') discountBadgeText = `-${campaignToApply.discountValue}%`;

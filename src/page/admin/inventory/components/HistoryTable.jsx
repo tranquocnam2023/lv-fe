@@ -10,6 +10,7 @@ export default function HistoryTable({
   setSelectedStockProduct,
   viewMode = 'TRANSACTIONS'
 }) {
+  // Khai báo biến/hằng số: isStockMode - Dùng trong logic xử lý của component
   const isStockMode = viewMode === 'STOCK';
 
   return (
@@ -58,13 +59,18 @@ export default function HistoryTable({
           ) : paginatedHistory.length > 0 ? (
             paginatedHistory.map((item) => {
               if (isStockMode) {
+                // Khai báo biến/hằng số: totalRem - Dùng trong logic xử lý của component
                 const totalRem = item.totalQuantityRemaining || 0;
+                // Khai báo biến/hằng số: variantCount - Dùng trong logic xử lý của component
                 const variantCount = item.variants ? item.variants.length : 0;
+                // Khai báo biến/hằng số: catName - Dùng trong logic xử lý của component
                 const catName = (item.categoryName || '').toLowerCase();
+                // Khai báo biến/hằng số: prodName - Dùng trong logic xử lý của component
                 const prodName = (item.productName || '').toLowerCase();
 
                 // Kiểm tra nếu là Phụ kiện hoặc Sản phẩm đơn (chỉ có 1 biến thể duy nhất)
                 const isAccessory = catName.includes('phụ kiện') || catName.includes('tai nghe') || catName.includes('cáp') || catName.includes('sạc') || catName.includes('ốp') || catName.includes('kính') || prodName.includes('tai nghe') || prodName.includes('sạc') || prodName.includes('ốp') || prodName.includes('kính');
+                // Khai báo biến/hằng số: hasMultipleVariants - Dùng trong logic xử lý của component
                 const hasMultipleVariants = variantCount > 1 && !isAccessory;
 
                 return (
@@ -141,6 +147,7 @@ export default function HistoryTable({
               //sửa xong vô BE sửa,Controllers/InventoryTransactionController dòng 337-346
               // Nếu có liên kết đơn hàng thì dùng orderId, ngược lại dùng id giao dịch kho tự tăng
               const code = item.orderId ? `${prefix}${item.orderId}` : `${prefix}${item.primaryTx.id}`;
+              // Khai báo biến/hằng số: formattedDate - Dùng trong logic xử lý của component
               const formattedDate = new Date(item.createdAt).toLocaleString('vi-VN');
 
               return (

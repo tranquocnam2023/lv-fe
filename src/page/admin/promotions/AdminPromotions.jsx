@@ -4,12 +4,18 @@ import { Search, Plus, Edit, Trash2, Ticket, X, Check, Calendar, Settings } from
 import { promotionService } from '../../../services/promotionService';
 
 export default function AdminPromotions() {
+  // State: promotions - Quản lý trạng thái và dữ liệu của promotions trong giao diện
   const [promotions, setPromotions] = useState([]);
+  // State: searchTerm - Quản lý trạng thái và dữ liệu của searchTerm trong giao diện
   const [searchTerm, setSearchTerm] = useState('');
+  // State: isModalOpen - Quản lý trạng thái và dữ liệu của isModalOpen trong giao diện
   const [isModalOpen, setIsModalOpen] = useState(false);
+  // State: editingPromotion - Quản lý trạng thái và dữ liệu của editingPromotion trong giao diện
   const [editingPromotion, setEditingPromotion] = useState(null);
+  // State: loading - Quản lý trạng thái và dữ liệu của loading trong giao diện
   const [loading, setLoading] = useState(false);
 
+  // State: formData - Quản lý trạng thái và dữ liệu của formData trong giao diện
   const [formData, setFormData] = useState({
     code: '',
     discountType: 'PERCENTAGE',
@@ -23,6 +29,7 @@ export default function AdminPromotions() {
     maxPerUser: ''
   });
 
+  // Hàm xử lý logic/sự kiện: fetchPromotions
   const fetchPromotions = () => {
     setLoading(true);
     promotionService.getAll()
@@ -40,11 +47,13 @@ export default function AdminPromotions() {
     fetchPromotions();
   }, []);
 
+  // Hàm xử lý logic/sự kiện: handleOpenModal
   const handleOpenModal = (promo = null) => {
     if (promo) {
       setEditingPromotion(promo);
       // Format dates to YYYY-MM-DDThh:mm for datetime-local input
       const startIso = promo.startDate ? new Date(promo.startDate).toISOString().slice(0, 16) : '';
+      // Khai báo biến/hằng số: endIso - Dùng trong logic xử lý của component
       const endIso = promo.endDate ? new Date(promo.endDate).toISOString().slice(0, 16) : '';
 
       setFormData({
@@ -63,6 +72,7 @@ export default function AdminPromotions() {
       setEditingPromotion(null);
       // Default dates: now and +30 days
       const now = new Date();
+      // Khai báo biến/hằng số: nextMonth - Dùng trong logic xử lý của component
       const nextMonth = new Date();
       nextMonth.setDate(now.getDate() + 30);
 
@@ -82,10 +92,12 @@ export default function AdminPromotions() {
     setIsModalOpen(true);
   };
 
+  // Hàm xử lý logic/sự kiện: handleSave
   const handleSave = async (e) => {
     e.preventDefault();
     setLoading(true);
     try {
+      // Khai báo biến/hằng số: payload - Dùng trong logic xử lý của component
       const payload = {
         code: formData.code.trim().toUpperCase(),
         discountType: formData.discountType,
@@ -116,6 +128,7 @@ export default function AdminPromotions() {
     }
   };
 
+  // Hàm xử lý logic/sự kiện: handleDelete
   const handleDelete = async (id) => {
     if (window.confirm('Bạn có chắc chắn muốn xóa mã khuyến mãi này?')) {
       try {
@@ -129,10 +142,14 @@ export default function AdminPromotions() {
     }
   };
 
+  // Hàm xử lý logic/sự kiện: getPromoStatus
   const getPromoStatus = (promo) => {
     if (!promo.isActive) return { text: 'Vô hiệu', color: 'bg-red-50 text-red-600 border border-red-100' };
+    // Khai báo biến/hằng số: now - Dùng trong logic xử lý của component
     const now = new Date();
+    // Khai báo biến/hằng số: start - Dùng trong logic xử lý của component
     const start = new Date(promo.startDate);
+    // Khai báo biến/hằng số: end - Dùng trong logic xử lý của component
     const end = new Date(promo.endDate);
 
     if (now < start) return { text: 'Sắp diễn ra', color: 'bg-blue-50 text-blue-600 border border-blue-100' };
@@ -143,6 +160,7 @@ export default function AdminPromotions() {
     return { text: 'Đang hoạt động', color: 'bg-green-50 text-green-400 border border-green-100' };
   };
 
+  // Hàm thực thi logic: filteredPromotions
   const filteredPromotions = promotions.filter(promo =>
     promo.code.toLowerCase().includes(searchTerm.toLowerCase())
   );
@@ -197,6 +215,7 @@ export default function AdminPromotions() {
             <tbody className="divide-y divide-admin-border text-sm">
               {filteredPromotions.length > 0 ? (
                 filteredPromotions.map((promo) => {
+                  // Cấu hình/Hằng số/Dịch vụ dữ liệu: status
                   const status = getPromoStatus(promo);
                   return (
                     <tr key={promo.id} className="hover:bg-admin-bg transition-colors group">

@@ -22,17 +22,22 @@ export default function VariantDetailAccordion({
     showToast
   } = useProductFormContext();
 
+  // State: searchParams - Quản lý trạng thái và dữ liệu của searchParams trong giao diện
   const [searchParams] = useSearchParams();
+  // Khai báo biến/hằng số: isEditMode - Dùng trong logic xử lý của component
   const isEditMode = !!searchParams.get('productId');
 
+  // Cấu hình/Hằng số/Dịch vụ dữ liệu: vData
   const vData = variantsData[variantKey] || {};
 
   // Trích xuất các key từ specs template của sản phẩm cha để gợi ý
   const availableSpecKeys = useMemo(() => {
     if (!formData?.specs) return [];
     try {
+      // Khai báo biến/hằng số: parsed - Dùng trong logic xử lý của component
       const parsed = typeof formData.specs === 'string' ? JSON.parse(formData.specs) : formData.specs;
       if (Array.isArray(parsed)) {
+        // Khai báo biến/hằng số: keys - Dùng trong logic xử lý của component
         const keys = [];
         parsed.forEach(group => {
           if (group.items && Array.isArray(group.items)) {
@@ -51,14 +56,19 @@ export default function VariantDetailAccordion({
     return [];
   }, [formData?.specs]);
 
+  // Hàm xử lý logic/sự kiện: handleAddSpecOverride
   const handleAddSpecOverride = () => {
+    // Cấu hình/Hằng số/Dịch vụ dữ liệu: specsList
     const specsList = Array.isArray(vData.specsOverrideList) ? [...vData.specsOverrideList] : [];
     specsList.push({ key: '', value: '' });
     updateVariantField(variantKey, 'specsOverrideList', specsList);
   };
 
+  // Hàm xử lý logic/sự kiện: handleAddQuickSpecOverride
   const handleAddQuickSpecOverride = (specKey) => {
+    // Cấu hình/Hằng số/Dịch vụ dữ liệu: specsList
     const specsList = Array.isArray(vData.specsOverrideList) ? [...vData.specsOverrideList] : [];
+    // Hàm thực thi logic: exists
     const exists = specsList.some(s => s.key.trim().toLowerCase() === specKey.toLowerCase());
     if (exists) {
       showToast("warning", `Thông số '${specKey}' đã được thêm.`);
@@ -68,13 +78,18 @@ export default function VariantDetailAccordion({
     updateVariantField(variantKey, 'specsOverrideList', specsList);
   };
 
+  // Hàm xử lý logic/sự kiện: handleRemoveSpecOverride
   const handleRemoveSpecOverride = (index) => {
+    // Cấu hình/Hằng số/Dịch vụ dữ liệu: specsList
     const specsList = Array.isArray(vData.specsOverrideList) ? [...vData.specsOverrideList] : [];
+    // Hàm thực thi logic: updated
     const updated = specsList.filter((_, i) => i !== index);
     updateVariantField(variantKey, 'specsOverrideList', updated);
   };
 
+  // Hàm xử lý logic/sự kiện: handleSpecOverrideChange
   const handleSpecOverrideChange = (index, field, value) => {
+    // Cấu hình/Hằng số/Dịch vụ dữ liệu: specsList
     const specsList = Array.isArray(vData.specsOverrideList) ? [...vData.specsOverrideList] : [];
     specsList[index] = {
       ...specsList[index],
@@ -227,7 +242,9 @@ export default function VariantDetailAccordion({
 
             <div className="space-y-2 max-h-48 overflow-y-auto pr-1">
               {Array.isArray(vData?.specsOverrideList) && vData.specsOverrideList.map((spec, specIdx) => {
+                // Khai báo biến/hằng số: isKeyInSpecs - Dùng trong logic xử lý của component
                 const isKeyInSpecs = availableSpecKeys.includes(spec.key);
+                // Khai báo biến/hằng số: isCustomKey - Dùng trong logic xử lý của component
                 const isCustomKey = spec.key !== '' && !isKeyInSpecs;
 
                 return (
@@ -238,6 +255,7 @@ export default function VariantDetailAccordion({
                           className="w-full px-2 py-1 border border-admin-border rounded outline-none text-[11px] text-admin-text-main font-semibold bg-white focus:border-primary cursor-pointer h-7"
                           value={spec.key}
                           onChange={(e) => {
+                            // Khai báo biến/hằng số: val - Dùng trong logic xử lý của component
                             const val = e.target.value;
                             if (val === '__custom__') {
                               handleSpecOverrideChange(specIdx, 'key', ' ');

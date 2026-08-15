@@ -4,6 +4,7 @@ import { useProductFormContext } from '../../../context/ProductFormContext';
 import RichTextEditor from '../../RichTextEditor';
 
 export default function ProductBasicInfo({ productId }) {
+  // State: searchParams - Quản lý trạng thái và dữ liệu của searchParams trong giao diện
   const [searchParams] = useSearchParams();
   const {
     formData,

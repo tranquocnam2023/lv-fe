@@ -9,6 +9,7 @@ import { useFormat } from '../../../hooks/useFormat';
 import OrderDetailsModal from './OrderDetailsModal';
 import OrderReturnModal from '../../../components/OrderReturnModal';
 
+// Khai báo biến/hằng số: STATUS_TABS - Dùng trong logic xử lý của component
 const STATUS_TABS = [
   { id: 'all', name: 'Tất cả', count: 0 },
   { id: 'pending', name: 'Chờ xác nhận', count: 0, icon: Clock, color: 'text-warning', bgColor: 'bg-warning/10' },
@@ -19,6 +20,7 @@ const STATUS_TABS = [
   { id: 'cancelled', name: 'Đã hủy', count: 0, icon: XCircle, color: 'text-admin-danger', bgColor: 'bg-admin-danger/10' },
 ];
 
+// Cấu hình/Hằng số/Dịch vụ dữ liệu: ORDER_STATS_CONFIG
 const ORDER_STATS_CONFIG = [
   { label: 'Tổng đơn hàng', countKey: 'all', icon: ShoppingCart, bgColor: '#FFFFFF', textColor: 'var(--color-admin-text-main)', iconColor: 'var(--color-primary)' },
   { label: 'Chờ xác nhận', countKey: 'pending', icon: Clock, bgColor: '#FFFFFF', textColor: 'var(--color-admin-text-main)', iconColor: 'var(--color-warning)' },
@@ -38,6 +40,7 @@ const getPaymentMethodLabel = (method) => {
   }
 };
 
+// Hàm xử lý logic/sự kiện: getPaymentMethodStyle
 const getPaymentMethodStyle = (method) => {
   switch (method?.toLowerCase()) {
     case 'cod': return 'bg-orange-50 text-orange-600 border-orange-100';
@@ -50,19 +53,29 @@ const getPaymentMethodStyle = (method) => {
 
 
 export default function AdminOrders() {
+  // State: orders - Quản lý trạng thái và dữ liệu của orders trong giao diện
   const [orders, setOrders] = useState([]);
+  // State: activeTab - Quản lý trạng thái và dữ liệu của activeTab trong giao diện
   const [activeTab, setActiveTab] = useState('all');
+  // State: searchTerm - Quản lý trạng thái và dữ liệu của searchTerm trong giao diện
   const [searchTerm, setSearchTerm] = useState('');
+  // State: error - Quản lý trạng thái và dữ liệu của error trong giao diện
   const [error, setError] = useState(null);
+  // State: cancelModal - Quản lý trạng thái và dữ liệu của cancelModal trong giao diện
   const [cancelModal, setCancelModal] = useState({ isOpen: false, orderId: null, newStatus: null });
+  // State: selectedOrderDetails - Quản lý trạng thái và dữ liệu của selectedOrderDetails trong giao diện
   const [selectedOrderDetails, setSelectedOrderDetails] = useState(null);
+  // State: returnModalOrder - Quản lý trạng thái và dữ liệu của returnModalOrder trong giao diện
   const [returnModalOrder, setReturnModalOrder] = useState(null);
+  // State: searchParams - Quản lý trạng thái và dữ liệu của searchParams trong giao diện
   const [searchParams, setSearchParams] = useSearchParams();
+  // Khai báo biến/hằng số: orderIdParam - Dùng trong logic xử lý của component
   const orderIdParam = searchParams.get('orderId');
 
   // Helper đọc dữ liệu yêu cầu đổi trả
   const getReturnRequestInfo = (ordId) => {
     try {
+      // Khai báo biến/hằng số: requests - Dùng trong logic xử lý của component
       const requests = JSON.parse(localStorage.getItem('PROJECT_RETURN_REQUESTS') || '{}');
       return requests[ordId] || null;
     } catch {
@@ -96,7 +109,9 @@ export default function AdminOrders() {
         console.log("AdminOrders: Đã tải dữ liệu thành công từ API:", data);
         if (Array.isArray(data)) {
           if (data.length > 0) {
+            // Hàm thực thi logic: mappedOrders
             const mappedOrders = data.map(order => {
+              // Cấu hình/Hằng số/Dịch vụ dữ liệu: statusMap
               const statusMap = {
                 1: 'pending',
                 2: 'confirmed',
@@ -106,6 +121,7 @@ export default function AdminOrders() {
                 6: 'shipping_failed',
                 7: 'refunded'
               };
+              // Khai báo biến/hằng số: statusStr - Dùng trong logic xử lý của component
               const statusStr = statusMap[order.statusId] || 'pending';
               return {
                 id: order.id,
@@ -168,10 +184,13 @@ export default function AdminOrders() {
       });
   }, []);
 
+  // Hàm thực thi logic: filteredOrders
   const filteredOrders = orders.filter(order => {
+    // Khai báo biến/hằng số: matchesTab - Dùng trong logic xử lý của component
     const matchesTab = activeTab === 'all' ||
       (activeTab === 'shipping' && (order.status === 'shipping' || order.status === 'shipping_failed')) ||
       order.status === activeTab;
+    // Khai báo biến/hằng số: matchesSearch - Dùng trong logic xử lý của component
     const matchesSearch = String(order.id).toLowerCase().includes(searchTerm.toLowerCase()) ||
       String(order.customer || '').toLowerCase().includes(searchTerm.toLowerCase());
     return matchesTab && matchesSearch;
@@ -189,10 +208,12 @@ export default function AdminOrders() {
     totalItems
   } = usePagination(filteredOrders, 5); // Hiển thị 5 đơn hàng mỗi trang
 
+  // Hàm xử lý logic/sự kiện: getStatusName
   const getStatusName = (status) => {
     return STATUS_TABS.find(t => t.id === status)?.name || status;
   };
 
+  // Hàm xử lý logic/sự kiện: getOrderStatus
   const getOrderStatus = (status) => {
     switch (status) {
       case 'pending': return 'pending';
@@ -207,6 +228,7 @@ export default function AdminOrders() {
     }
   };
 
+  // Hàm xử lý logic/sự kiện: getShippingStatus
   const getShippingStatus = (status) => {
     switch (status) {
       case 'pending':
@@ -229,6 +251,7 @@ export default function AdminOrders() {
     }
   };
 
+  // Hàm thực thi logic: isTransitionAllowed
   const isTransitionAllowed = (currentStatus, newStatus) => {
     if (currentStatus === newStatus) return true;
     if (currentStatus === 'cancelled' || currentStatus === 'refunded') return false;
@@ -255,10 +278,13 @@ export default function AdminOrders() {
     return false;
   };
 
+  // Hàm xử lý logic/sự kiện: handleStatusChange
   const handleStatusChange = (orderId, newStatus) => {
+    // Hàm thực thi logic: order
     const order = orders.find(o => o.id === orderId);
     if (!order) return;
 
+    // Cấu hình/Hằng số/Dịch vụ dữ liệu: currentStatus
     const currentStatus = order.status;
 
     // Kiểm tra tính hợp lệ của luồng chuyển đổi trạng thái
@@ -279,6 +305,7 @@ export default function AdminOrders() {
     }
   };
 
+  // Hàm thực thi logic: executeStatusChange
   const executeStatusChange = (orderId, newStatus, currentStatus) => {
     // Ràng buộc trừ kho:
     // - Đơn hàng khi ở trạng thái xác nhận (confirmed) thì trừ hàng luôn.
@@ -293,7 +320,9 @@ export default function AdminOrders() {
     orderService.updateStatus(orderId, newStatus)
       .then((res) => {
         alert(`Cập nhật trạng thái đơn hàng thành công!${stockMessage}`);
+        // Cấu hình/Hằng số/Dịch vụ dữ liệu: data
         const data = res?.data || res;
+        // Khai báo biến/hằng số: nextFailedCount - Dùng trong logic xử lý của component
         const nextFailedCount = (data && typeof data.failedDeliveryCount === 'number')
           ? data.failedDeliveryCount
           : (newStatus === 'shipping_failed'
@@ -302,7 +331,9 @@ export default function AdminOrders() {
 
         setOrders(prev => prev.map(o => {
           if (o.id === orderId) {
+            // Khai báo biến/hằng số: isCod - Dùng trong logic xử lý của component
             const isCod = (o.paymentMethod || 'cod').toLowerCase() === 'cod';
+            // Khai báo biến/hằng số: paymentStatusText - Dùng trong logic xử lý của component
             const paymentStatusText = isCod
               ? (newStatus === 'delivered' ? 'Đã thanh toán' : 'Chờ thanh toán')
               : (newStatus === 'confirmed' || newStatus === 'preparing' || newStatus === 'shipping' || newStatus === 'delivered' ? 'Đã thanh toán' : 'Chờ thanh toán');
@@ -318,20 +349,26 @@ export default function AdminOrders() {
       })
       .catch(err => {
         console.error("Lỗi cập nhật trạng thái đơn hàng:", err);
+        // Khai báo biến/hằng số: errorMsg - Dùng trong logic xử lý của component
         const errorMsg = err.response?.data?.message || err.response?.data || err.message;
         alert(`Cập nhật trạng thái đơn hàng thất bại: ${errorMsg}`);
       });
   };
 
+  // Hàm thực thi logic: confirmCancelOrder
   const confirmCancelOrder = () => {
+    // Khai báo giải nén các thuộc tính/hàm (orderId, newStatus) từ Hook / Context / Props
     const { orderId, newStatus } = cancelModal;
+    // Hàm thực thi logic: order
     const order = orders.find(o => o.id === orderId);
+    // Cấu hình/Hằng số/Dịch vụ dữ liệu: currentStatus
     const currentStatus = order ? order.status : 'pending';
 
     setCancelModal({ isOpen: false, orderId: null, newStatus: null });
     executeStatusChange(orderId, newStatus, currentStatus);
   };
 
+  // Hàm xử lý logic/sự kiện: handleShipWithAhamove
   const handleShipWithAhamove = (orderId) => {
     if (!window.confirm("Bạn có chắc muốn gửi đơn hàng này sang Ahamove để giao hàng không?")) {
       return;
@@ -339,6 +376,7 @@ export default function AdminOrders() {
     orderService.shipAhamove(orderId)
       .then((res) => {
         alert("Đã gửi đơn hàng sang Ahamove thành công!");
+        // Khai báo biến/hằng số: updatedOrder - Dùng trong logic xử lý của component
         const updatedOrder = res.data || res;
         setOrders(prev => prev.map(o => {
           if (o.id === orderId) {
@@ -368,7 +406,9 @@ export default function AdminOrders() {
       })
       .catch(err => {
         console.error("Lỗi gửi đơn hàng sang Ahamove:", err);
+        // Khai báo biến/hằng số: errorMsg - Dùng trong logic xử lý của component
         const errorMsg = err.response?.data?.message || err.response?.data || err.message;
+        // Khai báo biến/hằng số: confirmManual - Dùng trong logic xử lý của component
         const confirmManual = window.confirm(
           `⚠️ Gửi đơn hàng sang Ahamove thất bại!\n\nLỗi: ${errorMsg}\n\n👉 Bạn có muốn chuyển đơn hàng này sang Giao hàng thủ công (Manual) không?`
         );
@@ -378,6 +418,7 @@ export default function AdminOrders() {
       });
   };
 
+  // Khai báo biến/hằng số: counts - Dùng trong logic xử lý của component
   const counts = {
     all: orders.length,
     pending: orders.filter(o => o.status === 'pending').length,
@@ -416,7 +457,9 @@ export default function AdminOrders() {
       {/* Stats Overview - MISA Style */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
         {ORDER_STATS_CONFIG.map((item, i) => {
+          // Khai báo biến/hằng số: Icon - Dùng trong logic xử lý của component
           const Icon = item.icon;
+          // Khai báo biến/hằng số: count - Dùng trong logic xử lý của component
           const count = counts[item.countKey];
           return (
             <div
@@ -442,7 +485,9 @@ export default function AdminOrders() {
       {/* Status Filter Tabs */}
       <div className="flex overflow-x-auto pb-2 gap-3 no-scrollbar">
         {STATUS_TABS.map((tab) => {
+          // Khai báo biến/hằng số: Icon - Dùng trong logic xử lý của component
           const Icon = tab.icon;
+          // Khai báo biến/hằng số: isActive - Dùng trong logic xử lý của component
           const isActive = activeTab === tab.id;
           return (
             <button
@@ -598,6 +643,7 @@ export default function AdminOrders() {
                         {order.status === 'delivered' && (
                           <div className="flex gap-1.5 items-center">
                             {(() => {
+                              // Cấu hình/Hằng số/Dịch vụ dữ liệu: returnData
                               const returnData = getReturnRequestInfo(order.id);
                               if (returnData && returnData.status === 'Pending') {
                                 return (
@@ -755,9 +801,11 @@ export default function AdminOrders() {
             // Tải lại danh sách đơn hàng
             orderService.getAll().then(data => {
               if (Array.isArray(data)) {
+                // Cấu hình/Hằng số/Dịch vụ dữ liệu: statusMap
                 const statusMap = {
                   1: 'pending', 2: 'confirmed', 3: 'shipping', 4: 'delivered', 5: 'cancelled', 6: 'shipping_failed', 7: 'refunded'
                 };
+                // Hàm thực thi logic: mappedOrders
                 const mappedOrders = data.map(order => ({
                   id: order.id,
                   customer: order.receiverName || 'Khách hàng',

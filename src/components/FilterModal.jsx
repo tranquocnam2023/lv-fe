@@ -25,6 +25,7 @@ const FilterSection = ({ title, options, selected, onSelect }) => {
       <h3 className="text-[15px] font-semibold text-gray-800 mb-3">{title}</h3>
       <div className={`grid gap-2`} style={{ gridTemplateColumns: `repeat(auto-fill, minmax(110px, 1fr))` }}>
         {options.map((opt) => {
+          // Khai báo biến/hằng số: isSelected - Dùng trong logic xử lý của component
           const isSelected = selected.includes(opt);
           return (
             <button
@@ -44,33 +45,46 @@ const FilterSection = ({ title, options, selected, onSelect }) => {
   );
 };
 
+// Khai báo biến/hằng số: MIN_PRICE - Dùng trong logic xử lý của component
 const MIN_PRICE = 0;        // Giới hạn giá tối thiểu trên bộ lọc kéo (mặc định: 0)
+// Khai báo biến/hằng số: MAX_PRICE - Dùng trong logic xử lý của component
 const MAX_PRICE = 60000000; // Giới hạn giá tối đa trên bộ lọc kéo. Sửa số này để đổi giá tối đa
 
 export default function FilterModal({ onClose, onApply }) {
+  // State: brands - Quản lý trạng thái và dữ liệu của brands trong giao diện
   const [brands, setBrands] = useState([]);
+  // State: selectedFilters - Quản lý trạng thái và dữ liệu của selectedFilters trong giao diện
   const [selectedFilters, setSelectedFilters] = useState({});
+  // State: priceRange - Quản lý trạng thái và dữ liệu của priceRange trong giao diện
   const [priceRange, setPriceRange] = useState([MIN_PRICE, MAX_PRICE]);
 
   // States for custom price inputs editing
   const [minFocused, setMinFocused] = useState(false);
+  // State: maxFocused - Quản lý trạng thái và dữ liệu của maxFocused trong giao diện
   const [maxFocused, setMaxFocused] = useState(false);
+  // State: minInputVal - Quản lý trạng thái và dữ liệu của minInputVal trong giao diện
   const [minInputVal, setMinInputVal] = useState("");
+  // State: maxInputVal - Quản lý trạng thái và dữ liệu của maxInputVal trong giao diện
   const [maxInputVal, setMaxInputVal] = useState("");
 
+  // Hàm xử lý logic/sự kiện: formatPrefix
   const formatPrefix = (value) => {
     if (value === undefined || value === null || value === "") return "";
+    // Khai báo biến/hằng số: clean - Dùng trong logic xử lý của component
     const clean = value.toString().replace(/\D/g, '');
     if (clean === "") return "";
+    // Khai báo biến/hằng số: num - Dùng trong logic xử lý của component
     const num = parseInt(clean, 10);
     return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
   };
 
+  // Hàm xử lý logic/sự kiện: handleMinFocus
   const handleMinFocus = () => {
     setMinFocused(true);
     setMinInputVal(priceRange[0] === MIN_PRICE ? "0" : (priceRange[0] / 1000).toString());
   };
 
+  // Hàm xử lý logic/sự kiện: handleMinBlur
   const handleMinBlur = () => {
     setMinFocused(false);
     let val = parseInt(minInputVal.replace(/\D/g, ''), 10);
@@ -79,12 +93,15 @@ export default function FilterModal({ onClose, onApply }) {
     if (val > MAX_PRICE / 1000) val = MAX_PRICE / 1000;
 
     setPriceRange(prev => {
+      // Khai báo biến/hằng số: newMin - Dùng trong logic xử lý của component
       const newMin = Math.min(val * 1000, prev[1]);
       return [newMin, prev[1]];
     });
   };
 
+  // Hàm xử lý logic/sự kiện: handleMinChange
   const handleMinChange = (e) => {
+    // Khai báo biến/hằng số: val - Dùng trong logic xử lý của component
     const val = e.target.value.replace(/\D/g, '');
     setMinInputVal(val);
 
@@ -95,11 +112,13 @@ export default function FilterModal({ onClose, onApply }) {
     setPriceRange(prev => [Math.min(numeric * 1000, prev[1]), prev[1]]);
   };
 
+  // Hàm xử lý logic/sự kiện: handleMaxFocus
   const handleMaxFocus = () => {
     setMaxFocused(true);
     setMaxInputVal(priceRange[1] === MIN_PRICE ? "0" : (priceRange[1] / 1000).toString());
   };
 
+  // Hàm xử lý logic/sự kiện: handleMaxBlur
   const handleMaxBlur = () => {
     setMaxFocused(false);
     let val = parseInt(maxInputVal.replace(/\D/g, ''), 10);
@@ -108,12 +127,15 @@ export default function FilterModal({ onClose, onApply }) {
     if (val > MAX_PRICE / 1000) val = MAX_PRICE / 1000;
 
     setPriceRange(prev => {
+      // Khai báo biến/hằng số: newMax - Dùng trong logic xử lý của component
       const newMax = Math.max(val * 1000, prev[0]);
       return [prev[0], newMax];
     });
   };
 
+  // Hàm xử lý logic/sự kiện: handleMaxChange
   const handleMaxChange = (e) => {
+    // Khai báo biến/hằng số: val - Dùng trong logic xử lý của component
     const val = e.target.value.replace(/\D/g, '');
     setMaxInputVal(val);
 
@@ -134,6 +156,7 @@ export default function FilterModal({ onClose, onApply }) {
       .catch(err => console.error("Lỗi tải thương hiệu cho FilterModal:", err));
   }, []);
 
+  // Hàm xử lý logic/sự kiện: toggleFilter
   const toggleFilter = (category, value) => {
     if (category === 'Giá') {
       // Update slider based on selected label for better sync
@@ -151,6 +174,7 @@ export default function FilterModal({ onClose, onApply }) {
     }
 
     setSelectedFilters(prev => {
+      // Khai báo biến/hằng số: current - Dùng trong logic xử lý của component
       const current = prev[category] || [];
       if (current.includes(value)) {
         return { ...prev, [category]: current.filter(v => v !== value) };
@@ -164,19 +188,23 @@ export default function FilterModal({ onClose, onApply }) {
     });
   };
 
+  // Hàm thực thi logic: clearAll
   const clearAll = () => {
     setSelectedFilters({});
     setPriceRange([MIN_PRICE, MAX_PRICE]);
   };
 
+  // Hàm xử lý logic/sự kiện: formatPrice
   const formatPrice = (value) => {
     return value.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
   };
 
+  // Hàm xử lý logic/sự kiện: handlePriceChange
   const handlePriceChange = (value) => {
     setPriceRange(value);
   };
 
+  // Hàm xử lý logic/sự kiện: handleApply
   const handleApply = () => {
     // Collect all active filters
     const activeFilters = {

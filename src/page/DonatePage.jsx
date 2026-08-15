@@ -3,15 +3,20 @@ import { Heart, Coffee, QrCode, Copy, Check, Home } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useLoading } from '../context/LoadingContext';
 
+// Component React: DonatePage - Quản lý giao diện và logic xử lý của DonatePage
 const DonatePage = () => {
+  // Khai báo giải nén các thuộc tính/hàm (stopLoading) từ Hook / Context / Props
   const { stopLoading } = useLoading();
+  // State: copied - Quản lý trạng thái và dữ liệu của copied trong giao diện
   const [copied, setCopied] = useState(false);
+  // Khai báo biến/hằng số: accountNo - Dùng trong logic xử lý của component
   const accountNo = "1234567890"; // Example account number
 
   useEffect(() => {
     stopLoading();
   }, [stopLoading]);
 
+  // Hàm xử lý logic/sự kiện: handleCopy
   const handleCopy = () => {
     navigator.clipboard.writeText(accountNo);
     setCopied(true);

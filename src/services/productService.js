@@ -1,5 +1,6 @@
 import api from './api';
 
+// Cấu hình/Hằng số/Dịch vụ dữ liệu: productService
 export const productService = {
   getAll: (params = {}) => {
     let queryParams = params;
@@ -22,6 +23,7 @@ export const productService = {
   delete: (id) => api.delete(`/Product/${id}`),
 
   uploadLocalImage: (file, folder = 'general') => {
+    // Cấu hình/Hằng số/Dịch vụ dữ liệu: formData
     const formData = new FormData();
     formData.append('file', file);
     return api.post(`/Upload/local?folder=${folder}`, formData, {

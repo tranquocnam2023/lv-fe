@@ -31,6 +31,7 @@ export default function ProductSpecsModal({ isOpen, onClose, mergedSpecs, produc
         <div className="flex-1 overflow-y-auto p-6 space-y-6">
           {(() => {
             try {
+              // Khai báo biến/hằng số: parsedSpecs - Dùng trong logic xử lý của component
               const parsedSpecs = mergedSpecs;
               if (!Array.isArray(parsedSpecs) || parsedSpecs.length === 0) {
                 return <div className="text-center py-6 text-gray-400">Không có dữ liệu chi tiết.</div>;

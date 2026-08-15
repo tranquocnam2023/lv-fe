@@ -11,7 +11,9 @@ import ProductOptionsBuilder from './subcomponents/ProductOptionsBuilder';
 import ProductVariantsMatrix from './subcomponents/ProductVariantsMatrix';
 
 export default function ProductForm({ productId, onBack, onSaveSuccess, onCreateNew }) {
+  // State: searchParams - Quản lý trạng thái và dữ liệu của searchParams trong giao diện
   const [searchParams, setSearchParams] = useSearchParams();
+  // Khai báo biến/hằng số: formState - Dùng trong logic xử lý của component
   const formState = useProductForm({ productId, onBack, onSaveSuccess, searchParams, setSearchParams });
 
   const {

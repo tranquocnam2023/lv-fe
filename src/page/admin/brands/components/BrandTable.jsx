@@ -68,9 +68,13 @@ export default function BrandTable({
               ))
             ) : brands.length > 0 ? (
               brands.map((brand) => {
+                // Khai báo biến/hằng số: isExpanded - Dùng trong logic xử lý của component
                 const isExpanded = expandedBrands[brand.id];
+                // Khai báo biến/hằng số: stats - Dùng trong logic xử lý của component
                 const stats = brandStats[brand.id];
+                // Khai báo biến/hằng số: statsLoading - Dùng trong logic xử lý của component
                 const statsLoading = loadingStats[brand.id];
+                // Khai báo biến/hằng số: isBrandActive - Dùng trong logic xử lý của component
                 const isBrandActive = brand.isActive !== false;
 
                 return (

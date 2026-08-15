@@ -4,22 +4,30 @@ import { warrantyService } from '../services/warrantyService';
 import { ShieldCheck, Smartphone, User, Phone, CheckCircle, RefreshCw, AlertCircle, X, Info, Sparkles, Lock } from 'lucide-react';
 
 export default function WarrantyPurchasePage() {
+  // Hook điều hướng trang (useNavigate) để chuyển hướng Route
   const navigate = useNavigate();
 
+  // State: warranties - Quản lý trạng thái và dữ liệu của warranties trong giao diện
   const [warranties, setWarranties] = useState([]);
+  // State: loading - Quản lý trạng thái và dữ liệu của loading trong giao diện
   const [loading, setLoading] = useState(true);
+  // State: errorMsg - Quản lý trạng thái và dữ liệu của errorMsg trong giao diện
   const [errorMsg, setErrorMsg] = useState('');
 
   // Modal State cho Gói được chọn
   const [selectedWarranty, setSelectedWarranty] = useState(null);
+  // State: activateLater - Quản lý trạng thái và dữ liệu của activateLater trong giao diện
   const [activateLater, setActivateLater] = useState(false);
+  // State: formData - Quản lý trạng thái và dữ liệu của formData trong giao diện
   const [formData, setFormData] = useState({
     receiverName: '',
     receiverPhone: '',
     imei: ''
   });
 
+  // State: submitting - Quản lý trạng thái và dữ liệu của submitting trong giao diện
   const [submitting, setSubmitting] = useState(false);
+  // State: successData - Quản lý trạng thái và dữ liệu của successData trong giao diện
   const [successData, setSuccessData] = useState(null);
 
   // Load tất cả gói bảo hành khả dụng
@@ -27,6 +35,7 @@ export default function WarrantyPurchasePage() {
     setLoading(true);
     warrantyService.getAllWarranties()
       .then(res => {
+        // Cấu hình/Hằng số/Dịch vụ dữ liệu: data
         const data = Array.isArray(res) ? res : res?.data || [];
         setWarranties(data);
       })
@@ -37,6 +46,7 @@ export default function WarrantyPurchasePage() {
       .finally(() => setLoading(false));
   }, []);
 
+  // Hàm xử lý logic/sự kiện: handleOpenModal
   const handleOpenModal = (warranty) => {
     setSelectedWarranty(warranty);
     setActivateLater(false);
@@ -44,18 +54,23 @@ export default function WarrantyPurchasePage() {
     setErrorMsg('');
   };
 
+  // Hàm xử lý logic/sự kiện: handleCloseModal
   const handleCloseModal = () => {
     setSelectedWarranty(null);
     setErrorMsg('');
   };
 
+  // Hàm xử lý logic/sự kiện: handleImeiChange
   const handleImeiChange = (e) => {
+    // Khai báo biến/hằng số: val - Dùng trong logic xử lý của component
     const val = e.target.value;
+    // Khai báo biến/hằng số: cleanVal - Dùng trong logic xử lý của component
     const cleanVal = val.replace(/\D/g, '').slice(0, 15);
     setFormData(prev => ({ ...prev, imei: cleanVal }));
     if (errorMsg) setErrorMsg('');
   };
 
+  // Hàm xử lý logic/sự kiện: handleSubmit
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!selectedWarranty) return;
@@ -71,6 +86,7 @@ export default function WarrantyPurchasePage() {
     setErrorMsg('');
 
     try {
+      // Khai báo biến/hằng số: payload - Dùng trong logic xử lý của component
       const payload = {
         receiverName: formData.receiverName.trim() || 'Khách hàng',
         receiverPhone: formData.receiverPhone.trim() || '0900000000',
@@ -79,7 +95,9 @@ export default function WarrantyPurchasePage() {
         variantId: 0
       };
 
+      // Khai báo biến/hằng số: res - Dùng trong logic xử lý của component
       const res = await warrantyService.standaloneCheckout(payload);
+      // Cấu hình/Hằng số/Dịch vụ dữ liệu: data
       const data = res?.data || res;
       setSuccessData({ ...data, warranty: selectedWarranty, imei: payload.imei });
       setSelectedWarranty(null);

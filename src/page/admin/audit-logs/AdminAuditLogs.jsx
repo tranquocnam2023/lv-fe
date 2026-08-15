@@ -6,14 +6,20 @@ import { auditLogService } from '../../../services/auditLogService';
 export default function AdminAuditLogs() {
   // State lưu danh sách nhật ký và phân trang
   const [logs, setLogs] = useState([]);
+  // State: loading - Quản lý trạng thái và dữ liệu của loading trong giao diện
   const [loading, setLoading] = useState(false);
+  // State: totalCount - Quản lý trạng thái và dữ liệu của totalCount trong giao diện
   const [totalCount, setTotalCount] = useState(0);
+  // State: totalPages - Quản lý trạng thái và dữ liệu của totalPages trong giao diện
   const [totalPages, setTotalPages] = useState(1);
+  // State: currentPage - Quản lý trạng thái và dữ liệu của currentPage trong giao diện
   const [currentPage, setCurrentPage] = useState(1);
+  // State: pageSize - Quản lý trạng thái và dữ liệu của pageSize trong giao diện
   const [pageSize] = useState(10);
 
   // State lưu các điều kiện lọc
   const [search, setSearch] = useState('');
+  // State: actionType - Quản lý trạng thái và dữ liệu của actionType trong giao diện
   const [actionType, setActionType] = useState('');
   // Setup state ngày bắt đầu (mặc định để rỗng '' để ô input hiển thị chữ mờ placeholder dd/mm/yyyy)
   const [startDate, setStartDate] = useState('');
@@ -30,10 +36,13 @@ export default function AdminAuditLogs() {
 
   // State quản lý Modal xem dữ liệu JSON cũ / mới
   const [selectedLog, setSelectedLog] = useState(null);
+  // State: modalType - Quản lý trạng thái và dữ liệu của modalType trong giao diện
   const [modalType, setModalType] = useState(''); // 'old' (cũ) hoặc 'new' (mới)
 
+  // Hàm xử lý logic/sự kiện: fetchLogs
   const fetchLogs = () => {
     setLoading(true);
+    // Khai báo biến/hằng số: params - Dùng trong logic xử lý của component
     const params = {
       page: currentPage,
       pageSize,
@@ -66,6 +75,7 @@ export default function AdminAuditLogs() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentPage, appliedFilters]);
 
+  // Hàm xử lý logic/sự kiện: handleApplyFilters
   const handleApplyFilters = (e) => {
     e.preventDefault();
     setCurrentPage(1); // Trở về trang 1 khi bấm lọc
@@ -77,6 +87,7 @@ export default function AdminAuditLogs() {
     });
   };
 
+  // Hàm xử lý logic/sự kiện: handleClearFilters
   const handleClearFilters = () => {
     setSearch('');
     setActionType('');
@@ -91,6 +102,7 @@ export default function AdminAuditLogs() {
     });
   };
 
+  // Hàm xử lý logic/sự kiện: formatTimestamp
   const formatTimestamp = (dateStr) => {
     if (!dateStr) return '---';
     try {
@@ -98,12 +110,19 @@ export default function AdminAuditLogs() {
       if (!str.endsWith('Z') && !str.includes('+') && !str.includes('Z')) {
         str += 'Z';
       }
+      // Khai báo biến/hằng số: date - Dùng trong logic xử lý của component
       const date = new Date(str);
+      // Khai báo biến/hằng số: hours - Dùng trong logic xử lý của component
       const hours = String(date.getHours()).padStart(2, '0');
+      // Khai báo biến/hằng số: minutes - Dùng trong logic xử lý của component
       const minutes = String(date.getMinutes()).padStart(2, '0');
+      // Khai báo biến/hằng số: seconds - Dùng trong logic xử lý của component
       const seconds = String(date.getSeconds()).padStart(2, '0');
+      // Khai báo biến/hằng số: day - Dùng trong logic xử lý của component
       const day = String(date.getDate()).padStart(2, '0');
+      // Khai báo biến/hằng số: month - Dùng trong logic xử lý của component
       const month = String(date.getMonth() + 1).padStart(2, '0');
+      // Khai báo biến/hằng số: year - Dùng trong logic xử lý của component
       const year = date.getFullYear();
       return `${hours}:${minutes}:${seconds} ${day}/${month}/${year}`;
     } catch {
@@ -111,8 +130,10 @@ export default function AdminAuditLogs() {
     }
   };
 
+  // Hàm xử lý logic/sự kiện: formatTargetTable
   const formatTargetTable = (table) => {
     if (!table) return '---';
+    // Cấu hình/Hằng số/Dịch vụ dữ liệu: map
     const map = {
       Users: 'Tài khoản người dùng (Users)',
       Products: 'Sản phẩm (Products)',
@@ -136,8 +157,10 @@ export default function AdminAuditLogs() {
     return map[table] || table;
   };
 
+  // Hàm xử lý logic/sự kiện: formatTargetId
   const formatTargetId = (id) => {
     if (!id) return '---';
+    // Khai báo biến/hằng số: str - Dùng trong logic xử lý của component
     const str = String(id);
     if (str.length > 20) {
       return `${str.slice(0, 8)}...${str.slice(-6)}`;
@@ -145,7 +168,9 @@ export default function AdminAuditLogs() {
     return `#${str}`;
   };
 
+  // Hàm xử lý logic/sự kiện: getActionBadgeClass
   const getActionBadgeClass = (action) => {
+    // Khai báo biến/hằng số: act - Dùng trong logic xử lý của component
     const act = (action || '').toLowerCase();
     if (act.includes('create') || act.includes('insert') || act.includes('add')) {
       return 'bg-emerald-50 text-emerald-600 border-emerald-200 dark:bg-emerald-950/20 dark:text-emerald-400 dark:border-emerald-800/30';
@@ -156,9 +181,11 @@ export default function AdminAuditLogs() {
     return 'bg-blue-50 text-blue-600 border-blue-200 dark:bg-blue-950/20 dark:text-blue-400 dark:border-blue-800/30';
   };
 
+  // Hàm xử lý logic/sự kiện: renderJsonPretty
   const renderJsonPretty = (jsonStr) => {
     if (!jsonStr) return <span className="text-gray-400 italic">Trống</span>;
     try {
+      // Khai báo biến/hằng số: parsed - Dùng trong logic xử lý của component
       const parsed = JSON.parse(jsonStr);
       return (
         <pre className="text-[11px] font-mono text-gray-700 bg-gray-50 dark:bg-slate-900 dark:text-slate-300 p-4 rounded border border-gray-150 dark:border-slate-800 max-h-[350px] overflow-y-auto leading-relaxed">
@@ -384,6 +411,7 @@ export default function AdminAuditLogs() {
 
               {/* Các nút số trang */}
               {Array.from({ length: totalPages }).map((_, i) => {
+                // Khai báo biến/hằng số: pageNum - Dùng trong logic xử lý của component
                 const pageNum = i + 1;
                 // Chỉ hiển thị một số trang nhất định để tránh tràn giao diện
                 if (totalPages > 6 && Math.abs(currentPage - pageNum) > 2 && pageNum !== 1 && pageNum !== totalPages) {

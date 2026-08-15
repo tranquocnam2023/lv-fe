@@ -1,3 +1,4 @@
+// Khai báo biến/hằng số: THEME - Dùng trong logic xử lý của component
 export const THEME = {
   primary: 'var(--color-primary)',
   secondary: 'var(--color-secondary)',
@@ -18,6 +19,7 @@ export const THEME = {
   accent: 'var(--color-yellow)'
 };
 
+// Khai báo biến/hằng số: PIE_COLORS - Dùng trong logic xử lý của component
 export const PIE_COLORS = [
   'var(--color-primary)',
   'var(--color-secondary)',

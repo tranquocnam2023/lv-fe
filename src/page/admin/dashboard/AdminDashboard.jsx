@@ -15,13 +15,21 @@ import api from '../../../services/api';
 import { THEME, PIE_COLORS } from '../../../utils/theme';
 
 export default function AdminDashboard({ onTabChange }) {
+  // State: chartType - Quản lý trạng thái và dữ liệu của chartType trong giao diện
   const [chartType, setChartType] = useState('cumulative'); // 'cumulative' or 'daily'
+  // State: revenueData - Quản lý trạng thái và dữ liệu của revenueData trong giao diện
   const [revenueData, setRevenueData] = useState([]);
+  // State: productStats - Quản lý trạng thái và dữ liệu của productStats trong giao diện
   const [productStats, setProductStats] = useState([]);
+  // State: brandPerformance - Quản lý trạng thái và dữ liệu của brandPerformance trong giao diện
   const [brandPerformance, setBrandPerformance] = useState([]);
+  // State: stats - Quản lý trạng thái và dữ liệu của stats trong giao diện
   const [stats, setStats] = useState({ totalRevenue: 0, totalOrders: 0, totalProducts: 0, totalUsers: 0 });
+  // State: weeklySales - Quản lý trạng thái và dữ liệu của weeklySales trong giao diện
   const [weeklySales, setWeeklySales] = useState(0);
+  // State: usersList - Quản lý trạng thái và dữ liệu của usersList trong giao diện
   const [usersList, setUsersList] = useState([]);
+  // State: shippingStats - Quản lý trạng thái và dữ liệu của shippingStats trong giao diện
   const [shippingStats, setShippingStats] = useState({ pending: 0, confirmed: 0, shipping: 0, delivered: 0, canceled: 0, total: 0 });
 
   useEffect(() => {
@@ -38,7 +46,9 @@ export default function AdminDashboard({ onTabChange }) {
     // 4. Fetch Users List
     api.get('/User')
       .then(res => {
+        // Khai báo biến/hằng số: rawUsers - Dùng trong logic xử lý của component
         const rawUsers = Array.isArray(res) ? res : (res && Array.isArray(res.data) ? res.data : []);
+        // Hàm thực thi logic: customersOnly
         const customersOnly = rawUsers.filter(u => u.role === 'User' || u.role?.toLowerCase() === 'customer');
         setUsersList(customersOnly.slice(0, 5));
       })
@@ -49,14 +59,19 @@ export default function AdminDashboard({ onTabChange }) {
       productService.getAll(),
       orderService.getAll()
     ]).then(([products, orders]) => {
+      // Cấu hình/Hằng số/Dịch vụ dữ liệu: prodList
       const prodList = Array.isArray(products) ? products : [];
+      // Cấu hình/Hằng số/Dịch vụ dữ liệu: orderList
       const orderList = Array.isArray(orders) ? orders : [];
 
       // A. Calculate weekly sales (past 7 days, completed only)
       const sevenDaysAgo = new Date();
       sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+      // Hàm thực thi logic: weeklyTotal
       const weeklyTotal = orderList.reduce((sum, o) => {
+        // Khai báo biến/hằng số: orderDate - Dùng trong logic xử lý của component
         const orderDate = new Date(o.createdAt);
+        // Khai báo biến/hằng số: isCompleted - Dùng trong logic xử lý của component
         const isCompleted = o.statusId === 4 || o.statusName === 'Đã giao' || o.statusName === 'Hoàn thành';
         if (!isCompleted) return sum;
         if (orderDate >= sevenDaysAgo) {
@@ -68,9 +83,13 @@ export default function AdminDashboard({ onTabChange }) {
 
       // B. Shipping statistics
       const pending = orderList.filter(o => o.statusId === 1).length;
+      // Hàm thực thi logic: confirmed
       const confirmed = orderList.filter(o => o.statusId === 2).length;
+      // Hàm thực thi logic: shipping
       const shipping = orderList.filter(o => o.statusId === 3).length;
+      // Hàm thực thi logic: delivered
       const delivered = orderList.filter(o => o.statusId === 4).length;
+      // Hàm thực thi logic: canceled
       const canceled = orderList.filter(o => o.statusId === 5).length;
       setShippingStats({
         pending,
@@ -84,29 +103,36 @@ export default function AdminDashboard({ onTabChange }) {
       // C. Brand performance (calculate stock from products, sold from orders)
       const brandSold = {};
       orderList.forEach(order => {
+        // Khai báo biến/hằng số: isCompleted - Dùng trong logic xử lý của component
         const isCompleted = order.statusId === 4 || order.statusName === 'Đã giao' || order.statusName === 'Hoàn thành';
         if (!isCompleted) return;
         if (order.items) {
           order.items.forEach(item => {
+            // Hàm thực thi logic: prod
             const prod = prodList.find(p => p.id === item.productId || p.name === item.productName);
+            // Khai báo biến/hằng số: brand - Dùng trong logic xử lý của component
             const brand = prod?.brandName || prod?.categoryName || 'Khác';
             brandSold[brand] = (brandSold[brand] || 0) + (item.quantity || 0);
           });
         }
       });
 
+      // Khai báo biến/hằng số: performance - Dùng trong logic xử lý của component
       const performance = {};
       prodList.forEach(p => {
+        // Khai báo biến/hằng số: brand - Dùng trong logic xử lý của component
         const brand = p.brandName || p.categoryName || 'Khác';
         if (!performance[brand]) {
           performance[brand] = { name: brand, stock: 0, sold: 0, value: 0 };
         }
+        // Khai báo biến/hằng số: currentStock - Dùng trong logic xử lý của component
         const currentStock = p.availableStock ?? p.totalStock ?? p.stockQuantity ?? p.stock ?? 0;
         performance[brand].stock += currentStock;
       });
 
       // Map sold quantities
       Object.keys(performance).forEach(brand => {
+        // Khai báo biến/hằng số: soldQty - Dùng trong logic xử lý của component
         const soldQty = brandSold[brand] || 0;
         performance[brand].sold = soldQty;
         performance[brand].value = performance[brand].stock + soldQty;
@@ -117,10 +143,12 @@ export default function AdminDashboard({ onTabChange }) {
       // D. Calculate best selling products
       const statsMap = {};
       orderList.forEach(order => {
+        // Khai báo biến/hằng số: isCompleted - Dùng trong logic xử lý của component
         const isCompleted = order.statusId === 4 || order.statusName === 'Đã giao' || order.statusName === 'Hoàn thành';
         if (!isCompleted) return;
         if (order.items && order.items.length > 0) {
           order.items.forEach(item => {
+            // Khai báo biến/hằng số: name - Dùng trong logic xử lý của component
             const name = item.productName || 'Sản phẩm không tên';
             if (!statsMap[name]) {
               statsMap[name] = {
@@ -134,6 +162,7 @@ export default function AdminDashboard({ onTabChange }) {
           });
         }
       });
+      // Hàm thực thi logic: sortedStats
       const sortedStats = Object.values(statsMap).sort((a, b) => b.quantity - a.quantity);
       setProductStats(sortedStats.slice(0, 5));
     }).catch(e => console.error("Error loading products & orders data:", e));
@@ -144,6 +173,7 @@ export default function AdminDashboard({ onTabChange }) {
     ? `${weeklySales.toLocaleString('vi-VN')}đ`
     : '0đ';
 
+  // Khai báo biến/hằng số: formattedTotalRevenue - Dùng trong logic xử lý của component
   const formattedTotalRevenue = stats.totalRevenue > 0
     ? `${stats.totalRevenue.toLocaleString('vi-VN')}đ`
     : '0đ';
@@ -159,6 +189,7 @@ export default function AdminDashboard({ onTabChange }) {
 
   // Tính phần trăm thị phần của các thương hiệu hàng đầu
   const totalBrandStock = brandPerformance.reduce((acc, curr) => acc + curr.value, 0) || 1;
+  // Hàm thực thi logic: pieData
   const pieData = brandPerformance.map(b => ({
     name: b.name,
     value: b.value,
@@ -441,7 +472,9 @@ export default function AdminDashboard({ onTabChange }) {
               <tbody className="divide-y divide-bordercustom">
                 {productStats.length > 0 ? (
                   productStats.map((item, idx) => {
+                    // Khai báo biến/hằng số: maxRevenue - Dùng trong logic xử lý của component
                     const maxRevenue = productStats[0].revenue || 1;
+                    // Khai báo biến/hằng số: contributionRate - Dùng trong logic xử lý của component
                     const contributionRate = Math.round((item.revenue / maxRevenue) * 100);
                     return (
                       <tr key={idx} className="hover:bg-gray-50 transition-colors">
@@ -479,9 +512,13 @@ export default function AdminDashboard({ onTabChange }) {
             <div className="space-y-4">
               {usersList.length > 0 ? (
                 usersList.map((user, idx) => {
+                  // Khai báo biến/hằng số: initials - Dùng trong logic xử lý của component
                   const initials = user.username ? user.username.substring(0, 2).toUpperCase() : 'US';
+                  // Khai báo biến/hằng số: roleName - Dùng trong logic xử lý của component
                   const roleName = 'Khách hàng';
+                  // Khai báo biến/hằng số: colorPalette - Dùng trong logic xử lý của component
                   const colorPalette = ['bg-blue-500', 'bg-teal-500', 'bg-indigo-500', 'bg-orange-500', 'bg-purple-500'];
+                  // Khai báo biến/hằng số: avatarBg - Dùng trong logic xử lý của component
                   const avatarBg = colorPalette[idx % colorPalette.length];
 
                   return (

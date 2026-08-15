@@ -23,9 +23,11 @@ export default function CategoryEditForm({
   handleSave,
   formError
 }) {
+  // Hàm xử lý logic/sự kiện: checkInheritedInactiveForId
   const checkInheritedInactiveForId = (parentId) => {
     let currentId = parentId;
     while (currentId) {
+      // Hàm thực thi logic: parent
       const parent = allCategories.find(c => c.id === parseInt(currentId));
       if (!parent) break;
       if (parent.isActive === false) return true;
@@ -34,6 +36,7 @@ export default function CategoryEditForm({
     return false;
   };
 
+  // Khai báo biến/hằng số: inheritedInactiveModal - Dùng trong logic xử lý của component
   const inheritedInactiveModal = checkInheritedInactiveForId(formData.parentId);
 
   return (

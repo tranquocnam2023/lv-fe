@@ -5,14 +5,20 @@ import { inventoryService } from '../../../../services/inventoryService';
 import { useFormat } from '../../../../hooks/useFormat';
 
 export default function ImportCsvModal({ isOpen, onClose, onSuccess, products }) {
+  // Khai báo giải nén các thuộc tính/hàm (formatCurrency) từ Hook / Context / Props
   const { formatCurrency } = useFormat();
+  // State: isDragOver - Quản lý trạng thái và dữ liệu của isDragOver trong giao diện
   const [isDragOver, setIsDragOver] = useState(false);
+  // State: importPreview - Quản lý trạng thái và dữ liệu của importPreview trong giao diện
   const [importPreview, setImportPreview] = useState([]);
+  // State: importingProgress - Quản lý trạng thái và dữ liệu của importingProgress trong giao diện
   const [importingProgress, setImportingProgress] = useState(null);
+  // State: importError - Quản lý trạng thái và dữ liệu của importError trong giao diện
   const [importError, setImportError] = useState(null);
 
   if (!isOpen) return null;
 
+  // Hàm xử lý logic/sự kiện: handleDownloadTemplateCSV
   const handleDownloadTemplateCSV = async () => {
     try {
       await excelService.downloadImportTemplate(products);
@@ -21,15 +27,19 @@ export default function ImportCsvModal({ isOpen, onClose, onSuccess, products })
     }
   };
 
+  // Hàm xử lý logic/sự kiện: handleCSVFileChange
   const handleCSVFileChange = (e) => {
+    // Khai báo biến/hằng số: file - Dùng trong logic xử lý của component
     const file = e.target.files[0];
     if (!file) return;
     setImportError(null);
     setImportPreview([]);
 
+    // Khai báo biến/hằng số: reader - Dùng trong logic xử lý của component
     const reader = new FileReader();
     reader.onload = (event) => {
       try {
+        // Khai báo biến/hằng số: text - Dùng trong logic xử lý của component
         const text = event.target.result;
         let lines = text.split(/\r?\n/);
         
@@ -45,13 +55,17 @@ export default function ImportCsvModal({ isOpen, onClose, onSuccess, products })
 
         // Tự động nhận diện dấu phân cách cột là dấu chấm phẩy (;) hay dấu phẩy (,)
         const headerLine = lines[0] || '';
+        // Khai báo biến/hằng số: separator - Dùng trong logic xử lý của component
         const separator = (headerLine.split(';').length > headerLine.split(',').length) ? ';' : ',';
 
+        // Hàm thực thi logic: parseLine
         const parseLine = (line) => {
+          // Khai báo biến/hằng số: result - Dùng trong logic xử lý của component
           const result = [];
           let current = '';
           let inQuotes = false;
           for (let i = 0; i < line.length; i++) {
+            // Khai báo biến/hằng số: char - Dùng trong logic xử lý của component
             const char = line[i];
             if (char === '"') {
               if (inQuotes && line[i + 1] === '"') {
@@ -71,25 +85,35 @@ export default function ImportCsvModal({ isOpen, onClose, onSuccess, products })
           return result;
         };
 
+        // Khai báo biến/hằng số: headers - Dùng trong logic xử lý của component
         const headers = parseLine(lines[0]);
         if (headers.length < 7) {
           setImportError("Cấu trúc cột của tệp không khớp với file mẫu!");
           return;
         }
 
+        // Cấu hình/Hằng số/Dịch vụ dữ liệu: previewData
         const previewData = [];
         for (let i = 1; i < lines.length; i++) {
+          // Khai báo biến/hằng số: line - Dùng trong logic xử lý của component
           const line = lines[i].trim();
           if (!line) continue;
 
+          // Khai báo biến/hằng số: values - Dùng trong logic xử lý của component
           const values = parseLine(line);
           if (values.length < 6) continue; 
 
+          // Khai báo biến/hằng số: productId - Dùng trong logic xử lý của component
           const productId = parseInt(values[0]);
+          // Khai báo biến/hằng số: variantId - Dùng trong logic xử lý của component
           const variantId = values[1] ? parseInt(values[1]) : null;
+          // Khai báo biến/hằng số: productName - Dùng trong logic xử lý của component
           const productName = values[2];
+          // Khai báo biến/hằng số: variantName - Dùng trong logic xử lý của component
           const variantName = values[3];
+          // Khai báo biến/hằng số: quantity - Dùng trong logic xử lý của component
           const quantity = parseInt(values[4]);
+          // Khai báo biến/hằng số: price - Dùng trong logic xử lý của component
           const price = parseFloat(values[5]);
           let transactionTypeRaw = values[6]?.toUpperCase().trim() || '';
           let transactionType = transactionTypeRaw;
@@ -105,12 +129,14 @@ export default function ImportCsvModal({ isOpen, onClose, onSuccess, products })
             transactionType = 'EXPORT_DEFECT';
           }
 
+          // Khai báo biến/hằng số: note - Dùng trong logic xử lý của component
           const note = values[7] || '';
 
           if (isNaN(productId) || isNaN(quantity) || quantity === 0 || isNaN(price)) {
             continue;
           }
 
+          // Cấu hình/Hằng số/Dịch vụ dữ liệu: validTypes
           const validTypes = ['IMPORT_SUPPLIER', 'IMPORT_RETURN', 'EXPORT_SELL', 'EXPORT_DEFECT'];
           if (!validTypes.includes(transactionType)) {
             continue;
@@ -141,6 +167,7 @@ export default function ImportCsvModal({ isOpen, onClose, onSuccess, products })
     reader.readAsText(file, "UTF-8");
   };
 
+  // Hàm xử lý logic/sự kiện: handleImportExcelConfirm
   const handleImportExcelConfirm = async () => {
     if (importPreview.length === 0) return;
     setImportingProgress({ current: 0, total: importPreview.length });
@@ -149,6 +176,7 @@ export default function ImportCsvModal({ isOpen, onClose, onSuccess, products })
     let failCount = 0;
     
     for (let i = 0; i < importPreview.length; i++) {
+      // Khai báo biến/hằng số: item - Dùng trong logic xử lý của component
       const item = importPreview[i];
       setImportingProgress({ current: i + 1, total: importPreview.length });
       
@@ -219,6 +247,7 @@ export default function ImportCsvModal({ isOpen, onClose, onSuccess, products })
               e.preventDefault();
               setIsDragOver(false);
               if (importingProgress !== null) return;
+              // Khai báo biến/hằng số: file - Dùng trong logic xử lý của component
               const file = e.dataTransfer.files[0];
               if (file) {
                 handleCSVFileChange({ target: { files: [file] } });

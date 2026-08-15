@@ -7,6 +7,7 @@ export default function TxDetailsModal({
   onClose, 
   onRevert 
 }) {
+  // Khai báo giải nén các thuộc tính/hàm (formatCurrency) từ Hook / Context / Props
   const { formatCurrency } = useFormat();
 
   if (!selectedTxGroup) return null;
@@ -54,6 +55,7 @@ export default function TxDetailsModal({
                </thead>
                <tbody className="text-sm">
                  {selectedTxGroup.items.map((tx, idx) => {
+                   // Khai báo biến/hằng số: qty - Dùng trong logic xử lý của component
                    const qty = Math.abs(tx.quantityChanged);
                    return (
                      <tr key={idx} className={`border-b border-admin-border last:border-0 hover:bg-slate-50 ${tx.isReverted ? 'opacity-50 line-through' : ''}`}>
