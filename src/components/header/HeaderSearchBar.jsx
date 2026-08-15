@@ -54,7 +54,7 @@ export default function HeaderSearchBar({
                   return (
                     <Link
                       key={product.id}
-                      to={`/product/${product.id}`}
+                      to={`/product/${product.slug || product.id}`}
                       onClick={() => {
                         setShowDropdown(false);
                         setSearchQuery('');

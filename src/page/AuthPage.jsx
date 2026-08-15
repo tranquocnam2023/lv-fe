@@ -402,9 +402,19 @@ export default function AuthPage() {
           navigate('/');
         }
       } else {
-        await authService.register({ username, email, password });
-        alert('Đăng ký thành công! Vui lòng đăng nhập.');
-        setIsLogin(true);
+        const res = await authService.register({ username, email, password });
+        if (res.data && res.data.token) {
+          alert('Đăng ký tài khoản thành công!');
+          const redirectUrl = searchParams.get('redirect');
+          if (redirectUrl) {
+            navigate(redirectUrl);
+          } else {
+            navigate('/');
+          }
+        } else {
+          alert('Đăng ký thành công! Vui lòng đăng nhập.');
+          setIsLogin(true);
+        }
         setPassword('');
         setConfirmPassword('');
       }
@@ -526,15 +536,19 @@ export default function AuthPage() {
     e.preventDefault();
     setLoading(true);
     try {
-      await userService.updateProfile({
+      const res = await userService.updateProfile({
         username: editProfileData.username,
         email: editProfileData.email
       });
-      alert('Cập nhật thông tin cá nhân thành công!');
+      const msg = res?.message || (typeof res === 'string' ? res : 'Cập nhật thông tin cá nhân thành công!');
+      alert(msg);
       setIsEditingProfile(false);
       fetchProfile();
     } catch (err) {
-      alert('Cập nhật thất bại: ' + (err.message || JSON.stringify(err)));
+      const errorMsg = typeof err === 'string' 
+        ? err 
+        : (err?.message || (err?.errors ? Object.values(err.errors).flat().join(', ') : 'Cập nhật thất bại. Vui lòng kiểm tra lại.'));
+      alert(errorMsg);
     } finally {
       setLoading(false);
     }
@@ -681,6 +695,7 @@ export default function AuthPage() {
                 handleUpdateProfile={handleUpdateProfile}
                 formatDate={formatDate}
                 loading={loading}
+                onRefreshProfile={fetchProfile}
               />
             )}
 

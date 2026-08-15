@@ -101,6 +101,7 @@ const parseSpecs = (specsInput, priorityKeys = []) => {
 
 export default function ProductCard({ 
   id,
+  slug,
   name, 
   image, 
   price, 
@@ -120,7 +121,7 @@ export default function ProductCard({
 
   return (
     <Link 
-      to={`/product/${id}`}
+      to={`/product/${slug || id}`}
       className="group flex flex-col bg-white border rounded-md p-3 transition-all duration-300 relative cursor-pointer h-full overflow-hidden"
       style={{ borderColor: THEME.border }}
       onMouseOver={(e) => { e.currentTarget.style.borderColor = THEME.primary; }}

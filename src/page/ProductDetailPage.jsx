@@ -236,13 +236,11 @@ export default function ProductDetailPage() {
   // Tải dữ liệu Product, danh sách Variants & Categories & Accessories
   useEffect(() => {
     setLoading(true);
-    Promise.all([
-      productService.getById(id),
-      api.get(`/ProductVariant?productId=${id}`).catch(() => []),
-      categoryService.getAll().catch(() => []),
-      productService.getAll().catch(() => [])
-    ])
-      .then(([productData, variantData, categoryData, allProducts]) => {
+    const fetchProductData = async () => {
+      try {
+        const getProductReq = isNaN(id) ? productService.getBySlug(id) : productService.getById(id);
+        const productData = await getProductReq;
+
         if (productData) {
           // Khai báo biến/hằng số: normalized - Dùng trong logic xử lý của component
           const normalized = {
@@ -256,6 +254,12 @@ export default function ProductDetailPage() {
           const masterImgs = getMasterImages(normalized);
           setGalleryImages(masterImgs);
           setActiveImage(masterImgs[0]);
+
+          const [variantData, categoryData, allProducts] = await Promise.all([
+            api.get(`/ProductVariant?productId=${normalized.id}`).catch(() => []),
+            categoryService.getAll().catch(() => []),
+            productService.getAll().catch(() => [])
+          ]);
 
           if (Array.isArray(variantData)) {
             setVariants(variantData);
@@ -412,12 +416,14 @@ export default function ProductDetailPage() {
         } else {
           setProduct(null);
         }
-      })
-      .catch((err) => {
+      } catch (err) {
         console.error("Lỗi lấy chi tiết sản phẩm:", err);
         setProduct(null);
-      })
-      .finally(() => setLoading(false));
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchProductData();
   }, [id]);
 
   // Tự động chọn biến thể hoạt động đầu tiên làm mặc định khi tải trang

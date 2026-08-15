@@ -12,6 +12,8 @@ export const productService = {
   
   getById: (id) => api.get(`/Product/${id}`),
   
+  getBySlug: (slug) => api.get(`/Product/${slug}`),
+  
   getByCategory: (categoryId) => api.get(`/Product/Category/${categoryId}`),
   
   getPerformance: () => api.get('/Product/Performance'),

@@ -3,6 +3,8 @@ import { CreditCard, Truck, Info, ShieldCheck } from 'lucide-react';
 
 export default function CartPaymentMethods({
   isLoggedIn,
+  currentUser,
+  setIsVerifyModalOpen,
   deliveryMethod,
   shippingCarrier,
   shippingOptions,
@@ -192,24 +194,54 @@ export default function CartPaymentMethods({
         </label>
 
         {/* COD */}
-        <label className={`flex items-center gap-3 p-3 border rounded-md transition cursor-pointer select-none ${paymentMethod === 'cod'
-          ? 'border-blue-500 bg-blue-50/20'
-          : 'border-gray-200 hover:border-gray-300'
-          }`}>
-          <input
-            type="radio"
-            name="paymentMethod"
-            value="cod"
-            checked={paymentMethod === 'cod'}
-            onChange={() => setPaymentMethod('cod')}
-            className="w-4 h-4 text-blue-600 border-gray-300 focus:ring-0 cursor-pointer"
-          />
-          <div className="text-xs flex-1">
-            <p className="font-bold text-gray-800">Thanh toán tiền mặt khi nhận hàng (COD)</p>
-            <p className="text-[10px] text-gray-400">Thanh toán bằng tiền mặt khi nhận được hàng</p>
-          </div>
-          <Truck size={16} className="text-gray-400" />
-        </label>
+        <div className="space-y-2">
+          <label className={`flex items-center gap-3 p-3 border rounded-md transition cursor-pointer select-none ${paymentMethod === 'cod'
+            ? 'border-blue-500 bg-blue-50/20'
+            : 'border-gray-200 hover:border-gray-300'
+            }`}>
+            <input
+              type="radio"
+              name="paymentMethod"
+              value="cod"
+              checked={paymentMethod === 'cod'}
+              onChange={() => setPaymentMethod('cod')}
+              className="w-4 h-4 text-blue-600 border-gray-300 focus:ring-0 cursor-pointer"
+            />
+            <div className="text-xs flex-1">
+              <div className="flex items-center gap-2 flex-wrap">
+                <p className="font-bold text-gray-800">Thanh toán tiền mặt khi nhận hàng (COD)</p>
+                {currentUser && !currentUser.isEmailVerified && (
+                  <span className="px-2 py-0.5 text-[10px] font-bold bg-amber-100 text-amber-800 rounded border border-amber-200">
+                    Cần xác thực Email
+                  </span>
+                )}
+              </div>
+              <p className="text-[10px] text-gray-400">Thanh toán bằng tiền mặt khi nhận được hàng</p>
+            </div>
+            <Truck size={16} className="text-gray-400" />
+          </label>
+
+          {paymentMethod === 'cod' && currentUser && !currentUser.isEmailVerified && (
+            <div className="p-3.5 bg-amber-50/80 border border-amber-200 rounded-md text-xs text-amber-900 space-y-2 animate-in slide-in-from-top-2 duration-200">
+              <div className="flex items-start gap-2">
+                <span className="text-base leading-none">⚠️</span>
+                <div>
+                  <p className="font-bold text-amber-900">Yêu cầu xác thực Email trước khi đặt hàng COD</p>
+                  <p className="text-[11px] text-amber-700 mt-0.5">
+                    Để tránh đơn hàng ảo, quý khách cần xác thực địa chỉ email để chọn phương thức COD.
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsVerifyModalOpen && setIsVerifyModalOpen(true)}
+                className="w-full py-2 bg-amber-600 hover:bg-amber-700 text-white font-bold rounded text-xs transition cursor-pointer border-0 shadow-xs"
+              >
+                Xác thực Email ngay
+              </button>
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Bank Transfer QR details */}
