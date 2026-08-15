@@ -520,6 +520,7 @@ export default function HomePage({ selectedLocation }) {
               <ProductCard
                 key={`bestseller-${product.id}`}
                 id={product.id}
+                slug={product.slug}
                 name={product.name}
                 price={product.price}
                 originalPrice={product.originalPrice}
@@ -703,6 +704,7 @@ export default function HomePage({ selectedLocation }) {
                         <ProductCard
                           key={product.id}
                           id={product.id}
+                          slug={product.slug}
                           name={product.name}
                           price={product.price}
                           originalPrice={product.originalPrice}

@@ -370,7 +370,7 @@ export default function Sidebar({ isFocused, setIsFocused }) {
                         return (
                           <Link
                             key={prod.id}
-                            to={`/product/${prod.id}`}
+                            to={`/product/${prod.slug || prod.id}`}
                             onClick={() => {
                               setHoveredRootId(null);
                               setHoveredSub2Id(null);

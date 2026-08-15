@@ -21,6 +21,7 @@ import CartPaymentMethods from './cart/components/CartPaymentMethods';
 import CartSuccessScreen from './cart/components/CartSuccessScreen';
 import PromotionSelector from '../components/PromotionSelector';
 import CoPurchaseRecommendation from './product-detail/components/CoPurchaseRecommendation';
+import EmailVerificationModal from '../components/auth/EmailVerificationModal';
 
 export default function CartPage() {
   // Khai báo giải nén các thuộc tính/hàm (stopLoading) từ Hook / Context / Props
@@ -34,6 +35,7 @@ export default function CartPage() {
   const [isLoggedIn, setIsLoggedIn] = useState(!!localStorage.getItem('token'));
   // State: currentUser - Quản lý trạng thái và dữ liệu của currentUser trong giao diện
   const [currentUser, setCurrentUser] = useState(null);
+  const [isVerifyModalOpen, setIsVerifyModalOpen] = useState(false);
 
   // Stop loading on mount/data loaded
   useEffect(() => {
@@ -1240,6 +1242,8 @@ export default function CartPage() {
             {/* Card 5: Payment Methods and Shipping Options */}
             <CartPaymentMethods
               isLoggedIn={isLoggedIn}
+              currentUser={currentUser}
+              setIsVerifyModalOpen={setIsVerifyModalOpen}
               deliveryMethod={deliveryMethod}
               shippingCarrier={shippingCarrier}
               shippingOptions={shippingOptions}
@@ -1448,6 +1452,20 @@ export default function CartPage() {
           </div>
         </div>
       )}
+
+      <EmailVerificationModal
+        isOpen={isVerifyModalOpen}
+        onClose={() => setIsVerifyModalOpen(false)}
+        email={currentUser?.email}
+        onVerifiedSuccess={() => {
+          userService.getProfile().then(res => {
+            if (res) {
+              setCurrentUser(res);
+              localStorage.setItem('user', JSON.stringify(res));
+            }
+          });
+        }}
+      />
 
     </div>
   );

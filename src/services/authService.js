@@ -52,8 +52,14 @@ export const authService = {
         localMap[userData.email.trim().toLowerCase()] = userData.username;
         localStorage.setItem('email_to_username', JSON.stringify(localMap));
       }
+
+      if (res.data && res.data.token) {
+        localStorage.setItem('token', res.data.token);
+        localStorage.setItem('user', JSON.stringify(res.data));
+        window.dispatchEvent(new Event('auth-change'));
+      }
     } catch (e) {
-      console.error("Lỗi lưu email_to_username vào localStorage:", e);
+      console.error("Lỗi lưu thông tin sau khi đăng ký:", e);
     }
     
     return res;
@@ -81,5 +87,13 @@ export const authService = {
 
   googleLogin: (idToken) => {
     return api.post('/Auth/google-login', { idToken });
+  },
+
+  sendVerificationOtp: () => {
+    return api.post('/Auth/send-verification-otp');
+  },
+
+  verifyEmail: (otp) => {
+    return api.post('/Auth/verify-email', { otp });
   }
 };

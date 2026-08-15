@@ -5,7 +5,8 @@
  * - HIỂN THỊ Ở ĐÂU: Xuất hiện mặc định khi người dùng đã đăng nhập mở Trang cá nhân `/profile` hoặc `/profile?tab=info`.
  * =========================================================================
  */
-import React from 'react';
+import React, { useState } from 'react';
+import EmailVerificationModal from '../../../components/auth/EmailVerificationModal';
 
 // LUỒNG PHÂN HẠNG THÀNH VIÊN (CUSTOMER TIERS):
 // - Hạng thành viên được xác định động dựa trên Điểm Tích Lũy Trọn Đời (accumulatedPoints).
@@ -40,8 +41,11 @@ export default function ProfileInfoTab({
   setEditProfileData,
   handleUpdateProfile,
   formatDate,
-  loading
+  loading,
+  onRefreshProfile
 }) {
+  const [isVerifyModalOpen, setIsVerifyModalOpen] = useState(false);
+
   return (
     <div className="space-y-6">
       <div className="border-b border-gray-100 pb-3">
@@ -65,7 +69,26 @@ export default function ProfileInfoTab({
 
           <div className="space-y-1">
             <span className="text-xs text-gray-400 font-bold uppercase">Email</span>
-            <p className="font-bold text-gray-800 text-lg">{userProfile?.email}</p>
+            <div className="flex items-center gap-2 flex-wrap">
+              <p className="font-bold text-gray-800 text-lg">{userProfile?.email}</p>
+              {userProfile?.isEmailVerified ? (
+                <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-100 text-emerald-700 border border-emerald-200">
+                  ✓ Đã xác thực
+                </span>
+              ) : (
+                <div className="flex items-center gap-2">
+                  <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-amber-100 text-amber-800 border border-amber-200">
+                    ⚠ Chưa xác thực
+                  </span>
+                  <button
+                    onClick={() => setIsVerifyModalOpen(true)}
+                    className="text-xs font-bold text-blue-600 hover:text-blue-700 hover:underline cursor-pointer border-0 bg-transparent"
+                  >
+                    Xác thực ngay
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
 
           <div className="space-y-1">
@@ -140,6 +163,15 @@ export default function ProfileInfoTab({
           </div>
         </form>
       )}
+
+      <EmailVerificationModal
+        isOpen={isVerifyModalOpen}
+        onClose={() => setIsVerifyModalOpen(false)}
+        email={userProfile?.email}
+        onVerifiedSuccess={() => {
+          if (onRefreshProfile) onRefreshProfile();
+        }}
+      />
     </div>
   );
 }

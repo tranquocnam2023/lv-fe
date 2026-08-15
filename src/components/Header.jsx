@@ -799,7 +799,7 @@ export default function Header() {
                               {megaData.hotProducts.map((prod, pIdx) => (
                                 <Link
                                   key={pIdx}
-                                  to={prod.id ? `/product/${prod.id}` : `/?search=${encodeURIComponent(prod.name)}`}
+                                  to={prod.id ? `/product/${prod.slug || prod.id}` : `/?search=${encodeURIComponent(prod.name)}`}
                                   className={`flex items-center justify-between p-2 rounded-xl transition-all ${
                                     isDark
                                       ? 'hover:bg-slate-800/80 text-slate-200'
@@ -913,7 +913,7 @@ export default function Header() {
                       return (
                         <Link
                           key={product.id}
-                          to={`/product/${product.id}`}
+                          to={`/product/${product.slug || product.id}`}
                           onClick={() => {
                             setShowDropdown(false);
                             setSearchQuery('');
