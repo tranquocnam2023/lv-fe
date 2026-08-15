@@ -19,6 +19,7 @@ import ProfileOrderHistoryTab from './auth/components/ProfileOrderHistoryTab';
 import ProfilePasswordTab from './auth/components/ProfilePasswordTab';
 import ProfileWarrantyDevicesTab from './auth/components/ProfileWarrantyDevicesTab';
 import ProfileTrackOrderTab from './auth/components/ProfileTrackOrderTab';
+import WishlistTab from './auth/components/WishlistTab';
 
 export default function AuthPage() {
   // Khai báo giải nén các thuộc tính/hàm (stopLoading) từ Hook / Context / Props
@@ -100,7 +101,7 @@ export default function AuthPage() {
     }
     // truyền tab từ url vào state
     const tab = searchParams.get('tab');
-    if (tab && ['info', 'addresses', 'password', 'history', 'track', 'warranties', 'warranty'].includes(tab)) {
+    if (tab && ['info', 'addresses', 'password', 'history', 'track', 'warranties', 'warranty', 'wishlist'].includes(tab)) {
       setProfileTab(tab === 'warranty' ? 'warranties' : tab);
     }
 
@@ -726,6 +727,10 @@ export default function AuthPage() {
 
             {profileTab === 'warranties' && (
               <ProfileWarrantyDevicesTab />
+            )}
+
+            {profileTab === 'wishlist' && (
+              <WishlistTab />
             )}
 
             {profileTab === 'password' && (

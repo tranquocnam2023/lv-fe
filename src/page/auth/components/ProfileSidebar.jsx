@@ -6,7 +6,7 @@
  * =========================================================================
  */
 import React from 'react';
-import { User, MapPin, ClipboardList, Key, LogOut, ShieldCheck } from 'lucide-react';
+import { User, MapPin, ClipboardList, Key, LogOut, ShieldCheck, Heart } from 'lucide-react';
 
 export default function ProfileSidebar({
   userProfile,
@@ -15,6 +15,11 @@ export default function ProfileSidebar({
   setSelectedOrder,
   handleLogout
 }) {
+  const handleTabClick = (tabName) => {
+    setProfileTab(tabName);
+    window.history.pushState({}, '', `/profile?tab=${tabName}`);
+  };
+
   return (
     <aside className="w-full md:w-64 shrink-0 bg-white rounded-md border border-gray-200 p-4 h-fit font-sans">
       <div className="flex items-center space-x-3 pb-4 mb-4 border-b border-gray-100">
@@ -30,7 +35,7 @@ export default function ProfileSidebar({
 
       <nav className="flex flex-col space-y-1">
         <button
-          onClick={() => setProfileTab('info')}
+          onClick={() => handleTabClick('info')}
           className={`flex items-center space-x-3 px-4 py-3 rounded-md text-sm font-bold transition-all text-left cursor-pointer border-0 ${
             profileTab === 'info'
               ? 'bg-primary/10 text-primary'
@@ -42,7 +47,7 @@ export default function ProfileSidebar({
         </button>
 
         <button
-          onClick={() => setProfileTab('track')}
+          onClick={() => handleTabClick('track')}
           className={`flex items-center space-x-3 px-4 py-3 rounded-md text-sm font-bold transition-all text-left cursor-pointer border-0 ${
             (profileTab === 'track' || profileTab === 'history')
               ? 'bg-primary/10 text-primary'
@@ -54,7 +59,7 @@ export default function ProfileSidebar({
         </button>
 
         <button
-          onClick={() => setProfileTab('warranties')}
+          onClick={() => handleTabClick('warranties')}
           className={`flex items-center space-x-3 px-4 py-3 rounded-md text-sm font-bold transition-all text-left cursor-pointer border-0 ${
             profileTab === 'warranties'
               ? 'bg-primary/10 text-primary'
@@ -66,7 +71,19 @@ export default function ProfileSidebar({
         </button>
 
         <button
-          onClick={() => setProfileTab('addresses')}
+          onClick={() => handleTabClick('wishlist')}
+          className={`flex items-center space-x-3 px-4 py-3 rounded-md text-sm font-bold transition-all text-left cursor-pointer border-0 ${
+            profileTab === 'wishlist'
+              ? 'bg-primary/10 text-primary'
+              : 'text-gray-600 hover:bg-gray-50 bg-transparent'
+          }`}
+        >
+          <Heart size={18} className="text-rose-500 fill-rose-500/20" />
+          <span>Sản phẩm đã lưu</span>
+        </button>
+
+        <button
+          onClick={() => handleTabClick('addresses')}
           className={`flex items-center space-x-3 px-4 py-3 rounded-md text-sm font-bold transition-all text-left cursor-pointer border-0 ${
             profileTab === 'addresses'
               ? 'bg-primary/10 text-primary'
@@ -78,7 +95,7 @@ export default function ProfileSidebar({
         </button>
 
         <button
-          onClick={() => setProfileTab('password')}
+          onClick={() => handleTabClick('password')}
           className={`flex items-center space-x-3 px-4 py-3 rounded-md text-sm font-bold transition-all text-left cursor-pointer border-0 ${
             profileTab === 'password'
               ? 'bg-primary/10 text-primary'

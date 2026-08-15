@@ -13,6 +13,7 @@
 
 import { Link } from 'react-router-dom';
 import { THEME } from '../../utils/theme';
+import WishlistButton from './WishlistButton';
 
 /**
  * Hàm hỗ trợ bóc tách thông số kỹ thuật (RAM, ROM, Màn hình...) từ dữ liệu JSON specs
@@ -127,6 +128,9 @@ export default function ProductCard({
       onMouseOver={(e) => { e.currentTarget.style.borderColor = THEME.primary; }}
       onMouseOut={(e) => { e.currentTarget.style.borderColor = THEME.border; }}
     >
+
+      {/* Nút Yêu thích (Wishlist) */}
+      <WishlistButton productId={id} className="absolute top-2 left-2 z-20" iconSize={16} />
 
       {/* Badge Giảm giá & Nổi bật */}
       <div className="absolute top-2 right-2 flex flex-col space-y-1 z-10 text-[11px] font-bold">

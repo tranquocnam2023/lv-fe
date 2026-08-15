@@ -1,6 +1,7 @@
 import React from 'react';
 import { Check, X, ShoppingCart, ShieldCheck, Award, Gift, Truck, RefreshCw } from 'lucide-react';
 import WarrantySelector from '../../../components/product/WarrantySelector';
+import WishlistButton from '../../../components/product/WishlistButton';
 
 // Hàm xử lý logic/sự kiện: getHexForColor
 const getHexForColor = (colorName) => {
@@ -237,20 +238,28 @@ export default function ProductSummaryInfo({
 
 
 
-          {/* Nút THÊM VÀO GIỎ HÀNG */}
-          <button
-            type="button"
-            onClick={onAddToCart}
-            disabled={displayDetails.stock === 0 || product.isAvailable === false}
-            className={`w-full py-3 rounded-xl border-2 font-black text-xs uppercase flex items-center justify-center gap-2 transition-all cursor-pointer select-none ${
-              displayDetails.stock > 0 && product.isAvailable !== false
-                ? 'border-red-600 text-red-600 bg-white hover:bg-red-50/50'
-                : 'border-slate-200 text-slate-400 bg-slate-50 cursor-not-allowed'
-            }`}
-          >
-            <ShoppingCart size={17} />
-            <span>THÊM VÀO GIỎ HÀNG</span>
-          </button>
+          {/* Nút THÊM VÀO GIỎ HÀNG & YÊU THÍCH */}
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={onAddToCart}
+              disabled={displayDetails.stock === 0 || product.isAvailable === false}
+              className={`flex-1 py-3 rounded-xl border-2 font-black text-xs uppercase flex items-center justify-center gap-2 transition-all cursor-pointer select-none ${
+                displayDetails.stock > 0 && product.isAvailable !== false
+                  ? 'border-red-600 text-red-600 bg-white hover:bg-red-50/50'
+                  : 'border-slate-200 text-slate-400 bg-slate-50 cursor-not-allowed'
+              }`}
+            >
+              <ShoppingCart size={17} />
+              <span>THÊM VÀO GIỎ HÀNG</span>
+            </button>
+
+            <WishlistButton
+              productId={product.id || product.Id}
+              className="h-11 w-11 shrink-0 rounded-xl border-2 border-slate-200 hover:border-rose-400 flex items-center justify-center"
+              iconSize={20}
+            />
+          </div>
         </div>
 
         {/* UY TÍN CỬA HÀNG */}

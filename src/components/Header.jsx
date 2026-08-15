@@ -66,6 +66,7 @@ const getCategoryIcon = (name, iconUrl) => {
 // Subcomponents
 import HeaderSearchBar from './header/HeaderSearchBar';
 import HeaderAccountMenu from './header/HeaderAccountMenu';
+import NotificationBell from './header/NotificationBell';
 
 // Fallback logo các thương hiệu lớn nếu DB chưa cập nhật imageUrl
 const BRAND_FALLBACK_LOGOS = {
@@ -518,6 +519,9 @@ export default function Header() {
             )}
           </button>*/}
 
+          {/* Notification Bell Icon */}
+          <NotificationBell />
+
           {/* Account Menu Dropdown */}
           <HeaderAccountMenu
             isLoggedIn={isLoggedIn}
@@ -529,6 +533,8 @@ export default function Header() {
 
         {/* MOBILE & TABLET: Simple Action Icons */}
         <div className="flex lg:hidden items-center space-x-2">
+          {/* Notification Bell for Mobile */}
+          <NotificationBell />
           {/* Cart Icon */}
           <Link
             to="/cart"
