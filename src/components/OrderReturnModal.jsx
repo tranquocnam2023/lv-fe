@@ -1,6 +1,6 @@
 /**
  * =========================================================================
- * 📌 COMPONENT DÙNG CHUNG: OrderReturnModal.jsx
+ *   COMPONENT DÙNG CHUNG: OrderReturnModal.jsx
  * - CHỨC NĂNG: Xử lý Đổi trả & Hoàn tiền cho cả 2 phía:
  *   + mode="user": Khách chọn sản phẩm trong đơn, nhập lý do & tải ảnh minh chứng.
  *   + mode="admin": Admin xem thông tin sản phẩm khiếu nại, ảnh minh chứng & bấm duyệt 1-Click (OrderStatusId = 7).
@@ -9,6 +9,7 @@
 import React, { useState, useEffect } from 'react';
 import { RotateCcw, ShieldAlert, CheckCircle2, X, Upload, Image as ImageIcon, AlertCircle, Clock } from 'lucide-react';
 import { orderService } from '../services/orderService';
+import { returnService } from '../services/returnService';
 
 export default function OrderReturnModal({ isOpen, onClose, order, mode = 'user', onSuccess }) {
   // State phía User
@@ -161,7 +162,7 @@ export default function OrderReturnModal({ isOpen, onClose, order, mode = 'user'
     setSubmitting(true);
     try {
       try {
-        await orderService.approveReturnRequest(orderId, adminNote);
+        await returnService.approveReturnRequest(orderId, adminNote);
       } catch {
         await orderService.updateStatus(orderId, 'refunded');
       }
@@ -207,7 +208,7 @@ export default function OrderReturnModal({ isOpen, onClose, order, mode = 'user'
   // Admin từ chối yêu cầu
   const handleAdminReject = async () => {
     try {
-      await orderService.rejectReturnRequest(orderId, adminNote);
+      await returnService.rejectReturnRequest(orderId, adminNote);
     } catch {
       // Fallback local
     }
@@ -261,7 +262,7 @@ export default function OrderReturnModal({ isOpen, onClose, order, mode = 'user'
   return (
     <div className="fixed inset-0 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 z-[9999] animate-in fade-in duration-200">
       <div className="bg-white rounded-2xl max-w-2xl w-full p-6 space-y-5 shadow-2xl relative border border-gray-100 max-h-[90vh] overflow-y-auto animate-in zoom-in-95 duration-200">
-        
+
         {/* Header Modal */}
         <div className="flex items-center justify-between border-b border-gray-150 pb-4">
           <div className="flex items-center gap-2.5">
@@ -285,9 +286,8 @@ export default function OrderReturnModal({ isOpen, onClose, order, mode = 'user'
         </div>
 
         {/* Thông báo chính sách 7 ngày */}
-        <div className={`p-3.5 border rounded-xl flex items-center gap-2.5 text-xs font-semibold shadow-2xs ${
-          isExpired ? 'bg-red-50 border-red-200 text-red-900' : 'bg-blue-50/80 border-blue-200 text-blue-900'
-        }`}>
+        <div className={`p-3.5 border rounded-xl flex items-center gap-2.5 text-xs font-semibold shadow-2xs ${isExpired ? 'bg-red-50 border-red-200 text-red-900' : 'bg-blue-50/80 border-blue-200 text-blue-900'
+          }`}>
           <ShieldAlert size={18} className={isExpired ? 'text-red-600 shrink-0' : 'text-blue-600 shrink-0'} />
           <span>
             Chính sách đổi trả 1 đổi 1 trong <strong>7 ngày</strong> (Thời hạn đến ngày <strong>{getReturnDeadline(order.createdAt)}</strong>).
@@ -412,9 +412,8 @@ export default function OrderReturnModal({ isOpen, onClose, order, mode = 'user'
                   return (
                     <div
                       key={itemId}
-                      className={`p-3.5 rounded-xl border transition-all ${
-                        isChecked ? 'bg-purple-50/40 border-purple-300' : 'bg-gray-50 border-gray-200'
-                      }`}
+                      className={`p-3.5 rounded-xl border transition-all ${isChecked ? 'bg-purple-50/40 border-purple-300' : 'bg-gray-50 border-gray-200'
+                        }`}
                     >
                       <div className="flex items-start gap-3">
                         <input
