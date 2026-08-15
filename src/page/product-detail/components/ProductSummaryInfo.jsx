@@ -74,7 +74,7 @@ export default function ProductSummaryInfo({
           if (isColorAttr) {
             return (
               <div key={attrKey} className="space-y-2">
-                <div className="flex items-center justify-between text-xs">
+                <div className="flex items-center gap-2 text-xs">
                   <span className="font-extrabold text-slate-700 uppercase text-[11px] tracking-wider">{attrKey}:</span>
                   <span className="text-slate-900 font-black">{selectedAttributes[attrKey] || 'Chưa chọn'}</span>
                 </div>
@@ -121,7 +121,7 @@ export default function ProductSummaryInfo({
           // Dung lượng / Kích thước
           return (
             <div key={attrKey} className="space-y-2">
-              <div className="flex items-center justify-between text-xs">
+              <div className="flex items-center gap-2 text-xs">
                 <span className="font-extrabold text-slate-700 uppercase text-[11px] tracking-wider">{attrKey}:</span>
                 <span className="text-slate-900 font-black">{selectedAttributes[attrKey] || 'Chưa chọn'}</span>
               </div>

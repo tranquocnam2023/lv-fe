@@ -56,14 +56,14 @@ export default function OrderReturnModal({ isOpen, onClose, order, mode = 'user'
   // Khai báo biến/hằng số: orderId - Dùng trong logic xử lý của component
   const orderId = order.id || order.Id;
   // Khai báo biến/hằng số: items - Dùng trong logic xử lý của component
-  const items = order.items || [];
+  const items = order.items || order.orderItems || order.OrderItems || [];
 
-  // Tính hạn đổi trả 7 ngày
+  // Tính hạn đổi trả 30 ngày
   const getReturnDeadline = (createdDate) => {
     // Khai báo biến/hằng số: d - Dùng trong logic xử lý của component
     const d = new Date(createdDate || Date.now());
     if (isNaN(d.getTime())) return '';
-    d.setDate(d.getDate() + 8);
+    d.setDate(d.getDate() + 31);
     return d.toLocaleDateString('vi-VN');
   };
 
@@ -250,12 +250,12 @@ export default function OrderReturnModal({ isOpen, onClose, order, mode = 'user'
   // Cấu hình/Hằng số/Dịch vụ dữ liệu: existingReturnData
   const existingReturnData = savedRequests[orderId];
 
-  // Kiểm tra đã hết thời hạn 7 ngày chưa (Ngày tạo đơn + 7 ngày)
+  // Kiểm tra đã hết thời hạn 30 ngày chưa (Ngày tạo đơn + 30 ngày)
   const isExpired = (() => {
     if (!order?.createdAt) return false;
     // Khai báo biến/hằng số: deadline - Dùng trong logic xử lý của component
     const deadline = new Date(order.createdAt);
-    deadline.setDate(deadline.getDate() + 7);
+    deadline.setDate(deadline.getDate() + 30);
     return new Date() > deadline;
   })();
 
@@ -285,12 +285,12 @@ export default function OrderReturnModal({ isOpen, onClose, order, mode = 'user'
           </button>
         </div>
 
-        {/* Thông báo chính sách 7 ngày */}
+        {/* Thông báo chính sách 30 ngày */}
         <div className={`p-3.5 border rounded-xl flex items-center gap-2.5 text-xs font-semibold shadow-2xs ${isExpired ? 'bg-red-50 border-red-200 text-red-900' : 'bg-blue-50/80 border-blue-200 text-blue-900'
           }`}>
           <ShieldAlert size={18} className={isExpired ? 'text-red-600 shrink-0' : 'text-blue-600 shrink-0'} />
           <span>
-            Chính sách đổi trả 1 đổi 1 trong <strong>7 ngày</strong> (Thời hạn đến ngày <strong>{getReturnDeadline(order.createdAt)}</strong>).
+            Chính sách đổi trả 1 đổi 1 trong <strong>30 ngày</strong> (Thời hạn đến ngày <strong>{getReturnDeadline(order.createdAt)}</strong>).
           </span>
         </div>
 
@@ -303,12 +303,12 @@ export default function OrderReturnModal({ isOpen, onClose, order, mode = 'user'
                 <span>Đã hết thời gian đổi trả sản phẩm</span>
               </div>
               <p className="text-xs font-medium leading-relaxed">
-                Rất tiếc, đơn hàng <strong>#PS{orderId}</strong> của quý khách đã <strong>vượt quá thời hạn 7 ngày đổi trả</strong> (Hạn chót là ngày <strong>{getReturnDeadline(order.createdAt)}</strong>).
+                Rất tiếc, đơn hàng <strong>#PS{orderId}</strong> của quý khách đã <strong>vượt quá thời hạn 30 ngày đổi trả</strong> (Hạn chót là ngày <strong>{getReturnDeadline(order.createdAt)}</strong>).
               </p>
               <div className="p-3 bg-white/80 rounded-lg border border-red-150 text-[11px] text-red-800 space-y-1">
                 <p className="font-bold">⚠️ Quy định áp dụng chính sách đổi trả 1 đổi 1:</p>
-                <p>• Yêu cầu đổi trả chỉ có hiệu lực trong vòng <strong>7 ngày</strong> kể từ khi đặt/giao hàng thành công.</p>
-                <p>• Nếu sản phẩm phát sinh sự cố kỹ thuật sau 7 ngày, quý khách vui lòng liên hệ Trung tâm bảo hành chính hãng hoặc hotline CSKH để được hỗ trợ.</p>
+                <p>• Yêu cầu đổi trả chỉ có hiệu lực trong vòng <strong>30 ngày</strong> kể từ khi đặt/giao hàng thành công.</p>
+                <p>• Nếu sản phẩm phát sinh sự cố kỹ thuật sau 30 ngày, quý khách vui lòng liên hệ Trung tâm bảo hành chính hãng hoặc hotline CSKH để được hỗ trợ.</p>
               </div>
             </div>
 
@@ -412,21 +412,25 @@ export default function OrderReturnModal({ isOpen, onClose, order, mode = 'user'
                   return (
                     <div
                       key={itemId}
-                      className={`p-3.5 rounded-xl border transition-all ${isChecked ? 'bg-purple-50/40 border-purple-300' : 'bg-gray-50 border-gray-200'
+                      className={`p-3.5 rounded-xl border transition-all relative ${isChecked ? 'bg-purple-50/40 border-purple-300' : 'bg-gray-50 border-gray-200'
                         }`}
                     >
-                      <div className="flex items-start gap-3">
-                        <input
-                          type="checkbox"
-                          checked={isChecked}
-                          onChange={() => handleToggleItem(itemId)}
-                          className="mt-1 w-4 h-4 text-purple-600 rounded cursor-pointer"
-                        />
-                        <div className="flex-1 space-y-1 text-xs">
-                          <p className="font-bold text-gray-900">{item.productName || item.ProductName || 'Sản phẩm'}</p>
-                          <p className="text-gray-500 font-medium">
-                            Số lượng mua: <span className="font-black text-gray-800">{item.quantity || item.Quantity || 1}</span> | Giá mua: <span className="font-black text-red-600">{(item.price || item.Price || 0).toLocaleString('vi-VN')}₫</span>
-                          </p>
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="flex items-start gap-3 flex-1">
+                          <input
+                            type="checkbox"
+                            checked={isChecked}
+                            onChange={() => handleToggleItem(itemId)}
+                            className="mt-1 w-4 h-4 text-purple-600 rounded cursor-pointer"
+                          />
+                          <div className="flex-1 space-y-1 text-xs">
+                            <p className="font-bold text-gray-900">{item.productName || item.ProductName || 'Sản phẩm'}</p>
+                            <p className="text-gray-500 font-medium">
+                              Số lượng mua: <span className="font-black text-gray-800">{item.quantity || item.Quantity || 1}</span> | Giá mua: <span className="font-black text-red-600">{(item.priceAtPurchase ?? item.PriceAtPurchase ?? item.price ?? item.Price ?? item.unitPrice ?? item.UnitPrice ?? item.productVariant?.price ?? item.ProductVariant?.price ?? 0).toLocaleString('vi-VN')}₫</span>
+                            </p>
+                          </div>
+                        </div>
+                      </div>
 
                           {/* Chọn lý do nếu sản phẩm được tích */}
                           {isChecked && (
@@ -477,8 +481,6 @@ export default function OrderReturnModal({ isOpen, onClose, order, mode = 'user'
                             </div>
                           )}
                         </div>
-                      </div>
-                    </div>
                   );
                 })}
               </div>

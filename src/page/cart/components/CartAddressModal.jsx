@@ -41,6 +41,8 @@ export default function CartAddressModal({
   onSelectSavedAddress,
   onAddNewAddress
 }) {
+  // Email xác nhận đơn hàng hiện tại được hệ thống tự động liên kết trực tiếp với Email tài khoản mà người dùng đã dùng để đăng ký
+  // (truy xuất từ currentUser.email ở CartPage.jsx), giúp tối ưu thao tác nhập liệu và đảm bảo tính chính xác 100%.
 
   if (!showAddressModal) return null;
 
@@ -202,17 +204,7 @@ export default function CartAddressModal({
             </div>
           </div>
 
-          {/* Email */}
-          <div className="space-y-1">
-            <label className="block text-[9px] font-bold text-gray-400 uppercase tracking-wider">Email (Để nhận thông tin đơn hàng)</label>
-            <input
-              type="email"
-              placeholder="nhapemail@gmail.com..."
-              value={modalEmail}
-              onChange={(e) => setModalEmail(e.target.value)}
-              className="w-full bg-gray-50 border border-gray-200 rounded-md px-3 py-2 font-bold focus:outline-none focus:border-blue-500 text-gray-800"
-            />
-          </div>
+
 
           {/* Address dropdowns */}
           {deliveryMethod === 'ship' && (

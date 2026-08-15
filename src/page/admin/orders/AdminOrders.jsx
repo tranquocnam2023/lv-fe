@@ -16,7 +16,7 @@ const STATUS_TABS = [
   { id: 'confirmed', name: 'Đã xác nhận', count: 0, icon: CheckCircle, color: 'text-info', bgColor: 'bg-info/10' },
   { id: 'shipping', name: 'Đang giao', count: 0, icon: Truck, color: 'text-primary', bgColor: 'bg-primary/10' },
   { id: 'delivered', name: 'Đã hoàn thành', count: 0, icon: CheckCircle, color: 'text-success', bgColor: 'bg-success/10' },
-  { id: 'refunded', name: 'Hoàn tiền', count: 0, icon: RotateCcw, color: 'text-purple-600', bgColor: 'bg-purple-50 border-purple-100' },
+  { id: 'refunded', name: 'Đổi trả & Hoàn tiền', count: 0, icon: RotateCcw, color: 'text-purple-600', bgColor: 'bg-purple-50 border-purple-100' },
   { id: 'cancelled', name: 'Đã hủy', count: 0, icon: XCircle, color: 'text-admin-danger', bgColor: 'bg-admin-danger/10' },
 ];
 
@@ -187,9 +187,10 @@ export default function AdminOrders() {
   // Hàm thực thi logic: filteredOrders
   const filteredOrders = orders.filter(order => {
     // Khai báo biến/hằng số: matchesTab - Dùng trong logic xử lý của component
+    const isRefunded = order.status === 'refunded' || order.statusId === 7 || getReturnRequestInfo(order.id)?.status === 'Approved';
     const matchesTab = activeTab === 'all' ||
       (activeTab === 'shipping' && (order.status === 'shipping' || order.status === 'shipping_failed')) ||
-      order.status === activeTab;
+      (activeTab === 'refunded' ? isRefunded : order.status === activeTab);
     // Khai báo biến/hằng số: matchesSearch - Dùng trong logic xử lý của component
     const matchesSearch = String(order.id).toLowerCase().includes(searchTerm.toLowerCase()) ||
       String(order.customer || '').toLowerCase().includes(searchTerm.toLowerCase());
@@ -346,6 +347,26 @@ export default function AdminOrders() {
           }
           return o;
         }));
+
+        // [ĐỒNG BỘ NGUYÊN TỬ VÀO MODAL CHI TIẾT ĐƠN HÀNG]:
+        // Nếu modal chi tiết đơn hàng (OrderDetailsModal) đang mở khi Admin thực hiện đổi trạng thái
+        // (ví dụ bấm nút Duyệt/Hủy/Giao hàng trong modal footer), ta đồng bộ ngay lập tức `selectedOrderDetails` 
+        // để modal cập nhật nút thao tác mới mà không cần F5 hoặc tắt/mở lại modal.
+        if (selectedOrderDetails && selectedOrderDetails.id === orderId) {
+          setSelectedOrderDetails(prev => {
+            if (!prev) return null;
+            const isCod = (prev.paymentMethod || 'cod').toLowerCase() === 'cod';
+            const paymentStatusText = isCod
+              ? (newStatus === 'delivered' ? 'Đã thanh toán' : 'Chờ thanh toán')
+              : (newStatus === 'confirmed' || newStatus === 'preparing' || newStatus === 'shipping' || newStatus === 'delivered' ? 'Đã thanh toán' : 'Chờ thanh toán');
+            return {
+              ...prev,
+              status: newStatus,
+              payment: paymentStatusText,
+              failedDeliveryCount: nextFailedCount
+            };
+          });
+        }
       })
       .catch(err => {
         console.error("Lỗi cập nhật trạng thái đơn hàng:", err);
@@ -425,6 +446,7 @@ export default function AdminOrders() {
     confirmed: orders.filter(o => o.status === 'confirmed' || o.status === 'preparing').length,
     shipping: orders.filter(o => o.status === 'shipping' || o.status === 'shipping_failed').length,
     delivered: orders.filter(o => o.status === 'delivered').length,
+    refunded: orders.filter(o => o.status === 'refunded' || o.statusId === 7 || getReturnRequestInfo(o.id)?.status === 'Approved').length,
     cancelled: orders.filter(o => o.status === 'cancelled').length,
   };
 
@@ -579,7 +601,8 @@ export default function AdminOrders() {
                             : getShippingStatus(order.status).label}
                         </span>
 
-                        {/* Nút thao tác trực tiếp bên dưới với thiết kế mẫu chuẩn */}
+                        {/* Nút thao tác trực tiếp ở ngoài đã được comment lại theo yêu cầu, chuyển vào modal Chi tiết đơn hàng */}
+                        {/* 
                         {order.status === 'pending' && (
                           <div className="flex gap-1.5 items-center">
                             <button
@@ -696,6 +719,7 @@ export default function AdminOrders() {
                             </button>
                           </div>
                         )}
+                        */}
                       </div>
                     </td>
                   </tr>
@@ -786,7 +810,10 @@ export default function AdminOrders() {
             return prev;
           });
         }}
+        onStatusChange={handleStatusChange}
         onShipWithAhamove={handleShipWithAhamove}
+        onOpenReturnModal={(ord) => setReturnModalOrder(ord)}
+        getReturnRequestInfo={getReturnRequestInfo}
       />
 
       {/* MODAL KIỂM DUYỆT ĐỔI TRẢ HOÀN TIỀN CHO ADMIN */}

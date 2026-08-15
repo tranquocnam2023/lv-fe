@@ -147,7 +147,7 @@ export default function ProductGallery({ product, selectedColor, galleryImages, 
               <button
                 type="button"
                 onClick={handleMainImagePrev}
-                className="absolute left-2 top-1/2 -translate-y-1/2 z-10 p-2 bg-white/90 hover:bg-white text-gray-800 rounded-full shadow-md transition-all opacity-0 group-hover:opacity-100 hover:scale-105 active:scale-95 focus:outline-none"
+                className="absolute left-2 top-1/2 -translate-y-1/2 z-10 p-2 bg-white/90 hover:bg-white text-gray-800 rounded-full shadow-md transition-all opacity-100 sm:opacity-0 sm:group-hover:opacity-100 hover:scale-105 active:scale-95 focus:outline-none"
                 title="Ảnh trước"
               >
                 <ChevronLeft size={20} strokeWidth={2.5} />
@@ -155,7 +155,7 @@ export default function ProductGallery({ product, selectedColor, galleryImages, 
               <button
                 type="button"
                 onClick={handleMainImageNext}
-                className="absolute right-2 top-1/2 -translate-y-1/2 z-10 p-2 bg-white/90 hover:bg-white text-gray-800 rounded-full shadow-md transition-all opacity-0 group-hover:opacity-100 hover:scale-105 active:scale-95 focus:outline-none"
+                className="absolute right-2 top-1/2 -translate-y-1/2 z-10 p-2 bg-white/90 hover:bg-white text-gray-800 rounded-full shadow-md transition-all opacity-100 sm:opacity-0 sm:group-hover:opacity-100 hover:scale-105 active:scale-95 focus:outline-none"
                 title="Ảnh tiếp theo"
               >
                 <ChevronRight size={20} strokeWidth={2.5} />

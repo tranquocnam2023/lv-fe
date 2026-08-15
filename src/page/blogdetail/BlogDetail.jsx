@@ -125,10 +125,10 @@ export default function BlogDetail() {
   }
 
   return (
-    <div className="max-w-6xl mx-auto px-4 py-6 space-y-8 animate-in fade-in duration-300">
+    <div className="w-full max-w-6xl mx-auto px-2 sm:px-4 py-3 sm:py-6 space-y-5 sm:space-y-8 animate-in fade-in duration-300">
       
       {/* ── BREADCRUMB NAVIGATION ── */}
-      <nav className="flex items-center gap-2 text-xs font-semibold text-gray-500 overflow-x-auto pb-1">
+      <nav className="flex items-center gap-1.5 text-xs font-semibold text-gray-500 overflow-x-auto pb-1 px-1">
         <Link to="/" className="hover:text-blue-600 transition-colors shrink-0 flex items-center gap-1">
           <span>Trang chủ</span>
         </Link>
@@ -148,16 +148,16 @@ export default function BlogDetail() {
           </>
         )}
         <ChevronRight size={13} className="shrink-0 text-gray-300" />
-        <span className="text-gray-900 font-bold truncate max-w-sm">
+        <span className="text-gray-900 font-bold truncate max-w-xs sm:max-w-sm">
           {blog.title || blog.name}
         </span>
       </nav>
 
       {/* ── MAIN CONTENT & SIDEBAR GRID ── */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 sm:gap-8 items-start w-full">
         
         {/* LEFT COLUMN: MAIN ARTICLE (8 COLS) */}
-        <article className="lg:col-span-8 bg-white rounded-3xl p-6 md:p-8 shadow-sm border border-gray-100 space-y-6">
+        <article className="lg:col-span-8 bg-white rounded-2xl sm:rounded-3xl p-3.5 sm:p-6 md:p-8 shadow-sm border border-gray-100 space-y-5 sm:space-y-6 w-full">
           
           {/* Header Info */}
           <div className="space-y-4">

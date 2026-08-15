@@ -57,6 +57,9 @@ export default function CartPage() {
           if (res) {
             setCurrentUser(res);
             localStorage.setItem('user', JSON.stringify(res));
+            if (res.email) {
+              setFormData(prev => ({ ...prev, email: res.email }));
+            }
           }
         })
         .catch(err => {
@@ -65,7 +68,11 @@ export default function CartPage() {
           const userJson = localStorage.getItem('user');
           if (userJson && userJson !== 'undefined' && userJson !== 'null') {
             try {
-              setCurrentUser(JSON.parse(userJson));
+              const u = JSON.parse(userJson);
+              setCurrentUser(u);
+              if (u?.email) {
+                setFormData(prev => ({ ...prev, email: u.email }));
+              }
             } catch (err2) {
               console.debug(err2);
             }
@@ -936,6 +943,26 @@ export default function CartPage() {
         formData.note ? `Ghi chú: ${formData.note}` : ""
       ].filter(n => n !== "").join(" | ");
 
+      /*
+       * LUỒNG TỰ ĐỘNG GỬI EMAIL THÔNG BÁO ĐƠN HÀNG (AUTOMATED EMAIL NOTIFICATION SYSTEM):
+       * - Mục đích: Loại bỏ việc người dùng phải nhập Email thủ công khi thanh toán (tránh gõ sai/gõ nhầm địa chỉ email).
+       * - Logic hoạt động: Hệ thống tự động truy xuất địa chỉ Email chính chủ đã được người dùng sử dụng để ĐĂNG KÝ TÀI KHOẢN 
+       *   từ `currentUser.email` hoặc bộ nhớ tạm `localStorage.user`.
+       * - Tác dụng: Địa chỉ email này sẽ được gắn trực tiếp vào `payload.email` để chuyển xuống Backend (`OrderService.cs`).
+       *   Backend sẽ kích hoạt Background Task (`Task.Run`) tự động gửi Email xác nhận hóa đơn, thông báo hành trình vận chuyển
+       *   Ahamove và cập nhật trạng thái đơn hàng realtime mà không làm chậm tốc độ phản hồi API.
+       */
+      let registeredEmail = currentUser?.email;
+      if (!registeredEmail) {
+        try {
+          const userObj = JSON.parse(localStorage.getItem('user') || '{}');
+          registeredEmail = userObj?.email;
+        } catch (e) {
+          console.debug(e);
+        }
+      }
+      const finalEmail = registeredEmail || formData.email || '';
+
       // Khai báo biến/hằng số: payload - Dùng trong logic xử lý của component
       const payload = {
         recipientName: formData.fullName,
@@ -949,7 +976,7 @@ export default function CartPage() {
         shippingCarrier: shippingCarrier,
         deliveryLatitude: deliveryMethod === 'ship' ? formData.deliveryLatitude : null,
         deliveryLongitude: deliveryMethod === 'ship' ? formData.deliveryLongitude : null,
-        email: formData.email,
+        email: finalEmail,
         items: cartItems.map(item => ({
           productId: item.id || item.Id,
           storage: item.selectedStorage || '',

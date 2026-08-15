@@ -1,5 +1,5 @@
 import React from 'react';
-import { X } from 'lucide-react';
+import { X, RotateCcw } from 'lucide-react';
 import { useFormat } from '../../../hooks/useFormat';
 
 // ánh xạ tên phương thức thanh toán
@@ -37,7 +37,14 @@ const getShippingStatus = (status) => {
   }
 };
 
-export default function OrderDetailsModal({ order, onClose, onShipWithAhamove }) {
+export default function OrderDetailsModal({
+  order,
+  onClose,
+  onStatusChange,
+  onShipWithAhamove,
+  onOpenReturnModal,
+  getReturnRequestInfo
+}) {
   // Khai báo giải nén các thuộc tính/hàm (formatCurrency, formatDate) từ Hook / Context / Props
   const { formatCurrency, formatDate } = useFormat();
 
@@ -270,15 +277,133 @@ export default function OrderDetailsModal({ order, onClose, onShipWithAhamove })
         </div>
 
         {/* Footer */}
-        <div className="flex justify-end gap-3 px-6 py-4 bg-admin-bg border-t border-admin-border flex-shrink-0">
-          {(order.status === 'confirmed' || order.status === 'preparing') && order.deliveryLatitude && order.deliveryLongitude && !order.ahamoveOrderId && order.shippingCarrier && order.shippingCarrier.toLowerCase().includes('ahamove') && (
-            <button
-              onClick={() => onShipWithAhamove(order.id)}
-              className="px-5 py-2.5 bg-primary text-white rounded-md font-bold hover:bg-primary/90 transition-colors text-xs cursor-pointer shadow-sm animate-pulse"
-            >
-              Gửi giao hàng qua Ahamove
-            </button>
-          )}
+        <div className="flex flex-wrap items-center justify-between gap-3 px-6 py-4 bg-admin-bg border-t border-admin-border flex-shrink-0">
+          <div className="flex items-center gap-2 flex-wrap">
+            {/* 
+              GHI CHÚ HỆ THỐNG: TẠO VÀ CHUYỂN TẤT CẢ CÁC NÚT THAO TÁC ĐƠN HÀNG VÀO MODAL CHI TIẾT
+              - Mục đích thiết kế UI/UX: Rút gọn bảng danh sách đơn hàng ngoài AdminOrders.jsx giúp giao diện gọn gàng.
+              - Logic hoạt động: Tùy thuộc vào trạng thái hiện tại của đơn hàng (`order.status`), modal footer sẽ tự động 
+                hiển thị các nút thao tác tương ứng:
+                + 'pending': Duyệt & Giao hàng (Manual), Hủy đơn
+                + 'confirmed' / 'preparing': Gửi giao hàng qua Ahamove (nếu carrier là Ahamove) hoặc Giao hàng (Manual)
+                + 'shipping': Xác nhận đã giao, Giao thất bại
+                + 'delivered': Duyệt Đổi trả (nếu có yêu cầu Pending)
+                + 'shipping_failed': Giao lại
+            */}
+            {order.status === 'pending' && onStatusChange && (
+              <>
+                <button
+                  onClick={() => onStatusChange(order.id, 'shipping')}
+                  className="px-4 py-2 bg-primary/10 text-primary border border-primary/20 hover:bg-primary/20 rounded-md font-extrabold text-xs cursor-pointer transition-all active:scale-95"
+                  title="1-Click: Duyệt đơn hàng và chuyển ngay sang Đang giao"
+                >
+                  Duyệt & Giao hàng (Manual)
+                </button>
+                <button
+                  onClick={() => onStatusChange(order.id, 'cancelled')}
+                  className="px-4 py-2 bg-admin-danger/10 text-admin-danger border border-admin-danger/20 hover:bg-admin-danger/20 rounded-md font-extrabold text-xs cursor-pointer transition-all active:scale-95"
+                  title="Hủy đơn hàng"
+                >
+                  Hủy đơn
+                </button>
+              </>
+            )}
+
+            {(order.status === 'confirmed' || order.status === 'preparing') && (
+              <>
+                {order.shippingCarrier && order.shippingCarrier.toLowerCase().includes('ahamove') ? (
+                  onShipWithAhamove && (
+                    <button
+                      onClick={() => onShipWithAhamove(order.id)}
+                      className="px-5 py-2.5 bg-primary text-white rounded-md font-bold hover:bg-primary/90 transition-colors text-xs cursor-pointer shadow-sm animate-pulse active:scale-95"
+                      title="Gửi đơn hàng sang hệ thống Ahamove"
+                    >
+                      Gửi giao hàng qua Ahamove
+                    </button>
+                  )
+                ) : (
+                  onStatusChange && (
+                    <button
+                      onClick={() => onStatusChange(order.id, 'shipping')}
+                      className="px-4 py-2 bg-primary/10 text-primary border border-primary/20 hover:bg-primary/20 rounded-md font-extrabold text-xs cursor-pointer transition-all active:scale-95"
+                      title="Bên vận chuyển đến lấy hàng và bắt đầu giao"
+                    >
+                      Giao hàng (Manual)
+                    </button>
+                  )
+                )}
+              </>
+            )}
+
+            {order.status === 'shipping' && onStatusChange && (
+              <>
+                <button
+                  onClick={() => onStatusChange(order.id, 'delivered')}
+                  className="px-4 py-2 bg-success/10 text-success border border-success/20 hover:bg-success/20 rounded-md font-extrabold text-xs cursor-pointer transition-all active:scale-95"
+                  title="Xác nhận khách đã nhận hàng thành công"
+                >
+                  Xác nhận đã giao
+                </button>
+                <button
+                  onClick={() => onStatusChange(order.id, 'shipping_failed')}
+                  className="px-4 py-2 bg-admin-danger/10 text-admin-danger border border-admin-danger/20 hover:bg-admin-danger/20 rounded-md font-extrabold text-xs cursor-pointer transition-all active:scale-95"
+                  title="Báo giao hàng thất bại"
+                >
+                  Giao thất bại
+                </button>
+              </>
+            )}
+
+            {order.status === 'delivered' && (() => {
+              const returnData = getReturnRequestInfo ? getReturnRequestInfo(order.id) : null;
+              if (returnData && returnData.status === 'Pending') {
+                return (
+                  <button
+                    onClick={() => onOpenReturnModal && onOpenReturnModal(order)}
+                    className="px-4 py-2 bg-admin-danger/10 text-admin-danger border border-admin-danger/20 hover:bg-admin-danger/20 rounded-md font-extrabold text-xs cursor-pointer transition-all active:scale-95"
+                    title="Khách vừa gửi yêu cầu đổi trả! Nhấp để xem và duyệt ngay"
+                  >
+                    Duyệt Đổi trả
+                  </button>
+                );
+              }
+              if (returnData && returnData.status === 'Rejected') {
+                return (
+                  <span className="text-[11px] font-bold text-gray-500 bg-gray-100 px-3 py-1.5 rounded-md border border-gray-200">
+                    Từ chối đổi trả
+                  </span>
+                );
+              }
+              return null;
+            })()}
+
+            {order.status === 'refunded' && (
+              <span className="text-[11px] font-black text-purple-700 bg-purple-50 border border-purple-200 px-3 py-1.5 rounded-md flex items-center gap-1">
+                <RotateCcw size={12} />
+                <span>Đã hoàn tiền</span>
+              </span>
+            )}
+
+            {order.status === 'shipping_failed' && onStatusChange && (
+              <>
+                <button
+                  onClick={() => onStatusChange(order.id, 'shipping')}
+                  className="px-4 py-2 bg-info/10 text-info border border-info/20 hover:bg-info/20 rounded-md font-extrabold text-xs cursor-pointer transition-all active:scale-95"
+                  title="Giao hàng lại lần tiếp theo"
+                >
+                  Giao lại
+                </button>
+                <button
+                  onClick={() => onStatusChange(order.id, 'cancelled')}
+                  className="px-4 py-2 bg-admin-danger/10 text-admin-danger border border-admin-danger/20 hover:bg-admin-danger/20 rounded-md font-extrabold text-xs cursor-pointer transition-all active:scale-95"
+                  title="Hủy đơn hàng"
+                >
+                  Hủy đơn
+                </button>
+              </>
+            )}
+          </div>
+
           <button
             onClick={onClose}
             className="px-5 py-2.5 bg-white border border-admin-border text-admin-text-main rounded-md font-bold hover:bg-admin-bg transition-colors text-xs cursor-pointer"

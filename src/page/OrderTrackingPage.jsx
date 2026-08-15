@@ -249,6 +249,7 @@ export default function OrderTrackingPage() {
                 <option value="2">Đang xử lý</option>
                 <option value="3">Đang giao hàng</option>
                 <option value="4">Đã hoàn thành</option>
+                <option value="7">Hoàn tiền / Đổi trả</option>
                 <option value="5">Đã hủy</option>
               </select>
               <Filter className="absolute left-2.5 top-2.5 text-gray-400" size={14} />
