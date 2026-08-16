@@ -150,6 +150,13 @@ export default function ProfileWarrantyDevicesTab() {
             // Khai báo biến/hằng số: isEditing - Dùng trong logic xử lý của component
             const isEditing = activeInputId === item.orderItemId;
 
+            const status = item.inspectionStatus;
+            const isApproved = status === 'Approved' || status === 'Approved_Passed' || status === 'ĐÃ DUYỆT';
+            const isRejected = status === 'Rejected' || status === 'Rejected_Failed' || status === 'TỪ CHỐI';
+
+            // Khách chỉ được phép nhập/sửa IMEI khi chưa được Admin duyệt (Chưa kích hoạt hoặc Đang chờ duyệt)
+            const canEditImei = !isApproved && !isRejected;
+
             return (
               <div
                 key={item.orderItemId}
@@ -164,13 +171,23 @@ export default function ProfileWarrantyDevicesTab() {
                   </div>
 
                   <div>
-                    {isActivated ? (
+                    {isApproved ? (
                       <span className="inline-flex items-center gap-1 text-[10px] font-black uppercase text-green-700 bg-green-50 px-2.5 py-1 rounded-full border border-green-200">
                         <CheckCircle size={12} />
-                        <span>Đã kích hoạt bảo hành</span>
+                        <span>Đã thẩm định &amp; Kích hoạt</span>
+                      </span>
+                    ) : isRejected ? (
+                      <span className="inline-flex items-center gap-1 text-[10px] font-black uppercase text-red-700 bg-red-50 px-2.5 py-1 rounded-full border border-red-200">
+                        <AlertCircle size={12} />
+                        <span>Từ chối bảo hành</span>
+                      </span>
+                    ) : isActivated ? (
+                      <span className="inline-flex items-center gap-1 text-[10px] font-black uppercase text-amber-700 bg-amber-50 px-2.5 py-1 rounded-full border border-amber-200">
+                        <Clock size={12} />
+                        <span>Chờ Admin thẩm định máy</span>
                       </span>
                     ) : (
-                      <span className="inline-flex items-center gap-1 text-[10px] font-black uppercase text-amber-700 bg-amber-50 px-2.5 py-1 rounded-full border border-amber-200">
+                      <span className="inline-flex items-center gap-1 text-[10px] font-black uppercase text-gray-600 bg-gray-100 px-2.5 py-1 rounded-full border border-gray-200">
                         <Clock size={12} />
                         <span>Chờ nhập mã IMEI kích hoạt</span>
                       </span>
@@ -203,13 +220,13 @@ export default function ProfileWarrantyDevicesTab() {
                   </div>
                 </div>
 
-                {/* Khung nhập IMEI nếu chưa kích hoạt hoặc bấm Sửa */}
-                {(!isActivated || isEditing) && (
+                {/* Khung nhập / sửa IMEI: Chỉ hiện khi chưa duyệt (Chưa kích hoạt hoặc Đang chờ Admin thẩm định) */}
+                {canEditImei && (!isActivated || isEditing) && (
                   <div className="pt-3 border-t border-dashed border-gray-200 bg-amber-50/50 p-4 rounded-xl space-y-3">
                     <div className="flex items-center justify-between">
                       <span className="text-xs font-bold text-amber-900 flex items-center gap-1">
                         <Sparkles size={14} className="text-amber-600" />
-                        <span>Nhập mã IMEI (15 chữ số) của máy bạn để bắt đầu tính hạn bảo hành:</span>
+                        <span>{isActivated ? 'Cập nhật lại mã IMEI (trường hợp gõ nhầm):' : 'Nhập mã IMEI (15 chữ số) của máy bạn để bắt đầu tính hạn bảo hành:'}</span>
                       </span>
                       {isEditing && isActivated && (
                         <button
@@ -235,7 +252,7 @@ export default function ProfileWarrantyDevicesTab() {
                         disabled={activatingId === item.orderItemId || inputVal.length !== 15}
                         className="px-4 py-2 bg-amber-600 hover:bg-amber-700 disabled:bg-gray-300 text-white rounded-lg font-black text-xs uppercase tracking-wider transition active:scale-95 cursor-pointer border-0 shrink-0 flex items-center justify-center gap-1"
                       >
-                        {activatingId === item.orderItemId ? 'Đang kích hoạt...' : 'Kích Hoạt Bảo Hành'}
+                        {activatingId === item.orderItemId ? 'Đang cập nhật...' : (isActivated ? 'Cập nhật IMEI' : 'Kích Hoạt Bảo Hành')}
                       </button>
                     </div>
                     {inputVal && inputVal.length < 15 && (
@@ -246,16 +263,17 @@ export default function ProfileWarrantyDevicesTab() {
                   </div>
                 )}
 
-                {isActivated && !isEditing && (
+                {/* Nút Cập nhật lại số IMEI khác: Chỉ hiện khi ĐANG CHỜ DUYỆT và chưa bật khung sửa */}
+                {isActivated && canEditImei && !isEditing && (
                   <div className="pt-2 flex justify-end">
                     <button
                       onClick={() => {
                         setActiveInputId(item.orderItemId);
                         setImeiInputs(prev => ({ ...prev, [item.orderItemId]: item.imei }));
                       }}
-                      className="text-[11px] font-bold text-blue-600 hover:underline cursor-pointer border-0 bg-transparent"
+                      className="text-[11px] font-bold text-blue-600 hover:underline cursor-pointer border-0 bg-transparent flex items-center gap-1"
                     >
-                      Cập nhật lại số IMEI khác
+                      <span> Cập nhật lại số IMEI</span>
                     </button>
                   </div>
                 )}

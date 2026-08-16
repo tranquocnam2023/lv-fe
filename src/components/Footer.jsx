@@ -4,14 +4,14 @@ import { Link } from 'react-router-dom';
 
 import { THEME } from '../utils/theme';
 
-import topzoneLogo from '../assets/mwg-logos/topzone.svg';
-import dienmayxanhLogo from '../assets/mwg-logos/dienmayxanh.svg';
-import bachhoaxanhLogo from '../assets/mwg-logos/bachhoaxanh.svg';
-import ankhangLogo from '../assets/mwg-logos/ankhang.svg';
-import avakidsLogo from '../assets/mwg-logos/avakids.svg';
-import vieclamLogo from '../assets/mwg-logos/vieclam.svg';
-import erablueLogo from '../assets/mwg-logos/erablue.svg';
-import thodmxLogo from '../assets/mwg-logos/thodmx.svg';
+import topzoneLogo from '../assets/mwg-logos/topzone.webp';
+import dienmayxanhLogo from '../assets/mwg-logos/dienmayxanh.webp';
+import bachhoaxanhLogo from '../assets/mwg-logos/bachhoaxanh.png';
+import ankhangLogo from '../assets/mwg-logos/ankhang.jpg';
+import avakidsLogo from '../assets/mwg-logos/avakids.jpg';
+import vieclamLogo from '../assets/mwg-logos/vieclam.jpg';
+import erablueLogo from '../assets/mwg-logos/erablue.jpg';
+import thodmxLogo from '../assets/mwg-logos/thodmx.png';
 
 export default function Footer() {
   // State: isExpanded - Quản lý trạng thái và dữ liệu của isExpanded trong giao diện
@@ -25,7 +25,7 @@ export default function Footer() {
       // Khai báo biến/hằng số: u - Dùng trong logic xử lý của component
       const u = JSON.parse(userJson);
       isLoggedIn = !!(u && (u.id || u.Id));
-    } catch (e) {}
+    } catch (e) { }
   }
 
   return (
@@ -55,13 +55,13 @@ export default function Footer() {
         {/* Col 3 */}
         <div className="flex flex-col space-y-3 text-gray-700">
           <h3 className="font-bold text-gray-800 uppercase mb-2">Thông tin khác</h3>
-          
+
           <Link to="#" className="hover:text-primary transition">Tích điểm Quà tặng VIP</Link>
           <Link to={isLoggedIn ? "/profile?tab=history" : "/track"} className="hover:text-primary transition">Lịch sử mua hàng</Link>
           <Link to="#" className="hover:text-primary transition">Đăng ký bán hàng CTV chiết khấu cao</Link>
           <Link to="/chinh-sach/tra-gop" className="hover:text-primary transition">Tìm hiểu về mua trả chậm</Link>
           <Link to="/chinh-sach/bao-hanh" className="hover:text-primary transition">Chính sách bảo hành</Link>
-          
+
           {/* nút thu gọn/mở rộng */}
           {!isExpanded ? (
             <button
@@ -93,82 +93,82 @@ export default function Footer() {
         {/* Col 4 */}
         <div className="flex flex-col space-y-4">
           <h3 className="font-bold text-gray-900 uppercase text-xs tracking-wider">Website cùng tập đoàn</h3>
-          
+
           {/* Grid logo tập đoàn chuẩn MWG Thế Giới Di Động */}
           <div className="grid grid-cols-2 gap-2.5 max-w-xs font-sans select-none">
             {/* 1. TopZone */}
-            <a 
-              href="https://www.topzone.vn" 
-              target="_blank" 
-              rel="noopener noreferrer" 
+            <a
+              href="https://www.topzone.vn"
+              target="_blank"
+              rel="noopener noreferrer"
               className="h-10 rounded-xl flex items-center justify-center transition-transform hover:scale-102 active:scale-95 shadow-xs overflow-hidden"
             >
               <img src={topzoneLogo} alt="TopZone" className="w-full h-full object-contain" />
             </a>
-            
+
             {/* 2. Điện Máy XANH */}
-            <a 
-              href="https://www.dienmayxanh.com" 
-              target="_blank" 
-              rel="noopener noreferrer" 
+            <a
+              href="https://www.dienmayxanh.com"
+              target="_blank"
+              rel="noopener noreferrer"
               className="h-10 rounded-xl flex items-center justify-center transition-transform hover:scale-102 active:scale-95 shadow-xs overflow-hidden"
             >
               <img src={dienmayxanhLogo} alt="Điện máy XANH" className="w-full h-full object-contain" />
             </a>
 
             {/* 3. Bách Hóa XANH */}
-            <a 
-              href="https://www.bachhoaxanh.com" 
-              target="_blank" 
-              rel="noopener noreferrer" 
+            <a
+              href="https://www.bachhoaxanh.com"
+              target="_blank"
+              rel="noopener noreferrer"
               className="h-10 rounded-xl flex items-center justify-center transition-transform hover:scale-102 active:scale-95 shadow-xs overflow-hidden"
             >
               <img src={bachhoaxanhLogo} alt="Bách hóa XANH" className="w-full h-full object-contain" />
             </a>
 
             {/* 4. Nhà Thuốc An Khang */}
-            <a 
-              href="https://www.nhathuocankhang.com" 
-              target="_blank" 
-              rel="noopener noreferrer" 
+            <a
+              href="https://www.nhathuocankhang.com"
+              target="_blank"
+              rel="noopener noreferrer"
               className="h-10 rounded-xl flex items-center justify-center transition-transform hover:scale-102 active:scale-95 shadow-xs overflow-hidden"
             >
               <img src={ankhangLogo} alt="Nhà Thuốc An Khang" className="w-full h-full object-contain" />
             </a>
 
             {/* 5. AVAKids */}
-            <a 
-              href="https://www.avakids.com" 
-              target="_blank" 
-              rel="noopener noreferrer" 
+            <a
+              href="https://www.avakids.com"
+              target="_blank"
+              rel="noopener noreferrer"
               className="h-10 rounded-xl flex items-center justify-center transition-transform hover:scale-102 active:scale-95 shadow-xs overflow-hidden"
             >
               <img src={avakidsLogo} alt="AVAKids" className="w-full h-full object-contain" />
             </a>
 
             {/* 6. VIỆC LÀM */}
-            <a 
-              href="https://vieclam.thegioididong.com" 
-              target="_blank" 
-              rel="noopener noreferrer" 
+            <a
+              href="https://vieclam.thegioididong.com"
+              target="_blank"
+              rel="noopener noreferrer"
               className="h-10 rounded-xl flex items-center justify-center transition-transform hover:scale-102 active:scale-95 shadow-xs overflow-hidden"
             >
               <img src={vieclamLogo} alt="Việc Làm" className="w-full h-full object-contain" />
             </a>
 
             {/* 7. EraBlue */}
-            <a 
-              href="https://www.erablue.com" 
-              target="_blank" 
-              rel="noopener noreferrer" 
+            <a
+              href="https://www.erablue.com"
+              target="_blank"
+              rel="noopener noreferrer"
               className="h-10 rounded-xl flex items-center justify-center transition-transform hover:scale-102 active:scale-95 shadow-xs overflow-hidden"
             >
               <img src={erablueLogo} alt="EraBlue" className="w-full h-full object-contain" />
             </a>
 
             {/* 8. Thợ Điện Máy Xanh */}
-            <a 
-              href="#" 
+            <a
+              href="#"
               className="h-10 rounded-xl flex items-center justify-center transition-transform hover:scale-102 active:scale-95 shadow-xs overflow-hidden"
             >
               <img src={thodmxLogo} alt="Thợ Điện Máy Xanh" className="w-full h-full object-contain" />
@@ -179,15 +179,15 @@ export default function Footer() {
           <div className="pt-3 flex flex-col space-y-3 select-none">
             <div className="flex items-center gap-5">
               {/* Facebook Fanpage */}
-              <a 
-                href="https://www.facebook.com/thegioididongcom" 
-                target="_blank" 
-                rel="noopener noreferrer" 
+              <a
+                href="https://www.facebook.com/thegioididongcom"
+                target="_blank"
+                rel="noopener noreferrer"
                 className="flex items-center gap-2.5 hover:opacity-90 transition-opacity group"
               >
                 <div className="w-8 h-8 rounded-full bg-[#3b5998] flex items-center justify-center text-white shadow-xs shrink-0 group-hover:scale-105 transition-transform">
                   <svg className="w-4 h-4 fill-white" viewBox="0 0 24 24">
-                    <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C20.478 23.47 24 18.063 24 12.073z"/>
+                    <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C20.478 23.47 24 18.063 24 12.073z" />
                   </svg>
                 </div>
                 <div className="flex flex-col text-left leading-tight">
@@ -197,15 +197,15 @@ export default function Footer() {
               </a>
 
               {/* Youtube Channel (Đỏ Tròn Play chuẩn TGDĐ) */}
-              <a 
-                href="https://www.youtube.com/user/TGDDVideoReviews" 
-                target="_blank" 
-                rel="noopener noreferrer" 
+              <a
+                href="https://www.youtube.com/user/TGDDVideoReviews"
+                target="_blank"
+                rel="noopener noreferrer"
                 className="flex items-center gap-2.5 hover:opacity-90 transition-opacity group"
               >
                 <div className="w-8 h-8 rounded-full bg-[#d0021b] flex items-center justify-center text-white shadow-xs shrink-0 group-hover:scale-105 transition-transform">
                   <svg className="w-4.5 h-4.5 fill-white ml-0.5" viewBox="0 0 24 24">
-                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 14.5v-9l6 4.5-6 4.5z"/>
+                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 14.5v-9l6 4.5-6 4.5z" />
                   </svg>
                 </div>
                 <div className="flex flex-col text-left leading-tight">
@@ -217,10 +217,10 @@ export default function Footer() {
 
             {/* Zalo Page */}
             <div>
-              <a 
-                href="https://zalo.me" 
-                target="_blank" 
-                rel="noopener noreferrer" 
+              <a
+                href="https://zalo.me"
+                target="_blank"
+                rel="noopener noreferrer"
                 className="flex items-center gap-2.5 hover:opacity-90 transition-opacity w-fit group"
               >
                 <div className="w-8 h-8 rounded-full bg-[#0088cc] flex items-center justify-center text-white font-black text-[9px] shadow-xs shrink-0 group-hover:scale-105 transition-transform tracking-tighter">
