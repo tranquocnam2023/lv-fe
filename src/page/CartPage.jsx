@@ -268,27 +268,51 @@ export default function CartPage() {
   // Validation errors
   const [validationErrors, setValidationErrors] = useState({});
 
-  // Fetch provinces list on mount
+  // Danh sách Tỉnh/Thành phố dự phòng sẵn sàng cho khách vãng lai nếu kết nối chậm
+  const DEFAULT_PROVINCES = [
+    { id: '79', name: 'Hồ Chí Minh', fullName: 'Thành phố Hồ Chí Minh' },
+    { id: '01', name: 'Hà Nội', fullName: 'Thành phố Hà Nội' },
+    { id: '48', name: 'Đà Nẵng', fullName: 'Thành phố Đà Nẵng' },
+    { id: '74', name: 'Bình Dương', fullName: 'Tỉnh Bình Dương' },
+    { id: '75', name: 'Đồng Nai', fullName: 'Tỉnh Đồng Nai' },
+    { id: '92', name: 'Cần Thơ', fullName: 'Thành phố Cần Thơ' },
+    { id: '31', name: 'Hải Phòng', fullName: 'Thành phố Hải Phòng' },
+    { id: '49', name: 'Quảng Nam', fullName: 'Tỉnh Quảng Nam' },
+    { id: '35', name: 'Ninh Bình', fullName: 'Tỉnh Ninh Bình' },
+    { id: '68', name: 'Lâm Đồng', fullName: 'Tỉnh Lâm Đồng' },
+    { id: '77', name: 'Bà Rịa - Vũng Tàu', fullName: 'Tỉnh Bà Rịa - Vũng Tàu' },
+    { id: '80', name: 'Long An', fullName: 'Tỉnh Long An' },
+    { id: '82', name: 'Tiền Giang', fullName: 'Tỉnh Tiền Giang' },
+    { id: '86', name: 'Vĩnh Long', fullName: 'Tỉnh Vĩnh Long' },
+    { id: '89', name: 'An Giang', fullName: 'Tỉnh An Giang' }
+  ];
+
+  // Fetch provinces list on mount and whenever address modal opens
   useEffect(() => {
-    api.get('/Location/provinces')
-      .then(res => {
-        if (Array.isArray(res)) {
-          setProvinces(res);
+    const loadProvinces = async () => {
+      try {
+        const res = await api.get('/Location/provinces');
+        const list = Array.isArray(res) ? res : (res?.data || []);
+        if (Array.isArray(list) && list.length > 0) {
+          setProvinces(list);
+          return;
         }
-      })
-      .catch(err => {
+      } catch (err) {
         console.error("Lỗi lấy danh sách tỉnh/thành:", err);
-      });
-  }, []);
+      }
+      setProvinces(prev => prev.length > 0 ? prev : DEFAULT_PROVINCES);
+    };
+
+    loadProvinces();
+  }, [showAddressModal]);
 
   // Fetch wards when selectedProvinceId changes
   useEffect(() => {
     if (selectedProvinceId) {
       api.get(`/Location/provinces/${selectedProvinceId}/wards`)
         .then(res => {
-          if (Array.isArray(res)) {
-            setWards(res);
-          }
+          const list = Array.isArray(res) ? res : (res?.data || []);
+          setWards(Array.isArray(list) ? list : []);
         })
         .catch(err => {
           console.error("Lỗi lấy danh sách phường/xã:", err);

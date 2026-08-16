@@ -462,8 +462,10 @@ export default function ProductDetailPage() {
   }, [product]);
 
   // Hàm xử lý logic/sự kiện: fetchProductReviews
-  const fetchProductReviews = () => {
-    reviewService.getByProductId(id)
+  const fetchProductReviews = (targetId) => {
+    const target = targetId || product?.id || id;
+    if (!target) return;
+    reviewService.getByProductId(target)
       .then(res => {
         if (Array.isArray(res)) {
           setReviews(res);
@@ -475,7 +477,12 @@ export default function ProductDetailPage() {
   };
 
   useEffect(() => {
-    fetchProductReviews();
+    if (product?.id) {
+      fetchProductReviews(product.id);
+    } else if (id && !isNaN(id)) {
+      fetchProductReviews(id);
+    }
+
     // Khai báo biến/hằng số: userStr - Dùng trong logic xử lý của component
     const userStr = localStorage.getItem('user');
     if (userStr) {
@@ -485,7 +492,7 @@ export default function ProductDetailPage() {
         console.error("Lỗi parse user:", e);
       }
     }
-  }, [id]);
+  }, [id, product?.id]);
 
   // Thống kê đánh giá
   const stats = useMemo(() => {
