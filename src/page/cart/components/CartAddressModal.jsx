@@ -63,7 +63,7 @@ export default function CartAddressModal({
 
     <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 overflow-y-auto animate-in fade-in duration-200">
       <div className="bg-white w-full max-w-md rounded-md flex flex-col relative max-h-[90vh] border border-gray-150 animate-in zoom-in-95 duration-200">
-        
+
         {/* Header */}
         <div className="flex items-center justify-between px-5 py-3.5 border-b border-gray-100 shrink-0">
           <h3 className="font-black text-gray-900 text-sm flex items-center gap-1.5">
@@ -80,7 +80,7 @@ export default function CartAddressModal({
 
         {/* Modal Body */}
         <div className="flex-1 overflow-y-auto px-5 py-4 space-y-3.5 text-xs font-semibold text-gray-700">
-          
+
           {/* Sổ địa chỉ đã lưu */}
           {isLoggedIn && userAddresses && userAddresses.length > 0 && (
             <div className="space-y-2 pb-3 border-b border-gray-100">
@@ -90,26 +90,25 @@ export default function CartAddressModal({
               <div className="grid grid-cols-1 gap-2 max-h-40 overflow-y-auto pr-1">
                 {userAddresses.map((addr) => {
                   // Khai báo biến/hằng số: isSelected - Dùng trong logic xử lý của component
-                  const isSelected = 
-                    modalFullName === addr.recipientName && 
-                    modalPhone === addr.phoneNumber && 
-                    modalStreetAddress === addr.addressLine && 
+                  const isSelected =
+                    modalFullName === addr.recipientName &&
+                    modalPhone === addr.phoneNumber &&
+                    modalStreetAddress === addr.addressLine &&
                     (modalWardId === addr.wardId || (wardName && (wardName === addr.wardName || wardName === addr.ward)));
-                  
+
                   return (
                     <div
                       key={addr.id || addr.Id}
                       onClick={() => onSelectSavedAddress(addr)}
-                      className={`p-2 rounded-md border text-left cursor-pointer transition flex items-start gap-2 ${
-                        isSelected 
-                          ? 'border-blue-500 bg-blue-50/50' 
+                      className={`p-2 rounded-md border text-left cursor-pointer transition flex items-start gap-2 ${isSelected
+                          ? 'border-blue-500 bg-blue-50/50'
                           : 'border-gray-200 hover:border-gray-300 bg-white'
-                      }`}
+                        }`}
                     >
                       <input
                         type="radio"
                         checked={isSelected}
-                        onChange={() => {}}
+                        onChange={() => { }}
                         className="mt-0.5 w-3.5 h-3.5 text-blue-600 focus:ring-0 cursor-pointer"
                       />
                       <div className="flex-1">
@@ -183,9 +182,8 @@ export default function CartAddressModal({
                 placeholder="VD: Nguyễn Văn A..."
                 value={modalFullName}
                 onChange={(e) => setModalFullName(e.target.value)}
-                className={`w-full bg-gray-50 border ${
-                  validationErrors.fullName ? 'border-red-500' : 'border-gray-200'
-                } rounded-md px-3 py-2 font-bold focus:outline-none focus:border-blue-500`}
+                className={`w-full bg-gray-50 border ${validationErrors.fullName ? 'border-red-500' : 'border-gray-200'
+                  } rounded-md px-3 py-2 font-bold focus:outline-none focus:border-blue-500`}
               />
               {validationErrors.fullName && <p className="text-red-500 text-[9px] font-medium">{validationErrors.fullName}</p>}
             </div>
@@ -196,9 +194,8 @@ export default function CartAddressModal({
                 placeholder="VD: 0987654321..."
                 value={modalPhone}
                 onChange={(e) => setModalPhone(e.target.value)}
-                className={`w-full bg-gray-50 border ${
-                  validationErrors.phone ? 'border-red-500' : 'border-gray-200'
-                } rounded-md px-3 py-2 font-bold focus:outline-none focus:border-blue-500`}
+                className={`w-full bg-gray-50 border ${validationErrors.phone ? 'border-red-500' : 'border-gray-200'
+                  } rounded-md px-3 py-2 font-bold focus:outline-none focus:border-blue-500`}
               />
               {validationErrors.phone && <p className="text-red-500 text-[9px] font-medium">{validationErrors.phone}</p>}
             </div>
@@ -259,9 +256,8 @@ export default function CartAddressModal({
                     placeholder="Tìm kiếm số nhà, tên đường bằng Goong Maps..."
                     error={validationErrors.streetAddress}
                     addressContext={addressContext}
-                    className={`w-full bg-gray-50 border ${
-                      validationErrors.streetAddress ? 'border-red-500' : 'border-gray-200'
-                    } rounded-md px-3 py-2 font-bold focus:outline-none focus:border-blue-500 text-gray-800`}
+                    className={`w-full bg-gray-50 border ${validationErrors.streetAddress ? 'border-red-500' : 'border-gray-200'
+                      } rounded-md px-3 py-2 font-bold focus:outline-none focus:border-blue-500 text-gray-800`}
                   />
                 </div>
               </div>
@@ -304,9 +300,8 @@ export default function CartAddressModal({
                     placeholder="Nguyễn Văn B..."
                     value={modalSomeoneElseName}
                     onChange={(e) => setModalSomeoneElseName(e.target.value)}
-                    className={`w-full bg-white border ${
-                      validationErrors.someoneElseName ? 'border-red-500' : 'border-gray-200'
-                    } rounded-md px-2 py-1.5 focus:outline-none focus:border-blue-500`}
+                    className={`w-full bg-white border ${validationErrors.someoneElseName ? 'border-red-500' : 'border-gray-200'
+                      } rounded-md px-2 py-1.5 focus:outline-none focus:border-blue-500`}
                   />
                   {validationErrors.someoneElseName && <p className="text-red-500 text-[8px] font-medium">{validationErrors.someoneElseName}</p>}
                 </div>
@@ -317,9 +312,8 @@ export default function CartAddressModal({
                     placeholder="Số điện thoại..."
                     value={modalSomeoneElsePhone}
                     onChange={(e) => setModalSomeoneElsePhone(e.target.value)}
-                    className={`w-full bg-white border ${
-                      validationErrors.someoneElsePhone ? 'border-red-500' : 'border-gray-200'
-                    } rounded-md px-2 py-1.5 focus:outline-none focus:border-blue-500`}
+                    className={`w-full bg-white border ${validationErrors.someoneElsePhone ? 'border-red-500' : 'border-gray-200'
+                      } rounded-md px-2 py-1.5 focus:outline-none focus:border-blue-500`}
                   />
                   {validationErrors.someoneElsePhone && <p className="text-red-500 text-[8px] font-medium">{validationErrors.someoneElsePhone}</p>}
                 </div>
