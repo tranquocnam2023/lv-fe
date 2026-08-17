@@ -3,7 +3,7 @@ import { X, Check } from 'lucide-react';
 import api from '../../../services/api';
 import { useCart } from '../../../context/CartContext';
 
-export default function AccessoryVariantModal({ isOpen, onClose, productId, basePrice, comboPrice, campaignId, maxQuantityAllowed = 5, hideQuantity = false }) {
+export default function AccessoryVariantModal({ isOpen, onClose, productId, basePrice, comboPrice, campaignId, parentProductId = null, maxQuantityAllowed = 5, hideQuantity = false }) {
   // State: product - Quản lý trạng thái và dữ liệu của product trong giao diện
   const [product, setProduct] = useState(null);
   // State: variants - Quản lý trạng thái và dữ liệu của variants trong giao diện
@@ -107,12 +107,15 @@ export default function AccessoryVariantModal({ isOpen, onClose, productId, base
     // Hàm thực thi logic: storageKey
     const storageKey = Object.keys(selectedAttributes).find(k => k.toLowerCase().includes('dung lượng') || k.toLowerCase().includes('storage') || k.toLowerCase().includes('ram') || k.toLowerCase().includes('phiên bản'));
 
+    const regularPrice = selectedVar?.price || basePrice || product?.basePrice || product?.price;
+
     addToCart({
       ...product,
       id: product.id,
       name: product.name,
       price: comboPrice,
-      originalBasePrice: basePrice,
+      originalBasePrice: regularPrice,
+      originalPrice: regularPrice,
       selectedAttributes: { ...selectedAttributes },
       selectedColor: colorKey ? selectedAttributes[colorKey] : null,
       selectedStorage: storageKey ? selectedAttributes[storageKey] : null,
@@ -120,6 +123,7 @@ export default function AccessoryVariantModal({ isOpen, onClose, productId, base
       image: selectedVar?.imageId || product.thumbnailImage || product.image || product.mainImage || product.imageUrl,
       appliedCampaignId: campaignId,
       isAddon: !!campaignId,
+      parentProductId: parentProductId || null,
       maxQuantityAllowed: maxQuantityAllowed
     }, quantity);
     onClose();

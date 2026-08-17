@@ -276,6 +276,7 @@ const CoPurchaseRecommendation = ({ mainProduct, mainProductPrice, selectedVaria
           comboPrice={getDynamicPrice(selectedAccessory).comboPrice}
           campaignId={getDynamicPrice(selectedAccessory).campaignToApply?.id}
           maxQuantityAllowed={getDynamicPrice(selectedAccessory).campaignToApply?.maxQuantityAllowed}
+          parentProductId={mainProduct?.id}
         />
       )}
 
@@ -284,6 +285,7 @@ const CoPurchaseRecommendation = ({ mainProduct, mainProductPrice, selectedVaria
         onClose={() => setBigModalOpen(false)} 
         campaigns={campaigns}
         initialTab={bigModalTab}
+        parentProductId={mainProduct?.id}
       />
     </div>
   );
