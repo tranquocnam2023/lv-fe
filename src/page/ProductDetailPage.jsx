@@ -1171,7 +1171,7 @@ export default function ProductDetailPage() {
           }}
           productId={selectedAccessoryForModal.id}
           basePrice={selectedAccessoryForModal.price || selectedAccessoryForModal.basePrice || 0}
-          comboPrice={(selectedAccessoryForModal.price || selectedAccessoryForModal.basePrice || 0) * BUNDLE_DISCOUNT_RATE}
+          comboPrice={selectedAccessoryForModal.price || selectedAccessoryForModal.basePrice || 0}
           hideQuantity={true}
         />
       )}

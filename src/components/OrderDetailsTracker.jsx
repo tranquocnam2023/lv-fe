@@ -257,7 +257,7 @@ export default function OrderDetailsTracker({ order, onOrderCancelled, isGuest =
           )}
 
           {/* PHÂN QUYỀN: Cho phép thanh toán khi đơn hàng ở trạng thái 1 */}
-          {statusId === 1 && (order.paymentMethod?.toLowerCase() === 'stripe' || order.paymentMethod?.toLowerCase() === 'vnpay' || order.paymentMethod?.toLowerCase() === 'momo') && (!warrantyItem || inspectionStatus === 'PASSED') && (
+          {statusId === 1 && (order.paymentMethod?.toLowerCase() === 'stripe' || order.paymentMethod?.toLowerCase() === 'vnpay') && (!warrantyItem || inspectionStatus === 'PASSED') && (
             <button
               onClick={handlePaymentRetry}
               className="px-4 py-1.5 bg-blue-600 border border-blue-600 text-white hover:bg-blue-700 text-xs font-black uppercase tracking-wider rounded-full transition-all active:scale-95 flex items-center gap-1.5 cursor-pointer"

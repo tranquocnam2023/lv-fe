@@ -34,7 +34,6 @@ const getPaymentMethodLabel = (method) => {
   switch (method.toLowerCase()) {
     case 'cod': return 'Tiền mặt (COD)';
     case 'transfer': return 'Chuyển khoản';
-    case 'momo': return 'Ví MoMo';
     case 'stripe': return 'Thẻ Stripe';
     default: return method;
   }
@@ -45,7 +44,6 @@ const getPaymentMethodStyle = (method) => {
   switch (method?.toLowerCase()) {
     case 'cod': return 'bg-orange-50 text-orange-600 border-orange-100';
     case 'transfer': return 'bg-blue-50 text-blue-600 border-blue-100';
-    case 'momo': return 'bg-pink-50 text-pink-600 border-pink-100';
     case 'stripe': return 'bg-indigo-50 text-indigo-600 border-indigo-100';
     default: return 'bg-gray-50 text-gray-600 border-gray-100';
   }

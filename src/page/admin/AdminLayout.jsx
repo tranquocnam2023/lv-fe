@@ -23,7 +23,7 @@ const ADMIN_FUNCTIONS = [
   { label: 'Thêm sản phẩm mới', tab: 'create_product', keywords: ['them san pham', 'tao san pham', 'them moi', 'create'] },
   { label: 'Quản lý kho hàng', tab: 'inventory', keywords: ['kho', 'ton kho', 'inventory'] },
   { label: 'Quản lý đơn hàng', tab: 'orders', keywords: ['don hang', 'orders', 'hoa don'] },
-  { label: 'Quản lý giao dịch', tab: 'payments', keywords: ['thanh toan', 'giao dich', 'momo', 'stripe', 'payments'] },
+  { label: 'Quản lý giao dịch', tab: 'payments', keywords: ['thanh toan', 'giao dich', 'vnpay', 'stripe', 'payments'] },
   { label: 'Quản lý khách hàng', tab: 'customers', keywords: ['khach hang', 'nguoi dung', 'users', 'customers', 'tai khoan'] },
   { label: 'Quản lý khuyến mãi', tab: 'promotions', keywords: ['khuyen mai', 'ma giam gia', 'voucher', 'promotions'] },
   { label: 'Quản lý Combo', tab: 'combos', keywords: ['combo', 'mua kem', 'ban cheo', 'combos'] },

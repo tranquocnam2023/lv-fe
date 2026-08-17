@@ -53,8 +53,8 @@ export default function FrequentlyBoughtTogether({ accessorySuggestions = [], on
           {accessorySuggestions.map((acc) => {
             // Khai báo biến/hằng số: originalPrice - Dùng trong logic xử lý của component
             const originalPrice = acc.price || acc.basePrice || 0;
-            // Khai báo biến/hằng số: comboPrice - Dùng trong logic xử lý của component
-            const comboPrice = originalPrice * BUNDLE_DISCOUNT_RATE;
+            // Khai báo biến/hằng số: comboPrice - Sử dụng đúng giá niêm yết khi không phải chiến dịch Combo Khuyến mãi
+            const comboPrice = originalPrice;
             // Khai báo biến/hằng số: rating - Dùng trong logic xử lý của component
             const rating = acc.averageRating ?? acc.rating ?? 5;
 
