@@ -119,7 +119,7 @@ export default function AccessoryVariantModal({ isOpen, onClose, productId, base
       variantId: selectedVar?.id,
       image: selectedVar?.imageId || product.thumbnailImage || product.image || product.mainImage || product.imageUrl,
       appliedCampaignId: campaignId,
-      isAddon: true,
+      isAddon: !!campaignId,
       maxQuantityAllowed: maxQuantityAllowed
     }, quantity);
     onClose();

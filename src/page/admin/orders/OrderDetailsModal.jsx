@@ -8,7 +8,6 @@ const getPaymentMethodLabel = (method) => {
   switch (method.toLowerCase()) {
     case 'cod': return 'Tiền mặt (COD)';
     case 'transfer': return 'Chuyển khoản';
-    case 'momo': return 'Ví MoMo';
     case 'stripe': return 'Thẻ Stripe';
     default: return method;
   }

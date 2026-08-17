@@ -66,7 +66,7 @@ const DonatePage = () => {
           <div className="space-y-4 text-left bg-gray-50 p-6 rounded-md border border-gray-100">
             <div>
               <label className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Ngân hàng</label>
-              <p className="font-bold text-gray-700">MOMO</p>
+              <p className="font-bold text-gray-700">MB BANK</p>
             </div>
 
             <div>
