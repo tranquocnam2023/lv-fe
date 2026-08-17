@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { X, ExternalLink, Plus } from 'lucide-react';
 import AccessoryVariantModal from './AccessoryVariantModal';
 
-export default function MuaKemGiaSocModal({ isOpen, onClose, campaigns, initialTab = 0 }) {
+export default function MuaKemGiaSocModal({ isOpen, onClose, campaigns, initialTab = 0, parentProductId = null }) {
   // State: activeTab - Quản lý trạng thái và dữ liệu của activeTab trong giao diện
   const [activeTab, setActiveTab] = useState(initialTab);
 
@@ -221,6 +221,7 @@ export default function MuaKemGiaSocModal({ isOpen, onClose, campaigns, initialT
           comboPrice={getDynamicPrice(selectedAccessory).comboPrice}
           campaignId={getDynamicPrice(selectedAccessory).campaignToApply?.id}
           maxQuantityAllowed={getDynamicPrice(selectedAccessory).campaignToApply?.maxQuantityAllowed}
+          parentProductId={parentProductId}
         />
       )}
     </>

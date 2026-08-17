@@ -5,7 +5,10 @@ import { Trash2, ShoppingBag } from 'lucide-react';
 export default function CartItemsList({ cartItems, updateQuantity, removeFromCart, cartTotal }) {
   // Khai báo biến/hằng số: cartSavings - Dùng trong logic xử lý của component
   const cartSavings = cartItems.reduce(
-    (total, item) => total + ((item.originalBasePrice || item.price) - item.price) * item.quantity,
+    (total, item) => {
+      const orig = item.originalBasePrice || item.originalPrice || item.price;
+      return total + (orig > item.price ? (orig - item.price) * item.quantity : 0);
+    },
     0
   );
 
@@ -20,18 +23,44 @@ export default function CartItemsList({ cartItems, updateQuantity, removeFromCar
 
       <div className="divide-y divide-gray-100">
         {(() => {
-          // Khai báo biến/hằng số: standaloneItems - Dùng trong logic xử lý của component
-          const standaloneItems = [];
-          // Khai báo biến/hằng số: addonItems - Dùng trong logic xử lý của component
-          const addonItems = [];
+          const mainProducts = cartItems.filter(item => !item.isAddon);
+          const addonItems = cartItems.filter(item => item.isAddon);
 
-          cartItems.forEach(item => {
-            if (item.isAddon) {
-              addonItems.push(item);
+          const comboGroups = [];
+          const standaloneProducts = [];
+          const assignedAddonIds = new Set();
+
+          mainProducts.forEach(mainProd => {
+            const matchedAddons = addonItems.filter(
+              addon =>
+                !assignedAddonIds.has(addon.cartId) &&
+                (Number(addon.parentProductId) === Number(mainProd.id) ||
+                 addon.parentCartItemId === mainProd.cartId)
+            );
+
+            if (matchedAddons.length > 0) {
+              matchedAddons.forEach(a => assignedAddonIds.add(a.cartId));
+              comboGroups.push({
+                mainProduct: mainProd,
+                addons: matchedAddons
+              });
             } else {
-              standaloneItems.push(item);
+              standaloneProducts.push(mainProd);
             }
           });
+
+          // Unassigned addons fallback
+          const unassignedAddons = addonItems.filter(addon => !assignedAddonIds.has(addon.cartId));
+          if (unassignedAddons.length > 0) {
+            if (comboGroups.length > 0) {
+              comboGroups[0].addons.push(...unassignedAddons);
+            } else {
+              comboGroups.push({
+                mainProduct: null,
+                addons: unassignedAddons
+              });
+            }
+          }
 
           // Hàm xử lý logic/sự kiện: renderItem
           const renderItem = (item) => (
@@ -62,11 +91,17 @@ export default function CartItemsList({ cartItems, updateQuantity, removeFromCar
                       <span className="font-black text-red-600 text-xs">
                         {((item.price + (item.warrantyPrice || 0)) * item.quantity).toLocaleString('vi-VN')}₫
                       </span>
-                      {item.originalPrice && item.originalPrice > item.price && (
-                        <p className="text-[10px] text-gray-400 line-through font-semibold">
-                          {((item.originalPrice + (item.warrantyPrice || 0)) * item.quantity).toLocaleString('vi-VN')}₫
-                        </p>
-                      )}
+                      {(() => {
+                        const orig = item.originalPrice || item.originalBasePrice;
+                        if (orig && orig > item.price) {
+                          return (
+                            <p className="text-[10px] text-gray-400 line-through font-semibold">
+                              {((orig + (item.warrantyPrice || 0)) * item.quantity).toLocaleString('vi-VN')}₫
+                            </p>
+                          );
+                        }
+                        return null;
+                      })()}
                     </div>
                   </div>
                   {item.selectedAttributes && Object.keys(item.selectedAttributes).length > 0 ? (
@@ -130,22 +165,52 @@ export default function CartItemsList({ cartItems, updateQuantity, removeFromCar
           );
 
           return (
-            <>
-              {standaloneItems.map(renderItem)}
-              {addonItems.length > 0 && (
-                <div className="border-2 border-dashed border-red-200 rounded-xl p-4 relative mt-6 mb-4 bg-red-50/20 ml-4">
-                  <div className="absolute -top-5 left-0 text-red-600 text-[11px] font-black px-3 py-1 uppercase flex items-center gap-1.5">
-                    Mua kèm tiết kiệm hơn
+            <div className="space-y-4 pt-1">
+              {/* Render các khung Combo Mua Kèm */}
+              {comboGroups.map(({ mainProduct, addons }, groupIdx) => (
+                <div
+                  key={mainProduct?.cartId || `combo-group-${groupIdx}`}
+                  className="border-2 border-dashed border-red-200 bg-red-50/20 rounded-2xl p-4 space-y-3 relative my-2"
+                >
+                  <div className="flex items-center justify-between border-b border-red-100 pb-2">
+                    <span className="text-[11px] font-black text-red-600 uppercase tracking-wider flex items-center gap-1.5">
+                      🔥 Combo Mua Kèm Tiết Kiệm
+                    </span>
+                    {mainProduct && (
+                      <span className="text-[10px] font-bold text-gray-500 bg-white px-2.5 py-0.5 rounded-full border border-red-100">
+                        Theo sản phẩm: <strong className="text-gray-800">{mainProduct.name}</strong>
+                      </span>
+                    )}
                   </div>
-                  <div className="absolute -top-2.5 right-4 text-[11px] text-red-600 font-bold bg-white px-2">
-                    Bạn chọn mua kèm {addonItems.length} sản phẩm
-                  </div>
-                  <div className="divide-y divide-gray-100 pt-2">
-                    {addonItems.map(renderItem)}
-                  </div>
+
+                  {/* Sản phẩm chính trong khung Combo */}
+                  {mainProduct && (
+                    <div className="bg-white rounded-xl p-3 border border-gray-100 shadow-sm">
+                      {renderItem(mainProduct)}
+                    </div>
+                  )}
+
+                  {/* Các sản phẩm phụ thuộc Combo này */}
+                  {addons.length > 0 && (
+                    <div className="bg-white/90 rounded-xl p-3 border border-red-100 space-y-2">
+                      <div className="text-[11px] font-bold text-red-600 flex items-center justify-between pb-1.5 border-b border-red-50">
+                        <span>🎁 Sản phẩm phụ mua kèm ({addons.length} món):</span>
+                      </div>
+                      <div className="divide-y divide-gray-100">
+                        {addons.map(renderItem)}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ))}
+
+              {/* Render các sản phẩm độc lập / không thuộc combo */}
+              {standaloneProducts.length > 0 && (
+                <div className="divide-y divide-gray-100">
+                  {standaloneProducts.map(renderItem)}
                 </div>
               )}
-            </>
+            </div>
           );
         })()}
       </div>

@@ -54,61 +54,165 @@ export const CartProvider = ({ children }) => {
   const safeCartItems = Array.isArray(cartItems) ? cartItems : [];
 
   useEffect(() => {
-    // Kiểm tra xem có sản phẩm chính (máy điện thoại/máy tính bảng...) nào trong giỏ không
-    const hasMainProduct = safeCartItems.some(item => !item.isAddon);
-    
-    // Nếu KHÔNG có sản phẩm chính, nhưng lại CÓ phụ kiện mua kèm (isAddon = true)
-    if (!hasMainProduct && safeCartItems.some(item => item.isAddon)) {
-      setCartItems((prevItems) => {
-        // Khai báo biến/hằng số: currentArr - Dùng trong logic xử lý của component
-        const currentArr = Array.isArray(prevItems) ? prevItems : [];
-        return currentArr.map((item) => {
-          if (item.isAddon) {
-            // Khôi phục giá gốc của phụ kiện khi mua lẻ độc lập
-            const normalPrice = item.originalBasePrice || item.price;
-            // Tạo lại mã định danh giỏ hàng tiêu chuẩn (không có tiền tố addon-)
-            const normalCartId = `${item.id}-${item.selectedStorage || ''}-${item.selectedColor || ''}${item.selectedWarranty ? `-${item.selectedWarranty.id}` : ''}`;
-            return {
-              ...item,
-              isAddon: false,
-              price: normalPrice,
-              cartId: normalCartId
-            };
-          }
-          return item;
-        });
+    const mainProducts = safeCartItems.filter(item => !item.isAddon);
+    const hasAddons = safeCartItems.some(item => item.isAddon);
+
+    // 1. Kiểm tra nếu sản phẩm phụ bị mất sản phẩm chính -> Khôi phục về giá gốc mua lẻ
+    let needsRevert = false;
+    const updatedCartItems = safeCartItems.map((item) => {
+      if (!item.isAddon) return item;
+
+      let isValidAddon = false;
+      if (mainProducts.length > 0) {
+        if (item.parentProductId) {
+          isValidAddon = mainProducts.some(m => Number(m.id) === Number(item.parentProductId));
+        } else {
+          isValidAddon = true;
+        }
+      }
+
+      if (!isValidAddon) {
+        needsRevert = true;
+        const normalPrice = item.originalBasePrice || item.originalPrice || item.price;
+        const normalCartId = `${item.id}-${item.selectedStorage || ''}-${item.selectedColor || ''}${item.selectedWarranty ? `-${item.selectedWarranty.id}` : ''}`;
+        return {
+          ...item,
+          isAddon: false,
+          price: normalPrice,
+          originalBasePrice: item.originalBasePrice || item.originalPrice || normalPrice,
+          originalPrice: item.originalPrice || item.originalBasePrice || normalPrice,
+          appliedCampaignId: null,
+          parentProductId: null,
+          parentCartItemId: null,
+          cartId: normalCartId
+        };
+      }
+      return item;
+    });
+
+    if (needsRevert) {
+      const mergedItems = [];
+      updatedCartItems.forEach(item => {
+        const existingIdx = mergedItems.findIndex(i => i.cartId === item.cartId);
+        if (existingIdx >= 0) {
+          mergedItems[existingIdx] = {
+            ...mergedItems[existingIdx],
+            quantity: mergedItems[existingIdx].quantity + item.quantity
+          };
+        } else {
+          mergedItems.push(item);
+        }
       });
+      setCartItems(mergedItems);
       return;
     }
-    
+
+    // 2. Kiểm tra nếu thêm lại sản phẩm chính -> Tự động chuyển các phụ kiện độc lập phù hợp thành sản phẩm mua kèm giảm giá
+    const regularItemsToUpgrade = safeCartItems.filter(item => !item.isAddon);
+    if (mainProducts.length > 0 && regularItemsToUpgrade.length > 1) {
+      Promise.all(
+        mainProducts.map(mainProd =>
+          api.get(`/PromotionCampaign/product/${mainProd.id}`)
+            .then(res => ({ mainProd, campaigns: res.data || res || [] }))
+            .catch(() => ({ mainProd, campaigns: [] }))
+        )
+      ).then(results => {
+        let itemsUpgraded = false;
+        let currentList = [...safeCartItems];
+
+        results.forEach(({ mainProd, campaigns }) => {
+          if (!campaigns || campaigns.length === 0) return;
+
+          campaigns.forEach(campData => {
+            const campaign = campData.campaign;
+            const addonProducts = campData.addonProducts || [];
+            if (!campaign || !addonProducts.length) return;
+
+            addonProducts.forEach(addonProd => {
+              const matchIndex = currentList.findIndex(
+                ci => !ci.isAddon && Number(ci.id) === Number(addonProd.id) && Number(ci.id) !== Number(mainProd.id)
+              );
+
+              if (matchIndex >= 0) {
+                const targetItem = currentList[matchIndex];
+                const origPrice = targetItem.originalBasePrice || targetItem.originalPrice || targetItem.price;
+
+                let comboPrice = origPrice;
+                if (campaign.discountType === 'Percentage') {
+                  comboPrice = origPrice * (1 - campaign.discountValue / 100);
+                } else if (campaign.discountType === 'FixedAmount') {
+                  comboPrice = Math.max(0, origPrice - campaign.discountValue);
+                } else if (campaign.discountType === 'FixedPrice') {
+                  comboPrice = campaign.discountValue;
+                }
+
+                const addonCartId = `addon-${campaign.id}-${targetItem.id}-${targetItem.selectedStorage || ''}-${targetItem.selectedColor || ''}`;
+
+                currentList[matchIndex] = {
+                  ...targetItem,
+                  isAddon: true,
+                  price: comboPrice,
+                  originalBasePrice: origPrice,
+                  originalPrice: origPrice,
+                  appliedCampaignId: campaign.id,
+                  parentProductId: mainProd.id,
+                  parentCartItemId: mainProd.cartId,
+                  cartId: addonCartId
+                };
+
+                itemsUpgraded = true;
+              }
+            });
+          });
+        });
+
+        if (itemsUpgraded) {
+          const mergedList = [];
+          currentList.forEach(item => {
+            const idx = mergedList.findIndex(i => i.cartId === item.cartId);
+            if (idx >= 0) {
+              mergedList[idx] = {
+                ...mergedList[idx],
+                quantity: mergedList[idx].quantity + item.quantity
+              };
+            } else {
+              mergedList.push(item);
+            }
+          });
+          setCartItems(mergedList);
+        }
+      });
+    }
+
     localStorage.setItem('cart', JSON.stringify(safeCartItems));
   }, [safeCartItems]);
 
   // Hàm thực thi logic: addToCart
   const addToCart = (product, quantity = 1) => {
     setCartItems((prevItems) => {
-      // Khai báo biến/hằng số: currentArr - Dùng trong logic xử lý của component
       const currentArr = Array.isArray(prevItems) ? prevItems : [];
-      // Khai báo biến/hằng số: cartId - Dùng trong logic xử lý của component
       const cartId = product.isAddon && product.appliedCampaignId
         ? `addon-${product.appliedCampaignId}-${product.id}-${product.selectedStorage || ''}-${product.selectedColor || ''}`
         : `${product.id}-${product.selectedStorage || ''}-${product.selectedColor || ''}${product.selectedWarranty ? `-${product.selectedWarranty.id}` : ''}`;
 
-      // Hàm thực thi logic: existingItemIndex
       const existingItemIndex = currentArr.findIndex(item => item.cartId === cartId);
 
       if (existingItemIndex >= 0) {
-        // Khai báo biến/hằng số: newItems - Dùng trong logic xử lý của component
         const newItems = [...currentArr];
         newItems[existingItemIndex].quantity += quantity;
         return newItems;
       }
 
+      const regularPrice = product.originalBasePrice || product.originalPrice || product.basePrice || product.price;
+
       return [...currentArr, {
         ...product,
         quantity,
         cartId,
-        originalBasePrice: product.originalBasePrice || product.price,
+        price: product.price,
+        originalBasePrice: regularPrice,
+        originalPrice: regularPrice,
+        parentProductId: product.parentProductId || null,
         warrantyId: product.selectedWarranty?.id || null,
         warrantyName: product.selectedWarranty?.name || null,
         warrantyPrice: product.selectedWarranty?.basePrice || 0
@@ -153,6 +257,11 @@ export const CartProvider = ({ children }) => {
   // Hàm thực thi logic: cartCount
   const cartCount = safeCartItems.reduce((count, item) => count + (item.quantity || 1), 0);
 
+  // Hàm chủ động làm mới/cập nhật combo giỏ hàng
+  const refreshCartCombos = () => {
+    setCartItems(prev => [...prev]);
+  };
+
   return (
     <CartContext.Provider
       value={{
@@ -161,6 +270,7 @@ export const CartProvider = ({ children }) => {
         removeFromCart,
         updateQuantity,
         clearCart,
+        refreshCartCombos,
         cartTotal,
         cartCount,
         showToast

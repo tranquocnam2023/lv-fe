@@ -31,7 +31,10 @@ export default function CartSummaryPayment({
 
   // Khai báo biến/hằng số: cartSavings - Dùng trong logic xử lý của component
   const cartSavings = cartItems.reduce(
-    (total, item) => total + ((item.originalBasePrice || item.price) - item.price) * item.quantity,
+    (total, item) => {
+      const orig = item.originalBasePrice || item.originalPrice || item.price;
+      return total + (orig > item.price ? (orig - item.price) * item.quantity : 0);
+    },
     0
   );
 

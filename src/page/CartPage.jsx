@@ -1227,13 +1227,18 @@ export default function CartPage() {
                     mainProductPrice={cartItems.find(i => !i.isAddon).price}
                     selectedVariantId={cartItems.find(i => !i.isAddon).variantId}
                     onAddComboToCart={(comboData) => {
+                      const mainItem = cartItems.find(i => !i.isAddon);
+                      const origPrice = comboData.basePrice || comboData.originalPrice || comboData.price;
                       addToCart({
                         id: comboData.variantId,
                         name: comboData.productName,
                         price: comboData.price,
+                        originalBasePrice: origPrice,
+                        originalPrice: origPrice,
                         isAddon: true,
                         appliedCampaignId: comboData.campaignId,
-                        parentCartItemId: cartItems.find(i => !i.isAddon).id
+                        parentProductId: mainItem?.id,
+                        parentCartItemId: mainItem?.cartId
                       }, comboData.quantity);
                     }}
                   />
