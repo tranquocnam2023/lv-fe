@@ -12,13 +12,13 @@ import OrderReturnModal from '../../../components/OrderReturnModal';
 // Khai báo biến/hằng số: STATUS_TABS - Dùng trong logic xử lý của component
 const STATUS_TABS = [
   { id: 'all', name: 'Tất cả', count: 0 },
-  { id: 'pending', name: 'Chờ xác nhận', count: 0, icon: Clock, color: 'text-warning', bgColor: 'bg-warning/10' },
-  { id: 'confirmed', name: 'Đã xác nhận', count: 0, icon: CheckCircle, color: 'text-info', bgColor: 'bg-info/10' },
-  { id: 'shipping', name: 'Đang giao', count: 0, icon: Truck, color: 'text-primary', bgColor: 'bg-primary/10' },
-  { id: 'delivered', name: 'Đã hoàn thành', count: 0, icon: CheckCircle, color: 'text-success', bgColor: 'bg-success/10' },
-  { id: 'return_requested', name: 'Đang yêu cầu đổi trả', count: 0, icon: RotateCcw, color: 'text-orange-600', bgColor: 'bg-orange-100 border-orange-300' },
-  { id: 'refunded', name: 'Đã đổi trả & hoàn tiền', count: 0, icon: RotateCcw, color: 'text-purple-600', bgColor: 'bg-purple-50 border-purple-100' },
-  { id: 'cancelled', name: 'Đã hủy', count: 0, icon: XCircle, color: 'text-admin-danger', bgColor: 'bg-admin-danger/10' },
+  { id: 'pending', name: 'Chờ xác nhận', count: 0, icon: Clock, color: 'text-amber-500' },
+  { id: 'confirmed', name: 'Đã xác nhận', count: 0, icon: CheckCircle, color: 'text-blue-500' },
+  { id: 'shipping', name: 'Đang giao', count: 0, icon: Truck, color: 'text-indigo-500' },
+  { id: 'delivered', name: 'Đã hoàn thành', count: 0, icon: CheckCircle, color: 'text-emerald-500' },
+  { id: 'return_requested', name: 'Yêu cầu đổi trả', count: 0, icon: RotateCcw, color: 'text-orange-500' },
+  { id: 'refunded', name: 'Đã hoàn tiền', count: 0, icon: RotateCcw, color: 'text-purple-500' },
+  { id: 'cancelled', name: 'Đã hủy', count: 0, icon: XCircle, color: 'text-red-500' },
 ];
 
 // Cấu hình/Hằng số/Dịch vụ dữ liệu: ORDER_STATS_CONFIG
@@ -27,6 +27,7 @@ const ORDER_STATS_CONFIG = [
   { label: 'Chờ xác nhận', countKey: 'pending', icon: Clock, bgColor: '#FFFFFF', textColor: 'var(--color-admin-text-main)', iconColor: 'var(--color-warning)' },
   { label: 'Đang giao', countKey: 'shipping', icon: Truck, bgColor: '#FFFFFF', textColor: 'var(--color-admin-text-main)', iconColor: 'var(--color-info)' },
   { label: 'Đã hoàn thành', countKey: 'delivered', icon: CheckCircle, bgColor: '#FFFFFF', textColor: 'var(--color-admin-text-main)', iconColor: 'var(--color-success)' },
+  { label: 'Đã hủy', countKey: 'cancelled', icon: XCircle, bgColor: '#FFFFFF', textColor: 'var(--color-admin-text-main)', iconColor: '#EF4444' },
 ];
 
 // ánh xạ tên phương thức thanh toán
@@ -142,6 +143,7 @@ export default function AdminOrders() {
                 items: order.items || [],
                 shippingAddress: order.shippingAddress || 'N/A',
                 promotionCode: order.promotionCode || null,
+                discountApplied: order.discountApplied || 0,
                 pointsEarned: order.pointsEarned || 0,
                 pointsRedeemed: order.pointsRedeemed || 0,
                 discountFromPoints: order.discountFromPoints || 0,
@@ -188,9 +190,10 @@ export default function AdminOrders() {
   const filteredOrders = orders.filter(order => {
     const isReturnRequested = order.status === 'return_requested' || order.statusId === 6;
     const isRefunded = order.status === 'refunded' || order.statusId === 7;
+    const isCancelled = order.status === 'cancelled' || order.statusId === 5;
     const matchesTab = activeTab === 'all' ||
       (activeTab === 'shipping' && (order.status === 'shipping' || order.status === 'shipping_failed')) ||
-      (activeTab === 'return_requested' ? isReturnRequested : (activeTab === 'refunded' ? isRefunded : order.status === activeTab));
+      (activeTab === 'cancelled' ? isCancelled : (activeTab === 'return_requested' ? isReturnRequested : (activeTab === 'refunded' ? isRefunded : order.status === activeTab)));
     const matchesSearch = String(order.id).toLowerCase().includes(searchTerm.toLowerCase()) ||
       String(order.customer || '').toLowerCase().includes(searchTerm.toLowerCase());
     return matchesTab && matchesSearch;
@@ -479,35 +482,35 @@ export default function AdminOrders() {
       </div>
 
       {/* Stats Overview - MISA Style */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
         {ORDER_STATS_CONFIG.map((item, i) => {
           // Khai báo biến/hằng số: Icon - Dùng trong logic xử lý của component
           const Icon = item.icon;
           // Khai báo biến/hằng số: count - Dùng trong logic xử lý của component
-          const count = counts[item.countKey];
+          const count = counts[item.countKey] || 0;
           return (
             <div
               key={i}
-              className="p-5 rounded-md transition-all flex items-center justify-between h-28 bg-white"
+              className="p-4 rounded-xl border border-admin-border/70 transition-all flex items-center justify-between h-24 bg-white shadow-sm hover:shadow-md"
             >
               <div className="flex flex-col">
                 <p className="text-[12px] font-bold text-admin-text-muted mb-1">
                   {item.label}
                 </p>
-                <h3 className="text-2xl font-bold text-admin-text-main leading-none">
+                <h3 className="text-xl font-extrabold text-admin-text-main leading-none">
                   {count.toLocaleString('vi-VN')}
                 </h3>
               </div>
-              <div className="w-14 h-14 rounded-full bg-admin-bg flex items-center justify-center flex-shrink-0">
-                <Icon size={24} style={{ color: item.iconColor }} />
+              <div className="w-11 h-11 rounded-full bg-admin-bg flex items-center justify-center flex-shrink-0">
+                <Icon size={20} style={{ color: item.iconColor }} />
               </div>
             </div>
           );
         })}
       </div>
 
-      {/* Status Filter Tabs */}
-      <div className="flex overflow-x-auto pb-2 gap-3 no-scrollbar">
+      {/* Status Filter Tabs - Hiển thị đầy đủ tất cả các Tab (kể cả Đã hủy) không bị khuất */}
+      <div className="flex flex-wrap gap-2 p-1.5 bg-gray-50/80 rounded-xl border border-admin-border/60">
         {STATUS_TABS.map((tab) => {
           // Khai báo biến/hằng số: Icon - Dùng trong logic xử lý của component
           const Icon = tab.icon;
@@ -517,15 +520,15 @@ export default function AdminOrders() {
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              className={`flex items-center px-6 py-3 rounded-md text-sm font-bold transition-all whitespace-nowrap border ${isActive
-                ? 'bg-primary text-white border-primary shadow-md scale-[1.02]'
-                : 'bg-white text-admin-text-muted border-admin-border hover:border-primary hover:text-primary'
+              className={`flex items-center px-4 py-2.5 rounded-lg text-xs font-extrabold transition-all whitespace-nowrap cursor-pointer border ${isActive
+                ? 'bg-primary text-white border-primary shadow-sm scale-[1.02]'
+                : 'bg-white text-admin-text-muted border-admin-border hover:border-primary/50 hover:text-primary'
                 }`}
             >
-              {Icon && <Icon className={`w-4 h-4 mr-3 ${isActive ? 'text-white' : tab.color}`} />}
-              {tab.name}
-              <span className={`ml-3 px-2 py-0.5 rounded-md text-[11px] font-bold tracking-tighter ${isActive ? 'bg-white/20 text-white' : 'bg-admin-bg text-admin-text-main'}`}>
-                {counts[tab.id]}
+              {Icon && <Icon className={`w-3.5 h-3.5 mr-2 ${isActive ? 'text-white' : tab.color}`} />}
+              <span>{tab.name}</span>
+              <span className={`ml-2 px-2 py-0.5 rounded-md text-[11px] font-black ${isActive ? 'bg-white/20 text-white' : 'bg-gray-100 text-admin-text-main'}`}>
+                {counts[tab.id] || 0}
               </span>
             </button>
           );
@@ -773,34 +776,6 @@ export default function AdminOrders() {
         </div>
       </div>
 
-      {/* Custom Confirm Cancel Modal */}
-      {cancelModal.isOpen && (
-        <div className="fixed inset-0 bg-admin-text-main/40 backdrop-blur-sm flex items-center justify-center z-[9999] animate-in fade-in duration-200">
-          <div className="bg-white p-6 rounded-md border border-admin-border w-full max-w-sm mx-4 transform transition-all scale-100 animate-in zoom-in-95 duration-200">
-            <h3 className="text-lg font-bold text-admin-text-main mb-2 flex items-center gap-2">
-              ⚠️ Xác nhận hủy đơn hàng
-            </h3>
-            <p className="text-sm text-admin-text-muted font-semibold mb-6">
-              Xác nhận hủy và hoàn lại số lượng (+{orders.find(o => o.id === cancelModal.orderId)?.items?.reduce((sum, item) => sum + (item.quantity || 0), 0) || 1}) vào kho?
-            </p>
-            <div className="flex justify-end gap-3">
-              <button
-                onClick={() => setCancelModal({ isOpen: false, orderId: null, newStatus: null })}
-                className="px-5 py-2.5 bg-admin-bg text-admin-text-muted font-bold rounded-md text-xs hover:bg-admin-border transition-colors"
-              >
-                Hủy bỏ
-              </button>
-              <button
-                onClick={confirmCancelOrder}
-                className="px-5 py-2.5 bg-admin-danger text-white font-bold rounded-md text-xs hover:bg-admin-danger/90 transition-colors"
-              >
-                Đồng ý hủy
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
       {/* Order Details Modal */}
       <OrderDetailsModal
         order={selectedOrderDetails}
@@ -817,6 +792,34 @@ export default function AdminOrders() {
         onOpenReturnModal={(ord) => setReturnModalOrder(ord)}
         getReturnRequestInfo={getReturnRequestInfo}
       />
+
+      {/* Custom Confirm Cancel Modal */}
+      {cancelModal.isOpen && (
+        <div className="fixed inset-0 bg-admin-text-main/40 backdrop-blur-sm flex items-center justify-center z-[10050] animate-in fade-in duration-200">
+          <div className="bg-white p-6 rounded-md border border-admin-border w-full max-w-sm mx-4 transform transition-all scale-100 animate-in zoom-in-95 duration-200 shadow-2xl">
+            <h3 className="text-lg font-bold text-admin-text-main mb-2 flex items-center gap-2">
+              ⚠️ Xác nhận hủy đơn hàng
+            </h3>
+            <p className="text-sm text-admin-text-muted font-semibold mb-6">
+              Xác nhận hủy và hoàn lại số lượng (+{orders.find(o => o.id === cancelModal.orderId)?.items?.reduce((sum, item) => sum + (item.quantity || 0), 0) || 1}) vào kho?
+            </p>
+            <div className="flex justify-end gap-3">
+              <button
+                onClick={() => setCancelModal({ isOpen: false, orderId: null, newStatus: null })}
+                className="px-5 py-2.5 bg-admin-bg text-admin-text-muted font-bold rounded-md text-xs hover:bg-admin-border transition-colors cursor-pointer"
+              >
+                Hủy bỏ
+              </button>
+              <button
+                onClick={confirmCancelOrder}
+                className="px-5 py-2.5 bg-admin-danger text-white font-bold rounded-md text-xs hover:bg-admin-danger/90 transition-colors cursor-pointer"
+              >
+                Đồng ý hủy
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* MODAL KIỂM DUYỆT ĐỔI TRẢ HOÀN TIỀN CHO ADMIN */}
       {returnModalOrder && (

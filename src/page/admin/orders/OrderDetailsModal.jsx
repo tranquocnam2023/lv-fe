@@ -55,12 +55,10 @@ export default function OrderDetailsModal({
   const discountFromPoints = order.discountFromPoints || 0;
   // Khai báo biến/hằng số: totalPaid - Dùng trong logic xử lý của component
   const totalPaid = order.amount || 0;
-  // Khai báo biến/hằng số: diff - Dùng trong logic xử lý của component
-  const diff = totalPaid - subTotal + discountFromPoints;
-  // Khai báo biến/hằng số: shippingFee - Dùng trong logic xử lý của component
-  const shippingFee = diff > 0 ? diff : 0;
-  // Khai báo biến/hằng số: promoDiscount - Dùng trong logic xử lý của component
-  const promoDiscount = diff < 0 ? -diff : 0;
+  // Phí ship thực tế từ backend
+  const shippingFee = order.actualShippingFee || 0;
+  // Giảm giá coupon từ backend hoặc tự tính từ subTotal + shippingFee - discountFromPoints - totalPaid
+  const promoDiscount = order.discountApplied || Math.max(0, subTotal + shippingFee - discountFromPoints - totalPaid);
 
   return (
     <div className="fixed inset-0 bg-admin-text-main/40 backdrop-blur-sm flex items-center justify-center z-[9999] animate-in fade-in duration-200">
@@ -310,21 +308,51 @@ export default function OrderDetailsModal({
             */}
             {order.status === 'pending' && onStatusChange && (
               <>
-                <button
-                  onClick={() => onStatusChange(order.id, 'shipping')}
-                  className="px-4 py-2 bg-primary/10 text-primary border border-primary/20 hover:bg-primary/20 rounded-md font-extrabold text-xs cursor-pointer transition-all active:scale-95"
-                  title="1-Click: Duyệt đơn hàng và chuyển ngay sang Đang giao"
-                >
-                  Duyệt & Giao hàng (Manual)
-                </button>
-                <button
-                  onClick={() => onStatusChange(order.id, 'cancelled')}
-                  className="px-4 py-2 bg-admin-danger/10 text-admin-danger border border-admin-danger/20 hover:bg-admin-danger/20 rounded-md font-extrabold text-xs cursor-pointer transition-all active:scale-95"
-                  title="Hủy đơn hàng"
-                >
-                  Hủy đơn
-                </button>
+                {order.paymentMethod?.toLowerCase() !== 'cod' && order.payment !== 'Đã thanh toán' ? (
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="px-3 py-1.5 bg-amber-100 text-amber-800 font-extrabold text-xs rounded border border-amber-200">
+                      ⚠️ Khách chưa hoàn tất thanh toán Online ({getPaymentMethodLabel(order.paymentMethod)})
+                    </span>
+                    <button
+                      disabled
+                      className="px-4 py-2 bg-gray-100 text-gray-400 border border-gray-200 rounded-md font-bold text-xs cursor-not-allowed opacity-60"
+                      title="Không thể duyệt đơn hàng khi chưa hoàn tất thanh toán Online"
+                    >
+                      Duyệt & Giao hàng (Manual)
+                    </button>
+                    <button
+                      onClick={() => onStatusChange(order.id, 'cancelled')}
+                      className="px-4 py-2 bg-admin-danger/10 text-admin-danger border border-admin-danger/20 hover:bg-admin-danger hover:text-white rounded-md font-extrabold text-xs cursor-pointer transition-all active:scale-95 flex items-center gap-1"
+                      title="Bấm để Hủy đơn hàng và hoàn lại Điểm thưởng & Mã giảm giá cho khách"
+                    >
+                      Hủy đơn
+                    </button>
+                  </div>
+                ) : (
+                  <>
+                    <button
+                      onClick={() => onStatusChange(order.id, 'shipping')}
+                      className="px-4 py-2 bg-primary/10 text-primary border border-primary/20 hover:bg-primary/20 rounded-md font-extrabold text-xs cursor-pointer transition-all active:scale-95"
+                      title="1-Click: Duyệt đơn hàng và chuyển ngay sang Đang giao"
+                    >
+                      Duyệt & Giao hàng (Manual)
+                    </button>
+                    <button
+                      onClick={() => onStatusChange(order.id, 'cancelled')}
+                      className="px-4 py-2 bg-admin-danger/10 text-admin-danger border border-admin-danger/20 hover:bg-admin-danger/20 rounded-md font-extrabold text-xs cursor-pointer transition-all active:scale-95"
+                      title="Hủy đơn hàng"
+                    >
+                      Hủy đơn
+                    </button>
+                  </>
+                )}
               </>
+            )}
+
+            {order.status === 'cancelled' && (
+              <span className="px-3 py-1.5 bg-red-100 text-red-700 font-extrabold text-xs rounded border border-red-200">
+                ❌ Đơn hàng đã bị hủy (Thanh toán thất bại hoặc người dùng/shop hủy đơn)
+              </span>
             )}
 
             {(order.status === 'confirmed' || order.status === 'preparing') && (

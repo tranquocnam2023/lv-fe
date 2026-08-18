@@ -209,42 +209,48 @@ export default function CartPage() {
         totalWeightKg: 1.0,
         latitude: formData.deliveryLatitude,
         longitude: formData.deliveryLongitude,
-        addressLine: formData.streetAddress
+        addressLine: formData.streetAddress || formData.address
       })
         .then(res => {
           if (res) {
-            // Cấu hình/Hằng số/Dịch vụ dữ liệu: options
             const options = res.options || res.Options || [];
             setShippingOptions(options);
 
             if (options.length > 0) {
-              // Mặc định chọn phương thức rẻ nhất (thường là Giao Hàng Tiêu Chuẩn) để không làm khách hoảng vì phí ship cao
-              const cheapestOption = [...options].sort((a, b) => (Number(a.fee || a.Fee || 0)) - (Number(b.fee || b.Fee || 0)))[0];
-              setShippingFee(Number(cheapestOption.fee || cheapestOption.Fee || 0));
-              setShippingCarrier(cheapestOption.carrier || cheapestOption.Carrier || '');
-              setShippingEstimatedDays(cheapestOption.estimatedDeliveryDays || cheapestOption.EstimatedDeliveryDays || '');
+              const currentOrStd = options.find(o => (o.carrier || o.Carrier) === shippingCarrier) ||
+                                  options.find(o => (o.carrier || o.Carrier) === 'Giao Hàng Tiêu Chuẩn') ||
+                                  [...options].sort((a, b) => (Number(a.fee || a.Fee || 0)) - (Number(b.fee || b.Fee || 0)))[0];
+              setShippingFee(Number(currentOrStd.fee || currentOrStd.Fee || 0));
+              setShippingCarrier(currentOrStd.carrier || currentOrStd.Carrier || '');
+              setShippingEstimatedDays(currentOrStd.estimatedDeliveryDays || currentOrStd.EstimatedDeliveryDays || '');
             } else {
               setShippingFee(Number(res.fee || res.Fee || 0));
-              setShippingCarrier(res.carrier || res.Carrier || 'Giao Hàng Nhanh (GHN)');
+              setShippingCarrier(res.carrier || res.Carrier || 'Giao Hàng Tiêu Chuẩn');
               setShippingEstimatedDays(res.estimatedDeliveryDays || res.EstimatedDeliveryDays || '2-3 ngày');
             }
           }
         })
         .catch(err => {
           console.error("Lỗi tính phí vận chuyển:", err);
-          setShippingFee(25000); // fallback
-          setShippingCarrier('Giao Hàng Nhanh (GHN)');
-          setShippingEstimatedDays('3-5 ngày');
+          const isHcmCity = formData.city && (formData.city.includes('Hồ Chí Minh') || formData.city.includes('HCM'));
+          const fallbackFee = isHcmCity ? 28000 : 45000;
+          const fallbackDays = isHcmCity ? '1-2 ngày' : '3-5 ngày';
+          const fallbackOption = { Fee: fallbackFee, Carrier: 'Giao Hàng Tiêu Chuẩn', EstimatedDeliveryDays: fallbackDays };
+          setShippingOptions([fallbackOption]);
+          setShippingFee(fallbackFee);
+          setShippingCarrier('Giao Hàng Tiêu Chuẩn');
+          setShippingEstimatedDays(fallbackDays);
         })
         .finally(() => {
           setShippingLoading(false);
         });
     } else {
+      setShippingOptions([]);
       setShippingFee(0);
       setShippingCarrier('');
       setShippingEstimatedDays('');
     }
-  }, [formData.wardId, deliveryMethod, formData.deliveryLatitude, formData.deliveryLongitude, formData.streetAddress]);
+  }, [formData.wardId, deliveryMethod, formData.deliveryLatitude, formData.deliveryLongitude, formData.streetAddress, formData.city]);
 
   // Form submission state
   const [paymentMethod, setPaymentMethod] = useState('stripe'); // default 'stripe'
@@ -417,6 +423,9 @@ export default function CartPage() {
 
   // Hàm xử lý logic/sự kiện: handleSelectSavedAddress
   const handleSelectSavedAddress = async (addr) => {
+    if (addr?.id || addr?.Id) {
+      sessionStorage.setItem('selectedShippingAddressId', String(addr.id || addr.Id));
+    }
     // Khai báo biến/hằng số: recipient - Dùng trong logic xử lý của component
     const recipient = addr.recipientName || '';
     // Khai báo biến/hằng số: phoneNum - Dùng trong logic xử lý của component
@@ -582,8 +591,9 @@ export default function CartPage() {
           if (Array.isArray(res)) {
             setUserAddresses(res);
             if (res.length > 0) {
-              // Hàm thực thi logic: defaultAddr
-              const defaultAddr = res.find(addr => addr.isDefault) || res[0];
+              const savedId = sessionStorage.getItem('selectedShippingAddressId');
+              const defaultAddr = (savedId && res.find(addr => String(addr.id || addr.Id) === String(savedId))) ||
+                                  res.find(addr => addr.isDefault) || res[0];
               // Khai báo biến/hằng số: recipient - Dùng trong logic xử lý của component
               const recipient = defaultAddr.recipientName || '';
               // Khai báo biến/hằng số: phoneNum - Dùng trong logic xử lý của component
