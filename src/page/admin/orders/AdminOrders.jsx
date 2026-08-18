@@ -136,6 +136,13 @@ export default function AdminOrders() {
                       ? (order.statusId === 4 ? 'Đã thanh toán' : 'Chờ thanh toán')
                       : (order.statusId === 2 || order.statusId === 3 || order.statusId === 4 ? 'Đã thanh toán' : 'Chờ thanh toán'),
                 amount: order.totalPrice,
+                // LỢI NHUẬN: Tiền bán - Tiền gốc (giá nhập kho). grossProfit chỉ khác 0 khi đơn ĐÃ GIAO THÀNH CÔNG,
+                // estimatedProfit là số dự kiến để tham khảo với các đơn chưa hoàn tất.
+                grossProfit: order.grossProfit || 0,
+                estimatedProfit: order.estimatedGrossProfit || 0,
+                totalCost: order.totalCost || 0,
+                totalItemRevenue: order.totalItemRevenue || 0,
+                profitMargin: order.profitMargin || 0,
                 status: statusStr,
                 paymentMethod: order.paymentMethod || order.PaymentMethod || 'cod',
                 failedDeliveryCount: order.failedDeliveryCount || 0,
@@ -452,6 +459,21 @@ export default function AdminOrders() {
     cancelled: orders.filter(o => o.status === 'cancelled' || o.statusId === 5).length,
   };
 
+  // ===== TỔNG HỢP LỢI NHUẬN: CHỈ TÍNH ĐƠN HÀNG ĐÃ GIAO THÀNH CÔNG =====
+  const completedOrders = orders.filter(o => o.status === 'delivered');
+  const profitSummary = completedOrders.reduce(
+    (acc, o) => {
+      acc.revenue += o.totalItemRevenue || 0;
+      acc.cost += o.totalCost || 0;
+      acc.profit += o.grossProfit || 0;
+      return acc;
+    },
+    { revenue: 0, cost: 0, profit: 0 }
+  );
+  const profitSummaryMargin = profitSummary.revenue > 0
+    ? Math.round((profitSummary.profit / profitSummary.revenue) * 1000) / 10
+    : 0;
+
   return (
     <div className="animate-in fade-in duration-500 space-y-6">
       {error && (
@@ -506,6 +528,30 @@ export default function AdminOrders() {
         })}
       </div>
 
+      {/* Bảng tổng hợp Lợi nhuận (Tiền bán - Tiền gốc nhập hàng) - chỉ tính đơn hàng thành công */}
+      <div className="bg-white rounded-md p-5 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="flex flex-col">
+          <p className="text-[12px] font-bold text-admin-text-muted mb-1">Doanh thu hàng (đơn thành công)</p>
+          <h3 className="text-xl font-bold text-admin-text-main leading-none">{formatCurrency(profitSummary.revenue)}</h3>
+        </div>
+        <div className="flex flex-col">
+          <p className="text-[12px] font-bold text-admin-text-muted mb-1">Tiền gốc nhập hàng</p>
+          <h3 className="text-xl font-bold text-admin-text-main leading-none">{formatCurrency(profitSummary.cost)}</h3>
+        </div>
+        <div className="flex flex-col">
+          <p className="text-[12px] font-bold text-admin-text-muted mb-1" title="Lợi nhuận = Tiền bán - Tiền gốc nhập hàng. Chỉ tính các đơn đã giao thành công.">
+            Lợi nhuận gộp
+          </p>
+          <h3 className="text-xl font-bold text-success leading-none">{formatCurrency(profitSummary.profit)}</h3>
+        </div>
+        <div className="flex flex-col">
+          <p className="text-[12px] font-bold text-admin-text-muted mb-1">Biên lợi nhuận / Số đơn</p>
+          <h3 className="text-xl font-bold text-admin-text-main leading-none">
+            {profitSummaryMargin}% <span className="text-sm font-semibold text-admin-text-muted">/ {completedOrders.length} đơn</span>
+          </h3>
+        </div>
+      </div>
+
       {/* Status Filter Tabs */}
       <div className="flex overflow-x-auto pb-2 gap-3 no-scrollbar">
         {STATUS_TABS.map((tab) => {
@@ -544,6 +590,12 @@ export default function AdminOrders() {
                 <th className="px-6 py-4 text-[12px] font-bold text-admin-text-muted">Trạng thái TT</th>
                 <th className="px-6 py-4 text-[12px] font-bold text-admin-text-muted">Hình thức TT</th>
                 <th className="px-6 py-4 text-[12px] font-bold text-admin-text-muted">Tổng cộng</th>
+                <th
+                  className="px-6 py-4 text-[12px] font-bold text-admin-text-muted"
+                  title="Lợi nhuận = Tiền bán - Tiền gốc (giá nhập kho). Chỉ ghi nhận với đơn đã giao thành công."
+                >
+                  Lợi nhuận
+                </th>
                 <th className="px-6 py-4 text-[12px] font-bold text-admin-text-muted text-center">Trạng thái & Thao tác</th>
               </tr>
             </thead>
@@ -591,6 +643,25 @@ export default function AdminOrders() {
                     </td>
                     <td className="px-6 py-4 font-bold text-admin-text-main">
                       {formatCurrency(order.amount)}
+                    </td>
+
+                    {/* CỘT LỢI NHUẬN: Tiền bán - Tiền gốc nhập hàng (chỉ ghi nhận khi đơn giao thành công) */}
+                    <td className="px-6 py-4">
+                      {order.status === 'delivered' ? (
+                        <div className="flex flex-col">
+                          <span className="font-bold text-success">{formatCurrency(order.grossProfit)}</span>
+                          <span className="text-[11px] text-admin-text-muted font-medium">
+                            Gốc: {formatCurrency(order.totalCost)} • {order.profitMargin}%
+                          </span>
+                        </div>
+                      ) : (
+                        <div className="flex flex-col">
+                          <span className="font-bold text-admin-text-muted">—</span>
+                          <span className="text-[11px] text-admin-text-muted font-medium">
+                            Dự kiến: {formatCurrency(order.estimatedProfit)}
+                          </span>
+                        </div>
+                      )}
                     </td>
 
                     {/* CỘT THỐNG NHẤT QUY TRÌNH: TRẠNG THÁI & THAO TÁC */}
@@ -728,7 +799,7 @@ export default function AdminOrders() {
                 ))
               ) : (
                 <tr>
-                  <td colSpan="7" className="px-6 py-20 text-center">
+                  <td colSpan="8" className="px-6 py-20 text-center">
                     <div className="flex flex-col items-center justify-center text-admin-text-muted">
                       <ShoppingCart size={64} strokeWidth={1} className="mb-4 opacity-50" />
                       <p className="text-lg font-bold text-admin-text-main">Không tìm thấy đơn hàng nào</p>

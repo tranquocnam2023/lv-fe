@@ -62,6 +62,14 @@ export default function OrderDetailsModal({
   // Khai báo biến/hằng số: promoDiscount - Dùng trong logic xử lý của component
   const promoDiscount = diff < 0 ? -diff : 0;
 
+  // ===== LỢI NHUẬN ĐƠN HÀNG: Tiền bán - Tiền gốc (giá nhập kho gần nhất) =====
+  // Chỉ đơn ĐÃ GIAO THÀNH CÔNG mới được ghi nhận lợi nhuận thực tế, các trạng thái khác chỉ là dự kiến.
+  const isProfitRealized = order.status === 'delivered';
+  const itemsRevenue = order.items?.reduce((sum, i) => sum + (i.quantity * (i.priceAtPurchase || 0)), 0) || 0;
+  const itemsCost = order.items?.reduce((sum, i) => sum + (i.quantity * (i.costPriceAtPurchase || 0)), 0) || 0;
+  const itemsProfit = itemsRevenue - itemsCost;
+  const itemsMargin = itemsRevenue > 0 ? Math.round((itemsProfit / itemsRevenue) * 1000) / 10 : 0;
+
   return (
     <div className="fixed inset-0 bg-admin-text-main/40 backdrop-blur-sm flex items-center justify-center z-[9999] animate-in fade-in duration-200">
       <div className="bg-white rounded-lg border border-admin-border w-full max-w-3xl mx-4 overflow-hidden transform transition-all scale-100 animate-in zoom-in-95 duration-200 shadow-2xl flex flex-col max-h-[90vh]">
@@ -207,8 +215,10 @@ export default function OrderDetailsModal({
                   <tr className="bg-admin-bg border-b border-admin-border text-xs text-admin-text-muted">
                     <th className="px-4 py-3 font-bold">Sản phẩm</th>
                     <th className="px-4 py-3 font-bold text-right">Đơn giá</th>
+                    <th className="px-4 py-3 font-bold text-right" title="Giá vốn nhập kho tại thời điểm bán">Giá gốc (nhập)</th>
                     <th className="px-4 py-3 font-bold text-center">Số lượng</th>
                     <th className="px-4 py-3 font-bold text-right">Thành tiền</th>
+                    <th className="px-4 py-3 font-bold text-right" title="Lợi nhuận = (Đơn giá - Giá gốc) x Số lượng">Lợi nhuận</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-admin-border text-xs">
@@ -254,11 +264,17 @@ export default function OrderDetailsModal({
                       <td className="px-4 py-3 text-right font-bold text-admin-text-main">
                         {formatCurrency(item.priceAtPurchase)}
                       </td>
+                      <td className="px-4 py-3 text-right font-semibold text-admin-text-muted">
+                        {formatCurrency(item.costPriceAtPurchase || 0)}
+                      </td>
                       <td className="px-4 py-3 text-center font-bold text-admin-text-main">
                         {item.quantity}
                       </td>
                       <td className="px-4 py-3 text-right font-bold text-admin-text-main">
                         {formatCurrency(item.quantity * (item.priceAtPurchase + (item.warrantyPrice || 0)))}
+                      </td>
+                      <td className={`px-4 py-3 text-right font-bold ${isProfitRealized ? 'text-success' : 'text-admin-text-muted'}`}>
+                        {formatCurrency(item.quantity * ((item.priceAtPurchase || 0) - (item.costPriceAtPurchase || 0)))}
                       </td>
                     </tr>
                   ))}
@@ -294,6 +310,27 @@ export default function OrderDetailsModal({
             <div className="flex justify-between w-64 text-sm font-extrabold text-admin-text-muted border-t border-admin-border/50 pt-2 mt-1">
               <span className="text-admin-text-main">Tổng thanh toán:</span>
               <span className="text-lg font-extrabold text-primary">{formatCurrency(totalPaid)}</span>
+            </div>
+
+            {/* Khối lợi nhuận: Tiền bán - Tiền gốc nhập hàng */}
+            <div className="w-64 mt-2 pt-2 border-t border-dashed border-admin-border">
+              <div className="flex justify-between text-admin-text-muted font-bold">
+                <span>Tiền gốc nhập hàng:</span>
+                <span className="text-admin-text-main font-semibold">{formatCurrency(itemsCost)}</span>
+              </div>
+              <div className="flex justify-between font-bold mt-1">
+                <span className="text-admin-text-muted">
+                  {isProfitRealized ? 'Lợi nhuận gộp:' : 'Lợi nhuận dự kiến:'}
+                </span>
+                <span className={`font-extrabold ${isProfitRealized ? 'text-success' : 'text-admin-text-muted'}`}>
+                  {formatCurrency(itemsProfit)} <span className="font-bold">({itemsMargin}%)</span>
+                </span>
+              </div>
+              {!isProfitRealized && (
+                <p className="text-[10px] text-admin-text-muted font-semibold mt-1 text-right">
+                  Chỉ ghi nhận vào báo cáo khi đơn giao thành công.
+                </p>
+              )}
             </div>
           </div>
         </div>

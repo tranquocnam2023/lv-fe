@@ -16,15 +16,27 @@ export const dashboardService = {
       // Hàm thực thi logic: totalRevenue
       const totalRevenue = completedOrders.reduce((sum, o) => sum + (o.totalPrice || 0), 0);
 
+      // LỢI NHUẬN GỘP = Tiền bán - Tiền gốc (giá nhập kho), CHỈ TÍNH ĐƠN HÀNG THÀNH CÔNG
+      const totalCost = completedOrders.reduce((sum, o) => sum + (o.totalCost || 0), 0);
+      const totalProfit = completedOrders.reduce((sum, o) => sum + (o.grossProfit || 0), 0);
+      const totalItemRevenue = completedOrders.reduce((sum, o) => sum + (o.totalItemRevenue || 0), 0);
+      const profitMargin = totalItemRevenue > 0
+        ? Math.round((totalProfit / totalItemRevenue) * 1000) / 10
+        : 0;
+
       return {
         totalRevenue,
+        totalCost,
+        totalProfit,
+        profitMargin,
+        totalCompletedOrders: completedOrders.length,
         totalOrders: orders.length,
         totalProducts: products.length,
         totalUsers: users.length
       };
     } catch (error) {
       console.error("Error calculating dashboard stats:", error);
-      return { totalRevenue: 0, totalOrders: 0, totalProducts: 0, totalUsers: 0 };
+      return { totalRevenue: 0, totalCost: 0, totalProfit: 0, profitMargin: 0, totalCompletedOrders: 0, totalOrders: 0, totalProducts: 0, totalUsers: 0 };
     }
   },
   
