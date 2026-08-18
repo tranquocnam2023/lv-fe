@@ -196,10 +196,22 @@ export default function AdminOrders() {
       });
   }, []);
 
+  // Đọc danh sách yêu cầu đổi trả gửi từ phía Khách hàng
+  const savedReturnRequests = React.useMemo(() => {
+    try {
+      return JSON.parse(localStorage.getItem('PROJECT_RETURN_REQUESTS') || '{}');
+    } catch {
+      return {};
+    }
+  }, []);
+
   // Hàm thực thi logic: filteredOrders
   const filteredOrders = orders.filter(order => {
-    const isReturnRequested = order.status === 'return_requested' || order.statusId === 6;
-    const isRefunded = order.status === 'refunded' || order.statusId === 7;
+    const ordId = String(order.id);
+    const returnReq = savedReturnRequests[ordId];
+    const isReturnRequested = order.status === 'return_requested' || order.statusId === 6 || (returnReq && returnReq.status === 'Pending');
+    const isRefunded = order.status === 'refunded' || order.statusId === 7 || (returnReq && returnReq.status === 'Approved');
+
     const matchesTab = activeTab === 'all' ||
       (activeTab === 'shipping' && (order.status === 'shipping' || order.status === 'shipping_failed')) ||
       (activeTab === 'return_requested' ? isReturnRequested : (activeTab === 'refunded' ? isRefunded : order.status === activeTab));
@@ -241,7 +253,14 @@ export default function AdminOrders() {
   };
 
   // Hàm xử lý logic/sự kiện: getShippingStatus
-  const getShippingStatus = (status) => {
+  const getShippingStatus = (status, orderId) => {
+    const returnReq = savedReturnRequests[String(orderId)];
+    if (returnReq && returnReq.status === 'Pending') {
+      return { label: 'Đang yêu cầu đổi trả', style: 'bg-orange-500 text-white font-bold border border-orange-600 shadow-sm animate-pulse' };
+    }
+    if (returnReq && returnReq.status === 'Approved') {
+      return { label: 'Đã đổi trả & hoàn tiền', style: 'bg-purple-100 text-purple-700 font-bold border border-purple-200' };
+    }
     switch (status) {
       case 'pending':
         return { label: 'Chờ xác nhận', style: 'bg-orange-50 text-orange-600 font-bold border border-orange-100' };
@@ -459,8 +478,8 @@ export default function AdminOrders() {
     confirmed: orders.filter(o => o.status === 'confirmed' || o.status === 'preparing' || o.statusId === 2).length,
     shipping: orders.filter(o => o.status === 'shipping' || o.status === 'shipping_failed' || o.statusId === 3).length,
     delivered: orders.filter(o => o.status === 'delivered' || o.statusId === 4).length,
-    return_requested: orders.filter(o => o.status === 'return_requested' || o.statusId === 6).length,
-    refunded: orders.filter(o => o.status === 'refunded' || o.statusId === 7).length,
+    return_requested: orders.filter(o => o.status === 'return_requested' || o.statusId === 6 || (savedReturnRequests[String(o.id)] && savedReturnRequests[String(o.id)].status === 'Pending')).length,
+    refunded: orders.filter(o => o.status === 'refunded' || o.statusId === 7 || (savedReturnRequests[String(o.id)] && savedReturnRequests[String(o.id)].status === 'Approved')).length,
     cancelled: orders.filter(o => o.status === 'cancelled' || o.statusId === 5).length,
   };
 
@@ -673,10 +692,10 @@ export default function AdminOrders() {
                     <td className="px-6 py-4">
                       <div className="flex flex-col items-center justify-center gap-1.5">
                         {/* Nhãn trạng thái hình Oval / Pill Badge (Nguyên bản) */}
-                        <span className={`px-4 py-1.5 rounded-full text-[11px] font-bold inline-block ${getShippingStatus(order.status).style}`}>
+                        <span className={`px-4 py-1.5 rounded-full text-[11px] font-bold inline-block ${getShippingStatus(order.status, order.id).style}`}>
                           {order.status === 'shipping_failed'
                             ? `Giao thất bại (${order.failedDeliveryCount}/3 lần)`
-                            : getShippingStatus(order.status).label}
+                            : getShippingStatus(order.status, order.id).label}
                         </span>
 
                         {/* Nút thao tác trực tiếp ở ngoài đã được comment lại theo yêu cầu, chuyển vào modal Chi tiết đơn hàng */}

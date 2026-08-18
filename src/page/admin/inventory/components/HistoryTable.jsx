@@ -132,19 +132,23 @@ export default function HistoryTable({
 
 
               // [ĐỊNH DẠNG MÃ GIAO DỊCH KHO - PHÍA FRONT-END]
+              const isImport = item.transactionType === 'IMPORT_SUPPLIER' || 
+                               item.transactionType === 'IMPORT_INITIAL' || 
+                               item.transactionType?.toLowerCase().includes('import') || 
+                               item.transactionType?.toLowerCase().includes('initial') || 
+                               item.note?.includes('Khởi tạo tồn kho ban đầu');
 
               let prefix = '#TX'; // Tiền tố mặc định cho điều chỉnh kho thủ công
 
               if (item.transactionType === 'EXPORT_SELL') {
                 prefix = '#PS';   // Tiền tố Xuất bán hàng
-              } else if (item.transactionType === 'IMPORT_SUPPLIER') {
-                prefix = '#ORD';  // Tiền tố Nhập hàng từ nhà cung cấp (NCC)
+              } else if (isImport) {
+                prefix = '#ORD';  // Tiền tố Nhập hàng từ nhà cung cấp (NCC) / Khởi tạo kho
               } else if (item.transactionType === 'IMPORT_RETURN') {
                 prefix = '#REO';  // Tiền tố Nhập trả hàng lỗi từ khách
               } else if (item.transactionType === 'EXPORT_DEFECT' || item.transactionType === 'EXPORT_DAMAGE') {
                 prefix = '#ER';   // Tiền tố Xuất trả hàng lỗi cho NCC / Xuất kho hư hỏng
               }
-              //sửa xong vô BE sửa,Controllers/InventoryTransactionController dòng 337-346
               // Nếu có liên kết đơn hàng thì dùng orderId, ngược lại dùng id giao dịch kho tự tăng
               const code = item.orderId ? `${prefix}${item.orderId}` : `${prefix}${item.primaryTx.id}`;
               // Khai báo biến/hằng số: formattedDate - Dùng trong logic xử lý của component
@@ -166,12 +170,12 @@ export default function HistoryTable({
                     </div>
                   </td>
                   <td className="py-3.5 px-4">
-                    <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${item.transactionType === 'IMPORT_SUPPLIER' ? 'bg-blue-50 text-blue-600' :
+                    <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${isImport ? 'bg-blue-50 text-blue-600' :
                       item.transactionType === 'IMPORT_RETURN' ? 'bg-green-50 text-green-600' :
                         item.transactionType === 'EXPORT_SELL' ? 'bg-purple-50 text-purple-600' :
                           'bg-red-50 text-red-600'
                       }`}>
-                      {item.transactionType === 'IMPORT_SUPPLIER' ? 'Nhập NCC' :
+                      {isImport ? 'Nhập NCC' :
                         item.transactionType === 'IMPORT_RETURN' ? 'Khách trả' :
                           item.transactionType === 'EXPORT_SELL' ? 'Xuất bán' : 'Xuất lỗi'}
                     </span>

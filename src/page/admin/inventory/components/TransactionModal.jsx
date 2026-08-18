@@ -337,21 +337,50 @@ export default function TransactionModal({ activeTxTab, setActiveTxTab, products
     setTxVariants([]);
     setMatchingOrders([]);
     
+    const itemsList = order.items || order.orderDetails || order.OrderDetails || [];
+    const orderTotalAmount = Number(order.totalPrice || order.totalAmount || order.finalAmount || order.amount || 0);
+
     // Map danh sách hàng trong hóa đơn sang txVariants
-    if (order.items && Array.isArray(order.items)) {
-      setTxVariants(order.items.map(item => {
-        // Hàm thực thi logic: matchedProd
-        const matchedProd = products.find(p => p.name === item.productName);
+    if (Array.isArray(itemsList) && itemsList.length > 0) {
+      setTxVariants(itemsList.map(item => {
+        const pName = item.productName || item.ProductName || item.name || '';
+        const vName = item.variantName || item.VariantName || item.color || item.ram || '';
+        const matchedProd = products.find(p => p.name === pName || (p.id && p.id === (item.productId || item.ProductId)));
+        const qty = Number(item.quantity || item.Quantity || item.purchaseQuantity || 1);
+        
+        let purchasePrice = Number(
+          item.priceAtPurchase ??
+          item.PriceAtPurchase ??
+          item.price ??
+          item.Price ??
+          item.unitPrice ??
+          item.UnitPrice ??
+          item.priceSelling ??
+          item.PriceSelling ??
+          (item.totalPrice ? item.totalPrice / qty : 0) ??
+          0
+        );
+
+        // [SỬA LỖI GIÁ MUA HÀNG]:
+        // Ưu tiên chia giá trị tổng tiền của đơn hàng thực tế trước khi fallback lấy giá bán gốc
+        if (!purchasePrice || purchasePrice <= 0) {
+          if (orderTotalAmount > 0) {
+            purchasePrice = Math.round(orderTotalAmount / itemsList.length);
+          } else if (matchedProd) {
+            purchasePrice = Number(matchedProd.basePrice || matchedProd.price || matchedProd.sellingPrice || 0);
+          }
+        }
+
         return {
-          id: item.variantId,
-          name: `${item.productName} - ${item.variantName}`,
-          productName: item.productName,
-          variantName: item.variantName,
-          productId: matchedProd ? matchedProd.id : 0,
-          price: item.priceAtPurchase || 0,
-          purchasePrice: item.priceAtPurchase || 0,
-          quantity: item.quantity || 1,
-          purchaseQuantity: item.quantity || 1,
+          id: item.variantId || item.VariantId || item.id || 0,
+          name: vName ? `${pName} - ${vName}` : pName,
+          productName: pName,
+          variantName: vName,
+          productId: matchedProd ? matchedProd.id : (item.productId || item.ProductId || 0),
+          price: purchasePrice,
+          purchasePrice: purchasePrice,
+          quantity: qty,
+          purchaseQuantity: qty,
           selected: false,
           condition: 'NEW'
         };

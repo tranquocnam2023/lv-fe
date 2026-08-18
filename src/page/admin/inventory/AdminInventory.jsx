@@ -124,8 +124,8 @@ export default function AdminInventory() {
   const groupedHistory = useMemo(() => {
     if (!txHistory || txHistory.length === 0) return [];
 
-    // Sort descending by ID
-    const sorted = [...txHistory].sort((a, b) => b.id - a.id);
+    // [CẬP NHẬT NGHIỆP VỤ]: Sắp xếp giao dịch theo THỜI GIAN GIẢM DẦN (Mới nhất theo ngày/giờ lên trên đầu)
+    const sorted = [...txHistory].sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
 
     // Khai báo biến/hằng số: groups - Dùng trong logic xử lý của component
     const groups = [];
@@ -183,7 +183,7 @@ export default function AdminInventory() {
         }
       }
     }
-    return groups;
+    return groups.sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
   }, [txHistory]);
 
   // Filter history list

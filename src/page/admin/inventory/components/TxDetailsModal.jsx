@@ -23,7 +23,7 @@ export default function TxDetailsModal({
             <p className="text-sm text-admin-text-muted mt-1">
               Mã giao dịch: <span className="font-mono text-blue-600 font-bold">{selectedTxGroup.batchId}</span> |
               Thời gian: {new Date(selectedTxGroup.createdAt).toLocaleString('vi-VN')} | 
-              Loại: <span className="font-bold">{selectedTxGroup.transactionType.includes('IMPORT') ? 'Nhập kho' : 'Xuất kho'}</span>
+              Loại: <span className="font-bold">{selectedTxGroup.transactionType?.includes('IMPORT') || selectedTxGroup.transactionType?.includes('INITIAL') || selectedTxGroup.note?.includes('Khởi tạo tồn kho ban đầu') ? 'Nhập kho' : 'Xuất kho'}</span>
             </p>
             {selectedTxGroup.note && (
               <p className="text-sm text-gray-600 mt-1 italic">Ghi chú: {selectedTxGroup.note}</p>
