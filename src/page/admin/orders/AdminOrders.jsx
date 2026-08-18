@@ -4,6 +4,7 @@ import { useSearchParams } from 'react-router-dom';
 import { Search, Eye, Edit, CheckCircle, Truck, XCircle, Clock, ShoppingCart, RotateCcw } from 'lucide-react';
 // import { MOCK_ORDERS } from '../utils/mockData'; // Removed mock data
 import { orderService } from '../../../services/orderService';
+import { returnService } from '../../../services/returnService';
 import { usePagination } from '../../../hooks/usePagination';
 import { useFormat } from '../../../hooks/useFormat';
 import OrderDetailsModal from './OrderDetailsModal';
@@ -71,16 +72,8 @@ export default function AdminOrders() {
   // Khai báo biến/hằng số: orderIdParam - Dùng trong logic xử lý của component
   const orderIdParam = searchParams.get('orderId');
 
-  // Helper đọc dữ liệu yêu cầu đổi trả
-  const getReturnRequestInfo = (ordId) => {
-    try {
-      // Khai báo biến/hằng số: requests - Dùng trong logic xử lý của component
-      const requests = JSON.parse(localStorage.getItem('PROJECT_RETURN_REQUESTS') || '{}');
-      return requests[ordId] || null;
-    } catch {
-      return null;
-    }
-  };
+  // Helper đọc yêu cầu đổi trả của một đơn (nguồn: API /Return, xem returnRequests bên dưới)
+  const getReturnRequestInfo = (ordId) => returnRequests[String(ordId)] || null;
 
   // Khởi tạo các hook
   const { formatCurrency, formatDate } = useFormat();
@@ -111,15 +104,17 @@ export default function AdminOrders() {
             // Hàm thực thi logic: mappedOrders
             const mappedOrders = data.map(order => {
               // Cấu hình/Hằng số/Dịch vụ dữ liệu: statusMap
+              // Khớp đúng bảng OrderStatuses trong CSDL (Id 1..7, không có 8).
+              // Id 6 là "Giao hàng thất bại", KHÔNG phải "đang yêu cầu đổi trả" - trạng thái
+              // đổi trả đọc riêng từ API /Return.
               const statusMap = {
                 1: 'pending',
                 2: 'confirmed',
                 3: 'shipping',
                 4: 'delivered',
                 5: 'cancelled',
-                6: 'return_requested',
-                7: 'refunded',
-                8: 'shipping_failed'
+                6: 'shipping_failed',
+                7: 'refunded'
               };
               // Khai báo biến/hằng số: statusStr - Dùng trong logic xử lý của component
               const statusStr = statusMap[order.statusId] || 'pending';
@@ -196,14 +191,35 @@ export default function AdminOrders() {
       });
   }, []);
 
-  // Đọc danh sách yêu cầu đổi trả gửi từ phía Khách hàng
-  const savedReturnRequests = React.useMemo(() => {
-    try {
-      return JSON.parse(localStorage.getItem('PROJECT_RETURN_REQUESTS') || '{}');
-    } catch {
-      return {};
-    }
+  // Danh sách yêu cầu đổi trả, nạp từ API /Return của back-end.
+  // Trước đây đọc từ localStorage 'PROJECT_RETURN_REQUESTS' - khách gửi yêu cầu trên trình
+  // duyệt của khách thì chỉ ghi vào localStorage máy khách, admin ngồi máy khác không bao giờ
+  // thấy. Chỉ chạy được khi demo cùng một trình duyệt.
+  const [returnRequests, setReturnRequests] = useState({});
+
+  const loadReturnRequests = React.useCallback(() => {
+    returnService.getAllReturnRequests()
+      .then(res => {
+        const list = Array.isArray(res) ? res : (res && Array.isArray(res.data) ? res.data : []);
+        // Gom theo orderId, giữ yêu cầu mới nhất (API đã sắp xếp giảm dần theo CreatedAt)
+        const byOrder = {};
+        list.forEach(r => {
+          const key = String(r.orderId ?? r.OrderId);
+          if (!byOrder[key]) byOrder[key] = r;
+        });
+        setReturnRequests(byOrder);
+      })
+      .catch(err => {
+        console.error('Lỗi tải danh sách yêu cầu đổi trả:', err);
+        setReturnRequests({});
+      });
   }, []);
+
+  useEffect(() => {
+    loadReturnRequests();
+  }, [loadReturnRequests]);
+
+  const savedReturnRequests = returnRequests;
 
   // Hàm thực thi logic: filteredOrders
   const filteredOrders = orders.filter(order => {
@@ -910,7 +926,7 @@ export default function AdminOrders() {
         onStatusChange={handleStatusChange}
         onShipWithAhamove={handleShipWithAhamove}
         onOpenReturnModal={(ord) => setReturnModalOrder(ord)}
-        getReturnRequestInfo={getReturnRequestInfo}
+        returnRequest={selectedOrderDetails ? getReturnRequestInfo(selectedOrderDetails.id) : null}
       />
 
       {/* MODAL KIỂM DUYỆT ĐỔI TRẢ HOÀN TIỀN CHO ADMIN */}
@@ -923,12 +939,13 @@ export default function AdminOrders() {
           onSuccess={() => {
             setReturnModalOrder(null);
             setSelectedOrderDetails(null); // Tự động đóng luôn cửa sổ chi tiết đơn hàng
+            loadReturnRequests(); // Nạp lại trạng thái yêu cầu đổi trả từ back-end
             // Tải lại danh sách đơn hàng
             orderService.getAll().then(data => {
               if (Array.isArray(data)) {
                 // Cấu hình/Hằng số/Dịch vụ dữ liệu: statusMap
                 const statusMap = {
-                  1: 'pending', 2: 'confirmed', 3: 'shipping', 4: 'delivered', 5: 'cancelled', 6: 'return_requested', 7: 'refunded', 8: 'shipping_failed'
+                  1: 'pending', 2: 'confirmed', 3: 'shipping', 4: 'delivered', 5: 'cancelled', 6: 'shipping_failed', 7: 'refunded'
                 };
                 // Hàm thực thi logic: mappedOrders
                 const mappedOrders = data.map(order => ({

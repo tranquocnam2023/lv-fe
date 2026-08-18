@@ -8,7 +8,6 @@
  */
 import React, { useState, useEffect } from 'react';
 import { RotateCcw, ShieldAlert, CheckCircle2, X, Upload, Image as ImageIcon, AlertCircle, Clock } from 'lucide-react';
-import { orderService } from '../services/orderService';
 import { returnService } from '../services/returnService';
 
 export default function OrderReturnModal({ isOpen, onClose, order, mode = 'user', onSuccess }) {
@@ -113,33 +112,33 @@ export default function OrderReturnModal({ isOpen, onClose, order, mode = 'user'
     setSubmitting(true);
 
     try {
-      // 1. Gửi API đổi trả về BE (nếu có)
-      try {
-        await returnService.createReturnRequest({
-          orderId: Number(orderId),
-          reason: Object.values(itemReasons).join('; ') || 'Sản phẩm lỗi kỹ thuật',
-          note: generalNote,
-          items: selectedIds.map(itemId => ({
-            orderItemId: Number(itemId),
-            quantity: 1,
-            reason: itemReasons[itemId] || 'Sản phẩm lỗi kỹ thuật',
-            proofImages: (itemImages[itemId] || []).join(';')
-          }))
-        });
-      } catch (apiErr) {
-        console.warn('Gửi API Return/create thất bại, tiến hành cập nhật trạng thái đơn:', apiErr);
-      }
+      // 1. Gửi yêu cầu đổi trả về BE. Đây là NGUỒN DỮ LIỆU CHÍNH: bản ghi nằm ở bảng
+      //    ReturnRequests để admin (máy khác, trình duyệt khác) đọc được qua API /Return.
+      //    Trước đây lỗi API bị nuốt bằng console.warn nên yêu cầu chỉ tồn tại trong
+      //    localStorage của chính máy khách - admin không bao giờ thấy.
+      const createdReq = await returnService.createReturnRequest({
+        orderId: Number(orderId),
+        reason: Object.values(itemReasons).join('; ') || 'Sản phẩm lỗi kỹ thuật',
+        note: generalNote,
+        items: selectedIds.map(itemId => ({
+          orderItemId: Number(itemId),
+          quantity: 1,
+          reason: itemReasons[itemId] || 'Sản phẩm lỗi kỹ thuật',
+          proofImages: (itemImages[itemId] || []).join(';')
+        }))
+      });
 
-      // 2. Cập nhật trạng thái đơn hàng sang return_requested (Status 6)
-      try {
-        await orderService.updateStatus(orderId, 'return_requested');
-      } catch (statusErr) {
-        console.warn('Cập nhật trạng thái đơn sang return_requested thất bại:', statusErr);
-      }
+      // 2. KHÔNG đổi trạng thái đơn hàng ở đây.
+      //    Đơn phải giữ nguyên trạng thái 4 (Đã giao) trong lúc chờ duyệt; chỉ khi admin duyệt
+      //    thì ReturnController mới chuyển đơn sang 7 (Refunded) trong cùng transaction hoàn
+      //    kho - hoàn tiền. Lệnh updateStatus(...,'return_requested') cũ map sang Id 6, mà 6
+      //    trong CSDL là "Giao hàng thất bại", đồng thời chuyển 4 -> 6 bị BE chặn thẳng.
 
       // 3. Khai báo biến/hằng số: returnPayload - Dùng trong logic xử lý của component
+      const createdData = createdReq?.data ?? createdReq;
       const returnPayload = {
-        returnRequestId: `REQ-${orderId}-${Date.now()}`,
+        // Id thật do back-end cấp, dùng khi admin gọi duyệt/từ chối
+        returnRequestId: createdData?.id ?? `REQ-${orderId}-${Date.now()}`,
         orderId: orderId,
         userId: order.userId || order.UserId,
         status: 'Pending',
@@ -182,14 +181,33 @@ export default function OrderReturnModal({ isOpen, onClose, order, mode = 'user'
   };
 
   // Admin phê duyệt hoàn tiền (StatusId = 7)
+  // Lấy Id thật của yêu cầu đổi trả. Ưu tiên Id đã có sẵn trên object order (admin lấy từ
+  // API /Return), nếu không có thì hỏi lại back-end theo orderId.
+  const resolveReturnRequestId = async () => {
+    const known = order?.returnRequest?.id ?? order?.returnRequestId;
+    if (known) return known;
+    try {
+      const res = await returnService.getReturnRequestByOrder(orderId);
+      const data = res?.data ?? res;
+      return data?.id ?? null;
+    } catch (err) {
+      console.error('Không đọc được yêu cầu đổi trả của đơn:', err);
+      return null;
+    }
+  };
+
   const handleAdminApprove = async () => {
     setSubmitting(true);
     try {
-      try {
-        await returnService.approveReturnRequest(orderId, adminNote);
-      } catch {
-        await orderService.updateStatus(orderId, 'refunded');
+      // Route back-end là PUT /Return/{id}/approve với id = ReturnRequests.Id,
+      // KHÔNG phải OrderId. Truyền nhầm orderId thì API trả 404, rơi vào catch rỗng và
+      // fallback updateStatus(...,'refunded') - tức đổi trạng thái đơn mà bỏ qua toàn bộ
+      // transaction 7 bước của BE: không hoàn kho, không ghi nhận hoàn tiền.
+      const returnRequestId = await resolveReturnRequestId();
+      if (!returnRequestId) {
+        throw new Error('Không tìm thấy yêu cầu đổi trả của đơn hàng này trên hệ thống.');
       }
+      await returnService.approveReturnRequest(returnRequestId, adminNote);
 
       // Khai báo biến/hằng số: existingReqs - Dùng trong logic xử lý của component
       const existingReqs = JSON.parse(localStorage.getItem('PROJECT_RETURN_REQUESTS') || '{}');
@@ -224,7 +242,7 @@ export default function OrderReturnModal({ isOpen, onClose, order, mode = 'user'
       if (onSuccess) onSuccess();
     } catch (err) {
       console.error('Lỗi khi duyệt hoàn tiền:', err);
-      alert('Không thể cập nhật trạng thái hoàn tiền. Vui lòng thử lại.');
+      alert(err?.message || 'Không thể cập nhật trạng thái hoàn tiền. Vui lòng thử lại.');
       setSubmitting(false);
     }
   };
@@ -233,11 +251,11 @@ export default function OrderReturnModal({ isOpen, onClose, order, mode = 'user'
   const handleAdminReject = async () => {
     setSubmitting(true);
     try {
-      try {
-        await returnService.rejectReturnRequest(orderId, adminNote);
-      } catch {
-        await orderService.updateStatus(orderId, 'delivered');
+      const returnRequestId = await resolveReturnRequestId();
+      if (!returnRequestId) {
+        throw new Error('Không tìm thấy yêu cầu đổi trả của đơn hàng này trên hệ thống.');
       }
+      await returnService.rejectReturnRequest(returnRequestId, adminNote);
 
       // Khai báo biến/hằng số: existingReqs - Dùng trong logic xử lý của component
       const existingReqs = JSON.parse(localStorage.getItem('PROJECT_RETURN_REQUESTS') || '{}');

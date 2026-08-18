@@ -41,7 +41,8 @@ export default function OrderDetailsModal({
   onClose,
   onStatusChange,
   onShipWithAhamove,
-  onOpenReturnModal
+  onOpenReturnModal,
+  returnRequest
 }) {
   // Khai báo giải nén các thuộc tính/hàm (formatCurrency, formatDate) từ Hook / Context / Props
   const { formatCurrency, formatDate } = useFormat();
@@ -446,15 +447,28 @@ export default function OrderDetailsModal({
               </>
             )}
 
-            {(order.status === 'return_requested' || order.statusId === 6) && (
+            {/*
+              Điều kiện cũ là (status === 'return_requested' || statusId === 6). Cả hai đều sai:
+              CSDL không có trạng thái đơn "đang yêu cầu đổi trả", còn Id 6 nghĩa là "Giao hàng
+              thất bại" - dùng nó sẽ hiện nút Duyệt Đổi Trả cho đơn giao hỏng.
+              Yêu cầu đổi trả nằm ở bảng ReturnRequests riêng, lấy qua API /Return.
+            */}
+            {returnRequest?.status === 'Pending' && (
               <button
-                onClick={() => onOpenReturnModal && onOpenReturnModal(order)}
+                onClick={() => onOpenReturnModal && onOpenReturnModal({ ...order, returnRequestId: returnRequest.id })}
                 className="px-5 py-2.5 bg-orange-600 hover:bg-orange-700 text-white rounded-md font-bold text-xs cursor-pointer shadow-sm transition-all active:scale-95 flex items-center gap-1.5"
                 title="Khách vừa gửi yêu cầu đổi trả! Nhấp để xem và duyệt ngay"
               >
                 <RotateCcw size={14} />
                 <span>Duyệt Đổi Trả &amp; Hoàn Tiền</span>
               </button>
+            )}
+
+            {returnRequest?.status === 'Rejected' && (
+              <span className="text-[11px] font-black text-gray-600 bg-gray-100 border border-gray-200 px-3 py-1.5 rounded-md flex items-center gap-1">
+                <RotateCcw size={12} />
+                <span>Đã từ chối đổi trả</span>
+              </span>
             )}
 
             {order.status === 'refunded' && (
