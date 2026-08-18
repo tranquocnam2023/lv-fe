@@ -539,9 +539,16 @@ export const useProductVariants = ({ formData, setFormData, brands, showToast })
     }
   };
 
-  useEffect(() => {
+  // Bỏ khỏi danh sách đang chọn những biến thể vừa bị vô hiệu hoá.
+  // Chỉnh trong lúc render theo hướng dẫn của React thay vì useEffect, và so sánh bằng chữ ký
+  // nội dung: allActiveKeys là mảng mới sau mỗi lần useMemo tính lại, nên so sánh theo tham
+  // chiếu như effect cũ sẽ chạy lại nhiều hơn cần thiết.
+  const activeKeysSignature = allActiveKeys.join('|');
+  const [prevActiveKeysSignature, setPrevActiveKeysSignature] = useState(activeKeysSignature);
+  if (prevActiveKeysSignature !== activeKeysSignature) {
+    setPrevActiveKeysSignature(activeKeysSignature);
     setSelectedVariantKeys(prev => prev.filter(k => allActiveKeys.includes(k)));
-  }, [allActiveKeys]);
+  }
 
   return {
     options,

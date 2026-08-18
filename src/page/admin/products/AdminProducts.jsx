@@ -135,6 +135,8 @@ export default function AdminProducts({ onCreate, onEdit, defaultBrandFilter, cl
 
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- nạp dữ liệu từ API khi mount,
+    // đúng mục đích của useEffect (đồng bộ với hệ thống bên ngoài).
     fetchProducts();
 
     // Tính toán số lượng sản phẩm đã bán trong tháng hiện tại từ CSDL đơn hàng thực tế

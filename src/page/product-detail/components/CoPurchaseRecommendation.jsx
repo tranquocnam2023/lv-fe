@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { Plus, ChevronLeft, ChevronRight } from "lucide-react";
 import api from "../../../services/api";
 import AccessoryVariantModal from "./AccessoryVariantModal";
@@ -26,20 +26,24 @@ const CoPurchaseRecommendation = ({ mainProduct, isCartPage = false, cartItems =
   // Khai báo biến/hằng số: itemsPerPage - Dùng trong logic xử lý của component
   const itemsPerPage = 4;
 
-  useEffect(() => {
-    let mainProductList = [];
+  // Danh sách sản phẩm chính được suy ra từ props, không cần state riêng.
+  // Trước đây nằm trong effect và khi rỗng thì gọi setCampaigns([])/setLoading(false) - tức
+  // dùng effect để tính giá trị dẫn xuất. Nay tính thẳng lúc render, effect chỉ còn lo gọi API.
+  const mainProductList = useMemo(() => {
     if (isCartPage && cartItems && cartItems.length > 0) {
-      mainProductList = cartItems.filter(i => !i.isAddon);
-    } else if (mainProduct?.id) {
-      mainProductList = [mainProduct];
+      return cartItems.filter(i => !i.isAddon);
     }
+    if (mainProduct?.id) return [mainProduct];
+    return [];
+  }, [isCartPage, cartItems, mainProduct]);
 
-    if (mainProductList.length === 0) {
-      setCampaigns([]);
-      setLoading(false);
-      return;
-    }
+  const hasMainProduct = mainProductList.length > 0;
 
+  useEffect(() => {
+    if (!hasMainProduct) return;
+
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- effect này gọi API; bật cờ
+    // đang tải ngay từ đầu là đúng vòng đời của việc tải dữ liệu.
     setLoading(true);
 
     const uniqueProducts = [];
@@ -79,9 +83,10 @@ const CoPurchaseRecommendation = ({ mainProduct, isCartPage = false, cartItems =
       console.error("Lỗi khi tải thông tin combo:", err);
       setLoading(false);
     });
-  }, [mainProduct?.id, isCartPage, JSON.stringify(cartItems?.map(i => i.id || i.productId))]);
+  }, [hasMainProduct, mainProduct?.id, isCartPage, JSON.stringify(cartItems?.map(i => i.id || i.productId))]);
 
-  if (loading || campaigns.length === 0) return null;
+  // Không có sản phẩm chính thì không hiển thị gì, kể cả khi campaigns còn dữ liệu của lần trước
+  if (!hasMainProduct || loading || campaigns.length === 0) return null;
 
   // 1. Lấy tất cả sản phẩm được set giảm giá riêng (explicit)
   const explicitProducts = [];

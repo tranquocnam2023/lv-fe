@@ -306,10 +306,14 @@ export default function Header() {
   const desktopSearchRef = useRef(null);
   const mobileSearchRef = useRef(null);
 
-  // Reset vị trí chọn khi thay đổi từ khóa tìm kiếm
-  useEffect(() => {
+  // Đặt lại vị trí chọn khi từ khoá tìm kiếm đổi.
+  // Chỉnh ngay trong lúc render theo hướng dẫn của React thay vì dùng useEffect: tránh render
+  // thừa và tránh khoảnh khắc danh sách gợi ý mới vẫn giữ vị trí chọn cũ.
+  const [prevSearchQuery, setPrevSearchQuery] = useState(searchQuery);
+  if (prevSearchQuery !== searchQuery) {
+    setPrevSearchQuery(searchQuery);
     setSelectedIndex(-1);
-  }, [searchQuery]);
+  }
 
   useEffect(() => {
     categoryService.getAll()

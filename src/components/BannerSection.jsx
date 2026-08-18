@@ -67,31 +67,38 @@ const LinkWrapper = ({ to, children }) => {
 };
 
 // Component React: BannerSection - Quản lý giao diện và logic xử lý của BannerSection
+// Bổ sung link mặc định cho banner chưa khai linkUrl. Hàm thuần, đặt ở cấp module để dùng
+// được cả trong lúc render lẫn trong effect tải dữ liệu.
+const ensureTgddLink = (list) => {
+  if (!Array.isArray(list)) return DEFAULT_BANNERS;
+  return list.map(b => {
+    let url = b.linkUrl;
+    if (!url || url.startsWith('/khuyen-mai')) {
+      if (b.type === 'Top') url = TGDD_LINKS.TOP;
+      else if (b.type === 'Left' || b.type === 'Right') url = TGDD_LINKS.SIDE;
+      else url = TGDD_LINKS.SLIDER;
+    }
+    return { ...b, linkUrl: url };
+  });
+};
+
 const BannerSection = ({ showSideBanners = true, showTopBanner = true, showSlider = true, bannersData = null }) => {
   // State: banners - Quản lý trạng thái và dữ liệu của banners trong giao diện
   const [banners, setBanners] = useState(bannersData || []);
   // State: currentIndex - Quản lý trạng thái và dữ liệu của currentIndex trong giao diện
   const [currentIndex, setCurrentIndex] = useState(0);
 
-  // Đồng bộ banners khi bannersData thay đổi hoặc khi có sự kiện cập nhật từ API hoặc localStorage
-  useEffect(() => {
-    // Hàm thực thi logic: ensureTgddLink
-    const ensureTgddLink = (list) => {
-      if (!Array.isArray(list)) return DEFAULT_BANNERS;
-      return list.map(b => {
-        let url = b.linkUrl;
-        if (!url || url.startsWith('/khuyen-mai')) {
-          if (b.type === 'Top') url = TGDD_LINKS.TOP;
-          else if (b.type === 'Left' || b.type === 'Right') url = TGDD_LINKS.SIDE;
-          else url = TGDD_LINKS.SLIDER;
-        }
-        return { ...b, linkUrl: url };
-      });
-    };
+  // Khi component cha đã truyền sẵn danh sách banner thì đó là state dẫn xuất từ prop:
+  // chỉnh ngay trong lúc render theo hướng dẫn của React, không cần đi qua useEffect.
+  const [prevBannersData, setPrevBannersData] = useState(bannersData);
+  if (prevBannersData !== bannersData) {
+    setPrevBannersData(bannersData);
+    if (bannersData) setBanners(ensureTgddLink(bannersData));
+  }
 
-    if (bannersData) {
-      setBanners(ensureTgddLink(bannersData));
-    } else {
+  // Effect chỉ còn lo việc gọi API/đọc localStorage khi cha KHÔNG truyền dữ liệu sẵn
+  useEffect(() => {
+    if (!bannersData) {
       // Hàm xử lý logic/sự kiện: fetchBanners
       const fetchBanners = async () => {
         try {
@@ -133,6 +140,15 @@ const BannerSection = ({ showSideBanners = true, showTopBanner = true, showSlide
     .filter(b => b.type === 'Slider' && b.isActive)
     .sort((a, b) => a.position - b.position);
 
+  // Không đủ banner để chạy slider thì đưa vị trí về đầu. Chỉnh trong lúc render theo hướng
+  // dẫn của React thay vì useEffect: vị trí đúng ngay ở lượt render này, không lệch một nhịp.
+  const canSlide = sliderBanners.length > 2;
+  const [prevCanSlide, setPrevCanSlide] = useState(canSlide);
+  if (prevCanSlide !== canSlide) {
+    setPrevCanSlide(canSlide);
+    if (!canSlide) setCurrentIndex(0);
+  }
+
   // Hàm thực thi logic: topBanner
   const topBanner = banners.find(b => b.type === 'Top' && b.isActive);
   // Hàm thực thi logic: leftBanner
@@ -142,9 +158,8 @@ const BannerSection = ({ showSideBanners = true, showTopBanner = true, showSlide
 
   // Logic tự động trượt cho Slider đoàn tàu
   useEffect(() => {
-    // nếu chỉ có 2 banner thì không cần slide chạy
+    // nếu chỉ có 2 banner thì không cần slide chạy (vị trí đã được đưa về 0 ở phần render)
     if (sliderBanners.length <= 2) {
-      setCurrentIndex(0);
       return;
     }
     // Khai báo biến/hằng số: step - Dùng trong logic xử lý của component

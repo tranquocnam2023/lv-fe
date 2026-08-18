@@ -29,12 +29,13 @@ export default function SearchableSelect({
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  // Reset search when dropdown closes or opens
-  useEffect(() => {
-    if (!isOpen) {
-      setSearch('');
-    }
-  }, [isOpen]);
+  // Xoá ô tìm kiếm mỗi khi dropdown đóng. Chỉnh trong lúc render theo hướng dẫn của React
+  // thay vì useEffect, để lần mở sau không thấy loé từ khoá cũ.
+  const [prevIsOpen, setPrevIsOpen] = useState(isOpen);
+  if (prevIsOpen !== isOpen) {
+    setPrevIsOpen(isOpen);
+    if (!isOpen) setSearch('');
+  }
 
   // Hàm thực thi logic: selectedOption
   const selectedOption = options.find(opt => String(opt.id) === String(value));

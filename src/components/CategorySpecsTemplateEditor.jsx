@@ -13,21 +13,25 @@ export default function CategorySpecsTemplateEditor({ value, onChange }) {
   const [activeTabIdx, setActiveTabIdx] = useState(0);
 
   // ĐỌC DỮ LIỆU BAN ĐẦU TỪ CHUỖI JSON DƯỚI DATABASE LÊN (PARSE DỮ LIỆU)
-  useEffect(() => {
-    if (value) {
+  // Đây là state dẫn xuất từ prop `value`: chỉnh ngay trong lúc render theo hướng dẫn của
+  // React thay vì useEffect, để form không hiển thị dữ liệu của bản ghi trước trong một nhịp.
+  const parseGroups = (raw) => {
+    if (raw) {
       try {
-        // Khai báo biến/hằng số: parsed - Dùng trong logic xử lý của component
-        const parsed = JSON.parse(value);
-        if (Array.isArray(parsed)) {
-          setGroups(parsed);
-          return;
-        }
+        const parsed = JSON.parse(raw);
+        if (Array.isArray(parsed)) return parsed;
       } catch (e) {
         console.error("Lỗi parse specs template:", e);
       }
     }
-    setGroups([]);
-  }, [value]);
+    return [];
+  };
+
+  const [prevValue, setPrevValue] = useState(value);
+  if (prevValue !== value) {
+    setPrevValue(value);
+    setGroups(parseGroups(value));
+  }
 
   // CẬP NHẬT DỮ LIỆU NGƯỢC LÊN COMPONENT CHA DƯỚI DẠNG CHUỖI JSON (STRINGIFY DỮ LIỆU)
   const triggerChange = (newGroups) => {

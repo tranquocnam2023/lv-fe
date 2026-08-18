@@ -32,6 +32,9 @@ export default function AccessoryVariantModal({ isOpen, onClose, productId, base
 
   useEffect(() => {
     if (!isOpen || !productId) return;
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- effect này đồng bộ với hệ
+    // thống bên ngoài (gọi API); bật cờ đang tải ngay từ đầu là đúng vòng đời của việc tải,
+    // đẩy xuống chỗ khác sẽ để lộ dữ liệu của sản phẩm trước trong một nhịp render.
     setLoading(true);
     setQuantity(1);
     Promise.all([

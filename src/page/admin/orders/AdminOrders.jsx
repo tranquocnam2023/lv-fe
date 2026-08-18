@@ -79,17 +79,18 @@ export default function AdminOrders() {
   const { formatCurrency, formatDate } = useFormat();
 
   // TỰ ĐỘNG MỞ MODAL CHI TIẾT ĐƠN HÀNG KHI URL CÓ THAM SỐ `orderId`
-  useEffect(() => {
-    // Nếu URL có tham số orderId và danh sách đơn hàng đã được tải từ API thành công
-    if (orderIdParam && orders.length > 0) {
-      // Tìm đơn hàng có ID trùng khớp trong danh sách
-      const matchedOrder = orders.find(o => String(o.id) === String(orderIdParam));
-      if (matchedOrder) {
-        // Gán thông tin đơn hàng tìm thấy vào state để tự động mở Modal chi tiết
-        setSelectedOrderDetails(matchedOrder);
-      }
+  // Mở modal là phản ứng với URL + dữ liệu đã tải, không phải đồng bộ với hệ thống bên ngoài,
+  // nên chỉnh ngay trong lúc render theo hướng dẫn của React thay vì qua useEffect - modal
+  // hiện ngay ở lượt render này thay vì phải chờ thêm một lượt.
+  const autoOpenKey = orderIdParam && orders.length > 0 ? String(orderIdParam) : null;
+  const [prevAutoOpenKey, setPrevAutoOpenKey] = useState(null);
+  if (prevAutoOpenKey !== autoOpenKey) {
+    setPrevAutoOpenKey(autoOpenKey);
+    if (autoOpenKey) {
+      const matchedOrder = orders.find(o => String(o.id) === autoOpenKey);
+      if (matchedOrder) setSelectedOrderDetails(matchedOrder);
     }
-  }, [orderIdParam, orders]);
+  }
 
   useEffect(() => {
     console.log("AdminOrders: Bắt đầu tải danh sách đơn hàng...");

@@ -101,6 +101,8 @@ export default function TransactionModal({ activeTxTab, setActiveTxTab, products
   // Handle redirection action from Product Edit Page
   useEffect(() => {
     if (urlProductId && urlAction) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- effect này phản ứng với
+      // điều hướng: nhận tham số trên URL, dựng sẵn form rồi dọn URL. Không phải state dẫn xuất.
       setActiveTxTab(urlAction);
       setTxProductId(urlProductId);
       setTxNote(urlAction === 'IMPORT_SUPPLIER' ? 'Nhập hàng từ nhà cung cấp' :
@@ -127,6 +129,8 @@ export default function TransactionModal({ activeTxTab, setActiveTxTab, products
   // đơn đang giao lẫn đơn vừa hoàn thành - dù khách chưa hề gửi yêu cầu đổi trả.
   useEffect(() => {
     if (activeTxTab === 'IMPORT_RETURN') {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- effect gọi API; bật cờ
+      // đang tải ngay từ đầu là đúng vòng đời của việc tải dữ liệu.
       setOrdersLoading(true);
       Promise.all([orderService.getAll(), returnService.getAllReturnRequests()])
         .then(([orderData, returnData]) => {
@@ -162,6 +166,8 @@ export default function TransactionModal({ activeTxTab, setActiveTxTab, products
       if (!selectedProd) return;
 
       if (selectedProd.brandId) {
+        // eslint-disable-next-line react-hooks/set-state-in-effect -- nằm trong effect tải biến
+        // thể theo sản phẩm đã chọn; đây là bước dựng sẵn form đi kèm lần tải đó.
         setSelectedBrandId(String(selectedProd.brandId));
       }
 
