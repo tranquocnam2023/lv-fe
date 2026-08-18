@@ -32,22 +32,22 @@ const ORDER_STATS_CONFIG = [
 // ánh xạ tên phương thức thanh toán
 const getPaymentMethodLabel = (method) => {
   if (!method) return 'N/A';
-  switch (method.toLowerCase()) {
-    case 'cod': return 'Tiền mặt (COD)';
-    case 'transfer': return 'Chuyển khoản';
-    case 'stripe': return 'Thẻ Stripe';
-    default: return method;
-  }
+  const m = method.toLowerCase();
+  if (m === 'cod') return 'Tiền mặt (COD)';
+  if (m === 'transfer') return 'Chuyển khoản';
+  if (m.includes('stripe')) return 'Thẻ Stripe';
+  if (m.includes('vnpay')) return 'VNPAY';
+  return method.toUpperCase();
 };
 
 // Hàm xử lý logic/sự kiện: getPaymentMethodStyle
 const getPaymentMethodStyle = (method) => {
-  switch (method?.toLowerCase()) {
-    case 'cod': return 'bg-orange-50 text-orange-600 border-orange-100';
-    case 'transfer': return 'bg-blue-50 text-blue-600 border-blue-100';
-    case 'stripe': return 'bg-indigo-50 text-indigo-600 border-indigo-100';
-    default: return 'bg-gray-50 text-gray-600 border-gray-100';
-  }
+  const m = method?.toLowerCase() || '';
+  if (m === 'cod') return 'bg-orange-50 text-orange-600 border-orange-100';
+  if (m === 'transfer') return 'bg-blue-50 text-blue-600 border-blue-100';
+  if (m.includes('stripe')) return 'bg-indigo-50 text-indigo-600 border-indigo-100';
+  if (m.includes('vnpay')) return 'bg-blue-50 text-blue-600 border-blue-100 font-bold';
+  return 'bg-gray-50 text-gray-600 border-gray-100';
 };
 
 

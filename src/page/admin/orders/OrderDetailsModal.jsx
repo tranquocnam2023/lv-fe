@@ -5,12 +5,12 @@ import { useFormat } from '../../../hooks/useFormat';
 // ánh xạ tên phương thức thanh toán
 const getPaymentMethodLabel = (method) => {
   if (!method) return 'N/A';
-  switch (method.toLowerCase()) {
-    case 'cod': return 'Tiền mặt (COD)';
-    case 'transfer': return 'Chuyển khoản';
-    case 'stripe': return 'Thẻ Stripe';
-    default: return method;
-  }
+  const m = method.toLowerCase();
+  if (m === 'cod') return 'Tiền mặt (COD)';
+  if (m === 'transfer') return 'Chuyển khoản';
+  if (m.includes('stripe')) return 'Thẻ Stripe';
+  if (m.includes('vnpay')) return 'VNPAY';
+  return method.toUpperCase();
 };
 
 // Hàm xử lý logic/sự kiện: getShippingStatus
