@@ -261,8 +261,13 @@ export default function OrderDetailsTracker({ order, onOrderCancelled, isGuest =
             </button>
           )}
 
-          {/* PHÂN QUYỀN: Cho phép thanh toán khi đơn hàng ở trạng thái 1 */}
-          {statusId === 1 && (order.paymentMethod?.toLowerCase() === 'stripe' || order.paymentMethod?.toLowerCase() === 'vnpay') && (!warrantyItem || inspectionStatus === 'PASSED') && (
+          {/* 
+            PHÂN QUYỀN & ĐIỀU KIỆN HIỂN THỊ NÚT "THANH TOÁN NGAY":
+            - Đơn ở trạng thái 1 (Chờ thanh toán / Chờ xác nhận)
+            - Phương thức thanh toán online (Stripe hoặc VNPAY)
+            - Đơn KHÔNG có bảo hành (!warrantyItem) HOẶC Đơn có bảo hành đã được duyệt (PASSED) HOẶC Đơn máy mới mua kèm bảo hành online (NOT_REQUIRED)
+          */}
+          {statusId === 1 && (order.paymentMethod?.toLowerCase() === 'stripe' || order.paymentMethod?.toLowerCase() === 'vnpay') && (!warrantyItem || inspectionStatus === 'PASSED' || inspectionStatus === 'NOT_REQUIRED' || inspectionStatus === 'Approved' || inspectionStatus === 'Approved_Passed') && (
             <button
               onClick={handlePaymentRetry}
               className="px-4 py-1.5 bg-blue-600 border border-blue-600 text-white hover:bg-blue-700 text-xs font-black uppercase tracking-wider rounded-full transition-all active:scale-95 flex items-center gap-1.5 cursor-pointer"
@@ -297,9 +302,9 @@ export default function OrderDetailsTracker({ order, onOrderCancelled, isGuest =
         <div className={`p-5 rounded-md border animate-in zoom-in-95 space-y-2 ${
           inspectionStatus === 'WAITING_CHECK'
             ? 'bg-yellow-50 border-yellow-200 text-yellow-800'
-            : inspectionStatus === 'PASSED'
+            : (inspectionStatus === 'PASSED' || inspectionStatus === 'Approved' || inspectionStatus === 'NOT_REQUIRED')
             ? 'bg-green-50 border-green-200 text-green-800'
-            : inspectionStatus === 'FAILED'
+            : (inspectionStatus === 'FAILED' || inspectionStatus === 'Rejected')
             ? 'bg-red-50 border-red-200 text-red-800'
             : 'bg-gray-50 border-gray-250 text-gray-800'
         }`}>
@@ -313,11 +318,8 @@ export default function OrderDetailsTracker({ order, onOrderCancelled, isGuest =
             {inspectionStatus === 'WAITING_CHECK' && (
               <span>🟡 Cần thẩm định tại cửa hàng: Vui lòng mang thiết bị đến cửa hàng gần nhất và đọc mã đơn #PS{order.id} cho Kỹ thuật viên kiểm tra máy.</span>
             )}
-            {inspectionStatus === 'PASSED' && (
+            {(inspectionStatus === 'PASSED' || inspectionStatus === 'Approved' || inspectionStatus === 'Approved_Passed') && (
               <span>🟢 Máy đủ điều kiện bảo hành: Thẩm định thành công! Vui lòng tiến hành thanh toán để kích hoạt gói bảo hành.</span>
-            )}
-            {inspectionStatus === 'FAILED' && (
-              <span>🔴 Thẩm định thất bại: Thiết bị không đủ điều kiện tham gia gói bảo hành (Cấn móp/Nứt vỡ/Trầy xước nặng). Đơn hàng đã bị hủy.</span>
             )}
             {inspectionStatus === 'NOT_REQUIRED' && (
               <span>🟢 Máy mua mới tại cửa hàng: Gói bảo hành được áp dụng trực tiếp mà không cần qua thẩm định lại.</span>

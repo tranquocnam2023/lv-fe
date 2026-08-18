@@ -1,5 +1,6 @@
 import React from 'react';
 import { Loader2, Image as ImageIcon, X, Edit, Trash2, ChevronUp, ChevronDown, FolderOpen, Plus } from 'lucide-react';
+import { fixVietnameseEncoding } from '../../../../hooks/useFormat';
 
 export default function BrandTable({
   brands,
@@ -117,7 +118,7 @@ export default function BrandTable({
                           </div>
                           <div>
                             <div className="flex items-center gap-2">
-                              <span className="text-base font-bold text-admin-text-main">{brand.name}</span>
+                              <span className="text-base font-bold text-admin-text-main">{fixVietnameseEncoding(brand.name)}</span>
                               {!isBrandActive && (
                                 <span className="px-2 py-0.5 rounded-full text-[9px] font-bold bg-admin-danger/25 text-admin-danger border border-admin-danger/35">
                                   Đang ẩn
@@ -125,7 +126,7 @@ export default function BrandTable({
                               )}
                             </div>
                             {brand.description && (
-                              <span className="block text-xs text-admin-text-muted max-w-xs truncate mt-0.5">{brand.description}</span>
+                              <span className="block text-xs text-admin-text-muted max-w-xs truncate mt-0.5">{fixVietnameseEncoding(brand.description)}</span>
                             )}
                           </div>
                         </div>

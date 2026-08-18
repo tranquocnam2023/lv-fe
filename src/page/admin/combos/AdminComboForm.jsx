@@ -289,10 +289,10 @@ export default function AdminComboForm({ comboId = null, onBack }) {
         brandId: r.brandId ? Number(r.brandId) : null
       }));
 
-    if (cleanAddonRules.length === 0) {
-      alert('Vui lòng thêm ít nhất 1 sản phẩm hoặc nhóm phụ kiện được ưu đãi.');
-      return;
-    }
+    // [CẬP NHẬT NGHIỆP VỤ THEO YÊU CẦU ADMIM]:
+    // Cho phép Admin tùy chọn để trống phần "Danh sách Phụ kiện ưu đãi" (cleanAddonRules.length === 0)
+    // Phục vụ cho các chiến dịch sự kiện khuyến mãi độc lập hoặc tặng gói Bảo hành 0đ mà không bắt buộc mua kèm phụ kiện.
+    // (Đã loại bỏ alert chặn ép chọn ít nhất 1 sản phẩm phụ kiện).
 
     // Kiểm tra chống trùng lặp dòng quy tắc Sản phẩm chính
     const seenMainKeys = new Set();
@@ -573,9 +573,9 @@ export default function AdminComboForm({ comboId = null, onBack }) {
           }
         />
 
-        {/* Section 3: Danh sách Phụ kiện ưu đãi */}
+        {/* Section 3: Danh sách Phụ kiện ưu đãi (Tùy chọn) */}
         <CampaignRuleGroup
-          sectionTitle="3. Danh sách Phụ kiện ưu đãi (Khách được mua kèm món gì?) *"
+          sectionTitle="3. Danh sách Phụ kiện ưu đãi (Khách được mua kèm món gì? - Tùy chọn)"
           sectionSubtitle="Cấu hình các món sản phẩm/phụ kiện được phép mua với giá ưu đãi đặc biệt khi đã chọn sản phẩm chính."
           icon={Layers}
           colorTheme="amber"
@@ -586,12 +586,12 @@ export default function AdminComboForm({ comboId = null, onBack }) {
           products={products}
           getFilteredCategories={getFilteredCategories}
           getFilteredBrands={getFilteredBrands}
-          emptyMessage="Chưa chọn món phụ kiện mua kèm nào!"
-          emptySubMessage="Vui lòng bấm nút thêm ít nhất 1 món phụ kiện bên dưới."
+          emptyMessage="Không áp dụng ưu đãi phụ kiện mua kèm"
+          emptySubMessage="Được để trống nếu chỉ làm chương trình khuyến mãi/bảo hành 0đ. Bấm nút bên dưới nếu muốn thêm phụ kiện mua kèm."
           addButtonLabel="Thêm nhóm phụ kiện"
           emptyAddButtonLabel="Thêm món phụ kiện ưu đãi"
           productLabel="Sản phẩm chỉ định cụ thể"
-          productPlaceholder="-- Không chọn riêng --"
+          productPlaceholder="-- Bất kỳ sản phẩm nào --"
           categoryLabel="Áp dụng cho cả Danh mục phụ kiện"
           categoryPlaceholder="-- Bất kỳ danh mục nào --"
           brandLabel="Áp dụng cho cả Thương hiệu phụ kiện"

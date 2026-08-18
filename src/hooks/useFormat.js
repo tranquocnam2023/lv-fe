@@ -34,6 +34,25 @@ export const useFormat = () => {
   return {
     formatCurrency,
     formatDate,
-    formatNumber
+    formatNumber,
+    fixVietnameseEncoding
   };
+};
+
+/**
+ * Tự động sửa lỗi phông chữ / mã hóa UTF-8 bị lỗi (Mojibake double encoding)
+ * Ví dụ: "ThÆ°Æ¡ng hiá»‡u" -> "Thương hiệu"
+ */
+export const fixVietnameseEncoding = (str) => {
+  if (!str || typeof str !== 'string') return str || '';
+  try {
+    // Nếu chuỗi chứa các ký tự mã hóa lỗi UTF-8 kép đặc trưng (Æ, ®, ±, ¼, ½, ¾, á», áº...)
+    if (/[ÆØ¥§µ¶ÃÂÀÁÄÅÆÇÈÉÊËÌÍÎÏÐÑÒÓÔÕÖØÙÚÛÜÝÞßàáâãäåæçèéêëìíîïðñòóôõöøùúûüýþÿ]/.test(str)) {
+      const decoded = decodeURIComponent(escape(str));
+      if (decoded && decoded !== str) return decoded;
+    }
+  } catch {
+    // Nếu giải mã lỗi thì trả về chuỗi gốc
+  }
+  return str;
 };
