@@ -15,9 +15,15 @@ export const useFormat = () => {
   // Định dạng ngày tháng: 2024-05-01 -> 01/05/2024
   const formatDate = (dateString) => {
     if (!dateString) return '';
-    // Khai báo biến/hằng số: date - Dùng trong logic xử lý của component
-    const date = new Date(dateString);
-    return new Intl.DateTimeFormat('vi-VN').format(date);
+    try {
+      const date = new Date(dateString);
+      if (isNaN(date.getTime())) {
+        return String(dateString);
+      }
+      return new Intl.DateTimeFormat('vi-VN').format(date);
+    } catch {
+      return String(dateString);
+    }
   };
 
   // Định dạng số lượng: 1000 -> 1,000

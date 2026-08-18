@@ -721,7 +721,7 @@ export default function AuthPage() {
               />
             )}
 
-            {(profileTab === 'track' || profileTab === 'history') && (
+            {(profileTab === 'track' || profileTab === 'history' || profileTab === 'orders') && (
               <ProfileTrackOrderTab />
             )}
 

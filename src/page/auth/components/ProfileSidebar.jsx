@@ -49,7 +49,7 @@ export default function ProfileSidebar({
         <button
           onClick={() => handleTabClick('track')}
           className={`flex items-center space-x-3 px-4 py-3 rounded-md text-sm font-bold transition-all text-left cursor-pointer border-0 ${
-            (profileTab === 'track' || profileTab === 'history')
+            (profileTab === 'track' || profileTab === 'history' || profileTab === 'orders')
               ? 'bg-primary/10 text-primary'
               : 'text-gray-600 hover:bg-gray-50 bg-transparent'
           }`}

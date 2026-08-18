@@ -48,7 +48,7 @@ export default function HeaderAccountMenu({
               </Link>
 
               <Link
-                to="/profile?tab=orders"
+                to="/profile?tab=track"
                 className="flex items-center px-4 py-2 text-xs font-semibold text-gray-700 hover:bg-indigo-50 hover:text-primary transition-colors"
               >
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4 mr-2 shrink-0">
