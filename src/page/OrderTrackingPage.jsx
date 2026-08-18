@@ -36,6 +36,15 @@ export default function OrderTrackingPage() {
   const [myReturnRequests, setMyReturnRequests] = useState({});
 
   useEffect(() => {
+    // /track là trang CÔNG KHAI (tra cứu bằng mã đơn + SĐT, không cần đăng nhập).
+    // /Return/my lại yêu cầu đăng nhập; gọi khi chưa đăng nhập sẽ nhận 401 và interceptor
+    // trong services/api.js đá thẳng người dùng sang /auth - khách vãng lai mất luôn khả năng
+    // tra cứu đơn. Chỉ gọi khi thực sự có phiên đăng nhập.
+    if (!isLoggedIn) {
+      setMyReturnRequests({});
+      return;
+    }
+
     returnService.getMyReturnRequests()
       .then(res => {
         const list = Array.isArray(res) ? res : (res && Array.isArray(res.data) ? res.data : []);
@@ -47,7 +56,7 @@ export default function OrderTrackingPage() {
         setMyReturnRequests(byOrder);
       })
       .catch(() => setMyReturnRequests({}));
-  }, []);
+  }, [isLoggedIn]);
 
   useEffect(() => {
     stopLoading();

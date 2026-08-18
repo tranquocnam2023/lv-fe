@@ -34,7 +34,10 @@ export default function OrderReturnModal({ isOpen, onClose, order, mode = 'user'
   const currentOrderId = order?.id ?? order?.Id ?? null;
 
   useEffect(() => {
-    if (!isOpen || !currentOrderId) return;
+    // Modal này còn được dùng trên trang tra cứu đơn /track vốn CÔNG KHAI. Gọi API khi chưa
+    // đăng nhập sẽ nhận 401 và interceptor ở services/api.js đá thẳng sang /auth, cuốn mất
+    // cả trang tra cứu của khách vãng lai.
+    if (!isOpen || !currentOrderId || !localStorage.getItem('token')) return;
     let cancelled = false;
     returnService.getReturnRequestByOrder(currentOrderId)
       .then(res => {

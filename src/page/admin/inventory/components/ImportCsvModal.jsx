@@ -94,6 +94,8 @@ export default function ImportCsvModal({ isOpen, onClose, onSuccess, products })
 
         // Cấu hình/Hằng số/Dịch vụ dữ liệu: previewData
         const previewData = [];
+        // Đếm số dòng "Nhập hàng khách trả" bị bỏ qua để báo rõ cho admin
+        let skippedReturnRows = 0;
         for (let i = 1; i < lines.length; i++) {
           // Khai báo biến/hằng số: line - Dùng trong logic xử lý của component
           const line = lines[i].trim();
@@ -137,7 +139,15 @@ export default function ImportCsvModal({ isOpen, onClose, onSuccess, products })
           }
 
           // Cấu hình/Hằng số/Dịch vụ dữ liệu: validTypes
-          const validTypes = ['IMPORT_SUPPLIER', 'IMPORT_RETURN', 'EXPORT_SELL', 'EXPORT_DEFECT'];
+          // "Nhập hàng khách trả" KHÔNG nhập được qua file: back-end bắt buộc mỗi dòng phải
+          // gắn với một yêu cầu đổi trả đã được duyệt, mà file Excel không mang thông tin đó.
+          // Để lọt vào đây thì mọi dòng sẽ bị back-end từ chối và admin chỉ thấy "Thất bại: N dòng"
+          // mà không hiểu vì sao.
+          const validTypes = ['IMPORT_SUPPLIER', 'EXPORT_SELL', 'EXPORT_DEFECT'];
+          if (transactionType === 'IMPORT_RETURN') {
+            skippedReturnRows++;
+            continue;
+          }
           if (!validTypes.includes(transactionType)) {
             continue;
           }
@@ -154,10 +164,15 @@ export default function ImportCsvModal({ isOpen, onClose, onSuccess, products })
           });
         }
 
+        const returnNotice = skippedReturnRows > 0
+          ? ` Đã bỏ qua ${skippedReturnRows} dòng "Nhập hàng khách trả": loại này phải thao tác ở tab Nhập hàng khách trả và chỉ áp dụng cho đơn có yêu cầu đổi trả đã được duyệt.`
+          : '';
+
         if (previewData.length === 0) {
-          setImportError("Không tìm thấy dòng hợp lệ nào để nhập hàng (số lượng và đơn giá phải lớn hơn 0).");
+          setImportError("Không tìm thấy dòng hợp lệ nào để nhập hàng (số lượng và đơn giá phải lớn hơn 0)." + returnNotice);
         } else {
           setImportPreview(previewData);
+          if (returnNotice) setImportError(returnNotice.trim());
         }
       } catch (err) {
         console.error(err);
