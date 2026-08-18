@@ -190,6 +190,20 @@ export default function AdminComboForm({ comboId = null, onBack }) {
       }
     }
 
+    if (field === 'categoryId' || field === 'brandId') {
+      if (updated[index].productId) {
+        const selectedProd = products.find(p => String(p.id) === String(updated[index].productId));
+        if (selectedProd) {
+          if (updated[index].categoryId && String(selectedProd.categoryId) !== String(updated[index].categoryId)) {
+            updated[index].productId = '';
+          }
+          if (updated[index].brandId && String(selectedProd.brandId) !== String(updated[index].brandId)) {
+            updated[index].productId = '';
+          }
+        }
+      }
+    }
+
     if (field === 'categoryId' && value && updated[index].brandId) {
       // Hàm thực thi logic: validBrandIds
       const validBrandIds = getFilteredBrands(value).map(b => String(b.id));
@@ -236,6 +250,20 @@ export default function AdminComboForm({ comboId = null, onBack }) {
       } else {
         updated[index].categoryId = '';
         updated[index].brandId = '';
+      }
+    }
+
+    if (field === 'categoryId' || field === 'brandId') {
+      if (updated[index].productId) {
+        const selectedProd = products.find(p => String(p.id) === String(updated[index].productId));
+        if (selectedProd) {
+          if (updated[index].categoryId && String(selectedProd.categoryId) !== String(updated[index].categoryId)) {
+            updated[index].productId = '';
+          }
+          if (updated[index].brandId && String(selectedProd.brandId) !== String(updated[index].brandId)) {
+            updated[index].productId = '';
+          }
+        }
       }
     }
 

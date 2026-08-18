@@ -46,6 +46,18 @@ export default function CampaignRuleGroup({
   // Khai báo biến/hằng số: focusBorderColor - Dùng trong logic xử lý của component
   const focusBorderColor = isAmber ? 'focus:border-amber-500' : 'focus:border-blue-500';
 
+  // Hàm lọc danh sách sản phẩm theo Danh mục & Thương hiệu đã chọn
+  const getFilteredProducts = (rule) => {
+    let filtered = products || [];
+    if (rule.categoryId) {
+      filtered = filtered.filter(p => String(p.categoryId) === String(rule.categoryId));
+    }
+    if (rule.brandId) {
+      filtered = filtered.filter(p => String(p.brandId) === String(rule.brandId));
+    }
+    return filtered;
+  };
+
   return (
     <div className="bg-white rounded-3xl p-6 shadow-sm border border-gray-100 space-y-5">
       {/* Header section */}
@@ -120,7 +132,7 @@ export default function CampaignRuleGroup({
                 <div>
                   <label className="block text-[11px] font-bold text-gray-700 mb-1">{productLabel}</label>
                   <SearchableSelect
-                    options={products}
+                    options={getFilteredProducts(rule)}
                     value={rule.productId}
                     onChange={(val) => onUpdateRule(idx, 'productId', val)}
                     placeholder={productPlaceholder}
