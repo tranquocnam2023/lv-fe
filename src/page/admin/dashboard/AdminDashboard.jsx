@@ -685,7 +685,7 @@ có
                       <td className="p-2.5 text-right font-semibold text-slate-500">
                         {(b.costOfGoodsSold || 0).toLocaleString('vi-VN')}₫
                       </td>
-                      <td className="p-2.5 text-right font-black text-emerald-600">
+                      <td className={`p-2.5 text-right font-black ${b.grossProfit < 0 ? 'text-red-600' : 'text-emerald-600'}`}>
                         {b.grossProfit.toLocaleString('vi-VN')}₫
                       </td>
                       <td className="p-2.5 text-center font-bold">
@@ -694,7 +694,22 @@ có
                         </span>
                       </td>
                       <td className="p-2.5 text-right font-black text-slate-900">
-                        {b.profitShare}%
+                        {/*
+                          Hãng đang lỗ thì "tỷ trọng lợi nhuận" không còn ý nghĩa: mẫu số là tổng lãi
+                          của các hãng CÓ lãi, nên một hãng lỗ nặng sẽ ra con số kiểu -358% - đúng
+                          phép tính nhưng không đọc được. Với các hãng này ghi thẳng là đang lỗ và
+                          bao nhiêu, số % vẫn giữ trong tooltip cho ai cần.
+                        */}
+                        {b.grossProfit < 0 ? (
+                          <span
+                            className="px-2 py-0.5 rounded-full text-[11px] bg-red-100 text-red-700"
+                            title={`Tỷ trọng lợi nhuận: ${b.profitShare}%`}
+                          >
+                            Lỗ {Math.abs(b.grossProfit).toLocaleString('vi-VN')}₫
+                          </span>
+                        ) : (
+                          `${b.profitShare}%`
+                        )}
                       </td>
                     </tr>
                   ))}
