@@ -12,7 +12,6 @@ export default function MuaKemGiaSocModal({ isOpen, onClose, campaigns, initialT
 
   useEffect(() => {
     if (isOpen) {
-      // Khai báo biến/hằng số: originalStyle - Dùng trong logic xử lý của component
       const originalStyle = window.getComputedStyle(document.body).overflow;
       document.body.style.overflow = 'hidden';
       return () => {
@@ -28,41 +27,47 @@ export default function MuaKemGiaSocModal({ isOpen, onClose, campaigns, initialT
 
   if (!isOpen || !campaigns || campaigns.length === 0) return null;
 
-  // Xây dựng danh sách Nổi bật (các sản phẩm được Admin set giảm giá riêng - isExplicitlyAdded)
+  // 1. Xây dựng danh sách Nổi bật (các sản phẩm được Admin set giảm giá riêng - isExplicitlyAdded)
   const featuredAccessories = [];
   campaigns.forEach(campData => {
     if (campData.addonProducts) {
       campData.addonProducts.forEach(item => {
-        if (item.isExplicitlyAdded && !featuredAccessories.find(x => x.id === item.id)) {
+        if (item.isExplicitlyAdded && !featuredAccessories.find(x => x.id === item.id && x._parentProduct?.id === campData.parentProduct?.id)) {
           featuredAccessories.push({
             ...item,
-            _campaign: campData.campaign
+            _campaign: campData.campaign,
+            _parentProduct: campData.parentProduct
           });
         }
       });
     }
   });
 
-  // Lọc các campaign có chứa ít nhất 1 sản phẩm không phải set riêng (giảm giá danh mục/hãng)
+  // 2. Lấy tất cả chiến dịch có chứa phụ kiện mua kèm
   const displayCampaigns = campaigns.filter(campData =>
-    campData.addonProducts && campData.addonProducts.some(p => !p.isExplicitlyAdded)
+    campData.addonProducts && campData.addonProducts.length > 0
   );
 
-  // Khai báo biến/hằng số: isFeaturedTab - Dùng trong logic xử lý của component
-  const isFeaturedTab = activeTab === 0;
-  // Cấu hình/Hằng số/Dịch vụ dữ liệu: currentCampaignData
-  const currentCampaignData = isFeaturedTab ? null : displayCampaigns[activeTab - 1];
-  // Khai báo biến/hằng số: currentCampaign - Dùng trong logic xử lý của component
+  const hasFeaturedTab = featuredAccessories.length > 0;
+  const isFeaturedTab = hasFeaturedTab && activeTab === 0;
+  const campaignIndex = hasFeaturedTab ? activeTab - 1 : activeTab;
+  
+  const currentCampaignData = isFeaturedTab 
+    ? null 
+    : (displayCampaigns[campaignIndex] || displayCampaigns[0]);
+    
   const currentCampaign = currentCampaignData ? currentCampaignData.campaign : null;
-  // Khai báo biến/hằng số: accessories - Dùng trong logic xử lý của component
-  const accessories = isFeaturedTab ? featuredAccessories : (currentCampaignData?.addonProducts || []);
+  const accessories = isFeaturedTab 
+    ? featuredAccessories 
+    : (currentCampaignData?.addonProducts?.map(p => ({
+        ...p,
+        _parentProduct: currentCampaignData.parentProduct
+      })) || []);
 
   // Hàm xử lý logic/sự kiện: getDynamicPrice
   const getDynamicPrice = (item) => {
-    // Khai báo biến/hằng số: basePrice - Dùng trong logic xử lý của component
     const basePrice = item.basePrice;
     let comboPrice = basePrice;
-    // Khai báo biến/hằng số: campaignToApply - Dùng trong logic xử lý của component
     const campaignToApply = item._campaign || currentCampaign;
 
     if (campaignToApply) {
@@ -94,19 +99,19 @@ export default function MuaKemGiaSocModal({ isOpen, onClose, campaigns, initialT
             </div>
             <button
               onClick={onClose}
-              className="p-2 bg-gray-100 hover:bg-gray-200 text-gray-500 rounded-full transition-colors"
+              className="p-2 bg-gray-100 hover:bg-gray-200 text-gray-500 rounded-full transition-colors cursor-pointer"
             >
               <X size={24} strokeWidth={2.5} />
             </button>
           </div>
 
           {/* Tabs */}
-          {(displayCampaigns.length > 0 || featuredAccessories.length > 0) && (
+          {(displayCampaigns.length > 0 || hasFeaturedTab) && (
             <div className="bg-white px-6 border-b border-gray-100 shrink-0 flex gap-6 overflow-x-auto hide-scrollbar">
-              {featuredAccessories.length > 0 && (
+              {hasFeaturedTab && (
                 <button
                   onClick={() => setActiveTab(0)}
-                  className={`py-4 font-black text-sm whitespace-nowrap transition-colors relative ${activeTab === 0
+                  className={`py-4 font-black text-sm whitespace-nowrap transition-colors relative cursor-pointer ${activeTab === 0
                       ? 'text-red-600'
                       : 'text-gray-500 hover:text-gray-800'
                     }`}
@@ -118,21 +123,30 @@ export default function MuaKemGiaSocModal({ isOpen, onClose, campaigns, initialT
                 </button>
               )}
 
-              {displayCampaigns.map((campData, index) => (
-                <button
-                  key={campData.campaign.id}
-                  onClick={() => setActiveTab(index + 1)}
-                  className={`py-4 font-black text-sm whitespace-nowrap transition-colors relative ${activeTab === index + 1
-                      ? 'text-red-600'
-                      : 'text-gray-500 hover:text-gray-800'
-                    }`}
-                >
-                  {campData.campaign.name}
-                  {activeTab === index + 1 && (
-                    <div className="absolute bottom-0 left-0 right-0 h-1 bg-red-600 rounded-t-full" />
-                  )}
-                </button>
-              ))}
+              {displayCampaigns.map((campData, index) => {
+                const tabIdx = hasFeaturedTab ? index + 1 : index;
+                const isSelected = activeTab === tabIdx;
+                const parentName = campData.parentProduct?.name;
+
+                return (
+                  <button
+                    key={`${campData.campaign.id}-${campData.parentProduct?.id || index}`}
+                    onClick={() => setActiveTab(tabIdx)}
+                    className={`py-4 font-black text-sm whitespace-nowrap transition-colors relative cursor-pointer ${isSelected
+                        ? 'text-red-600'
+                        : 'text-gray-500 hover:text-gray-800'
+                      }`}
+                  >
+                    <span>{campData.campaign.name}</span>
+                    {parentName && (
+                      <span className="ml-1.5 text-[11px] font-medium text-gray-400">({parentName})</span>
+                    )}
+                    {isSelected && (
+                      <div className="absolute bottom-0 left-0 right-0 h-1 bg-red-600 rounded-t-full" />
+                    )}
+                  </button>
+                );
+              })}
             </div>
           )}
 
@@ -145,16 +159,17 @@ export default function MuaKemGiaSocModal({ isOpen, onClose, campaigns, initialT
               </div>
             ) : (
               <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                {accessories.map((item) => {
-                  // Khai báo giải nén các thuộc tính/hàm (basePrice, comboPrice, campaignToApply) từ Hook / Context / Props
+                {accessories.map((item, itemIdx) => {
                   const { basePrice, comboPrice, campaignToApply } = getDynamicPrice(item);
                   let discountBadgeText = '';
-                  if (campaignToApply.discountType === 'Percentage') discountBadgeText = `-${campaignToApply.discountValue}%`;
-                  else if (campaignToApply.discountType === 'FixedAmount') discountBadgeText = `-${campaignToApply.discountValue >= 1000 ? (campaignToApply.discountValue / 1000) + 'K' : campaignToApply.discountValue + 'đ'}`;
+                  if (campaignToApply?.discountType === 'Percentage') discountBadgeText = `-${campaignToApply.discountValue}%`;
+                  else if (campaignToApply?.discountType === 'FixedAmount') discountBadgeText = `-${campaignToApply.discountValue >= 1000 ? (campaignToApply.discountValue / 1000) + 'K' : campaignToApply.discountValue + 'đ'}`;
                   else discountBadgeText = 'GIÁ SỐC';
 
+                  const parentName = item._parentProduct?.name || currentCampaignData?.parentProduct?.name;
+
                   return (
-                    <div key={item.id} className="bg-white border border-gray-200 rounded-2xl overflow-hidden hover:border-red-400 hover:shadow-lg transition-all duration-300 flex flex-col group relative">
+                    <div key={`${item.id}-${item._parentProduct?.id || itemIdx}`} className="bg-white border border-gray-200 rounded-2xl overflow-hidden hover:border-red-400 hover:shadow-lg transition-all duration-300 flex flex-col group relative">
                       {/* Badge discount */}
                       <div className="absolute top-3 left-3 bg-red-600 text-white text-[10px] font-black px-2 py-1 rounded-md z-10">
                         {discountBadgeText}
@@ -180,24 +195,30 @@ export default function MuaKemGiaSocModal({ isOpen, onClose, campaigns, initialT
                       </div>
 
                       <div className="p-4 flex flex-col flex-1 border-t border-gray-50">
-                        <h4 className="text-sm font-bold text-gray-800 line-clamp-2 mb-2 min-h-[40px]">
+                        <h4 className="text-sm font-bold text-gray-800 line-clamp-2 mb-1 min-h-[38px]">
                           {item.name}
                         </h4>
 
-                        <div className="flex items-baseline gap-2 mb-4">
+                        {parentName && (
+                          <div className="text-[10px] text-gray-400 font-semibold truncate mb-2">
+                            Theo SP: <span className="text-gray-600 font-bold">{parentName}</span>
+                          </div>
+                        )}
+
+                        <div className="flex items-baseline gap-2 mb-4 mt-auto">
                           <span className="text-lg font-black text-red-600">{comboPrice.toLocaleString()}đ</span>
                           {basePrice > comboPrice && (
                             <span className="text-xs line-through text-gray-400 font-semibold">{basePrice.toLocaleString()}đ</span>
                           )}
                         </div>
 
-                        <div className="mt-auto">
+                        <div>
                           <button
                             onClick={() => {
                               setSelectedAccessory(item);
                               setVariantModalOpen(true);
                             }}
-                            className="w-full flex items-center justify-center gap-2 bg-red-50 hover:bg-red-600 text-red-600 hover:text-white px-4 py-2.5 rounded-xl text-sm font-black transition-colors uppercase tracking-wider"
+                            className="w-full flex items-center justify-center gap-2 bg-red-50 hover:bg-red-600 text-red-600 hover:text-white px-4 py-2.5 rounded-xl text-sm font-black transition-colors uppercase tracking-wider cursor-pointer"
                           >
                             Chọn <Plus size={16} strokeWidth={3} />
                           </button>
@@ -221,7 +242,7 @@ export default function MuaKemGiaSocModal({ isOpen, onClose, campaigns, initialT
           comboPrice={getDynamicPrice(selectedAccessory).comboPrice}
           campaignId={getDynamicPrice(selectedAccessory).campaignToApply?.id}
           maxQuantityAllowed={getDynamicPrice(selectedAccessory).campaignToApply?.maxQuantityAllowed}
-          parentProductId={parentProductId}
+          parentProductId={selectedAccessory._parentProduct?.id || currentCampaignData?.parentProduct?.id || parentProductId}
         />
       )}
     </>
