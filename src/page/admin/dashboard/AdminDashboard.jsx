@@ -214,6 +214,12 @@ export default function AdminDashboard({ onTabChange }) {
     dailyScaled: (item.daily || 0) / 10
   }));
 
+  // Biểu đồ tròn không biểu diễn được phần âm: thương hiệu đang lỗ (tỷ trọng LN < 0) sẽ làm
+  // Recharts vẽ sai hình. Chỉ đưa các thương hiệu có lãi vào biểu đồ, phần lỗ đã thể hiện đầy đủ
+  // ở bảng bên cạnh.
+  const profitPieData = (brandProfitReport?.brands || []).filter(b => (b.profitShare || 0) > 0);
+  const lossMakingBrands = (brandProfitReport?.brands || []).filter(b => (b.grossProfit || 0) < 0);
+có
   return (
     <div className="space-y-6 pb-10 font-sans text-textmain animate-in fade-in duration-300">
 
@@ -627,7 +633,7 @@ export default function AdminDashboard({ onTabChange }) {
                 <ResponsiveContainer minWidth={0} minHeight={0} width="100%" height="100%">
                   <PieChart>
                     <Pie
-                      data={brandProfitReport.brands || []}
+                      data={profitPieData}
                       dataKey="profitShare"
                       nameKey="brandName"
                       cx="50%"
@@ -637,7 +643,7 @@ export default function AdminDashboard({ onTabChange }) {
                       paddingAngle={4}
                       label={({ brandName, profitShare }) => `${brandName}: ${profitShare}%`}
                     >
-                      {(brandProfitReport.brands || []).map((entry, index) => (
+                      {profitPieData.map((entry, index) => (
                         <Cell key={`cell-${index}`} fill={PIE_COLORS[index % PIE_COLORS.length]} />
                       ))}
                     </Pie>
@@ -645,6 +651,12 @@ export default function AdminDashboard({ onTabChange }) {
                   </PieChart>
                 </ResponsiveContainer>
               </div>
+              {lossMakingBrands.length > 0 && (
+                <p className="text-[10px] font-semibold text-amber-700 bg-amber-50 border border-amber-200 rounded-md px-2.5 py-1.5 mt-1 text-center">
+                  Biểu đồ chỉ gồm thương hiệu có lãi. Đang lỗ:{' '}
+                  <span className="font-black">{lossMakingBrands.map(b => b.brandName).join(', ')}</span> — xem tỷ trọng âm ở bảng bên.
+                </p>
+              )}
             </div>
 
             {/* Right: Ecosystem Profit Table (7 Cols) */}
