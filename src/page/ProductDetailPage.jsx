@@ -156,18 +156,6 @@ export default function ProductDetailPage() {
   // Hàm thực thi logic: selectedColor
   const selectedColor = selectedAttributes["Màu sắc"] || Object.entries(selectedAttributes).find(([k]) => k.toLowerCase().includes('màu'))?.[1] || '';
 
-  // Toggle phụ kiện mua kèm
-  const handleToggleAccessory = (acc) => {
-    setSelectedAccessories(prev => {
-      // Hàm thực thi logic: exists
-      const exists = prev.some(item => item.id === acc.id);
-      if (exists) {
-        return prev.filter(item => item.id !== acc.id);
-      } else {
-        return [...prev, acc];
-      }
-    });
-  };
 
   // Phân tách ảnh chung (Master Images)
   const getMasterImages = (prod) => {

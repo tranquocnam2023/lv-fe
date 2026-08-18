@@ -27,7 +27,7 @@ export default function CartPage() {
   // Khai báo giải nén các thuộc tính/hàm (stopLoading) từ Hook / Context / Props
   const { stopLoading } = useLoading();
   // Khai báo giải nén các thuộc tính/hàm (cartItems, updateQuantity, removeFromCart, cartTotal, clearCart) từ Hook / Context / Props
-  const { cartItems, updateQuantity, removeFromCart, cartTotal, clearCart } = useCart();
+  const { cartItems, addToCart, updateQuantity, removeFromCart, cartTotal, clearCart } = useCart();
   // Hook điều hướng trang (useNavigate) để chuyển hướng Route
   const navigate = useNavigate();
 

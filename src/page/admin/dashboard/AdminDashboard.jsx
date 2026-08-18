@@ -219,7 +219,7 @@ export default function AdminDashboard({ onTabChange }) {
   // ở bảng bên cạnh.
   const profitPieData = (brandProfitReport?.brands || []).filter(b => (b.profitShare || 0) > 0);
   const lossMakingBrands = (brandProfitReport?.brands || []).filter(b => (b.grossProfit || 0) < 0);
-có
+
   return (
     <div className="space-y-6 pb-10 font-sans text-textmain animate-in fade-in duration-300">
 

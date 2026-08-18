@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { useLoading } from '../context/LoadingContext';
 import Breadcrumb from '../components/Breadcrumb';
 import { authService } from '../services/authService';
@@ -28,6 +28,8 @@ export default function AuthPage() {
   const location = useLocation();
   // Hook điều hướng trang (useNavigate) để chuyển hướng Route
   const navigate = useNavigate();
+  // Dùng ở luồng đăng ký thành công để đọc tham số ?redirect= và đưa khách về đúng trang cũ
+  const [searchParams] = useSearchParams();
 
   // Auth state
   const [isLogin, setIsLogin] = useState(true);
