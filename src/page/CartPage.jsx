@@ -1089,7 +1089,10 @@ export default function CartPage() {
               quantity: item.quantity,
               appliedCampaignId: item.appliedCampaignId,
               isAddon: item.isAddon || false,
-              warrantyId: item.warrantyId || null
+              warrantyId: item.warrantyId || null,
+              // Truyền productId của SP chính giúp BE gắn ParentCartItemId chính xác,
+              // không cần dò lại theo rule campaign (giữ combo discount ổn định qua VNPay).
+              parentProductId: item.parentProductId || null
             });
           }
         } catch (err) {
