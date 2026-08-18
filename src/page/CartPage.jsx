@@ -931,6 +931,15 @@ export default function CartPage() {
       return;
     }
 
+    // RÀNG BUỘC TỒN KHO TRƯỚC KHITHỰC HIỆN CHECKOUT
+    for (const item of cartItems) {
+      const maxStock = item.availableStock ?? item.stockQuantity ?? item.stock ?? item.totalStock ?? 999;
+      if (maxStock < 999 && item.quantity > maxStock) {
+        alert(`Sản phẩm "${item.name}" trong giỏ hàng (Số lượng: ${item.quantity}) đã vượt quá số lượng tồn kho khả dụng (${maxStock} sản phẩm). Vui lòng giảm số lượng trước khi đặt hàng.`);
+        return;
+      }
+    }
+
     if (!addressProvided || !formData.fullName || !formData.phone) {
       alert("Vui lòng cung cấp thông tin người nhận và địa chỉ trước khi đặt hàng.");
       openAddressModal();

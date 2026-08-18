@@ -189,6 +189,18 @@ export const CartProvider = ({ children }) => {
 
   // Hàm thực thi logic: addToCart
   const addToCart = (product, quantity = 1) => {
+    // RÀNG BUỘC TỒN KHO KHẢ DỤNG (AVAILABLE STOCK):
+    // Ưu tiên các trường chứa tồn kho khả dụng từ backend/frontend theo thứ tự
+    const maxStock = product.availableStock ?? product.stockQuantity ?? product.stock ?? product.totalStock ?? 999;
+
+    if (maxStock <= 0) {
+      showToast(`Rất tiếc, sản phẩm "${product.name}" hiện đã hết hàng!`, 'warning');
+      return;
+    }
+
+    let isOverStock = false;
+    let finalAddedQty = quantity;
+
     setCartItems((prevItems) => {
       const currentArr = Array.isArray(prevItems) ? prevItems : [];
       const cartId = product.isAddon && product.appliedCampaignId
@@ -198,17 +210,44 @@ export const CartProvider = ({ children }) => {
       const existingItemIndex = currentArr.findIndex(item => item.cartId === cartId);
 
       if (existingItemIndex >= 0) {
+        const existingItem = currentArr[existingItemIndex];
+        const itemMaxStock = existingItem.availableStock ?? existingItem.stockQuantity ?? existingItem.stock ?? existingItem.totalStock ?? maxStock;
+        
+        if (existingItem.quantity + quantity > itemMaxStock) {
+          isOverStock = true;
+          const newItems = [...currentArr];
+          newItems[existingItemIndex] = {
+            ...existingItem,
+            quantity: itemMaxStock,
+            availableStock: itemMaxStock,
+            stockQuantity: itemMaxStock
+          };
+          return newItems;
+        }
+
         const newItems = [...currentArr];
-        newItems[existingItemIndex].quantity += quantity;
+        newItems[existingItemIndex] = {
+          ...existingItem,
+          quantity: existingItem.quantity + quantity,
+          availableStock: itemMaxStock,
+          stockQuantity: itemMaxStock
+        };
         return newItems;
+      }
+
+      if (quantity > maxStock) {
+        isOverStock = true;
+        finalAddedQty = maxStock;
       }
 
       const regularPrice = product.originalBasePrice || product.originalPrice || product.basePrice || product.price;
 
       return [...currentArr, {
         ...product,
-        quantity,
+        quantity: finalAddedQty,
         cartId,
+        availableStock: maxStock,
+        stockQuantity: maxStock,
         price: product.price,
         originalBasePrice: regularPrice,
         originalPrice: regularPrice,
@@ -219,13 +258,16 @@ export const CartProvider = ({ children }) => {
       }];
     });
 
-    showToast(`Đã thêm "${product.name}" vào giỏ hàng thành công!`);
+    if (isOverStock) {
+      showToast(`Số lượng sản phẩm "${product.name}" trong giỏ hàng đã đạt giới hạn tồn kho khả dụng (${maxStock} sản phẩm)!`, 'warning');
+    } else {
+      showToast(`Đã thêm "${product.name}" vào giỏ hàng thành công!`);
+    }
   };
 
   // Hàm thực thi logic: removeFromCart
   const removeFromCart = (cartId) => {
     setCartItems((prevItems) => {
-      // Khai báo biến/hằng số: currentArr - Dùng trong logic xử lý của component
       const currentArr = Array.isArray(prevItems) ? prevItems : [];
       return currentArr.filter((item) => item.cartId !== cartId);
     });
@@ -235,11 +277,29 @@ export const CartProvider = ({ children }) => {
   const updateQuantity = (cartId, quantity) => {
     if (quantity < 1) return;
     setCartItems((prevItems) => {
-      // Khai báo biến/hằng số: currentArr - Dùng trong logic xử lý của component
       const currentArr = Array.isArray(prevItems) ? prevItems : [];
-      return currentArr.map((item) =>
-        item.cartId === cartId ? { ...item, quantity } : item
-      );
+      return currentArr.map((item) => {
+        if (item.cartId === cartId) {
+          const maxStock = item.availableStock ?? item.stockQuantity ?? item.stock ?? item.totalStock ?? 999;
+          
+          let targetQty = quantity;
+          if (targetQty > maxStock) {
+            showToast(`Sản phẩm "${item.name}" chỉ còn ${maxStock} sản phẩm trong kho!`, 'warning');
+            targetQty = maxStock;
+          }
+          if (item.isAddon && item.maxQuantityAllowed && targetQty > item.maxQuantityAllowed) {
+            showToast(`Phụ kiện mua kèm "${item.name}" được mua tối đa ${item.maxQuantityAllowed} sản phẩm!`, 'warning');
+            targetQty = item.maxQuantityAllowed;
+          }
+          return {
+            ...item,
+            quantity: targetQty,
+            availableStock: maxStock,
+            stockQuantity: maxStock
+          };
+        }
+        return item;
+      });
     });
   };
 

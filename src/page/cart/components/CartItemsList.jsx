@@ -126,6 +126,19 @@ export default function CartItemsList({ cartItems, updateQuantity, removeFromCar
                       <span>🛡️ Bảo hành mở rộng: {item.warrantyName} (+{item.warrantyPrice?.toLocaleString('vi-VN')}₫ / sản phẩm)</span>
                     </div>
                   )}
+
+                  {(() => {
+                    const maxStock = item.availableStock ?? item.stockQuantity ?? item.stock ?? item.totalStock ?? 999;
+                    if (maxStock < 999) {
+                      const isReached = item.quantity >= maxStock;
+                      return (
+                        <span className={`text-[10px] font-bold block mt-1 ${isReached ? 'text-red-500 font-extrabold' : 'text-gray-400'}`}>
+                          {isReached ? `⚠️ Đã chọn tối đa tồn kho khả dụng (${maxStock} máy)` : `Tồn kho khả dụng: ${maxStock} máy`}
+                        </span>
+                      );
+                    }
+                    return null;
+                  })()}
                 </div>
 
                 {/* Qty selector & Delete */}
@@ -150,14 +163,28 @@ export default function CartItemsList({ cartItems, updateQuantity, removeFromCar
                     <span className="w-7 h-6 flex items-center justify-center text-xs font-bold bg-white border-x border-gray-200 text-gray-800">
                       {item.quantity}
                     </span>
-                    <button
-                      type="button"
-                      onClick={() => updateQuantity(item.cartId, item.quantity + 1)}
-                      disabled={item.isAddon && item.maxQuantityAllowed && item.quantity >= item.maxQuantityAllowed}
-                      className="w-6 h-6 flex items-center justify-center bg-gray-50 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed text-gray-600 font-bold text-xs cursor-pointer"
-                    >
-                      +
-                    </button>
+                    {(() => {
+                      const maxStock = item.availableStock ?? item.stockQuantity ?? item.stock ?? item.totalStock ?? 999;
+                      const isMaxStock = item.quantity >= maxStock;
+                      const isAddonMax = item.isAddon && item.maxQuantityAllowed && item.quantity >= item.maxQuantityAllowed;
+                      const isPlusDisabled = isMaxStock || isAddonMax;
+
+                      let tooltipText = "";
+                      if (isMaxStock) tooltipText = `Đã đạt giới hạn tồn kho (${maxStock} sản phẩm)`;
+                      else if (isAddonMax) tooltipText = `Tối đa ${item.maxQuantityAllowed} sản phẩm mua kèm`;
+
+                      return (
+                        <button
+                          type="button"
+                          onClick={() => updateQuantity(item.cartId, item.quantity + 1)}
+                          disabled={isPlusDisabled}
+                          title={tooltipText}
+                          className="w-6 h-6 flex items-center justify-center bg-gray-50 hover:bg-gray-100 disabled:opacity-40 disabled:cursor-not-allowed text-gray-600 font-bold text-xs cursor-pointer transition-colors"
+                        >
+                          +
+                        </button>
+                      );
+                    })()}
                   </div>
                 </div>
               </div>
