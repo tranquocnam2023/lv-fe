@@ -8,6 +8,9 @@ export const returnService = {
   // Lấy chi tiết yêu cầu đổi trả của 1 đơn hàng theo orderId
   getReturnRequestByOrder: (orderId) => api.get(`/Return/order/${orderId}`),
 
+  // Khách hàng lấy toàn bộ yêu cầu đổi trả của chính mình
+  getMyReturnRequests: () => api.get('/Return/my'),
+
   // Admin lấy danh sách tất cả các yêu cầu đổi trả
   getAllReturnRequests: () => api.get('/Return'),
 

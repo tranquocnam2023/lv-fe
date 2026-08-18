@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom';
 import { authService } from '../../services/authService';
 import { productService } from '../../services/productService';
 import { orderService } from '../../services/orderService';
+import { returnService } from '../../services/returnService';
 import { userService } from '../../services/userService';
 import {
   Layout, Package, Users, ShoppingCart, Settings, LogOut,
@@ -124,6 +125,20 @@ export default function AdminLayout({ activeAdminTab, onTabChange, setSearchPara
 
   // State làm mới thông báo khi có yêu cầu đổi trả mới
   const [returnSignal, setReturnSignal] = useState(0);
+  // Yêu cầu đổi trả đang chờ duyệt, nạp từ API /Return
+  const [pendingReturnRequests, setPendingReturnRequests] = useState([]);
+
+  useEffect(() => {
+    returnService.getAllReturnRequests()
+      .then(res => {
+        const all = Array.isArray(res) ? res : (res && Array.isArray(res.data) ? res.data : []);
+        setPendingReturnRequests(all.filter(r => r.status === 'Pending'));
+      })
+      .catch(err => {
+        console.error('Lỗi tải yêu cầu đổi trả cho thông báo:', err);
+        setPendingReturnRequests([]);
+      });
+  }, [returnSignal]);
 
   useEffect(() => {
     // Hàm xử lý logic/sự kiện: handleReturnEvent
@@ -141,26 +156,20 @@ export default function AdminLayout({ activeAdminTab, onTabChange, setSearchPara
     // Cấu hình/Hằng số/Dịch vụ dữ liệu: list
     const list = [];
 
-    // 1. Yêu cầu đổi trả từ khách hàng (PROJECT_RETURN_REQUESTS)
-    try {
-      // Khai báo biến/hằng số: returnRequests - Dùng trong logic xử lý của component
-      const returnRequests = JSON.parse(localStorage.getItem('PROJECT_RETURN_REQUESTS') || '{}');
-      Object.values(returnRequests).forEach(req => {
-        if (req && req.status === 'Pending') {
-          list.push({
-            id: `return-${req.orderId}`,
-            type: 'order',
-            title: 'Yêu cầu đổi trả / hoàn tiền',
-            message: `Đơn hàng #PS${req.orderId} có yêu cầu đổi trả sản phẩm cần xử lý`,
-            time: req.createdAt || new Date().toISOString(),
-            targetTab: 'orders',
-            data: req
-          });
-        }
+    // 1. Yêu cầu đổi trả từ khách hàng - nguồn: API /Return của back-end.
+    //    Trước đây đọc localStorage 'PROJECT_RETURN_REQUESTS', mà khách gửi yêu cầu trên trình
+    //    duyệt của khách nên chuông thông báo phía admin không bao giờ kêu.
+    pendingReturnRequests.forEach(req => {
+      list.push({
+        id: `return-${req.orderId}`,
+        type: 'order',
+        title: 'Yêu cầu đổi trả / hoàn tiền',
+        message: `Đơn hàng #PS${req.orderId} có yêu cầu đổi trả sản phẩm cần xử lý`,
+        time: req.createdAt || new Date().toISOString(),
+        targetTab: 'orders',
+        data: req
       });
-    } catch (e) {
-      console.error('Lỗi đọc thông báo đổi trả:', e);
-    }
+    });
 
     /*
     [NGHIỆP VỤ TGDĐ - XỬ LÝ ĐƠN HÀNG TRỄ XÁC NHẬN XUẤT KHO]:
@@ -218,7 +227,7 @@ export default function AdminLayout({ activeAdminTab, onTabChange, setSearchPara
     const stocks = list.filter(n => n.type === 'stock');
     return [...orders, ...stocks];
   },
-    [allOrders, allProducts, returnSignal]);
+    [allOrders, allProducts, returnSignal, pendingReturnRequests]);
 
   //bộ lọc tab thông báo
   const filteredNotifications = React.useMemo(() => {

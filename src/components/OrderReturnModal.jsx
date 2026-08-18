@@ -27,6 +27,27 @@ export default function OrderReturnModal({ isOpen, onClose, order, mode = 'user'
   // State phía Admin
   const [adminNote, setAdminNote] = useState('');
 
+  // Yêu cầu đổi trả hiện có của đơn, đọc từ back-end (GET /Return/order/{orderId}).
+  // Trước đây đọc localStorage nên đổi máy/xoá cache là mất, và admin không thấy gì.
+  const [existingReturnData, setExistingReturnData] = useState(null);
+
+  const currentOrderId = order?.id ?? order?.Id ?? null;
+
+  useEffect(() => {
+    if (!isOpen || !currentOrderId) return;
+    let cancelled = false;
+    returnService.getReturnRequestByOrder(currentOrderId)
+      .then(res => {
+        if (cancelled) return;
+        setExistingReturnData(res?.data ?? res ?? null);
+      })
+      .catch(() => {
+        // 404 = đơn chưa có yêu cầu đổi trả nào, đây là trường hợp bình thường
+        if (!cancelled) setExistingReturnData(null);
+      });
+    return () => { cancelled = true; };
+  }, [isOpen, currentOrderId]);
+
   useEffect(() => {
     if (order && order.items) {
       // Khai báo biến/hằng số: initialSelected - Dùng trong logic xử lý của component
@@ -159,10 +180,8 @@ export default function OrderReturnModal({ isOpen, onClose, order, mode = 'user'
         generalNote: generalNote
       };
 
-      // Khai báo biến/hằng số: existingReqs - Dùng trong logic xử lý của component
-      const existingReqs = JSON.parse(localStorage.getItem('PROJECT_RETURN_REQUESTS') || '{}');
-      existingReqs[orderId] = returnPayload;
-      localStorage.setItem('PROJECT_RETURN_REQUESTS', JSON.stringify(existingReqs));
+      // Không còn ghi vào localStorage: yêu cầu đã nằm trong bảng ReturnRequests và mọi màn hình
+      // (giỏ theo dõi đơn của khách, danh sách đơn + chuông thông báo của admin) đều đọc qua API.
       window.dispatchEvent(new Event('storage'));
       window.dispatchEvent(new Event('return_request_updated'));
 
@@ -209,14 +228,6 @@ export default function OrderReturnModal({ isOpen, onClose, order, mode = 'user'
       }
       await returnService.approveReturnRequest(returnRequestId, adminNote);
 
-      // Khai báo biến/hằng số: existingReqs - Dùng trong logic xử lý của component
-      const existingReqs = JSON.parse(localStorage.getItem('PROJECT_RETURN_REQUESTS') || '{}');
-      if (existingReqs[orderId]) {
-        existingReqs[orderId].status = 'Approved';
-        existingReqs[orderId].adminNote = adminNote || 'Đã phê duyệt hoàn tiền';
-        localStorage.setItem('PROJECT_RETURN_REQUESTS', JSON.stringify(existingReqs));
-      }
-
       // Lưu log kiểm toán
       try {
         // Khai báo biến/hằng số: currentLogs - Dùng trong logic xử lý của component
@@ -257,14 +268,6 @@ export default function OrderReturnModal({ isOpen, onClose, order, mode = 'user'
       }
       await returnService.rejectReturnRequest(returnRequestId, adminNote);
 
-      // Khai báo biến/hằng số: existingReqs - Dùng trong logic xử lý của component
-      const existingReqs = JSON.parse(localStorage.getItem('PROJECT_RETURN_REQUESTS') || '{}');
-      if (existingReqs[orderId]) {
-        existingReqs[orderId].status = 'Rejected';
-        existingReqs[orderId].adminNote = adminNote || 'Từ chối yêu cầu đổi trả';
-        localStorage.setItem('PROJECT_RETURN_REQUESTS', JSON.stringify(existingReqs));
-      }
-
       // Lưu log kiểm toán từ chối
       try {
         // Khai báo biến/hằng số: currentLogs - Dùng trong logic xử lý của component
@@ -295,10 +298,6 @@ export default function OrderReturnModal({ isOpen, onClose, order, mode = 'user'
     }
   };
 
-  // Đọc dữ liệu yêu cầu đổi trả đã lưu (nếu có)
-  const savedRequests = JSON.parse(localStorage.getItem('PROJECT_RETURN_REQUESTS') || '{}');
-  // Cấu hình/Hằng số/Dịch vụ dữ liệu: existingReturnData
-  const existingReturnData = savedRequests[orderId];
 
   // Kiểm tra đã hết thời hạn 30 ngày chưa (Ngày tạo đơn + 30 ngày)
   const isExpired = (() => {

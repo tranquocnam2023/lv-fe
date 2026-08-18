@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { returnService } from '../services/returnService';
 import api from '../services/api';
 import { orderService } from '../services/orderService';
 import OrderDetailsTracker from '../components/OrderDetailsTracker';
@@ -29,6 +30,24 @@ export default function OrderTrackingPage() {
 
   // Đơn hàng đang được xem chi tiết
   const [selectedOrderDetails, setSelectedOrderDetails] = useState(null);
+  // Yêu cầu đổi trả của chính khách hàng, gom theo orderId. Nạp từ API /Return/my.
+  // Trước đây đọc localStorage 'PROJECT_RETURN_REQUESTS' nên chỉ đúng trên đúng trình duyệt
+  // đã bấm gửi yêu cầu; đăng nhập máy khác hoặc xoá cache là mất trạng thái đổi trả.
+  const [myReturnRequests, setMyReturnRequests] = useState({});
+
+  useEffect(() => {
+    returnService.getMyReturnRequests()
+      .then(res => {
+        const list = Array.isArray(res) ? res : (res && Array.isArray(res.data) ? res.data : []);
+        const byOrder = {};
+        list.forEach(r => {
+          const key = String(r.orderId ?? r.OrderId);
+          if (!byOrder[key]) byOrder[key] = r; // API đã sắp xếp mới nhất trước
+        });
+        setMyReturnRequests(byOrder);
+      })
+      .catch(() => setMyReturnRequests({}));
+  }, []);
 
   useEffect(() => {
     stopLoading();
@@ -106,9 +125,8 @@ export default function OrderTrackingPage() {
     if (!ord) return 0;
     const ordId = String(ord.id || ord.Id || '');
 
-    // Đọc trạng thái đổi trả đã ghi nhận từ localStorage
-    const savedRequests = JSON.parse(localStorage.getItem('PROJECT_RETURN_REQUESTS') || '{}');
-    const existingReq = savedRequests[ordId];
+    // Trạng thái đổi trả lấy từ back-end (xem myReturnRequests bên trên)
+    const existingReq = myReturnRequests[ordId];
 
     // Ưu tiên đọc ID trạng thái trực tiếp từ DB nếu có
     let id = ord.statusId ?? ord.StatusId ?? ord.orderStatusId ?? ord.OrderStatusId;
