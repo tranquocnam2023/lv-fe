@@ -13,6 +13,8 @@ export default function VariantModal({
   generatedSku,
   variantPrice,
   setVariantPrice,
+  variantCostPrice,
+  setVariantCostPrice,
   selectedProduct,
   variantStock,
   setVariantStock,
@@ -82,7 +84,19 @@ export default function VariantModal({
               />
             </div>
 
-            {/* Price */}
+            {/* Cost Price */}
+            <div>
+              <label className="block text-xs font-bold text-emerald-700 uppercase mb-2">Giá nhập từ Hãng (Cost Price)</label>
+              <input
+                type="number"
+                placeholder={selectedProduct ? `Giá nhập tham chiếu: ${(selectedProduct.costPrice || selectedProduct.basePrice || 0).toLocaleString('vi-VN')} ₫` : 'Giá nhập kho'}
+                className="w-full px-4 py-3 border border-emerald-200 bg-emerald-50/30 rounded-md focus:border-emerald-500 outline-none text-emerald-900 font-semibold shadow-sm"
+                value={variantCostPrice}
+                onChange={(e) => setVariantCostPrice(e.target.value)}
+              />
+            </div>
+
+            {/* Selling Price */}
             <div>
               <label className="block text-xs font-bold text-admin-text-muted uppercase mb-2">Giá bán (Để trống = Theo sản phẩm gốc)</label>
               <input

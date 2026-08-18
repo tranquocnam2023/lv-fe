@@ -54,6 +54,7 @@ export default function AdminProductVariants() {
   const [selectedProductId, setSelectedProductId] = useState('');
   // State: variantPrice - Quản lý trạng thái và dữ liệu của variantPrice trong giao diện
   const [variantPrice, setVariantPrice] = useState('');
+  const [variantCostPrice, setVariantCostPrice] = useState('');
   // State: variantStock - Quản lý trạng thái và dữ liệu của variantStock trong giao diện
   const [variantStock, setVariantStock] = useState('0');
   // State: variantImage - Quản lý trạng thái và dữ liệu của variantImage trong giao diện
@@ -104,6 +105,7 @@ export default function AdminProductVariants() {
       setEditingVariant(v);
       setSelectedProductId(v.productId.toString());
       setVariantPrice(v.price.toString());
+      setVariantCostPrice(v.costPrice ? v.costPrice.toString() : '');
       setVariantStock(v.totalStock.toString());
       setVariantImage(v.imageId || '');
       setIsActive(v.isActive ?? true);
@@ -139,6 +141,7 @@ export default function AdminProductVariants() {
       setEditingVariant(null);
       setSelectedProductId(products[0]?.id?.toString() || '');
       setVariantPrice('');
+      setVariantCostPrice('');
       setVariantStock('0');
       setVariantImage('');
       setIsActive(true);
@@ -282,6 +285,12 @@ export default function AdminProductVariants() {
       priceVal = selectedProduct.basePrice || selectedProduct.price || 0;
     }
 
+    const costPriceVal = parseFloat(variantCostPrice);
+    if (!isNaN(costPriceVal) && costPriceVal > 0 && costPriceVal >= priceVal) {
+      alert(`Giá nhập từ Hãng (${costPriceVal.toLocaleString('vi-VN')} ₫) không được lớn hơn hoặc bằng giá bán (${priceVal.toLocaleString('vi-VN')} ₫)!`);
+      return;
+    }
+
     // Khai báo biến/hằng số: attributesObj - Dùng trong logic xử lý của component
     const attributesObj = {};
     attributes.forEach(a => {
@@ -305,6 +314,7 @@ export default function AdminProductVariants() {
     const payload = {
       name: generatedVariantName,
       price: priceVal,
+      costPrice: parseFloat(variantCostPrice) || priceVal,
       totalStock: parseInt(variantStock) || 0,
       productId: selectedProduct.id,
       imageId: variantImage,
@@ -523,6 +533,8 @@ export default function AdminProductVariants() {
           generatedSku={generatedSku}
           variantPrice={variantPrice}
           setVariantPrice={setVariantPrice}
+          variantCostPrice={variantCostPrice}
+          setVariantCostPrice={setVariantCostPrice}
           selectedProduct={selectedProduct}
           variantStock={variantStock}
           setVariantStock={setVariantStock}

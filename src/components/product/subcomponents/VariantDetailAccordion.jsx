@@ -144,10 +144,10 @@ export default function VariantDetailAccordion({
                     Giá vốn (VNĐ) <span className="text-admin-text-muted font-normal cursor-help" title="Giá vốn nhập kho dùng để tính lợi nhuận sản phẩm">(?)</span>
                   </label>
                   <PriceInput
-                    value={vData?.costPrice || ''}
+                    value={(vData?.costPrice !== undefined && vData?.costPrice !== null && vData?.costPrice !== '') ? vData.costPrice : (formData.costPrice || '')}
                     onChange={(val) => updateVariantField(variantKey, 'costPrice', val)}
                     className="w-full px-3 py-2 border border-admin-border rounded outline-none text-xs text-admin-text-main font-semibold bg-white focus:border-primary focus:ring-1 focus:ring-primary/20"
-                    placeholder="Tính lợi nhuận..."
+                    placeholder="Theo giá vốn chung..."
                   />
                 </div>
               </div>

@@ -31,8 +31,14 @@ export default function AdminDashboard({ onTabChange }) {
   const [usersList, setUsersList] = useState([]);
   // State: shippingStats - Quản lý trạng thái và dữ liệu của shippingStats trong giao diện
   const [shippingStats, setShippingStats] = useState({ pending: 0, confirmed: 0, shipping: 0, delivered: 0, canceled: 0, total: 0 });
+  // State: brandProfitReport - Báo cáo Lợi nhuận gộp theo Thương hiệu (Ecosystem Business Insights)
+  const [brandProfitReport, setBrandProfitReport] = useState(null);
 
   useEffect(() => {
+    // Fetch Brand Profit Report
+    api.get('/AdminDashboard/brand-profit-report')
+      .then(res => setBrandProfitReport(res.data || res))
+      .catch(e => console.error("Lỗi tải báo cáo lợi nhuận:", e));
     // 1. Fetch Revenue Data
     dashboardService.getRevenue()
       .then(data => { if (data && data.length > 0) setRevenueData(data); })
@@ -549,6 +555,117 @@ export default function AdminDashboard({ onTabChange }) {
         </div>
 
       </div>
+
+      {/* SECTION BRAND PROFITABILITY & ECOSYSTEM INSIGHTS */}
+      {brandProfitReport && (
+        <div className="bg-white p-6 rounded-xl border border-emerald-200 shadow-sm space-y-6">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-emerald-100 pb-4">
+            <div>
+              <h3 className="font-extrabold text-emerald-900 text-lg flex items-center gap-2">
+                <span>📊</span> Báo Cáo Quản Trị: Ăn Chia Lợi Nhuận & Hệ Sinh Thái Theo Hãng
+              </h3>
+              <p className="text-xs text-slate-500 mt-1">
+                Phân tích đối sánh giữa Doanh thu và Lợi nhuận gộp thực tế (SellingPrice - CostPrice) giữa các thương hiệu.
+              </p>
+            </div>
+            <div className="flex items-center gap-3">
+              <div className="bg-emerald-50 border border-emerald-200 px-3 py-1.5 rounded-lg text-right">
+                <span className="text-[10px] font-bold text-emerald-700 block uppercase">Tổng Lợi Nhuận Gộp</span>
+                <span className="text-sm font-black text-emerald-600">
+                  {(brandProfitReport.totalStoreGrossProfit || 0).toLocaleString('vi-VN')}₫
+                </span>
+              </div>
+              <div className="bg-blue-50 border border-blue-200 px-3 py-1.5 rounded-lg text-right">
+                <span className="text-[10px] font-bold text-blue-700 block uppercase">Biên Lợi Nhuận Toàn Shop</span>
+                <span className="text-sm font-black text-blue-600">
+                  {brandProfitReport.overallMargin || 0}%
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-center">
+            {/* Left: Donut Charts (5 Cols) */}
+            <div className="lg:col-span-5 bg-slate-50/70 p-4 rounded-xl border border-slate-100 flex flex-col items-center">
+              <h4 className="text-xs font-black text-slate-800 uppercase tracking-wider mb-2 text-center">
+                So Sánh Tỷ Trọng Doanh Thu vs Lợi Nhuận Gộp (%)
+              </h4>
+              <div className="w-full h-[240px]">
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie
+                      data={brandProfitReport.brands || []}
+                      dataKey="profitShare"
+                      nameKey="brandName"
+                      cx="50%"
+                      cy="50%"
+                      innerRadius={50}
+                      outerRadius={85}
+                      paddingAngle={4}
+                      label={({ brandName, profitShare }) => `${brandName}: ${profitShare}%`}
+                    >
+                      {(brandProfitReport.brands || []).map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={PIE_COLORS[index % PIE_COLORS.length]} />
+                      ))}
+                    </Pie>
+                    <Tooltip formatter={(value) => `${value}%`} />
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+
+            {/* Right: Ecosystem Profit Table (7 Cols) */}
+            <div className="lg:col-span-7 overflow-x-auto">
+              <table className="w-full text-xs text-left border-collapse">
+                <thead>
+                  <tr className="border-b border-slate-200 text-slate-500 font-bold uppercase tracking-wider bg-slate-50">
+                    <th className="p-2.5 rounded-l-md">Thương hiệu</th>
+                    <th className="p-2.5 text-right">Doanh thu</th>
+                    <th className="p-2.5 text-right">Lợi nhuận gộp</th>
+                    <th className="p-2.5 text-center">Biên Lợi Nhuận</th>
+                    <th className="p-2.5 text-right rounded-r-md">Tỷ trọng LN</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100 font-medium">
+                  {(brandProfitReport.brands || []).map((b, idx) => (
+                    <tr key={idx} className="hover:bg-emerald-50/30 transition-colors">
+                      <td className="p-2.5 font-bold text-slate-800 flex items-center gap-2">
+                        <span className="w-2.5 h-2.5 rounded-full inline-block" style={{ backgroundColor: PIE_COLORS[idx % PIE_COLORS.length] }}></span>
+                        {b.brandName}
+                      </td>
+                      <td className="p-2.5 text-right font-semibold text-slate-600">
+                        {b.revenue.toLocaleString('vi-VN')}₫ <span className="text-[10px] text-slate-400">({b.revenueShare}%)</span>
+                      </td>
+                      <td className="p-2.5 text-right font-black text-emerald-600">
+                        {b.grossProfit.toLocaleString('vi-VN')}₫
+                      </td>
+                      <td className="p-2.5 text-center font-bold">
+                        <span className={`px-2 py-0.5 rounded-full text-[11px] ${b.profitMargin >= 30 ? 'bg-emerald-100 text-emerald-800' : (b.profitMargin >= 18 ? 'bg-blue-100 text-blue-800' : 'bg-amber-100 text-amber-800')}`}>
+                          {b.profitMargin}%
+                        </span>
+                      </td>
+                      <td className="p-2.5 text-right font-black text-slate-900">
+                        {b.profitShare}%
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+
+              {/* Insight Cards */}
+              <div className="mt-4 p-3 bg-emerald-50/60 border border-emerald-200 rounded-lg text-emerald-900 text-xs font-semibold space-y-1">
+                <div className="font-extrabold flex items-center gap-1 text-emerald-800">
+                  <span>💡 Insight Kinh doanh Hệ sinh thái:</span>
+                </div>
+                <p className="text-[11px] leading-relaxed text-emerald-800/90">
+                  - <strong>Apple</strong> kéo Traffic & Doanh thu cao nhưng biên lợi nhuận mỏng (chiết khấu thấp từ Hãng).<br />
+                  - <strong>OPPO / Phụ kiện Combo</strong> đóng góp tỷ trọng Lợi nhuận gộp bùng nổ nhờ chiến lược bán kèm trong giỏ hàng.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* SECTION 4: FULL CHART AT BOTTOM - TOP PRODUCTS */}
       <div className="bg-bgcard p-6 rounded-lg border border-bordercustom shadow-sm flex flex-col h-[350px]">
