@@ -1219,15 +1219,13 @@ export default function CartPage() {
             />
 
               {/* Co-Purchase Recommendation */}
-              {cartItems.length > 0 && cartItems.find(i => !i.isAddon) && (
+              {cartItems.length > 0 && cartItems.some(i => !i.isAddon) && (
                 <div className="mt-2">
                   <CoPurchaseRecommendation 
                     isCartPage={true}
-                    mainProduct={{ id: cartItems.find(i => !i.isAddon).id }} 
-                    mainProductPrice={cartItems.find(i => !i.isAddon).price}
-                    selectedVariantId={cartItems.find(i => !i.isAddon).variantId}
+                    cartItems={cartItems}
                     onAddComboToCart={(comboData) => {
-                      const mainItem = cartItems.find(i => !i.isAddon);
+                      const mainItem = cartItems.find(i => Number(i.id) === Number(comboData.parentProductId)) || cartItems.find(i => !i.isAddon);
                       const origPrice = comboData.basePrice || comboData.originalPrice || comboData.price;
                       addToCart({
                         id: comboData.variantId,
@@ -1237,7 +1235,7 @@ export default function CartPage() {
                         originalPrice: origPrice,
                         isAddon: true,
                         appliedCampaignId: comboData.campaignId,
-                        parentProductId: mainItem?.id,
+                        parentProductId: comboData.parentProductId || mainItem?.id,
                         parentCartItemId: mainItem?.cartId
                       }, comboData.quantity);
                     }}

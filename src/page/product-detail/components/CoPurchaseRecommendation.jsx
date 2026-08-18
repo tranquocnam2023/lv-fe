@@ -5,7 +5,7 @@ import AccessoryVariantModal from "./AccessoryVariantModal";
 import MuaKemGiaSocModal from "./MuaKemGiaSocModal";
 
 // Component React: CoPurchaseRecommendation - Quản lý giao diện và logic xử lý của CoPurchaseRecommendation
-const CoPurchaseRecommendation = ({ mainProduct, mainProductPrice, selectedVariantId, onAddComboToCart, isCartPage = false }) => {
+const CoPurchaseRecommendation = ({ mainProduct, mainProductPrice, selectedVariantId, onAddComboToCart, isCartPage = false, cartItems = [] }) => {
   // State: campaigns - Quản lý trạng thái và dữ liệu của campaigns trong giao diện
   const [campaigns, setCampaigns] = useState([]);
   // State: loading - Quản lý trạng thái và dữ liệu của loading trong giao diện
@@ -26,33 +26,72 @@ const CoPurchaseRecommendation = ({ mainProduct, mainProductPrice, selectedVaria
   const itemsPerPage = 4;
 
   useEffect(() => {
-    if (!mainProduct?.id) return;
-    
-    // Gọi API lấy thông tin chiến dịch mua kèm khả dụng cho sản phẩm này
-    api.get(`/PromotionCampaign/product/${mainProduct.id}`)
-      .then(res => {
-        // Cấu hình/Hằng số/Dịch vụ dữ liệu: data
-        const data = res.data || res || [];
-        setCampaigns(data);
-        setLoading(false);
+    let mainProductList = [];
+    if (isCartPage && cartItems && cartItems.length > 0) {
+      mainProductList = cartItems.filter(i => !i.isAddon);
+    } else if (mainProduct?.id) {
+      mainProductList = [mainProduct];
+    }
+
+    if (mainProductList.length === 0) {
+      setCampaigns([]);
+      setLoading(false);
+      return;
+    }
+
+    setLoading(true);
+
+    const uniqueProducts = [];
+    const seenIds = new Set();
+    mainProductList.forEach(p => {
+      const pId = p.id || p.productId;
+      if (pId && !seenIds.has(pId)) {
+        seenIds.add(pId);
+        uniqueProducts.push(p);
+      }
+    });
+
+    Promise.all(
+      uniqueProducts.map(p => {
+        const pId = p.id || p.productId;
+        return api.get(`/PromotionCampaign/product/${pId}`)
+          .then(res => {
+            const data = res.data || res || [];
+            if (Array.isArray(data)) {
+              return data.map(camp => ({
+                ...camp,
+                parentProduct: p
+              }));
+            }
+            return [];
+          })
+          .catch(err => {
+            console.error(`Lỗi khi tải thông tin combo cho sản phẩm ${pId}:`, err);
+            return [];
+          });
       })
-      .catch(err => {
-        console.error("Lỗi khi tải thông tin combo:", err);
-        setLoading(false);
-      });
-  }, [mainProduct?.id]);
+    ).then(results => {
+      const allCampaigns = results.flat();
+      setCampaigns(allCampaigns);
+      setLoading(false);
+    }).catch(err => {
+      console.error("Lỗi khi tải thông tin combo:", err);
+      setLoading(false);
+    });
+  }, [mainProduct?.id, isCartPage, JSON.stringify(cartItems?.map(i => i.id || i.productId))]);
 
   if (loading || campaigns.length === 0) return null;
 
-  // 1. Lấy tối đa 3 sản phẩm được set giảm giá riêng (explicit)
+  // 1. Lấy tất cả sản phẩm được set giảm giá riêng (explicit)
   const explicitProducts = [];
   campaigns.forEach(campData => {
     if (campData.addonProducts) {
       campData.addonProducts.forEach(item => {
-        if (item.isExplicitlyAdded && !explicitProducts.find(x => x.id === item.id)) {
+        if (item.isExplicitlyAdded && !explicitProducts.find(x => x.id === item.id && x._parentProduct?.id === campData.parentProduct?.id)) {
           explicitProducts.push({
             ...item,
-            _campaign: campData.campaign 
+            _campaign: campData.campaign,
+            _parentProduct: campData.parentProduct
           });
         }
       });
@@ -60,48 +99,50 @@ const CoPurchaseRecommendation = ({ mainProduct, mainProductPrice, selectedVaria
   });
 
   // Hàm thực thi logic: mixedItems
-  const mixedItems = explicitProducts.slice(0, 3).map(p => ({ type: 'product', data: p }));
+  const mixedItems = explicitProducts.map(p => ({ 
+    type: 'product', 
+    data: p,
+    parentProduct: p._parentProduct
+  }));
 
-  // 2. Lấy danh sách các Card Chiến dịch (chỉ các chiến dịch có chứa ít nhất 1 sản phẩm KHÔNG phải set riêng)
+  // 2. Lấy danh sách các Card Chiến dịch
   const displayCampaigns = campaigns.filter(campData => 
     campData.addonProducts && campData.addonProducts.some(p => !p.isExplicitlyAdded)
   );
 
   displayCampaigns.forEach((campData, index) => {
-    // Hàm thực thi logic: repProduct
     const repProduct = campData.addonProducts.find(p => !p.isExplicitlyAdded) || campData.addonProducts[0];
     mixedItems.push({
       type: 'campaign',
       data: campData.campaign,
       image: repProduct?.thumbnailImage || repProduct?.image || repProduct?.mainImage || repProduct?.imageUrl,
-      tabIndex: index + 1
+      parentProduct: campData.parentProduct,
+      tabIndex: index + (explicitProducts.length > 0 ? 1 : 0)
     });
   });
 
   // Khai báo biến/hằng số: displaySource - Dùng trong logic xử lý của component
   const displaySource = mixedItems;
 
-  // Ở phần màn hình chính (gợi ý), lấy tối đa 2 trang
-  const maxPages = 2;
-  // Khai báo biến/hằng số: totalPages - Dùng trong logic xử lý của component
-  const totalPages = Math.min(maxPages, Math.ceil(displaySource.length / itemsPerPage));
+  // Tính tổng số trang để cho phép chuyển hết tất cả các combo
+  const totalPages = Math.ceil(displaySource.length / itemsPerPage);
   // Khai báo biến/hằng số: displayedAccessories - Dùng trong logic xử lý của component
   const displayedAccessories = displaySource.slice(currentPage * itemsPerPage, (currentPage + 1) * itemsPerPage);
 
   // Hàm xử lý logic/sự kiện: getDynamicPrice
   const getDynamicPrice = (item) => {
-    // Khai báo biến/hằng số: basePrice - Dùng trong logic xử lý của component
     const basePrice = item.basePrice;
     let comboPrice = basePrice;
-    // Khai báo biến/hằng số: campaignToApply - Dùng trong logic xử lý của component
-    const campaignToApply = item._campaign || campaigns[0].campaign;
+    const campaignToApply = item._campaign || campaigns[0]?.campaign;
     
-    if (campaignToApply.discountType === 'Percentage') {
-      comboPrice = basePrice * (1 - campaignToApply.discountValue / 100);
-    } else if (campaignToApply.discountType === 'FixedAmount') {
-      comboPrice = Math.max(0, basePrice - campaignToApply.discountValue);
-    } else if (campaignToApply.discountType === 'FixedPrice') {
-      comboPrice = campaignToApply.discountValue;
+    if (campaignToApply) {
+      if (campaignToApply.discountType === 'Percentage') {
+        comboPrice = basePrice * (1 - campaignToApply.discountValue / 100);
+      } else if (campaignToApply.discountType === 'FixedAmount') {
+        comboPrice = Math.max(0, basePrice - campaignToApply.discountValue);
+      } else if (campaignToApply.discountType === 'FixedPrice') {
+        comboPrice = campaignToApply.discountValue;
+      }
     }
     return { basePrice, comboPrice, campaignToApply };
   };
@@ -119,7 +160,7 @@ const CoPurchaseRecommendation = ({ mainProduct, mainProductPrice, selectedVaria
         </div>
         <button 
           onClick={() => { setBigModalTab(0); setBigModalOpen(true); }}
-          className="text-sm font-bold text-blue-600 hover:text-blue-800 transition-colors shrink-0 whitespace-nowrap bg-blue-50 hover:bg-blue-100 px-4 py-2 rounded-xl flex items-center gap-1"
+          className="text-sm font-bold text-blue-600 hover:text-blue-800 transition-colors shrink-0 whitespace-nowrap bg-blue-50 hover:bg-blue-100 px-4 py-2 rounded-xl flex items-center gap-1 cursor-pointer"
         >
           Xem tất cả ưu đãi <ChevronRight size={16} />
         </button>
@@ -128,7 +169,6 @@ const CoPurchaseRecommendation = ({ mainProduct, mainProductPrice, selectedVaria
       <div className="relative group px-1">
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           {Array.from({ length: itemsPerPage }).map((_, idx) => {
-            // Khai báo biến/hằng số: item - Dùng trong logic xử lý của component
             const item = displayedAccessories[idx];
             
             if (!item) {
@@ -141,9 +181,7 @@ const CoPurchaseRecommendation = ({ mainProduct, mainProductPrice, selectedVaria
             }
 
             if (item.type === 'product') {
-              // Khai báo biến/hằng số: product - Dùng trong logic xử lý của component
               const product = item.data;
-              // Khai báo giải nén các thuộc tính/hàm (basePrice, comboPrice, campaignToApply) từ Hook / Context / Props
               const { basePrice, comboPrice, campaignToApply } = getDynamicPrice(product);
               
               let discountText = '';
@@ -152,7 +190,7 @@ const CoPurchaseRecommendation = ({ mainProduct, mainProductPrice, selectedVaria
               else discountText = `Chỉ còn ${campaignToApply.discountValue.toLocaleString('vi-VN')}đ`;
 
               return (
-                <div key={`prod-${product.id}`} className="flex bg-white border border-gray-200 rounded-2xl overflow-hidden hover:border-blue-400 hover:shadow-md transition-all duration-300 p-4 gap-4 items-center">
+                <div key={`prod-${product.id}-${product._parentProduct?.id || 'default'}`} className="flex bg-white border border-gray-200 rounded-2xl overflow-hidden hover:border-blue-400 hover:shadow-md transition-all duration-300 p-4 gap-4 items-center">
                   <div className="w-20 h-20 shrink-0 flex items-center justify-center bg-transparent rounded-xl p-1">
                      <img 
                        src={product.thumbnailImage || product.image || product.mainImage || product.imageUrl || '/placeholder-image.png'} 
@@ -162,17 +200,24 @@ const CoPurchaseRecommendation = ({ mainProduct, mainProductPrice, selectedVaria
                   </div>
                   
                   <div className="flex-1 min-w-0 flex flex-col justify-between h-full">
-                    <a 
-                      href={`/product/${product.id}`} 
-                      target="_blank" 
-                      rel="noreferrer" 
-                      className="text-[13px] font-bold text-gray-800 line-clamp-2 hover:text-blue-600 transition-colors mb-2 block"
-                      title={product.name}
-                    >
-                      {product.name}
-                    </a>
+                    <div>
+                      <a 
+                        href={`/product/${product.id}`} 
+                        target="_blank" 
+                        rel="noreferrer" 
+                        className="text-[13px] font-bold text-gray-800 line-clamp-2 hover:text-blue-600 transition-colors block"
+                        title={product.name}
+                      >
+                        {product.name}
+                      </a>
+                      {product._parentProduct?.name && (
+                        <div className="text-[10px] text-gray-400 font-semibold truncate mt-0.5">
+                          Theo SP: <span className="text-gray-600 font-bold">{product._parentProduct.name}</span>
+                        </div>
+                      )}
+                    </div>
                     
-                    <div className="flex flex-col items-start gap-1 mt-auto">
+                    <div className="flex flex-col items-start gap-1 mt-auto pt-2">
                       <div className="flex items-baseline gap-2">
                         <span className="text-base font-black text-red-600">{comboPrice.toLocaleString()}đ</span>
                         {basePrice > comboPrice && (
@@ -185,7 +230,7 @@ const CoPurchaseRecommendation = ({ mainProduct, mainProductPrice, selectedVaria
                         </span>
                         <button 
                           onClick={() => { setSelectedAccessory(product); setModalOpen(true); }}
-                          className="bg-blue-50 hover:bg-blue-600 text-blue-600 hover:text-white px-3 py-1.5 rounded-full text-xs font-black transition-colors flex items-center justify-center gap-1 shrink-0 ml-1"
+                          className="bg-blue-50 hover:bg-blue-600 text-blue-600 hover:text-white px-3 py-1.5 rounded-full text-xs font-black transition-colors flex items-center justify-center gap-1 shrink-0 ml-1 cursor-pointer"
                         >
                           Chọn <Plus size={14} strokeWidth={3} />
                         </button>
@@ -195,7 +240,6 @@ const CoPurchaseRecommendation = ({ mainProduct, mainProductPrice, selectedVaria
                 </div>
               );
             } else {
-              // Render Campaign Card
               const campaign = item.data;
               let discountText = '';
               if (campaign.discountType === 'Percentage') discountText = `Giảm thêm ${campaign.discountValue}%`;
@@ -203,7 +247,7 @@ const CoPurchaseRecommendation = ({ mainProduct, mainProductPrice, selectedVaria
               else discountText = `GIÁ SỐC`;
 
               return (
-                <div key={`camp-${campaign.id}`} className="flex bg-white border border-gray-200 rounded-2xl overflow-hidden hover:border-red-400 hover:shadow-md transition-all duration-300 p-4 gap-4 items-center">
+                <div key={`camp-${campaign.id}-${item.parentProduct?.id || 'default'}`} className="flex bg-white border border-gray-200 rounded-2xl overflow-hidden hover:border-red-400 hover:shadow-md transition-all duration-300 p-4 gap-4 items-center">
                   <div className="w-20 h-20 shrink-0 flex items-center justify-center bg-transparent rounded-xl p-1">
                      <img 
                        src={item.image || '/placeholder-image.png'} 
@@ -213,17 +257,24 @@ const CoPurchaseRecommendation = ({ mainProduct, mainProductPrice, selectedVaria
                   </div>
                   
                   <div className="flex-1 min-w-0 flex flex-col justify-between h-full py-1">
-                    <div className="text-[13px] font-bold text-gray-800 line-clamp-2 mb-2" title={campaign.name}>
-                      {campaign.name}
+                    <div>
+                      <div className="text-[13px] font-bold text-gray-800 line-clamp-2" title={campaign.name}>
+                        {campaign.name}
+                      </div>
+                      {item.parentProduct?.name && (
+                        <div className="text-[10px] text-gray-400 font-semibold truncate mt-0.5">
+                          Theo SP: <span className="text-gray-600 font-bold">{item.parentProduct.name}</span>
+                        </div>
+                      )}
                     </div>
                     
-                    <div className="flex justify-between items-center w-full mt-auto">
+                    <div className="flex justify-between items-center w-full mt-auto pt-2">
                       <span className="text-[12px] font-black uppercase tracking-wider text-red-600">
                         {discountText}
                       </span>
                       <button 
                         onClick={() => { setBigModalTab(item.tabIndex); setBigModalOpen(true); }}
-                        className="bg-blue-50 hover:bg-blue-600 text-blue-600 hover:text-white px-3 py-1.5 rounded-full text-xs font-black transition-colors flex items-center justify-center gap-1 shrink-0 ml-1"
+                        className="bg-blue-50 hover:bg-blue-600 text-blue-600 hover:text-white px-3 py-1.5 rounded-full text-xs font-black transition-colors flex items-center justify-center gap-1 shrink-0 ml-1 cursor-pointer"
                       >
                         Chọn thêm <Plus size={14} strokeWidth={3} />
                       </button>
@@ -240,14 +291,14 @@ const CoPurchaseRecommendation = ({ mainProduct, mainProductPrice, selectedVaria
             <button 
               onClick={() => setCurrentPage(p => Math.max(0, p - 1))}
               disabled={currentPage === 0}
-              className="absolute top-1/2 left-0 -translate-y-1/2 -translate-x-3 w-8 h-8 flex items-center justify-center bg-white border border-gray-200 shadow-md rounded-full text-gray-600 hover:text-blue-600 hover:border-blue-300 disabled:opacity-0 transition-all opacity-0 group-hover:opacity-100 z-10"
+              className="absolute top-1/2 left-0 -translate-y-1/2 -translate-x-3 w-8 h-8 flex items-center justify-center bg-white border border-gray-200 shadow-md rounded-full text-gray-600 hover:text-blue-600 hover:border-blue-300 disabled:opacity-0 transition-all opacity-0 group-hover:opacity-100 z-10 cursor-pointer"
             >
               <ChevronLeft size={18} strokeWidth={2.5} />
             </button>
             <button 
               onClick={() => setCurrentPage(p => Math.min(totalPages - 1, p + 1))}
               disabled={currentPage === totalPages - 1}
-              className="absolute top-1/2 right-0 -translate-y-1/2 translate-x-3 w-8 h-8 flex items-center justify-center bg-white border border-gray-200 shadow-md rounded-full text-gray-600 hover:text-blue-600 hover:border-blue-300 disabled:opacity-0 transition-all opacity-0 group-hover:opacity-100 z-10"
+              className="absolute top-1/2 right-0 -translate-y-1/2 translate-x-3 w-8 h-8 flex items-center justify-center bg-white border border-gray-200 shadow-md rounded-full text-gray-600 hover:text-blue-600 hover:border-blue-300 disabled:opacity-0 transition-all opacity-0 group-hover:opacity-100 z-10 cursor-pointer"
             >
               <ChevronRight size={18} strokeWidth={2.5} />
             </button>
@@ -261,7 +312,7 @@ const CoPurchaseRecommendation = ({ mainProduct, mainProductPrice, selectedVaria
             <button 
               key={idx}
               onClick={() => setCurrentPage(idx)}
-              className={`h-1.5 rounded-full transition-all duration-300 ${idx === currentPage ? 'w-4 bg-red-600' : 'w-1.5 bg-gray-200 hover:bg-gray-400'}`}
+              className={`h-1.5 rounded-full transition-all duration-300 cursor-pointer ${idx === currentPage ? 'w-4 bg-red-600' : 'w-1.5 bg-gray-200 hover:bg-gray-400'}`}
             />
           ))}
         </div>
@@ -276,7 +327,7 @@ const CoPurchaseRecommendation = ({ mainProduct, mainProductPrice, selectedVaria
           comboPrice={getDynamicPrice(selectedAccessory).comboPrice}
           campaignId={getDynamicPrice(selectedAccessory).campaignToApply?.id}
           maxQuantityAllowed={getDynamicPrice(selectedAccessory).campaignToApply?.maxQuantityAllowed}
-          parentProductId={mainProduct?.id}
+          parentProductId={selectedAccessory._parentProduct?.id || mainProduct?.id}
         />
       )}
 

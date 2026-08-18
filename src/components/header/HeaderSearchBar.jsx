@@ -1,5 +1,5 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 
 export default function HeaderSearchBar({
   searchContainerRef,
@@ -9,26 +9,44 @@ export default function HeaderSearchBar({
   handleKeyDown,
   handleSearchSubmit,
   shouldShowDropdown,
-  filteredProducts
+  filteredProducts,
+  selectedIndex = -1,
+  setSelectedIndex
 }) {
+  const navigate = useNavigate();
+
+  const handleProductClick = (product, e) => {
+    e?.preventDefault();
+    setShowDropdown(false);
+    setSearchQuery('');
+    if (setSelectedIndex) setSelectedIndex(-1);
+    
+    const target = product.slug || product.Slug || product.id || product.Id;
+    if (target) {
+      navigate(`/product/${target}`);
+    }
+  };
+
   return (
     <div ref={searchContainerRef} className="flex-1 max-w-xl mx-4 min-w-[200px] relative">
       <div className="flex items-center w-full h-10 rounded bg-white overflow-hidden shadow-inner">
         <input 
           type="text" 
           placeholder="Bạn tìm gì..." 
-          className="w-full h-full text-gray-800 px-3 outline-none font-medium"
+          className="w-full h-full text-gray-800 px-3 outline-none font-medium text-sm"
           value={searchQuery}
           onChange={(e) => {
             setSearchQuery(e.target.value);
             setShowDropdown(true);
+            if (setSelectedIndex) setSelectedIndex(-1);
           }}
           onFocus={() => setShowDropdown(true)}
           onKeyDown={handleKeyDown}
         />
         <button 
           onClick={handleSearchSubmit}
-          className="h-full px-4 text-gray-600 bg-white hover:bg-gray-100 transition cursor-pointer border-0"
+          className="h-full px-4 text-gray-600 bg-white hover:bg-gray-100 transition cursor-pointer border-0 flex items-center justify-center"
+          type="button"
         >
           <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5 text-gray-500">
             <path strokeLinecap="round" strokeLinejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" />
@@ -41,25 +59,32 @@ export default function HeaderSearchBar({
         <div className="absolute left-0 right-0 top-full mt-1.5 bg-white border border-gray-200 rounded-md shadow-2xl z-50 overflow-hidden text-gray-800 animate-in fade-in slide-in-from-top-2 duration-150">
           {filteredProducts.length > 0 ? (
             <div>
-              <div className="px-4 py-2 bg-gray-50 text-[11px] font-bold text-gray-400 uppercase tracking-wider border-b border-gray-100">
-                Sản phẩm gợi ý ({filteredProducts.length})
+              <div className="px-4 py-2 bg-gray-50 text-[11px] font-bold text-gray-400 uppercase tracking-wider border-b border-gray-100 flex justify-between items-center select-none">
+                <span>Sản phẩm gợi ý ({filteredProducts.length})</span>
+                <span className="text-[10px] text-gray-400 font-normal lowercase">Dùng ↑ ↓ để chọn</span>
               </div>
               <div className="max-h-[300px] overflow-y-auto no-scrollbar">
-                {filteredProducts.slice(0, 5).map((product) => {
+                {filteredProducts.slice(0, 5).map((product, index) => {
                   let finalDiscount = product.discount;
                   if (!finalDiscount && product.originalPrice && product.originalPrice > product.price) {
                     finalDiscount = Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100);
                   }
                   
+                  const isSelected = index === selectedIndex;
+                  const productId = product.id || product.Id;
+                  const productSlug = product.slug || product.Slug || productId;
+                  
                   return (
                     <Link
-                      key={product.id}
-                      to={`/product/${product.slug || product.id}`}
-                      onClick={() => {
-                        setShowDropdown(false);
-                        setSearchQuery('');
-                      }}
-                      className="flex items-center gap-3 px-4 py-2.5 hover:bg-gray-50 border-b border-gray-100 last:border-0 transition-colors cursor-pointer group"
+                      key={productId || index}
+                      to={`/product/${productSlug}`}
+                      onClick={(e) => handleProductClick(product, e)}
+                      onMouseEnter={() => setSelectedIndex && setSelectedIndex(index)}
+                      className={`flex items-center gap-3 px-4 py-2.5 border-b border-gray-100 last:border-0 transition-all cursor-pointer group ${
+                        isSelected 
+                          ? 'bg-blue-50/90 text-primary border-l-4 border-l-blue-600 pl-3 font-semibold' 
+                          : 'hover:bg-gray-50'
+                      }`}
                     >
                       <div className="w-12 h-12 shrink-0 overflow-hidden flex items-center justify-center bg-white rounded border border-gray-100 p-1">
                         {product.image ? (
@@ -78,7 +103,7 @@ export default function HeaderSearchBar({
                       </div>
                       
                       <div className="flex-1 min-w-0">
-                        <h4 className="text-xs font-bold text-gray-800 group-hover:text-primary transition-colors truncate">
+                        <h4 className={`text-xs font-bold transition-colors truncate ${isSelected ? 'text-blue-600' : 'text-gray-800 group-hover:text-primary'}`}>
                           {product.name}
                         </h4>
                         <div className="flex items-center gap-2 mt-1">
@@ -107,6 +132,7 @@ export default function HeaderSearchBar({
                 <button
                   onClick={handleSearchSubmit}
                   className="w-full text-center block py-2.5 bg-gray-50 hover:bg-gray-100 text-xs font-black text-primary border-t border-gray-100 cursor-pointer transition-all border-0"
+                  type="button"
                 >
                   Xem tất cả {filteredProducts.length} kết quả cho "{searchQuery}"
                 </button>
