@@ -3,9 +3,10 @@ import { Plus, ChevronLeft, ChevronRight } from "lucide-react";
 import api from "../../../services/api";
 import AccessoryVariantModal from "./AccessoryVariantModal";
 import MuaKemGiaSocModal from "./MuaKemGiaSocModal";
+import { calcComboPrice } from "../../../utils/comboPrice";
 
 // Component React: CoPurchaseRecommendation - Quản lý giao diện và logic xử lý của CoPurchaseRecommendation
-const CoPurchaseRecommendation = ({ mainProduct, mainProductPrice, selectedVariantId, onAddComboToCart, isCartPage = false, cartItems = [] }) => {
+const CoPurchaseRecommendation = ({ mainProduct, isCartPage = false, cartItems = [] }) => {
   // State: campaigns - Quản lý trạng thái và dữ liệu của campaigns trong giao diện
   const [campaigns, setCampaigns] = useState([]);
   // State: loading - Quản lý trạng thái và dữ liệu của loading trong giao diện
@@ -136,13 +137,7 @@ const CoPurchaseRecommendation = ({ mainProduct, mainProductPrice, selectedVaria
     const campaignToApply = item._campaign || campaigns[0]?.campaign;
     
     if (campaignToApply) {
-      if (campaignToApply.discountType === 'Percentage') {
-        comboPrice = basePrice * (1 - campaignToApply.discountValue / 100);
-      } else if (campaignToApply.discountType === 'FixedAmount') {
-        comboPrice = Math.max(0, basePrice - campaignToApply.discountValue);
-      } else if (campaignToApply.discountType === 'FixedPrice') {
-        comboPrice = campaignToApply.discountValue;
-      }
+      comboPrice = calcComboPrice(basePrice, campaignToApply);
     }
     return { basePrice, comboPrice, campaignToApply };
   };
@@ -185,7 +180,8 @@ const CoPurchaseRecommendation = ({ mainProduct, mainProductPrice, selectedVaria
               const { basePrice, comboPrice, campaignToApply } = getDynamicPrice(product);
               
               let discountText = '';
-              if (campaignToApply.discountType === 'Percentage') discountText = `Giảm thêm ${campaignToApply.discountValue}%`;
+              // Tính % giảm thực tế trên giá đã áp trần MaxDiscountAmount để badge không lệch với giá hiển thị
+              if (campaignToApply.discountType === 'Percentage') discountText = `Giảm thêm ${basePrice > 0 ? Math.round((basePrice - comboPrice) / basePrice * 100) : campaignToApply.discountValue}%`;
               else if (campaignToApply.discountType === 'FixedAmount') discountText = `Giảm thêm ${campaignToApply.discountValue >= 1000 ? (campaignToApply.discountValue / 1000) + 'K' : campaignToApply.discountValue + 'đ'}`;
               else discountText = `Chỉ còn ${campaignToApply.discountValue.toLocaleString('vi-VN')}đ`;
 

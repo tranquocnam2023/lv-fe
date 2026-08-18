@@ -136,6 +136,11 @@ export default function AdminOrders() {
                       ? (order.statusId === 4 ? 'Đã thanh toán' : 'Chờ thanh toán')
                       : (order.statusId === 2 || order.statusId === 3 || order.statusId === 4 ? 'Đã thanh toán' : 'Chờ thanh toán'),
                 amount: order.totalPrice,
+                // Bóc tách tiền do back-end trả về (OrderResponse) - KHÔNG suy đoán ở phía giao diện nữa
+                subTotal: order.subTotal ?? 0,
+                promoDiscount: order.discountApplied ?? 0,
+                comboDiscount: order.totalComboDiscount ?? 0,
+                originalItemRevenue: order.totalOriginalItemRevenue ?? 0,
                 // LỢI NHUẬN: Tiền bán - Tiền gốc (giá nhập kho). grossProfit chỉ khác 0 khi đơn ĐÃ GIAO THÀNH CÔNG,
                 // estimatedProfit là số dự kiến để tham khảo với các đơn chưa hoàn tất.
                 grossProfit: order.grossProfit || 0,
@@ -920,6 +925,11 @@ export default function AdminOrders() {
                         ? (order.statusId === 4 ? 'Đã thanh toán' : 'Chờ thanh toán')
                         : 'Đã thanh toán',
                   amount: order.totalPrice,
+                // Bóc tách tiền do back-end trả về (OrderResponse) - KHÔNG suy đoán ở phía giao diện nữa
+                subTotal: order.subTotal ?? 0,
+                promoDiscount: order.discountApplied ?? 0,
+                comboDiscount: order.totalComboDiscount ?? 0,
+                originalItemRevenue: order.totalOriginalItemRevenue ?? 0,
                   status: statusMap[order.statusId] || 'pending',
                   paymentMethod: order.paymentMethod || 'cod',
                   items: order.items || [],

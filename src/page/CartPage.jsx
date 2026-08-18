@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { useLoading } from '../context/LoadingContext';
 import { Link, useNavigate } from 'react-router-dom';
-import { useCart } from '../context/CartContext';
+import { useCart } from '../context/CartContextInstance';
 import { shippingInfoService } from '../services/shippingInfoService';
 import { orderService } from '../services/orderService';
 import api from '../services/api';

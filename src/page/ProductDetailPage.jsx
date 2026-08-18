@@ -3,7 +3,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import DOMPurify from 'dompurify';
 import Breadcrumb from '../components/Breadcrumb';
-import { useCart } from '../context/CartContext';
+import { useCart } from '../context/CartContextInstance';
 import { productService } from '../services/productService';
 import { reviewService } from '../services/reviewService';
 import { categoryService } from '../services/categoryService';

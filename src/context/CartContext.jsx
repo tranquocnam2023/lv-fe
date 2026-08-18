@@ -1,21 +1,67 @@
 //Nguồn lưu trữ dữ liệu duy nhất của giỏ hàng 
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import api from '../services/api';
 import { Check } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { calcComboPrice } from '../utils/comboPrice';
+import { CartContext } from './CartContextInstance';
 
-// Khởi tạo/Sử dụng Context (CartContext) để chia sẻ dữ liệu toàn cục
-const CartContext = createContext();
-
-// Custom Hook: useCart - Quản lý logic tái sử dụng useCart
-export const useCart = () => {
-  // Khởi tạo/Sử dụng Context (context) để chia sẻ dữ liệu toàn cục
-  const context = useContext(CartContext);
-  if (!context) {
-    throw new Error('useCart must be used within a CartProvider');
-  }
-  return context;
+// Gộp các dòng hàng trùng cartId (xảy ra khi phụ kiện mua kèm bị hạ cấp về hàng mua lẻ)
+const mergeByCartId = (list) => {
+  const merged = [];
+  list.forEach(item => {
+    const idx = merged.findIndex(i => i.cartId === item.cartId);
+    if (idx >= 0) {
+      merged[idx] = { ...merged[idx], quantity: merged[idx].quantity + item.quantity };
+    } else {
+      merged.push(item);
+    }
+  });
+  return merged;
 };
+
+// Sinh cartId của một sản phẩm mua lẻ (không phải hàng mua kèm)
+const buildNormalCartId = (item) =>
+  `${item.id}-${item.selectedStorage || ''}-${item.selectedColor || ''}${item.selectedWarranty ? `-${item.selectedWarranty.id}` : ''}`;
+
+// Phụ kiện mua kèm bị mất sản phẩm chính -> khôi phục về giá bán lẻ.
+// Đây là phép biến đổi THUẦN trên danh sách giỏ hàng nên được chạy ngay trong hàm cập nhật
+// state, thay vì trong useEffect. Nhờ vậy không có render thừa và giỏ hàng không bao giờ
+// hiển thị giá combo trong khoảnh khắc sản phẩm chính vừa bị xoá.
+const revertOrphanAddons = (list) => {
+  const arr = Array.isArray(list) ? list : [];
+  const mainProducts = arr.filter(item => !item.isAddon);
+
+  let needsRevert = false;
+  const reverted = arr.map((item) => {
+    if (!item.isAddon) return item;
+
+    let isValidAddon = false;
+    if (mainProducts.length > 0) {
+      isValidAddon = item.parentProductId
+        ? mainProducts.some(m => Number(m.id) === Number(item.parentProductId))
+        : true;
+    }
+    if (isValidAddon) return item;
+
+    needsRevert = true;
+    const normalPrice = item.originalBasePrice || item.originalPrice || item.price;
+    return {
+      ...item,
+      isAddon: false,
+      price: normalPrice,
+      originalBasePrice: item.originalBasePrice || item.originalPrice || normalPrice,
+      originalPrice: item.originalPrice || item.originalBasePrice || normalPrice,
+      appliedCampaignId: null,
+      parentProductId: null,
+      parentCartItemId: null,
+      cartId: buildNormalCartId(item)
+    };
+  });
+
+  return needsRevert ? mergeByCartId(reverted) : arr;
+};
+
 //Lưu dữ liệu vào LocalStorage
 export const CartProvider = ({ children }) => {
   // State: cartItems - Quản lý trạng thái và dữ liệu của cartItems trong giao diện
@@ -26,14 +72,24 @@ export const CartProvider = ({ children }) => {
       if (!savedCart) return [];
       // Khai báo biến/hằng số: parsed - Dùng trong logic xử lý của component
       const parsed = JSON.parse(savedCart);
-      if (Array.isArray(parsed)) return parsed;
-      if (parsed && Array.isArray(parsed.items)) return parsed.items;
-      if (parsed && Array.isArray(parsed.data)) return parsed.data;
-      return [];
+      let restored = [];
+      if (Array.isArray(parsed)) restored = parsed;
+      else if (parsed && Array.isArray(parsed.items)) restored = parsed.items;
+      else if (parsed && Array.isArray(parsed.data)) restored = parsed.data;
+      // Giỏ hàng cũ trong localStorage có thể đã mất sản phẩm chính -> chuẩn hoá ngay khi khôi phục
+      return revertOrphanAddons(restored);
     } catch {
       return [];
     }
   });
+  // Mọi thay đổi giỏ hàng đều đi qua đây để phụ kiện mua kèm không bao giờ "mồ côi" sản phẩm chính
+  const setCart = (updater) => {
+    setCartItems((prev) => {
+      const next = typeof updater === 'function' ? updater(prev) : updater;
+      return revertOrphanAddons(next);
+    });
+  };
+
   // State: toast - Quản lý trạng thái và dữ liệu của toast trong giao diện
   const [toast, setToast] = useState(null);
 
@@ -51,65 +107,20 @@ export const CartProvider = ({ children }) => {
   };
 
   // Khai báo biến/hằng số: safeCartItems - Dùng trong logic xử lý của component
-  const safeCartItems = Array.isArray(cartItems) ? cartItems : [];
+  const safeCartItems = useMemo(() => (Array.isArray(cartItems) ? cartItems : []), [cartItems]);
 
+  // Effect này CHỈ còn 2 việc: đồng bộ giỏ hàng xuống localStorage và soát lại giá combo
+  // (gọi API nên bắt buộc phải bất đồng bộ). Việc hạ cấp phụ kiện mồ côi đã chuyển vào
+  // revertOrphanAddons, chạy ngay lúc cập nhật state.
   useEffect(() => {
     const mainProducts = safeCartItems.filter(item => !item.isAddon);
     const hasAddons = safeCartItems.some(item => item.isAddon);
 
-    // 1. Kiểm tra nếu sản phẩm phụ bị mất sản phẩm chính -> Khôi phục về giá gốc mua lẻ
-    let needsRevert = false;
-    const updatedCartItems = safeCartItems.map((item) => {
-      if (!item.isAddon) return item;
-
-      let isValidAddon = false;
-      if (mainProducts.length > 0) {
-        if (item.parentProductId) {
-          isValidAddon = mainProducts.some(m => Number(m.id) === Number(item.parentProductId));
-        } else {
-          isValidAddon = true;
-        }
-      }
-
-      if (!isValidAddon) {
-        needsRevert = true;
-        const normalPrice = item.originalBasePrice || item.originalPrice || item.price;
-        const normalCartId = `${item.id}-${item.selectedStorage || ''}-${item.selectedColor || ''}${item.selectedWarranty ? `-${item.selectedWarranty.id}` : ''}`;
-        return {
-          ...item,
-          isAddon: false,
-          price: normalPrice,
-          originalBasePrice: item.originalBasePrice || item.originalPrice || normalPrice,
-          originalPrice: item.originalPrice || item.originalBasePrice || normalPrice,
-          appliedCampaignId: null,
-          parentProductId: null,
-          parentCartItemId: null,
-          cartId: normalCartId
-        };
-      }
-      return item;
-    });
-
-    if (needsRevert) {
-      const mergedItems = [];
-      updatedCartItems.forEach(item => {
-        const existingIdx = mergedItems.findIndex(i => i.cartId === item.cartId);
-        if (existingIdx >= 0) {
-          mergedItems[existingIdx] = {
-            ...mergedItems[existingIdx],
-            quantity: mergedItems[existingIdx].quantity + item.quantity
-          };
-        } else {
-          mergedItems.push(item);
-        }
-      });
-      setCartItems(mergedItems);
-      return;
-    }
-
     // 2. Kiểm tra nếu thêm lại sản phẩm chính -> Tự động chuyển các phụ kiện độc lập phù hợp thành sản phẩm mua kèm giảm giá
     const regularItemsToUpgrade = safeCartItems.filter(item => !item.isAddon);
-    if (mainProducts.length > 0 && regularItemsToUpgrade.length > 1) {
+    // Ngoài việc nâng cấp phụ kiện lẻ thành hàng mua kèm, luôn chạy lại khi giỏ đang có hàng mua kèm
+    // để soát lại giá combo theo cấu hình chiến dịch mới nhất (giỏ lưu trong localStorage có thể giữ giá cũ).
+    if (mainProducts.length > 0 && (regularItemsToUpgrade.length > 1 || hasAddons)) {
       Promise.all(
         mainProducts.map(mainProd =>
           api.get(`/PromotionCampaign/product/${mainProd.id}`)
@@ -137,14 +148,7 @@ export const CartProvider = ({ children }) => {
                 const targetItem = currentList[matchIndex];
                 const origPrice = targetItem.originalBasePrice || targetItem.originalPrice || targetItem.price;
 
-                let comboPrice = origPrice;
-                if (campaign.discountType === 'Percentage') {
-                  comboPrice = origPrice * (1 - campaign.discountValue / 100);
-                } else if (campaign.discountType === 'FixedAmount') {
-                  comboPrice = Math.max(0, origPrice - campaign.discountValue);
-                } else if (campaign.discountType === 'FixedPrice') {
-                  comboPrice = campaign.discountValue;
-                }
+                const comboPrice = calcComboPrice(origPrice, campaign);
 
                 const addonCartId = `addon-${campaign.id}-${targetItem.id}-${targetItem.selectedStorage || ''}-${targetItem.selectedColor || ''}`;
 
@@ -166,6 +170,31 @@ export const CartProvider = ({ children }) => {
           });
         });
 
+        // Soát lại giá của các phụ kiện ĐANG là hàng mua kèm.
+        // Giỏ hàng nằm trong localStorage nên có thể còn giữ giá tính theo công thức cũ
+        // (ví dụ chưa áp trần MaxDiscountAmount) -> phải tính lại theo đúng cấu hình chiến dịch,
+        // nếu không tổng tiền ở giỏ sẽ thấp hơn số tiền back-end thực thu.
+        const campaignById = new Map();
+        results.forEach(({ campaigns }) => {
+          (campaigns || []).forEach(campData => {
+            if (campData?.campaign) campaignById.set(Number(campData.campaign.id), campData.campaign);
+          });
+        });
+
+        currentList = currentList.map(item => {
+          if (!item.isAddon || !item.appliedCampaignId) return item;
+
+          const campaign = campaignById.get(Number(item.appliedCampaignId));
+          if (!campaign) return item;
+
+          const origPrice = item.originalBasePrice || item.originalPrice || item.price;
+          const correctedPrice = calcComboPrice(origPrice, campaign);
+          if (correctedPrice === item.price) return item;
+
+          itemsUpgraded = true;
+          return { ...item, price: correctedPrice, originalBasePrice: origPrice, originalPrice: origPrice };
+        });
+
         if (itemsUpgraded) {
           const mergedList = [];
           currentList.forEach(item => {
@@ -179,7 +208,7 @@ export const CartProvider = ({ children }) => {
               mergedList.push(item);
             }
           });
-          setCartItems(mergedList);
+          setCart(mergedList);
         }
       });
     }
@@ -201,7 +230,7 @@ export const CartProvider = ({ children }) => {
     let isOverStock = false;
     let finalAddedQty = quantity;
 
-    setCartItems((prevItems) => {
+    setCart((prevItems) => {
       const currentArr = Array.isArray(prevItems) ? prevItems : [];
       const cartId = product.isAddon && product.appliedCampaignId
         ? `addon-${product.appliedCampaignId}-${product.id}-${product.selectedStorage || ''}-${product.selectedColor || ''}`
@@ -267,7 +296,7 @@ export const CartProvider = ({ children }) => {
 
   // Hàm thực thi logic: removeFromCart
   const removeFromCart = (cartId) => {
-    setCartItems((prevItems) => {
+    setCart((prevItems) => {
       const currentArr = Array.isArray(prevItems) ? prevItems : [];
       return currentArr.filter((item) => item.cartId !== cartId);
     });
@@ -276,7 +305,7 @@ export const CartProvider = ({ children }) => {
   // Hàm thực thi logic: updateQuantity
   const updateQuantity = (cartId, quantity) => {
     if (quantity < 1) return;
-    setCartItems((prevItems) => {
+    setCart((prevItems) => {
       const currentArr = Array.isArray(prevItems) ? prevItems : [];
       return currentArr.map((item) => {
         if (item.cartId === cartId) {
@@ -305,7 +334,7 @@ export const CartProvider = ({ children }) => {
 
   // Hàm thực thi logic: clearCart
   const clearCart = () => {
-    setCartItems([]);
+    setCart([]);
   };
 
   // logic tính tổng tiền trong giỏ (bao gồm cả giá gói bảo hành đi kèm)
@@ -319,7 +348,7 @@ export const CartProvider = ({ children }) => {
 
   // Hàm chủ động làm mới/cập nhật combo giỏ hàng
   const refreshCartCombos = () => {
-    setCartItems(prev => [...prev]);
+    setCart(prev => [...prev]);
   };
 
   return (

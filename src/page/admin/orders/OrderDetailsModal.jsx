@@ -41,26 +41,34 @@ export default function OrderDetailsModal({
   onClose,
   onStatusChange,
   onShipWithAhamove,
-  onOpenReturnModal,
-  getReturnRequestInfo
+  onOpenReturnModal
 }) {
   // Khai báo giải nén các thuộc tính/hàm (formatCurrency, formatDate) từ Hook / Context / Props
   const { formatCurrency, formatDate } = useFormat();
 
   if (!order) return null;
 
-  // Hàm thực thi logic: subTotal
-  const subTotal = order.items?.reduce((sum, i) => sum + (i.quantity * (i.priceAtPurchase + (i.warrantyPrice || 0))), 0) || 0;
+  // ================= BÓC TÁCH TIỀN CỦA ĐƠN =================
+  // Các con số dưới đây lấy thẳng từ back-end (OrderResponse) - là chính những giá trị đã
+  // chốt lúc khách đặt hàng. Trước đây giao diện tự SUY ĐOÁN bằng hiệu số giữa tiền hàng và
+  // tiền thanh toán, nên khi đơn vừa có mã giảm giá vừa có phí ship thì hai khoản triệt tiêu
+  // nhau và hiển thị sai (ví dụ mã giảm 100.000 + ship 16.000 bị gộp thành "giảm giá 84.000").
+  const subTotal = order.subTotal || (order.items?.reduce((sum, i) => sum + (i.quantity * (i.priceAtPurchase + (i.warrantyPrice || 0))), 0) || 0);
   // Khai báo biến/hằng số: discountFromPoints - Dùng trong logic xử lý của component
   const discountFromPoints = order.discountFromPoints || 0;
   // Khai báo biến/hằng số: totalPaid - Dùng trong logic xử lý của component
   const totalPaid = order.amount || 0;
+  // Tổng đã giảm nhờ khuyến mãi mua kèm (combo), chốt theo snapshot lúc đặt hàng
+  const comboDiscount = order.comboDiscount || 0;
+  // Giá niêm yết gốc của hàng hoá trước khi trừ khuyến mãi combo
+  const originalItemRevenue = order.originalItemRevenue || 0;
   // Khai báo biến/hằng số: diff - Dùng trong logic xử lý của component
+  // Phí vận chuyển và giảm giá mã: dùng số thật của đơn, chỉ suy đoán khi gặp đơn cũ chưa có dữ liệu
   const diff = totalPaid - subTotal + discountFromPoints;
   // Khai báo biến/hằng số: shippingFee - Dùng trong logic xử lý của component
-  const shippingFee = diff > 0 ? diff : 0;
+  const shippingFee = order.actualShippingFee ?? (diff > 0 ? diff : 0);
   // Khai báo biến/hằng số: promoDiscount - Dùng trong logic xử lý của component
-  const promoDiscount = diff < 0 ? -diff : 0;
+  const promoDiscount = order.promoDiscount ?? (diff < 0 ? -diff : 0);
 
   // ===== LỢI NHUẬN ĐƠN HÀNG: Tiền bán - Tiền gốc (giá nhập kho gần nhất) =====
   // Chỉ đơn ĐÃ GIAO THÀNH CÔNG mới được ghi nhận lợi nhuận thực tế, các trạng thái khác chỉ là dự kiến.
@@ -262,7 +270,20 @@ export default function OrderDetailsModal({
                         </div>
                       </td>
                       <td className="px-4 py-3 text-right font-bold text-admin-text-main">
-                        {formatCurrency(item.priceAtPurchase)}
+                        {/* Hàng mua kèm: hiện giá niêm yết gạch ngang + giá đã giảm để thấy rõ khuyến mãi combo */}
+                        {item.campaignDiscountAmount > 0 ? (
+                          <div className="flex flex-col items-end leading-tight">
+                            <span className="text-[11px] font-semibold text-admin-text-muted line-through">
+                              {formatCurrency(item.priceAtPurchase + item.campaignDiscountAmount)}
+                            </span>
+                            <span>{formatCurrency(item.priceAtPurchase)}</span>
+                            <span className="text-[10px] font-bold text-admin-danger">
+                              Combo -{formatCurrency(item.campaignDiscountAmount)}
+                            </span>
+                          </div>
+                        ) : (
+                          formatCurrency(item.priceAtPurchase)
+                        )}
                       </td>
                       <td className="px-4 py-3 text-right font-semibold text-admin-text-muted">
                         {formatCurrency(item.costPriceAtPurchase || 0)}
@@ -285,6 +306,18 @@ export default function OrderDetailsModal({
 
           {/* Section: Total calculation */}
           <div className="flex flex-col items-end gap-2 border-t border-admin-border pt-4 text-xs font-semibold">
+            {comboDiscount > 0 && originalItemRevenue > 0 && (
+              <div className="flex justify-between w-64 text-admin-text-muted font-bold">
+                <span>Giá niêm yết gốc:</span>
+                <span className="text-admin-text-main font-semibold">{formatCurrency(originalItemRevenue)}</span>
+              </div>
+            )}
+            {comboDiscount > 0 && (
+              <div className="flex justify-between w-64 text-admin-text-muted font-bold">
+                <span>Giảm giá mua kèm (combo):</span>
+                <span className="text-admin-danger font-bold">-{formatCurrency(comboDiscount)}</span>
+              </div>
+            )}
             <div className="flex justify-between w-64 text-admin-text-muted font-bold">
               <span>Tổng tiền hàng:</span>
               <span className="text-admin-text-main font-semibold">{formatCurrency(subTotal)}</span>

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { X, ExternalLink, Plus } from 'lucide-react';
 import AccessoryVariantModal from './AccessoryVariantModal';
+import { calcComboPrice } from '../../../utils/comboPrice';
 
 export default function MuaKemGiaSocModal({ isOpen, onClose, campaigns, initialTab = 0, parentProductId = null }) {
   // State: activeTab - Quản lý trạng thái và dữ liệu của activeTab trong giao diện
@@ -71,13 +72,7 @@ export default function MuaKemGiaSocModal({ isOpen, onClose, campaigns, initialT
     const campaignToApply = item._campaign || currentCampaign;
 
     if (campaignToApply) {
-      if (campaignToApply.discountType === 'Percentage') {
-        comboPrice = basePrice * (1 - campaignToApply.discountValue / 100);
-      } else if (campaignToApply.discountType === 'FixedAmount') {
-        comboPrice = Math.max(0, basePrice - campaignToApply.discountValue);
-      } else if (campaignToApply.discountType === 'FixedPrice') {
-        comboPrice = campaignToApply.discountValue;
-      }
+      comboPrice = calcComboPrice(basePrice, campaignToApply);
     }
     return { basePrice, comboPrice, campaignToApply };
   };
@@ -162,7 +157,8 @@ export default function MuaKemGiaSocModal({ isOpen, onClose, campaigns, initialT
                 {accessories.map((item, itemIdx) => {
                   const { basePrice, comboPrice, campaignToApply } = getDynamicPrice(item);
                   let discountBadgeText = '';
-                  if (campaignToApply?.discountType === 'Percentage') discountBadgeText = `-${campaignToApply.discountValue}%`;
+                  // Tính % giảm thực tế trên giá đã áp trần MaxDiscountAmount để badge không lệch với giá hiển thị
+                  if (campaignToApply?.discountType === 'Percentage') discountBadgeText = `-${basePrice > 0 ? Math.round((basePrice - comboPrice) / basePrice * 100) : campaignToApply.discountValue}%`;
                   else if (campaignToApply?.discountType === 'FixedAmount') discountBadgeText = `-${campaignToApply.discountValue >= 1000 ? (campaignToApply.discountValue / 1000) + 'K' : campaignToApply.discountValue + 'đ'}`;
                   else discountBadgeText = 'GIÁ SỐC';
 

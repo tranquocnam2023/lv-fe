@@ -14,7 +14,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Home, Grid, ShoppingBag, User, Search } from 'lucide-react';
-import { useCart } from '../../context/CartContext';
+import { useCart } from '../../context/CartContextInstance';
 
 export default function BottomNav() {
   // Hook điều hướng trang (useNavigate) để chuyển hướng Route

@@ -5,6 +5,7 @@ import { Package, Layout, Bell, ShoppingCart, Settings2, Plus, Edit, Trash2, X, 
 import { categoryService } from '../../../services/categoryService';
 import { brandService } from '../../../services/brandService';
 import { productService } from '../../../services/productService';
+import { orderService } from '../../../services/orderService';
 import { usePagination } from '../../../hooks/usePagination';
 import { useFormat } from '../../../hooks/useFormat';
 
@@ -26,6 +27,8 @@ export default function AdminProducts({ onCreate, onEdit, defaultBrandFilter, cl
   const [isFeaturedFilter, setIsFeaturedFilter] = useState('ALL'); // 'ALL', 'TRUE', 'FALSE'
   // State: searchQuery - Quản lý trạng thái và dữ liệu của searchQuery trong giao diện
   const [searchQuery, setSearchQuery] = useState('');
+  // State: monthlySold - Tổng số lượng sản phẩm đã bán trong tháng hiện tại
+  const [monthlySold, setMonthlySold] = useState(0);
 
   React.useEffect(() => {
     if (defaultBrandFilter) {

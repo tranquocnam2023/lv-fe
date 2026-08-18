@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { X, Check } from 'lucide-react';
 import api from '../../../services/api';
-import { useCart } from '../../../context/CartContext';
+import { useCart } from '../../../context/CartContextInstance';
 
 export default function AccessoryVariantModal({ isOpen, onClose, productId, basePrice, comboPrice, campaignId, parentProductId = null, maxQuantityAllowed = 5, hideQuantity = false }) {
   // State: product - Quản lý trạng thái và dữ liệu của product trong giao diện
