@@ -3,6 +3,7 @@ import { Plus, ChevronDown, CheckCircle, X } from "lucide-react";
 import PriceInput from "../../../../components/PriceInput";
 import api from "../../../../services/api";
 import { inventoryService } from "../../../../services/inventoryService";
+import { returnService } from '../../../../services/returnService';
 import { orderService } from "../../../../services/orderService";
 
 // Khai báo biến/hằng số: TRANSACTIONS - Dùng trong logic xử lý của component
@@ -121,21 +122,25 @@ export default function TransactionModal({ activeTxTab, setActiveTxTab, products
   }, [urlProductId, urlAction, setSearchParams]);
 
   // Load orders list when activeTxTab becomes IMPORT_RETURN
+  // Chỉ cho tra cứu những đơn ĐÃ CÓ YÊU CẦU ĐỔI TRẢ ĐƯỢC DUYỆT.
+  // Trước đây nạp toàn bộ đơn hàng nên admin nhập lại được hàng của cả đơn chờ xác nhận,
+  // đơn đang giao lẫn đơn vừa hoàn thành - dù khách chưa hề gửi yêu cầu đổi trả.
   useEffect(() => {
     if (activeTxTab === 'IMPORT_RETURN') {
       setOrdersLoading(true);
-      orderService.getAll()
-        .then(data => {
-          if (Array.isArray(data)) {
-            setAllOrdersList(data);
-          } else {
-            console.error("Dữ liệu đơn hàng không phải mảng:", data);
-            setAllOrdersList([]);
-          }
+      Promise.all([orderService.getAll(), returnService.getAllReturnRequests()])
+        .then(([orderData, returnData]) => {
+          const orders = Array.isArray(orderData) ? orderData : [];
+          const returns = Array.isArray(returnData) ? returnData : (returnData?.data || []);
+          const approvedOrderIds = new Set(
+            returns.filter(r => r.status === 'Approved').map(r => String(r.orderId ?? r.OrderId))
+          );
+          setAllOrdersList(orders.filter(o => approvedOrderIds.has(String(o.id))));
         })
         .catch(err => {
-          console.error("Lỗi tải danh sách đơn hàng:", err);
+          console.error("Lỗi tải danh sách đơn đổi trả đã duyệt:", err);
           alert("Không thể tải danh sách đơn hàng để tra cứu. Vui lòng thử lại!");
+          setAllOrdersList([]);
         })
         .finally(() => {
           setOrdersLoading(false);
@@ -319,7 +324,7 @@ export default function TransactionModal({ activeTxTab, setActiveTxTab, products
     );
 
     if (matched.length === 0) {
-      alert("Không tìm thấy đơn hàng nào khớp với thông tin đã nhập.");
+      alert("Không tìm thấy đơn hàng nào khớp. Lưu ý: chỉ đơn có yêu cầu đổi trả ĐÃ ĐƯỢC DUYỆT mới nhập lại hàng được.");
       setMatchingOrders([]);
     } else if (matched.length === 1) {
       handleSelectOrder(matched[0]);
@@ -726,6 +731,9 @@ export default function TransactionModal({ activeTxTab, setActiveTxTab, products
           quantityChanged: parseInt(item.quantity),
           transactionType: activeTxTab,
           price: parseFloat(item.price) || 0,
+          // Gửi thẳng mã đơn thay vì chỉ nhét vào ghi chú. Back-end cần trường này để đối chiếu
+          // với yêu cầu đổi trả đã duyệt; trước đây nó phải dò số đơn bằng regex từ ô Ghi chú.
+          orderId: activeTxTab === 'IMPORT_RETURN' ? (selectedOrder?.id ?? null) : null,
           note: finalNote
         });
       }
