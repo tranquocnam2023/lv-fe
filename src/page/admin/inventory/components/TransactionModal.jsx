@@ -164,19 +164,45 @@ export default function TransactionModal({ activeTxTab, setActiveTxTab, products
       api.get(`/ProductVariant?productId=${txProductId}`)
         .then(res => {
           if (Array.isArray(res) && res.length > 0) {
-            setTxVariants(res.map(v => ({
-              id: v.id,
-              name: v.name,
-              price: v.price || selectedProd.basePrice || selectedProd.price || '',
-              quantity: '',
-              selected: true
-            })));
+            setTxVariants(res.map(v => {
+              const isCostPriceTab = activeTxTab === 'IMPORT_SUPPLIER' || activeTxTab === 'EXPORT_DEFECT';
+              const defaultPrice = isCostPriceTab
+                ? (v.costPrice || (v.price ? Math.round(v.price * 0.9) : selectedProd.costPrice || selectedProd.basePrice || ''))
+                : (v.price || selectedProd.basePrice || selectedProd.price || '');
+              const totStk = v.totalStock ?? selectedProd.totalStock ?? 0;
+              const resStk = v.reservedStock ?? selectedProd.reservedStock ?? 0;
+              const availStk = v.availableStock ?? (totStk - resStk);
+              return {
+                id: v.id,
+                name: v.name,
+                price: defaultPrice,
+                priceSelling: v.price || selectedProd.basePrice || selectedProd.price || 0,
+                costPriceCurrent: v.costPrice || selectedProd.costPrice || 0,
+                totalStock: totStk,
+                reservedStock: resStk,
+                availableStock: availStk,
+                quantity: '',
+                selected: true
+              };
+            }));
           } else {
             // Product has no variants, treat product itself as a single item
+            const isCostPriceTab = activeTxTab === 'IMPORT_SUPPLIER' || activeTxTab === 'EXPORT_DEFECT';
+            const defaultProdPrice = isCostPriceTab
+              ? (selectedProd.costPrice || (selectedProd.basePrice ? Math.round(selectedProd.basePrice * 0.9) : selectedProd.price || ''))
+              : (selectedProd.basePrice || selectedProd.price || '');
+            const totStk = selectedProd.totalStock ?? 0;
+            const resStk = selectedProd.reservedStock ?? 0;
+            const availStk = selectedProd.availableStock ?? (totStk - resStk);
             setTxVariants([{
               id: null,
               name: selectedProd.name,
-              price: selectedProd.basePrice || selectedProd.price || '',
+              price: defaultProdPrice,
+              priceSelling: selectedProd.basePrice || selectedProd.price || 0,
+              costPriceCurrent: selectedProd.costPrice || 0,
+              totalStock: totStk,
+              reservedStock: resStk,
+              availableStock: availStk,
               quantity: '',
               selected: true
             }]);
@@ -451,6 +477,22 @@ export default function TransactionModal({ activeTxTab, setActiveTxTab, products
         return;
       }
 
+      if (!isByOrder && activeTxTab === 'IMPORT_SUPPLIER') {
+        const sellingPrice = item.priceSelling || item.sellingPrice || item.priceOriginal || item.basePrice || 0;
+        if (sellingPrice > 0 && price >= sellingPrice) {
+          alert(`Giá nhập kho (${price.toLocaleString('vi-VN')} VNĐ) của "${item.name}" không được lớn hơn hoặc bằng giá bán ra (${sellingPrice.toLocaleString('vi-VN')} VNĐ)!`);
+          return;
+        }
+      }
+
+      if (!isByOrder && txConf.type === 'OUT' && item.availableStock !== undefined && item.availableStock !== null) {
+        const qty = parseInt(item.quantity);
+        if (qty > item.availableStock) {
+          alert(`Số lượng xuất kho của "${item.name}" (${qty.toLocaleString('vi-VN')}) vượt quá số lượng tồn kho khả dụng hiện có (${item.availableStock.toLocaleString('vi-VN')} sản phẩm)!`);
+          return;
+        }
+      }
+
       if (isByOrder) {
         // Validate against purchase limit
         const qty = parseInt(item.quantity);
@@ -494,6 +536,14 @@ export default function TransactionModal({ activeTxTab, setActiveTxTab, products
           // Khai báo biến/hằng số: newQty - Dùng trong logic xử lý của component
           const newQty = parseInt(item.quantity) || 0;
           
+          if (!isByOrder && txConf.type === 'OUT' && item.availableStock !== undefined && item.availableStock !== null) {
+            if ((existingQty + newQty) > item.availableStock) {
+              alert(`Tổng số lượng xuất kho trong danh sách chờ của "${item.name}" (${(existingQty + newQty).toLocaleString('vi-VN')}) vượt quá tồn kho khả dụng (${item.availableStock.toLocaleString('vi-VN')} sản phẩm)!`);
+              hasError = true;
+              return;
+            }
+          }
+
           // Validate merged quantity against purchase limit (if applicable)
           if (isByOrder && (existingQty + newQty) > item.purchaseQuantity) {
             alert(`Tổng số lượng hoàn trả trong hàng chờ của "${item.name}" không được vượt quá số lượng đã mua (${item.purchaseQuantity})!`);
@@ -517,7 +567,10 @@ export default function TransactionModal({ activeTxTab, setActiveTxTab, products
             price: parseFloat(item.price) || 0,
             condition: cond,
             purchasePrice: isByOrder ? item.purchasePrice : null,
-            purchaseQuantity: isByOrder ? item.purchaseQuantity : null
+            purchaseQuantity: isByOrder ? item.purchaseQuantity : null,
+            availableStock: item.availableStock,
+            totalStock: item.totalStock,
+            reservedStock: item.reservedStock
           });
         }
       });
@@ -557,6 +610,10 @@ export default function TransactionModal({ activeTxTab, setActiveTxTab, products
       if (i === index) {
         // Khai báo biến/hằng số: qty - Dùng trong logic xử lý của component
         const qty = parseInt(value);
+        if (txConf.type === 'OUT' && item.availableStock !== undefined && item.availableStock !== null && !isNaN(qty) && qty > item.availableStock) {
+          alert(`Số lượng xuất kho của "${item.variantName}" (${qty.toLocaleString('vi-VN')}) vượt quá số lượng tồn kho khả dụng (${item.availableStock.toLocaleString('vi-VN')} sản phẩm)!`);
+          return item;
+        }
         if (item.purchaseQuantity !== null && !isNaN(qty) && qty > item.purchaseQuantity) {
           alert(`Số lượng hoàn trả không được vượt quá số lượng đã mua (${item.purchaseQuantity})!`);
           return item;
@@ -916,7 +973,6 @@ export default function TransactionModal({ activeTxTab, setActiveTxTab, products
                                     type="checkbox"
                                     checked={txVariants.length > 0 && txVariants.every(v => v.selected)}
                                     onChange={(e) => {
-                                      // Khai báo biến/hằng số: isChecked - Dùng trong logic xử lý của component
                                       const isChecked = e.target.checked;
                                       setTxVariants(prev => prev.map(v => ({ ...v, selected: isChecked })));
                                     }}
@@ -929,7 +985,13 @@ export default function TransactionModal({ activeTxTab, setActiveTxTab, products
                                 <th className="py-2.5 px-3 w-48">Tình trạng máy</th>
                               )}
                               <th className="py-2.5 px-3 w-32">Số lượng {txConf.type === 'IN' ? 'nhập' : 'xuất'}</th>
-                              <th className="py-2.5 px-3 w-44">Giá {txConf.type === 'IN' ? 'hoàn lại' : 'xuất'} (VNĐ)</th>
+                              <th className="py-2.5 px-3 w-44">
+                                {activeTxTab === 'IMPORT_SUPPLIER' 
+                                  ? 'Đơn giá nhập từ Hãng (VNĐ)' 
+                                  : activeTxTab === 'EXPORT_DEFECT'
+                                  ? 'Đơn giá xuất trả NCC (VNĐ)'
+                                  : (activeTxTab === 'IMPORT_RETURN' ? 'Giá hoàn lại (VNĐ)' : 'Giá xuất bán (VNĐ)')}
+                               </th>
                               {selectedOrder && (
                                 <th className="py-2.5 px-3 w-32 text-center">Hành động</th>
                               )}
@@ -944,7 +1006,6 @@ export default function TransactionModal({ activeTxTab, setActiveTxTab, products
                                       type="checkbox"
                                       checked={!!v.selected}
                                       onChange={(e) => {
-                                        // Khai báo biến/hằng số: isChecked - Dùng trong logic xử lý của component
                                         const isChecked = e.target.checked;
                                         setTxVariants(prev => prev.map((item, i) => i === idx ? { ...item, selected: isChecked } : item));
                                       }}
@@ -981,17 +1042,33 @@ export default function TransactionModal({ activeTxTab, setActiveTxTab, products
                                       Mua tối đa: {v.purchaseQuantity}
                                     </div>
                                   )}
+                                  {!selectedOrder && txConf.type === 'OUT' && v.availableStock !== undefined && (
+                                    <div className="text-[10px] text-amber-700 font-semibold mt-1">
+                                      Tồn khả dụng: {v.availableStock.toLocaleString('vi-VN')} {v.reservedStock > 0 ? `(Đang giữ: ${v.reservedStock})` : ''}
+                                    </div>
+                                  )}
                                 </td>
                                 <td className="py-2 px-3">
                                   <PriceInput
-                                    placeholder="VD: 25.000.000"
+                                    placeholder="VD: 23.400.000"
                                     value={v.price}
                                     onChange={(val) => handlePriceChange(idx, val)}
-                                    className="w-full border border-admin-border rounded px-2.5 py-1.5 outline-none font-semibold text-xs text-admin-text-main bg-white focus:border-primary"
+                                    disabled={activeTxTab === 'EXPORT_DEFECT'}
+                                    className={`w-full border border-admin-border rounded px-2.5 py-1.5 outline-none font-semibold text-xs text-admin-text-main focus:border-primary ${activeTxTab === 'EXPORT_DEFECT' ? 'bg-slate-100 text-gray-500 cursor-not-allowed' : 'bg-white'}`}
                                   />
+                                  {activeTxTab === 'IMPORT_SUPPLIER' && v.priceSelling > 0 && (
+                                    <div className="text-[10px] text-emerald-700 font-semibold mt-1">
+                                      Giá bán web: {Number(v.priceSelling).toLocaleString('vi-VN')}₫
+                                    </div>
+                                  )}
+                                  {activeTxTab === 'EXPORT_DEFECT' && (
+                                    <div className="text-[10px] text-amber-700 font-semibold mt-1">
+                                      🔒 Cố định theo giá vốn nhập Hãng
+                                    </div>
+                                  )}
                                   {selectedOrder && (
                                     <div className="text-[10px] text-gray-500 font-medium mt-1">
-                                      Giá gốc: {v.purchasePrice.toLocaleString('vi-VN')}đ
+                                      Giá lúc mua: {v.purchasePrice.toLocaleString('vi-VN')}₫
                                     </div>
                                   )}
                                 </td>
@@ -1096,14 +1173,15 @@ export default function TransactionModal({ activeTxTab, setActiveTxTab, products
                               </td>
                               <td className="py-1 px-3">
                                 <PriceInput
-                                  placeholder="VD: 25.000.000"
+                                  placeholder="VD: 23.400.000"
                                   value={item.price}
                                   onChange={(val) => handleQueuePriceChange(index, val)}
-                                  className="w-full border border-admin-border rounded px-2 py-1.5 outline-none font-semibold text-xs text-admin-text-main bg-white focus:border-primary"
+                                  disabled={activeTxTab === 'EXPORT_DEFECT'}
+                                  className={`w-full border border-admin-border rounded px-2 py-1.5 outline-none font-semibold text-xs text-admin-text-main focus:border-primary ${activeTxTab === 'EXPORT_DEFECT' ? 'bg-slate-100 text-gray-500 cursor-not-allowed' : 'bg-white'}`}
                                 />
                                 {item.purchasePrice !== null && (
                                   <div className="text-[9px] text-gray-400 font-medium mt-0.5">
-                                    Giá gốc: {item.purchasePrice.toLocaleString('vi-VN')}đ
+                                    Giá lúc mua: {item.purchasePrice.toLocaleString('vi-VN')}₫
                                   </div>
                                 )}
                               </td>

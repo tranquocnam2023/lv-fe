@@ -51,6 +51,7 @@ export const useProductForm = ({ productId, onBack, onSaveSuccess, searchParams,
     specs: '',
     basePrice: 0,
     originalPrice: 0,
+    costPrice: 0,
     totalStock: 0,
     isActive: true,
     isFeatured: false,
@@ -257,7 +258,7 @@ export const useProductForm = ({ productId, onBack, onSaveSuccess, searchParams,
                         totalStock: v.totalStock,
                         isActive: v.isActive !== false,
                         imageId: v.imageId || '',
-                        costPrice: attrs.costPrice || '',
+                        costPrice: v.costPrice ?? attrs.costPrice ?? '',
                         specsOverrideList: specsList
                       };
                     }
@@ -296,6 +297,9 @@ export const useProductForm = ({ productId, onBack, onSaveSuccess, searchParams,
               specs: productData.specs || '',
               basePrice: productData.basePrice || 0,
               originalPrice: productData.originalPrice || 0,
+              costPrice: (hasVars && dbVariants.length > 0 && dbVariants[0].costPrice) 
+                ? dbVariants[0].costPrice 
+                : (productData.costPrice || 0),
               totalStock: productData.totalStock || 0,
               isActive: productData.isActive !== false,
               isFeatured: productData.isFeatured || false,
@@ -459,11 +463,35 @@ export const useProductForm = ({ productId, onBack, onSaveSuccess, searchParams,
     }
     // RÀNG BUỘC GIÁ: Giá bán thực tế (đã giảm) không được phép lớn hơn giá gốc niêm yết cũ.
     // Nếu giá bán bằng giá gốc thì hệ thống vẫn cho phép lưu bình thường (không giảm giá).
-    if(formData.basePrice > formData.originalPrice){
+    if (formData.originalPrice && formData.basePrice > formData.originalPrice) {
       return showToast("warning", "Giá bán không được lớn hơn giá gốc");
     }
-    
-    
+
+    if (formData.costPrice && Number(formData.costPrice) >= Number(formData.basePrice)) {
+      return showToast("warning", "Giá nhập từ Hãng (Cost Price) không được lớn hơn hoặc bằng giá bán.");
+    }
+
+    if (formData.costPrice && formData.originalPrice && Number(formData.costPrice) >= Number(formData.originalPrice)) {
+      return showToast("warning", "Giá nhập từ Hãng (Cost Price) không được lớn hơn hoặc bằng giá gốc.");
+    }
+
+    if (formData.hasVariants && activeCombinations.length > 0) {
+      for (const comb of activeCombinations) {
+        const key = comb.map(p => `${p.optionId}:${p.valueId.split(':').pop()}`).join('|');
+        const vData = variantsData[key];
+        const vCostPrice = (vData?.costPrice !== undefined && vData?.costPrice !== null && vData?.costPrice !== '') 
+          ? Number(vData.costPrice) 
+          : (formData.costPrice ? Number(formData.costPrice) : null);
+        const vPrice = (vData?.price !== undefined && vData?.price !== null && vData?.price !== '') 
+          ? Number(vData.price) 
+          : Number(formData.basePrice);
+
+        if (vCostPrice !== null && vCostPrice >= vPrice) {
+          const vName = comb.map(p => p.valueText).join(' - ');
+          return showToast("warning", `Giá nhập từ Hãng của biến thể "${vName}" (${vCostPrice.toLocaleString('vi-VN')} ₫) không được lớn hơn hoặc bằng giá bán (${vPrice.toLocaleString('vi-VN')} ₫).`);
+        }
+      }
+    }
 
     for (const opt of options) {
       if (opt.name === "Màu sắc" || opt.name === "Kích thước") {
@@ -518,6 +546,7 @@ export const useProductForm = ({ productId, onBack, onSaveSuccess, searchParams,
         specs: formData.specs,
         basePrice: Number(formData.basePrice),
         originalPrice: formData.originalPrice ? Number(formData.originalPrice) : null,
+        costPrice: formData.costPrice ? Number(formData.costPrice) : Number(formData.basePrice),
         totalStock: calculatedStock,
         isActive: formData.isActive,
         isFeatured: formData.isFeatured,
@@ -548,6 +577,20 @@ export const useProductForm = ({ productId, onBack, onSaveSuccess, searchParams,
           // Khai báo biến/hằng số: brandCode - Dùng trong logic xử lý của component
           const brandCode = selectedBrand?.brandCode || 'GEN';
 
+          // Tìm mức giá nhỏ nhất hiện tại của các biến thể để xác định nhóm biến thể cơ sở (Base Tier)
+          let minVariantPrice = null;
+          if (activeCombinations.length > 0) {
+            const prices = activeCombinations.map(comb => {
+              const sortedParts = [...comb].sort((a, b) => a.optionId.localeCompare(b.optionId));
+              const key = sortedParts.map(p => `${p.optionId}:${p.valueId.split(':').pop()}`).join('|');
+              const vData = variantsData[key];
+              return (vData?.price !== undefined && vData?.price !== null && vData?.price !== '') ? Number(vData.price) : null;
+            }).filter(p => p !== null && !isNaN(p));
+            if (prices.length > 0) {
+              minVariantPrice = Math.min(...prices);
+            }
+          }
+
           // Hàm thực thi logic: variantsPayload
           const variantsPayload = activeCombinations.map(comb => {
             // Hàm thực thi logic: sortedParts
@@ -562,10 +605,6 @@ export const useProductForm = ({ productId, onBack, onSaveSuccess, searchParams,
             comb.forEach(part => {
               attributeObj[part.optionName] = part.valueText;
             });
-
-            if (vData?.costPrice) {
-              attributeObj.costPrice = Number(vData.costPrice);
-            }
 
             // Hàm thực thi logic: combName
             const combName = comb.map(p => p.valueText).join(' - ');
@@ -586,11 +625,24 @@ export const useProductForm = ({ productId, onBack, onSaveSuccess, searchParams,
             // Khai báo biến/hằng số: specsOverrideStr - Dùng trong logic xử lý của component
             const specsOverrideStr = Object.keys(specsOverrideObj).length > 0 ? JSON.stringify(specsOverrideObj) : null;
 
+            // Xử lý giá bán thông minh: Nếu biến thể thuộc tầng cơ sở (Base Tier) hoặc chưa cài giá riêng, áp dụng giá bán từ Khối D
+            const vRawPrice = (vData?.price !== undefined && vData?.price !== null && vData?.price !== '') ? Number(vData.price) : null;
+            let finalPrice = Number(formData.basePrice);
+
+            if (activeCombinations.length > 1 && vRawPrice !== null) {
+              if (minVariantPrice !== null && vRawPrice > minVariantPrice) {
+                finalPrice = vRawPrice;
+              } else {
+                finalPrice = Number(formData.basePrice);
+              }
+            }
+
             return {
               id: vData?.id || 0,
               name: vData?.name || defaultName,
               sku: vData?.sku || defaultSku,
-              price: vData?.price ? Number(vData.price) : Number(formData.basePrice),
+              price: finalPrice,
+              costPrice: vData?.costPrice ? Number(vData.costPrice) : (formData.costPrice ? Number(formData.costPrice) : Number(formData.basePrice)),
               totalStock: vData?.totalStock ? Number(vData.totalStock) : 0,
               productId: savedProductId,
               imageId: vData?.imageId || '',

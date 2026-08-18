@@ -157,6 +157,20 @@ export default function ProductForm({ productId, onBack, onSaveSuccess, onCreate
                 </span>
               </div>
               <div className="space-y-4">
+                {/* Giá nhập từ Hãng */}
+                <div>
+                  <label className="block text-sm font-bold text-emerald-800 mb-2">Giá nhập từ Hãng (Cost Price)</label>
+                  <div className="relative">
+                    <PriceInput
+                      value={formData.costPrice}
+                      onChange={(val) => setFormData(prev => ({ ...prev, costPrice: val }))}
+                      className="w-full px-4 py-3 border border-emerald-300 rounded-md focus:border-emerald-500 outline-none text-emerald-950 bg-emerald-50/40 text-sm font-semibold"
+                      placeholder="Để trống = Mặc định 100% giá bán"
+                    />
+                    <span className="absolute right-4 top-3.5 text-emerald-600 font-bold text-sm">VNĐ</span>
+                  </div>
+                </div>
+
                 <div>
                   <label className="block text-sm font-bold text-admin-text-main mb-2">Giá khuyến mãi / Giá bán *</label>
                   <div className="relative">

@@ -30,6 +30,7 @@ export default function VariantTable({
               <th className="px-4 py-4 text-[12px] font-bold text-admin-text-muted uppercase">Sản phẩm gốc</th>
               <th className="px-4 py-4 text-[12px] font-bold text-admin-text-muted uppercase">Mã SKU</th>
               <th className="px-4 py-4 text-[12px] font-bold text-admin-text-muted uppercase">Thông số biến thể</th>
+              <th className="px-4 py-4 text-[12px] font-bold text-emerald-700 text-right uppercase">Giá nhập</th>
               <th className="px-4 py-4 text-[12px] font-bold text-admin-text-muted text-right uppercase">Giá bán</th>
               <th className="px-4 py-4 text-[12px] font-bold text-admin-text-muted text-center uppercase">Tồn kho</th>
               <th className="px-4 py-4 text-[12px] font-bold text-admin-text-muted text-center uppercase">Trạng thái</th>
@@ -103,6 +104,9 @@ export default function VariantTable({
                           <span className="text-xs text-gray-400 italic">Mặc định</span>
                         )}
                       </div>
+                    </td>
+                    <td className="px-4 py-4 text-right">
+                      <span className="font-semibold text-emerald-700 text-sm">{(v.costPrice || v.price || 0).toLocaleString('vi-VN')} ₫</span>
                     </td>
                     <td className="px-4 py-4 text-right">
                       <span className="font-bold text-admin-text-main text-base">{(v.price || 0).toLocaleString('vi-VN')} ₫</span>
