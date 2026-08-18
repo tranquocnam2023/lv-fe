@@ -15,11 +15,12 @@ export const orderService = {
       'shipping': 3,
       'delivered': 4,
       'cancelled': 5,
-      'shipping_failed': 6,
-      'refunded': 7
+      'return_requested': 6,
+      'refunded': 7,
+      'shipping_failed': 8
     };
     // Khai báo biến/hằng số: statusId - Dùng trong logic xử lý của component
-    const statusId = statusMap[status] || 1;
+    const statusId = typeof status === 'number' ? status : (statusMap[status] || 1);
     return api.put(`/Order/${id}/status`, statusId, {
       headers: {
         'Content-Type': 'application/json'

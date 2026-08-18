@@ -1,3 +1,9 @@
+/**
+ * =================================================================================
+ * 📌  XỬ LÝ BÀI VIẾT TƯƠNG TÁC END-TO-END (BLOG WORKFLOW):
+ *
+ * =================================================================================
+ */
 import React, { useState, useEffect, useRef } from 'react';
 import {
   ArrowLeft, Save, Sparkles, Newspaper, Image as ImageIcon,
@@ -60,6 +66,7 @@ export default function AdminBlogForm({ blogId = null, onBack }) {
     summary: '',
     content: '',
     thumbnailUrl: '',
+    imageCaption: '',
     author: 'Admin',
     category: 'Tin công nghệ',
     tags: '',
@@ -163,14 +170,17 @@ export default function AdminBlogForm({ blogId = null, onBack }) {
         // Khai báo biến/hằng số: isPub - Dùng trong logic xử lý của component
         const isPub = data.isPublished ?? data.isActive ?? true;
 
-        //Nhiệm vụ là nạp (fill) dữ liệu cũ của bài viết đó từ Database lên Form(chứ năng chỉnh sửa) 
-        //Dấu || là nếu dữ liệu cũ trong Database bị bỏ trống (null/undefined) thì sẽ tự động điền giá trị mặc định
+        // Đọc chú thích ảnh từ Database hoặc localStorage đệm
+        const savedCaptions = JSON.parse(localStorage.getItem('PROJECT_BLOG_CAPTIONS') || '{}');
+        const savedCap = data.imageCaption || data.thumbnailCaption || data.caption || savedCaptions[blogId] || savedCaptions[data.id] || savedCaptions[data.slug] || '';
+
         setFormData({
           title: data.title || data.name || '',
           slug: data.slug || generateSlug(data.title || data.name || ''),
           summary: data.summary || data.description || '',
           content: data.content || '',
           thumbnailUrl: data.thumbnailUrl ? getMediaUrl(data.thumbnailUrl) : (data.image ? getMediaUrl(data.image) : ''),
+          imageCaption: savedCap,
           author: data.author || 'Admin',
           category: data.category || 'Tin công nghệ',
           tags: data.tags || '',
@@ -219,6 +229,7 @@ export default function AdminBlogForm({ blogId = null, onBack }) {
       summary: formData.summary?.trim() || formData.metaDescription?.trim() || null,
       content: formData.content.trim(),
       thumbnailUrl: formData.thumbnailUrl?.trim() || null,
+      imageCaption: formData.imageCaption?.trim() || null,
       author: formData.author?.trim() || 'Admin',
       category: formData.category?.trim() || 'Tin tức',
       tags: formData.tags?.trim() || (formData.focusKeyword ? `SEO:${formData.focusKeyword}` : null),
@@ -228,23 +239,34 @@ export default function AdminBlogForm({ blogId = null, onBack }) {
 
     setLoading(true);
     try {
+      // Lưu chú thích hình ảnh vào localStorage dự phòng
+      const savedCaptions = JSON.parse(localStorage.getItem('PROJECT_BLOG_CAPTIONS') || '{}');
+      const blogKey = blogId || payload.slug || payload.title;
+      if (payload.imageCaption) {
+        savedCaptions[blogKey] = payload.imageCaption;
+        savedCaptions[payload.slug] = payload.imageCaption;
+      } else {
+        delete savedCaptions[blogKey];
+        delete savedCaptions[payload.slug];
+      }
+      localStorage.setItem('PROJECT_BLOG_CAPTIONS', JSON.stringify(savedCaptions));
+
       if (isEdit) {
         // =========================================================================
         // ✏️ [CẬP NHẬT BÀI VIẾT]
         // =========================================================================
-        // 👉 CÁCH 1: CẬP NHẬT THEO SLUG (Đang dùng mặc định)
         await blogService.updateBlogBySlug(blogId, payload);
-
-        // 👉 CÁCH 2: NẾU MUỐN CẬP NHẬT THEO ID (Mở comment dòng dưới và comment dòng CÁCH 1 ở trên)
-        // await blogService.updateBlog(blogId, payload);
-        // =========================================================================
-
         alert(isPub ? 'Cập nhật và xuất bản bài viết thành công!' : 'Đã lưu bản nháp bài viết!');
       } else {
         // =========================================================================
         // ➕ [TẠO MỚI BÀI VIẾT]
         // =========================================================================
-        await blogService.createBlog(payload);
+        const res = await blogService.createBlog(payload);
+        const createdId = res?.data?.id || res?.id;
+        if (createdId && payload.imageCaption) {
+          savedCaptions[createdId] = payload.imageCaption;
+          localStorage.setItem('PROJECT_BLOG_CAPTIONS', JSON.stringify(savedCaptions));
+        }
       }
       // Chỉ chuyển về danh sách khi Đăng bài/Xuất bản (isPub === true). Khi Lưu Nháp sẽ giữ nguyên ở màn hình để tiếp tục chỉnh sửa
       if (isPub && onBack) {
@@ -500,6 +522,21 @@ export default function AdminBlogForm({ blogId = null, onBack }) {
                   <span className="text-[10px] text-gray-400">PNG, JPG, WEBP tối đa 10MB</span>
                 </button>
               )}
+
+              {/* Input Chú thích hình ảnh */}
+              <div className="pt-3 border-t border-gray-100 mt-3">
+                <label className="block text-xs font-bold text-gray-700 mb-1 flex items-center justify-between">
+                  <span>Chú thích hình ảnh</span>
+                  <span className="text-[10px] text-gray-400 font-normal">Hiển thị dưới ảnh bài viết</span>
+                </label>
+                <input
+                  type="text"
+                  placeholder="Nhập chú thích hình ảnh..."
+                  className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs font-semibold text-gray-800 focus:outline-none focus:border-blue-500 focus:bg-white transition-all"
+                  value={formData.imageCaption || ''}
+                  onChange={(e) => setFormData({ ...formData, imageCaption: e.target.value })}
+                />
+              </div>
             </div>
           </div>
 
@@ -518,7 +555,7 @@ export default function AdminBlogForm({ blogId = null, onBack }) {
                   - IsPublished = true: CSDL hiểu bài viết đã được Xuất bản -> Cho phép khách hàng xem.
                 */}
                 <label className="block text-xs font-bold text-gray-700 mb-1.5 uppercase tracking-wider">
-                  Trạng thái 
+                  Trạng thái
                 </label>
                 <select
                   className="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 rounded-xl font-bold text-gray-800 text-xs focus:border-blue-500 outline-none"

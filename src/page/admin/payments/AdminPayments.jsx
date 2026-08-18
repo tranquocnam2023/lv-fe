@@ -64,7 +64,7 @@ export default function AdminPayments() {
     // Cấu hình/Hằng số/Dịch vụ dữ liệu: matchesStatus
     const matchesStatus = statusFilter === 'all' || p.status?.toLowerCase() === statusFilter.toLowerCase();
     // Khai báo biến/hằng số: matchesProvider - Dùng trong logic xử lý của component
-    const matchesProvider = providerFilter === 'all' || p.provider?.toLowerCase() === providerFilter.toLowerCase();
+    const matchesProvider = providerFilter === 'all' || (p.provider && p.provider.toLowerCase().includes(providerFilter.toLowerCase()));
 
     // Khai báo biến/hằng số: term - Dùng trong logic xử lý của component
     const term = searchTerm.trim().toLowerCase();
@@ -149,20 +149,24 @@ export default function AdminPayments() {
 
   // Hàm xử lý logic/sự kiện: getProviderBadgeStyle
   const getProviderBadgeStyle = (provider) => {
-    switch (provider?.toLowerCase()) {
-      case 'stripe':
-        return 'bg-indigo-50 text-indigo-600 border border-indigo-100 dark:bg-indigo-900/20 dark:text-indigo-400 dark:border-indigo-800/30';
-      default:
-        return 'bg-gray-50 text-gray-600 border border-gray-100 dark:bg-gray-800/30 dark:text-gray-400 dark:border-gray-700/30';
+    const p = provider?.toLowerCase() || '';
+    if (p.includes('stripe')) {
+      return 'bg-indigo-50 text-indigo-600 border border-indigo-100 dark:bg-indigo-900/20 dark:text-italic-400 dark:border-indigo-800/30';
     }
+    if (p.includes('vnpay')) {
+      return 'bg-blue-50 text-indigo-600 border border-indigo-100 font-italic';
+    }
+    return 'bg-gray-50 text-gray-600 border border-gray-100 dark:bg-gray-800/30 dark:text-gray-400 dark:border-gray-700/30';
   };
 
   // Hàm xử lý logic/sự kiện: getProviderName
   const getProviderName = (provider) => {
-    switch (provider?.toLowerCase()) {
-      case 'stripe': return 'Stripe Card';
-      default: return provider;
-    }
+    if (!provider) return 'Chưa xác định';
+    const p = provider.toLowerCase();
+    if (p.includes('vnpay')) return 'VNPAY';
+    if (p.includes('stripe')) return 'Stripe Card';
+    if (p.includes('cod')) return 'COD';
+    return provider.toUpperCase();
   };
 
   return (
@@ -274,8 +278,8 @@ export default function AdminPayments() {
               onChange={(e) => setProviderFilter(e.target.value)}
             >
               <option value="all">Tất cả</option>
+              <option value="vnpay">VNPAY</option>
               <option value="stripe">Stripe Card</option>
-              {/* <option value="cod">Thanh toán khi nhận hàng</option> */}
             </select>
           </div>
         </div>

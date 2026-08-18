@@ -16,7 +16,8 @@ const STATUS_TABS = [
   { id: 'confirmed', name: 'Đã xác nhận', count: 0, icon: CheckCircle, color: 'text-info', bgColor: 'bg-info/10' },
   { id: 'shipping', name: 'Đang giao', count: 0, icon: Truck, color: 'text-primary', bgColor: 'bg-primary/10' },
   { id: 'delivered', name: 'Đã hoàn thành', count: 0, icon: CheckCircle, color: 'text-success', bgColor: 'bg-success/10' },
-  { id: 'refunded', name: 'Đổi trả & Hoàn tiền', count: 0, icon: RotateCcw, color: 'text-purple-600', bgColor: 'bg-purple-50 border-purple-100' },
+  { id: 'return_requested', name: 'Đang yêu cầu đổi trả', count: 0, icon: RotateCcw, color: 'text-orange-600', bgColor: 'bg-orange-100 border-orange-300' },
+  { id: 'refunded', name: 'Đã đổi trả & hoàn tiền', count: 0, icon: RotateCcw, color: 'text-purple-600', bgColor: 'bg-purple-50 border-purple-100' },
   { id: 'cancelled', name: 'Đã hủy', count: 0, icon: XCircle, color: 'text-admin-danger', bgColor: 'bg-admin-danger/10' },
 ];
 
@@ -116,8 +117,9 @@ export default function AdminOrders() {
                 3: 'shipping',
                 4: 'delivered',
                 5: 'cancelled',
-                6: 'shipping_failed',
-                7: 'refunded'
+                6: 'return_requested',
+                7: 'refunded',
+                8: 'shipping_failed'
               };
               // Khai báo biến/hằng số: statusStr - Dùng trong logic xử lý của component
               const statusStr = statusMap[order.statusId] || 'pending';
@@ -184,12 +186,11 @@ export default function AdminOrders() {
 
   // Hàm thực thi logic: filteredOrders
   const filteredOrders = orders.filter(order => {
-    // Khai báo biến/hằng số: matchesTab - Dùng trong logic xử lý của component
-    const isRefunded = order.status === 'refunded' || order.statusId === 7 || getReturnRequestInfo(order.id)?.status === 'Approved';
+    const isReturnRequested = order.status === 'return_requested' || order.statusId === 6;
+    const isRefunded = order.status === 'refunded' || order.statusId === 7;
     const matchesTab = activeTab === 'all' ||
       (activeTab === 'shipping' && (order.status === 'shipping' || order.status === 'shipping_failed')) ||
-      (activeTab === 'refunded' ? isRefunded : order.status === activeTab);
-    // Khai báo biến/hằng số: matchesSearch - Dùng trong logic xử lý của component
+      (activeTab === 'return_requested' ? isReturnRequested : (activeTab === 'refunded' ? isRefunded : order.status === activeTab));
     const matchesSearch = String(order.id).toLowerCase().includes(searchTerm.toLowerCase()) ||
       String(order.customer || '').toLowerCase().includes(searchTerm.toLowerCase());
     return matchesTab && matchesSearch;
@@ -241,8 +242,10 @@ export default function AdminOrders() {
         return { label: 'Đã giao thành công', style: 'bg-success/10 text-success' };
       case 'shipping_failed':
         return { label: 'Giao thất bại', style: 'bg-red-50 text-red-500 font-bold' };
+      case 'return_requested':
+        return { label: 'Đang yêu cầu đổi trả', style: 'bg-orange-500 text-white font-bold border border-orange-600 shadow-sm animate-pulse' };
       case 'refunded':
-        return { label: 'Đổi trả / Hoàn tiền', style: 'bg-purple-100 text-purple-700 font-bold border border-purple-200' };
+        return { label: 'Đã đổi trả & hoàn tiền', style: 'bg-purple-100 text-purple-700 font-bold border border-purple-200' };
       case 'cancelled':
         return { label: 'Đã hủy', style: 'bg-red-100 text-red-700' };
       default:
@@ -440,12 +443,13 @@ export default function AdminOrders() {
   // Khai báo biến/hằng số: counts - Dùng trong logic xử lý của component
   const counts = {
     all: orders.length,
-    pending: orders.filter(o => o.status === 'pending').length,
-    confirmed: orders.filter(o => o.status === 'confirmed' || o.status === 'preparing').length,
-    shipping: orders.filter(o => o.status === 'shipping' || o.status === 'shipping_failed').length,
-    delivered: orders.filter(o => o.status === 'delivered').length,
-    refunded: orders.filter(o => o.status === 'refunded' || o.statusId === 7 || getReturnRequestInfo(o.id)?.status === 'Approved').length,
-    cancelled: orders.filter(o => o.status === 'cancelled').length,
+    pending: orders.filter(o => o.status === 'pending' || o.statusId === 1).length,
+    confirmed: orders.filter(o => o.status === 'confirmed' || o.status === 'preparing' || o.statusId === 2).length,
+    shipping: orders.filter(o => o.status === 'shipping' || o.status === 'shipping_failed' || o.statusId === 3).length,
+    delivered: orders.filter(o => o.status === 'delivered' || o.statusId === 4).length,
+    return_requested: orders.filter(o => o.status === 'return_requested' || o.statusId === 6).length,
+    refunded: orders.filter(o => o.status === 'refunded' || o.statusId === 7).length,
+    cancelled: orders.filter(o => o.status === 'cancelled' || o.statusId === 5).length,
   };
 
   return (
@@ -823,23 +827,32 @@ export default function AdminOrders() {
           mode="admin"
           onSuccess={() => {
             setReturnModalOrder(null);
+            setSelectedOrderDetails(null); // Tự động đóng luôn cửa sổ chi tiết đơn hàng
             // Tải lại danh sách đơn hàng
             orderService.getAll().then(data => {
               if (Array.isArray(data)) {
                 // Cấu hình/Hằng số/Dịch vụ dữ liệu: statusMap
                 const statusMap = {
-                  1: 'pending', 2: 'confirmed', 3: 'shipping', 4: 'delivered', 5: 'cancelled', 6: 'shipping_failed', 7: 'refunded'
+                  1: 'pending', 2: 'confirmed', 3: 'shipping', 4: 'delivered', 5: 'cancelled', 6: 'return_requested', 7: 'refunded', 8: 'shipping_failed'
                 };
                 // Hàm thực thi logic: mappedOrders
                 const mappedOrders = data.map(order => ({
                   id: order.id,
                   customer: order.receiverName || 'Khách hàng',
-                  date: order.createdAt ? new Date(order.createdAt).toLocaleDateString('vi-VN') : '',
-                  total: order.totalPrice || 0,
+                  phone: order.receiverPhone || 'N/A',
+                  date: order.createdAt,
+                  payment: order.statusId === 7
+                    ? 'Đã hoàn tiền'
+                    : order.statusId === 5
+                      ? 'Đã hủy'
+                      : (order.paymentMethod || 'cod').toLowerCase() === 'cod'
+                        ? (order.statusId === 4 ? 'Đã thanh toán' : 'Chờ thanh toán')
+                        : 'Đã thanh toán',
+                  amount: order.totalPrice,
                   status: statusMap[order.statusId] || 'pending',
-                  paymentMethod: order.paymentMethod || 'N/A',
-                  itemsCount: order.items?.length || 0,
-                  raw: order
+                  paymentMethod: order.paymentMethod || 'cod',
+                  items: order.items || [],
+                  shippingAddress: order.shippingAddress || 'N/A'
                 }));
                 setOrders(mappedOrders);
               }

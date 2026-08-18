@@ -95,23 +95,62 @@ export default function OrderTrackingPage() {
   };
 
   /**
-   * HÀM CHUẨN HÓA TRẠNG THÁI ĐƠN HÀNG (ORDER STATUS MAPPER):
-   * - Đọc linh hoạt cả trường số (statusId / StatusId / orderStatusId) lẫn trường chuỗi (statusName / status).
-   * - Khắc phục triệt để lỗi lọc đơn hàng theo trạng thái (như 'Đã hoàn thành') bị báo N/A hoặc không khớp dữ liệu từ Backend C#.
+   * =========================================================================
+   * 📌 HÀM CHUẨN HÓA TRẠNG THÁI ĐƠN HÀNG (ORDER STATUS MAPPER):
+   * - MỤC ĐÍCH: Ánh xạ chuẩn xác mã trạng thái đơn hàng (1-8) từ CSDL / API Backend sang UI.
+   * - LOGIC XỬ LÝ: Ưu tiên nhận diện bản ghi đổi trả đang Pending (Mã 6) hoặc Approved (Mã 7)
+   *   từ CSDL/localStorage trước khi fallback đọc các chuỗi status text của API.
+   * =========================================================================
    */
   const getOrderStatusId = (ord) => {
     if (!ord) return 0;
-    let id = ord.statusId ?? ord.StatusId ?? ord.orderStatusId ?? ord.OrderStatusId;
-    if (id !== undefined && id !== null && !isNaN(Number(id))) return Number(id);
+    const ordId = String(ord.id || ord.Id || '');
+    
+    // Đọc trạng thái đổi trả đã ghi nhận từ localStorage
+    const savedRequests = JSON.parse(localStorage.getItem('PROJECT_RETURN_REQUESTS') || '{}');
+    const existingReq = savedRequests[ordId];
 
-    // Khai báo biến/hằng số: st - Dùng trong logic xử lý của component
+    // Ưu tiên đọc ID trạng thái trực tiếp từ DB nếu có
+    let id = ord.statusId ?? ord.StatusId ?? ord.orderStatusId ?? ord.OrderStatusId;
+    if (id !== undefined && id !== null && !isNaN(Number(id))) {
+      const numId = Number(id);
+      // Nếu khách đã gửi yêu cầu đổi trả đang chờ duyệt -> Chuyển sang mã 6 (Đang yêu cầu đổi trả)
+      if (existingReq && existingReq.status === 'Pending') return 6;
+      // Nếu yêu cầu đổi trả đã được Admin chấp nhận -> Chuyển sang mã 7 (Đã đổi trả & Hoàn tiền)
+      if (existingReq && existingReq.status === 'Approved') return 7;
+      return numId;
+    }
+
+    // Nếu không đọc được ID số, kiểm tra theo yêu cầu đổi trả
+    if (existingReq && existingReq.status === 'Pending') return 6;
+    if (existingReq && existingReq.status === 'Approved') return 7;
+
+    // Phân tích chuỗi chữ ký tự tiếng Việt / tiếng Anh để ép kiểu về mã số chuẩn (Xắp xếp theo thứ tự 1-8)
     const st = String(ord.statusName || ord.StatusName || ord.status || '').toLowerCase();
-    if (st.includes('pending') || st.includes('chờ') || st.includes('xác nhận')) return 1;
+    
+    // Mã 1: Chờ xác nhận (Pending)
+    if (st.includes('pending') || st.includes('chờ xác nhận') || (st.includes('chờ') && !st.includes('duyệt'))) return 1;
+    
+    // Mã 2: Đã xác nhận / Đang xử lý (Confirmed / Processing)
     if (st.includes('process') || st.includes('confirm') || st.includes('xử lý') || st.includes('chuẩn')) return 2;
-    if (st.includes('ship') || st.includes('giao')) return 3;
-    if (st.includes('complete') || st.includes('deliver') || st.includes('thành') || st.includes('hoàn thành')) return 4;
+    
+    // Mã 3: Đang giao hàng (Shipping)
+    if ((st.includes('ship') || st.includes('giao')) && !st.includes('thất bại') && !st.includes('thành công')) return 3;
+    
+    // Mã 4: Đã hoàn thành (Delivered)
+    if (st.includes('complete') || st.includes('deliver') || st.includes('thành công') || st.includes('hoàn thành')) return 4;
+    
+    // Mã 5: Đã hủy (Cancelled)
     if (st.includes('cancel') || st.includes('hủy')) return 5;
-    if (st.includes('refund') || st.includes('hoàn tiền') || st.includes('đổi trả')) return 7;
+    
+    // Mã 6: Đang yêu cầu đổi trả (Pending Return Request)
+    if (st.includes('yêu cầu đổi trả') || st.includes('chờ duyệt đổi trả') || st.includes('chờ xét duyệt') || st.includes('đang đổi trả')) return 6;
+    
+    // Mã 7: Đã đổi trả & Hoàn tiền (Refunded)
+    if (st.includes('refund') || st.includes('hoàn tiền') || st.includes('đã đổi trả')) return 7;
+    
+    // Mã 8: Giao thất bại (Shipping Failed)
+    if (st.includes('thất bại') || st.includes('failed')) return 8;
 
     return 1;
   };
@@ -176,8 +215,12 @@ export default function OrderTrackingPage() {
         return <span className="px-2.5 py-1 text-[10px] font-black uppercase text-emerald-700 bg-emerald-50 rounded-full border border-emerald-200">Đã hoàn thành</span>;
       case 5:
         return <span className="px-2.5 py-1 text-[10px] font-black uppercase text-red-700 bg-red-50 rounded-full border border-red-200">Đã hủy</span>;
+      case 6:
+        return <span className="px-2.5 py-1 text-[10px] font-black uppercase text-orange-800 bg-orange-100 rounded-full border border-orange-300 animate-pulse">Đang yêu cầu đổi trả</span>;
       case 7:
         return <span className="px-2.5 py-1 text-[10px] font-black uppercase text-purple-700 bg-purple-50 rounded-full border border-purple-200">Đổi trả / Hoàn tiền</span>;
+      case 8:
+        return <span className="px-2.5 py-1 text-[10px] font-black uppercase text-rose-700 bg-rose-50 rounded-full border border-rose-200">Giao thất bại</span>;
       default:
         return <span className="px-2.5 py-1 text-[10px] font-black uppercase text-gray-700 bg-gray-50 rounded-full border border-gray-200">{stName || 'Khác'}</span>;
     }
@@ -245,11 +288,13 @@ export default function OrderTrackingPage() {
                 className="w-full pl-8 pr-3 py-2 bg-white border border-gray-300 rounded-lg text-xs font-bold text-gray-700 outline-none focus:border-primary cursor-pointer transition-colors"
               >
                 <option value="ALL">Tất cả trạng thái</option>
-                <option value="1">Chờ thanh toán</option>
+                <option value="1">Chờ xác nhận</option>
                 <option value="2">Đang xử lý</option>
                 <option value="3">Đang giao hàng</option>
                 <option value="4">Đã hoàn thành</option>
+                <option value="6">Đang yêu cầu đổi trả</option>
                 <option value="7">Hoàn tiền / Đổi trả</option>
+                <option value="8">Giao thất bại</option>
                 <option value="5">Đã hủy</option>
               </select>
               <Filter className="absolute left-2.5 top-2.5 text-gray-400" size={14} />
@@ -374,11 +419,10 @@ export default function OrderTrackingPage() {
                       key={i}
                       type="button"
                       onClick={() => goToPage(i + 1)}
-                      className={`w-7 h-7 rounded-lg text-xs font-black transition cursor-pointer ${
-                        currentPage === i + 1
+                      className={`w-7 h-7 rounded-lg text-xs font-black transition cursor-pointer ${currentPage === i + 1
                           ? 'bg-blue-600 text-white shadow-xs'
                           : 'bg-white border border-gray-200 text-gray-700 hover:bg-gray-100'
-                      }`}
+                        }`}
                     >
                       {i + 1}
                     </button>

@@ -353,28 +353,16 @@ export default function OrderDetailsModal({
               </>
             )}
 
-            {order.status === 'delivered' && (() => {
-              const returnData = getReturnRequestInfo ? getReturnRequestInfo(order.id) : null;
-              if (returnData && returnData.status === 'Pending') {
-                return (
-                  <button
-                    onClick={() => onOpenReturnModal && onOpenReturnModal(order)}
-                    className="px-4 py-2 bg-admin-danger/10 text-admin-danger border border-admin-danger/20 hover:bg-admin-danger/20 rounded-md font-extrabold text-xs cursor-pointer transition-all active:scale-95"
-                    title="Khách vừa gửi yêu cầu đổi trả! Nhấp để xem và duyệt ngay"
-                  >
-                    Duyệt Đổi trả
-                  </button>
-                );
-              }
-              if (returnData && returnData.status === 'Rejected') {
-                return (
-                  <span className="text-[11px] font-bold text-gray-500 bg-gray-100 px-3 py-1.5 rounded-md border border-gray-200">
-                    Từ chối đổi trả
-                  </span>
-                );
-              }
-              return null;
-            })()}
+            {(order.status === 'return_requested' || order.statusId === 6) && (
+              <button
+                onClick={() => onOpenReturnModal && onOpenReturnModal(order)}
+                className="px-5 py-2.5 bg-orange-600 hover:bg-orange-700 text-white rounded-md font-bold text-xs cursor-pointer shadow-sm transition-all active:scale-95 flex items-center gap-1.5"
+                title="Khách vừa gửi yêu cầu đổi trả! Nhấp để xem và duyệt ngay"
+              >
+                <RotateCcw size={14} />
+                <span>Duyệt Đổi Trả &amp; Hoàn Tiền</span>
+              </button>
+            )}
 
             {order.status === 'refunded' && (
               <span className="text-[11px] font-black text-purple-700 bg-purple-50 border border-purple-200 px-3 py-1.5 rounded-md flex items-center gap-1">

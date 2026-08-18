@@ -209,8 +209,9 @@ export default function OrderDetailsTracker({ order, onOrderCancelled, isGuest =
       case 3: return 'Đang giao hàng';
       case 4: return 'Đã giao hàng';
       case 5: return 'Đã hủy';
-      case 6: return 'Giao thất bại';
-      case 7: return 'Đổi trả hoàn tiền';
+      case 6: return 'Đang yêu cầu đổi trả';
+      case 7: return 'Đổi trả / Hoàn tiền';
+      case 8: return 'Giao thất bại';
       default: return order.statusName || order.status || 'Chờ xác nhận';
     }
   };
@@ -232,8 +233,12 @@ export default function OrderDetailsTracker({ order, onOrderCancelled, isGuest =
           <span className={`px-4 py-1.5 rounded-full text-xs font-black uppercase tracking-wider border ${
             statusId === 5
               ? 'bg-red-50 border-red-200 text-red-500'
+              : statusId === 6
+              ? 'bg-orange-100 border-orange-300 text-orange-800 animate-pulse'
               : statusId === 7
               ? 'bg-purple-50 border-purple-200 text-purple-600'
+              : statusId === 8
+              ? 'bg-rose-50 border-rose-200 text-rose-600'
               : currentStep === 4 || statusId === 4
               ? 'bg-green-50 border-green-200 text-green-600'
               : currentStep === 3
@@ -455,6 +460,11 @@ export default function OrderDetailsTracker({ order, onOrderCancelled, isGuest =
         mode="user"
         onSuccess={() => {
           setIsReturnModalOpen(false);
+          if (onOrderCancelled) {
+            onOrderCancelled();
+          } else {
+            window.location.reload();
+          }
         }}
       />
     </div>

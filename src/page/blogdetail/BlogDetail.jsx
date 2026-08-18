@@ -194,16 +194,28 @@ export default function BlogDetail() {
             </div>
           </div>
 
-          {/* Featured Image */}
+          {/* Featured Image & Caption */}
           {blog.thumbnailUrl && (
-            <div className="w-full max-h-[420px] rounded-2xl overflow-hidden bg-gray-100 shadow-sm border border-gray-100 relative group">
-              <img
-                src={getMediaUrl(blog.thumbnailUrl)}
-                alt={blog.title}
-                className="w-full h-full object-cover group-hover:scale-102 transition-transform duration-500"
-                onError={(e) => { e.target.style.display = 'none'; }}
-              />
-            </div>
+            <figure className="w-full space-y-2">
+              <div className="w-full max-h-[420px] rounded-2xl overflow-hidden bg-gray-100 shadow-sm border border-gray-100 relative group">
+                <img
+                  src={getMediaUrl(blog.thumbnailUrl)}
+                  alt={blog.title}
+                  className="w-full h-full object-cover group-hover:scale-102 transition-transform duration-500"
+                  onError={(e) => { e.target.style.display = 'none'; }}
+                />
+              </div>
+              {(() => {
+                const savedCaptions = JSON.parse(localStorage.getItem('PROJECT_BLOG_CAPTIONS') || '{}');
+                const caption = blog.imageCaption || blog.thumbnailCaption || blog.caption || savedCaptions[blog.id] || savedCaptions[blog.slug] || savedCaptions[id];
+                if (!caption) return null;
+                return (
+                  <figcaption className="text-center text-xs md:text-sm font-semibold text-gray-500 italic bg-gray-50/80 py-2 px-4 rounded-xl border border-gray-100/80">
+                    {caption}
+                  </figcaption>
+                );
+              })()}
+            </figure>
           )}
 
           {/* Excerpt / Summary Quote */}
@@ -282,10 +294,10 @@ export default function BlogDetail() {
 
             <div className="pt-2">
               <button
-                onClick={() => navigate('/')}
+                onClick={() => navigate('/blog')}
                 className="w-full py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl font-bold text-xs transition-colors cursor-pointer"
               >
-                Xem tất cả bài viết trên Trang Chủ
+                Xem tất cả bài viết Tin tức & Blog
               </button>
             </div>
           </div>

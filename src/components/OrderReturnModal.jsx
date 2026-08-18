@@ -113,13 +113,37 @@ export default function OrderReturnModal({ isOpen, onClose, order, mode = 'user'
     setSubmitting(true);
 
     try {
-      // Khai báo biến/hằng số: returnPayload - Dùng trong logic xử lý của component
+      // 1. Gửi API đổi trả về BE (nếu có)
+      try {
+        await returnService.createReturnRequest({
+          orderId: Number(orderId),
+          reason: Object.values(itemReasons).join('; ') || 'Sản phẩm lỗi kỹ thuật',
+          note: generalNote,
+          items: selectedIds.map(itemId => ({
+            orderItemId: Number(itemId),
+            quantity: 1,
+            reason: itemReasons[itemId] || 'Sản phẩm lỗi kỹ thuật',
+            proofImages: (itemImages[itemId] || []).join(';')
+          }))
+        });
+      } catch (apiErr) {
+        console.warn('Gửi API Return/create thất bại, tiến hành cập nhật trạng thái đơn:', apiErr);
+      }
+
+      // 2. Cập nhật trạng thái đơn hàng sang return_requested (Status 6)
+      try {
+        await orderService.updateStatus(orderId, 'return_requested');
+      } catch (statusErr) {
+        console.warn('Cập nhật trạng thái đơn sang return_requested thất bại:', statusErr);
+      }
+
+      // 3. Khai báo biến/hằng số: returnPayload - Dùng trong logic xử lý của component
       const returnPayload = {
         returnRequestId: `REQ-${orderId}-${Date.now()}`,
         orderId: orderId,
         userId: order.userId || order.UserId,
         status: 'Pending',
-        totalRefundAmount: order.totalPrice || order.TotalPrice,
+        totalRefundAmount: order.totalPrice || order.TotalPrice || order.amount,
         createdAt: new Date().toISOString(),
         returnItems: selectedIds.map(itemId => {
           // Hàm thực thi logic: item
@@ -143,7 +167,7 @@ export default function OrderReturnModal({ isOpen, onClose, order, mode = 'user'
       window.dispatchEvent(new Event('storage'));
       window.dispatchEvent(new Event('return_request_updated'));
 
-      setSuccessMsg('Đã gửi yêu cầu đổi trả thành công! Đang chờ Admin phê duyệt.');
+      setSuccessMsg('Đã gửi yêu cầu đổi trả thành công! Đang chuyển trạng thái...');
       setTimeout(() => {
         setSubmitting(false);
         setSuccessMsg('');
@@ -207,42 +231,50 @@ export default function OrderReturnModal({ isOpen, onClose, order, mode = 'user'
 
   // Admin từ chối yêu cầu
   const handleAdminReject = async () => {
+    setSubmitting(true);
     try {
-      await returnService.rejectReturnRequest(orderId, adminNote);
-    } catch {
-      // Fallback local
-    }
+      try {
+        await returnService.rejectReturnRequest(orderId, adminNote);
+      } catch {
+        await orderService.updateStatus(orderId, 'delivered');
+      }
 
-    // Khai báo biến/hằng số: existingReqs - Dùng trong logic xử lý của component
-    const existingReqs = JSON.parse(localStorage.getItem('PROJECT_RETURN_REQUESTS') || '{}');
-    if (existingReqs[orderId]) {
-      existingReqs[orderId].status = 'Rejected';
-      existingReqs[orderId].adminNote = adminNote || 'Từ chối yêu cầu đổi trả';
-      localStorage.setItem('PROJECT_RETURN_REQUESTS', JSON.stringify(existingReqs));
-    }
+      // Khai báo biến/hằng số: existingReqs - Dùng trong logic xử lý của component
+      const existingReqs = JSON.parse(localStorage.getItem('PROJECT_RETURN_REQUESTS') || '{}');
+      if (existingReqs[orderId]) {
+        existingReqs[orderId].status = 'Rejected';
+        existingReqs[orderId].adminNote = adminNote || 'Từ chối yêu cầu đổi trả';
+        localStorage.setItem('PROJECT_RETURN_REQUESTS', JSON.stringify(existingReqs));
+      }
 
-    // Lưu log kiểm toán từ chối
-    try {
-      // Khai báo biến/hằng số: currentLogs - Dùng trong logic xử lý của component
-      const currentLogs = JSON.parse(localStorage.getItem('PROJECT_AUDIT_LOGS') || '[]');
-      currentLogs.unshift({
-        id: Date.now(),
-        action: 'REJECT_RETURN_REQUEST',
-        userEmail: 'admin@phoneshop.com',
-        targetTable: 'ReturnRequests',
-        targetId: `ORDER-#PS${orderId}`,
-        newValues: `Admin đã từ chối yêu cầu đổi trả cho đơn hàng #PS${orderId}. Lý do: ${adminNote || 'Không đủ điều kiện'}`,
-        timestamp: new Date().toISOString()
-      });
-      localStorage.setItem('PROJECT_AUDIT_LOGS', JSON.stringify(currentLogs));
-      window.dispatchEvent(new Event('storage'));
-    } catch (e) {
-      console.error('Lỗi ghi audit log FE:', e);
-    }
+      // Lưu log kiểm toán từ chối
+      try {
+        // Khai báo biến/hằng số: currentLogs - Dùng trong logic xử lý của component
+        const currentLogs = JSON.parse(localStorage.getItem('PROJECT_AUDIT_LOGS') || '[]');
+        currentLogs.unshift({
+          id: Date.now(),
+          action: 'REJECT_RETURN_REQUEST',
+          userEmail: 'admin@phoneshop.com',
+          targetTable: 'ReturnRequests',
+          targetId: `ORDER-#PS${orderId}`,
+          newValues: `Admin đã từ chối yêu cầu đổi trả cho đơn hàng #PS${orderId}. Lý do: ${adminNote || 'Không đủ điều kiện'}`,
+          timestamp: new Date().toISOString()
+        });
+        localStorage.setItem('PROJECT_AUDIT_LOGS', JSON.stringify(currentLogs));
+        window.dispatchEvent(new Event('storage'));
+      } catch (e) {
+        console.error('Lỗi ghi audit log FE:', e);
+      }
 
-    alert(`Đã từ chối yêu cầu đổi trả cho đơn hàng #PS${orderId}.`);
-    onClose();
-    if (onSuccess) onSuccess();
+      alert(`Đã từ chối yêu cầu đổi trả cho đơn hàng #PS${orderId}.`);
+      setSubmitting(false);
+      onClose();
+      if (onSuccess) onSuccess();
+    } catch (err) {
+      console.error('Lỗi khi từ chối đổi trả:', err);
+      alert('Không thể từ chối yêu cầu đổi trả. Vui lòng thử lại.');
+      setSubmitting(false);
+    }
   };
 
   // Đọc dữ liệu yêu cầu đổi trả đã lưu (nếu có)
@@ -540,12 +572,23 @@ export default function OrderReturnModal({ isOpen, onClose, order, mode = 'user'
                   {existingReturnData ? existingReturnData.status : 'Chờ xử lý'}
                 </span>
               </div>
-              <p className="text-gray-700 font-bold">
-                Khách hàng: <span className="text-gray-900 font-black">{order.receiverName || 'Khách hàng'}</span> ({order.receiverPhone})
-              </p>
-              <p className="text-gray-700 font-bold">
-                Tổng tiền đơn hàng: <span className="text-red-600 font-black">{(order.totalPrice || 0).toLocaleString('vi-VN')}₫</span>
-              </p>
+              {(() => {
+                const customerName = order.customer || order.receiverName || order.ReceiverName || order.fullName || 'Khách hàng';
+                const customerPhone = order.phone || order.receiverPhone || order.ReceiverPhone || '';
+                const orderTotal = order.amount || order.totalPrice || order.TotalPrice || 0;
+                const refundAmount = existingReturnData?.totalRefund || orderTotal;
+
+                return (
+                  <>
+                    <p className="text-gray-700 font-bold">
+                      Khách hàng: <span className="text-gray-900 font-black">{customerName}</span> {customerPhone ? `(${customerPhone})` : ''}
+                    </p>
+                    <p className="text-gray-700 font-bold">
+                      Số tiền cần hoàn trả: <span className="text-red-600 font-black">{refundAmount.toLocaleString('vi-VN')}₫</span> (Tổng giá trị đơn: {orderTotal.toLocaleString('vi-VN')}₫)
+                    </p>
+                  </>
+                );
+              })()}
             </div>
 
             {/* Sản phẩm khiếu nại */}
