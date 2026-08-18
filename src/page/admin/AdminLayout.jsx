@@ -161,16 +161,35 @@ export default function AdminLayout({ activeAdminTab, onTabChange, setSearchPara
     } catch (e) {
       console.error('Lỗi đọc thông báo đổi trả:', e);
     }
-    
-    // 2. Pending orders (statusId === 1) tất cả 
+
+    /*
+    [NGHIỆP VỤ TGDĐ - XỬ LÝ ĐƠN HÀNG TRỄ XÁC NHẬN XUẤT KHO]:
+    Nếu sau 15 - 30 phút đơn hàng chưa có nhân viên bấm xác nhận xuất kho:
+    Hệ thống tự động chuyển đơn hàng sang trạng thái CẢNH BÁO ĐỎ (Overdue Warning) trên màn hình Admin.
+    Cứ mỗi 15 phút (Slot 1: 15p, Slot 2: 30p, Slot 3: 45p...) hệ thống tự động phát THÔNG BÁO MỚI nhắc lại qua chuông.
+    Tự động gửi thông báo khẩn cấp tới Trưởng ca / Quản lý siêu thị.
+    */
     allOrders.forEach(o => {
-      if (o.statusId === 1) {
+      const isPending = o.statusId === 1 || o.statusStr === 'Chờ xác nhận' || o.status === 'Chờ xác nhận' || o.status === 'Pending' || o.orderStatus === 'Pending';
+      if (isPending) {
+        const orderTime = new Date(o.createdAt || o.orderDate || Date.now()).getTime();
+        const elapsedMinutes = Math.floor((Date.now() - orderTime) / (1000 * 60));
+
+        // Kiểm tra xem đơn hàng đã chờ xác nhận quá 15 phút chưa
+        const isOverdue = elapsedMinutes >= 15;
+        // Tự động phân slot 15 phút (Slot 1: 15-29p, Slot 2: 30-44p, Slot 3: 45-59p...) để phát lại thông báo mới
+        const timeSlot = isOverdue ? Math.floor(elapsedMinutes / 15) : 0;
+        const notifId = isOverdue ? `order-overdue-${o.id}-slot-${timeSlot}` : `order-${o.id}`;
+
         list.push({
-          id: `order-${o.id}`,
+          id: notifId,
           type: 'order',
-          title: 'Đơn hàng mới',
-          message: `Đơn hàng #${o.id} đang chờ xác nhận từ ${o.receiverName || o.customerName || 'Khách hàng'}`,
-          time: o.createdAt,
+          isOverdue: isOverdue,
+          title: isOverdue ? ` CẢNH BÁO ĐỎ (Nhắc lại đợt ${timeSlot})` : 'Đơn hàng mới',
+          message: isOverdue
+            ? ` CẢNH BÁO ĐỎ: Đơn hàng #${o.id} đã quá ${elapsedMinutes} phút chưa có nhân viên bấm xác nhận xuất kho! Cần Trưởng ca / Quản lý siêu thị xử lý khẩn cấp.`
+            : `Đơn hàng #${o.id} đang chờ xác nhận từ ${o.receiverName || o.customerName || 'Khách hàng'}`,
+          time: o.createdAt || o.orderDate || new Date().toISOString(),
           targetTab: 'orders',
           data: o
         });
@@ -196,10 +215,10 @@ export default function AdminLayout({ activeAdminTab, onTabChange, setSearchPara
     // Hàm thực thi logic: orders
     const orders = list.filter(n => n.type === 'order').sort((a, b) => new Date(b.time) - new Date(a.time));
     // Hàm thực thi logic: stocks
-    const stocks = list.filter(n => n.type === 'stock') ;
+    const stocks = list.filter(n => n.type === 'stock');
     return [...orders, ...stocks];
-  }, 
-  [allOrders, allProducts, returnSignal]);
+  },
+    [allOrders, allProducts, returnSignal]);
 
   //bộ lọc tab thông báo
   const filteredNotifications = React.useMemo(() => {
@@ -270,6 +289,13 @@ export default function AdminLayout({ activeAdminTab, onTabChange, setSearchPara
       }
     };
     fetchSearchData();
+
+    // [CẬP NHẬT NGHIỆP VỤ TGDĐ]: Quét liên tục mỗi 30 giây để tự động cập nhật mốc mười lăm phút và bật lại thông báo quả chuông
+    const intervalFastCheck = setInterval(() => {
+      fetchSearchData();
+    }, 30 * 1000);
+
+    return () => clearInterval(intervalFastCheck);
   }, []);
 
   // Đóng dropdown khi click ra ngoài
@@ -341,8 +367,8 @@ export default function AdminLayout({ activeAdminTab, onTabChange, setSearchPara
     <button
       onClick={() => { onTabChange(id); setIsSidebarOpen(false); }}
       className={`w-full flex items-center px-4 py-3 rounded-md transition-all duration-200 font-bold cursor-pointer ${activeAdminTab === id
-          ? 'bg-admin-sidebar-hover text-primary border-l-4 border-primary'
-          : 'text-admin-sidebar-text hover:bg-admin-sidebar-hover hover:text-white'
+        ? 'bg-admin-sidebar-hover text-primary border-l-4 border-primary'
+        : 'text-admin-sidebar-text hover:bg-admin-sidebar-hover hover:text-white'
         }`}
     >
       <IconComponent className={`w-5 h-5 mr-3 ${activeAdminTab === id ? 'text-primary' : 'text-admin-sidebar-text'}`} />
@@ -564,7 +590,7 @@ export default function AdminLayout({ activeAdminTab, onTabChange, setSearchPara
 
                   {/* Tabs */}
                   <div className="flex border-b border-admin-border px-2 py-1 bg-gray-50/50 dark:bg-admin-bg/30">
-                    {['all', 'unread', 'order', 'stock','logs'].map(tab => {
+                    {['all', 'unread', 'order', 'stock', 'logs'].map(tab => {
                       // Khai báo biến/hằng số: labels - Dùng trong logic xử lý của component
                       const labels = {
                         all: 'Tất cả',
@@ -577,11 +603,10 @@ export default function AdminLayout({ activeAdminTab, onTabChange, setSearchPara
                         <button
                           key={tab}
                           onClick={() => setNotificationFilter(tab)}
-                          className={`flex-1 text-center py-1.5 text-xs font-bold rounded-md transition-colors cursor-pointer ${
-                            notificationFilter === tab
-                              ? 'bg-primary/10 text-primary dark:bg-primary/20'
-                              : 'text-admin-text-muted hover:text-admin-text-main hover:bg-gray-100 dark:hover:bg-gray-800'
-                          }`}
+                          className={`flex-1 text-center py-1.5 text-xs font-bold rounded-md transition-colors cursor-pointer ${notificationFilter === tab
+                            ? 'bg-primary/10 text-primary dark:bg-primary/20'
+                            : 'text-admin-text-muted hover:text-admin-text-main hover:bg-gray-100 dark:hover:bg-gray-800'
+                            }`}
                         >
                           {labels[tab]}
                         </button>
@@ -603,13 +628,16 @@ export default function AdminLayout({ activeAdminTab, onTabChange, setSearchPara
                           <div
                             key={n.id}
                             onClick={() => handleNotificationClick(n)}
-                            className={`px-4 py-3 border-b border-gray-100 dark:border-admin-border/30 flex gap-3 hover:bg-gray-50 dark:hover:bg-gray-800/30 transition-colors cursor-pointer ${
-                              !isRead ? 'bg-primary/5 dark:bg-primary/5 font-semibold' : ''
-                            }`}
+                            className={`px-4 py-3 border-b border-gray-100 dark:border-admin-border/30 flex gap-3 hover:bg-gray-50 dark:hover:bg-gray-800/30 transition-colors cursor-pointer ${!isRead ? 'bg-primary/5 dark:bg-primary/5 font-semibold' : ''
+                              }`}
                           >
                             {/* Icon */}
                             <div className="mt-0.5 shrink-0">
-                              {n.type === 'order' ? (
+                              {n.isOverdue ? (
+                                <div className="w-8 h-8 rounded-full bg-red-100 text-red-600 flex items-center justify-center animate-pulse">
+                                  <ShieldAlert size={18} />
+                                </div>
+                              ) : n.type === 'order' ? (
                                 <div className="w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 flex items-center justify-center">
                                   <ShoppingCart size={16} />
                                 </div>
@@ -620,9 +648,16 @@ export default function AdminLayout({ activeAdminTab, onTabChange, setSearchPara
                               )}
                             </div>
 
-                            {/* Content */}
+                            {/* Content cảnh báo duyệt đơn*/}
                             <div className="flex-1 min-w-0">
-                              <p className="text-xs text-admin-text-main line-clamp-2 leading-relaxed">{n.message}</p>
+                              {n.isOverdue && (
+                                <span className="inline-block px-1.5 py-0.5  text-red-700 text-[9px] font-black uppercase rounded mb-1  ">
+                                  CẢNH BÁO ĐỎ (Overdue Warning)
+                                </span>
+                              )}
+                              <p className={`text-xs line-clamp-2 leading-relaxed ${n.isOverdue ? 'text-red-900 font-extrabold' : 'text-admin-text-main'}`}>
+                                {n.message}
+                              </p>
                               <span className="text-[10px] text-admin-text-muted mt-1 block">
                                 {n.time ? new Date(n.time).toLocaleString('vi-VN') : 'Cần xử lý ngay'}
                               </span>
@@ -630,7 +665,7 @@ export default function AdminLayout({ activeAdminTab, onTabChange, setSearchPara
 
                             {/* Unread dot */}
                             {!isRead && (
-                              <div className="mt-2 shrink-0 w-2 h-2 rounded-full bg-primary" />
+                              <div className={`mt-2 shrink-0 w-2 h-2 rounded-full ${n.isOverdue ? 'bg-red-600 animate-ping' : 'bg-primary'}`} />
                             )}
                           </div>
                         );

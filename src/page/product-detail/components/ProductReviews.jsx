@@ -51,14 +51,21 @@ export default function ProductReviews({ productId, reviews, currentUser, stats,
       setReviewError("Nội dung đánh giá phải có tối thiểu 10 ký tự.");
       return;
     }
-    
+
     setIsSubmittingReview(true);
     setReviewError('');
     setReviewSuccess('');
 
     try {
+      const numericProductId = parseInt(productId);
+      if (isNaN(numericProductId) || !numericProductId) {
+        setReviewError("Không thể xác định mã ID sản phẩm để gửi đánh giá.");
+        setIsSubmittingReview(false);
+        return;
+      }
+
       const res = await reviewService.create({
-        productId: parseInt(productId),
+        productId: numericProductId,
         rating: writeRating,
         comment: writeComment
       });
@@ -70,25 +77,25 @@ export default function ProductReviews({ productId, reviews, currentUser, stats,
       if (onReviewSubmitted) onReviewSubmitted();
     } catch (err) {
       console.error("Lỗi khi gửi đánh giá:", err);
-      let errorMsg = typeof err === 'string' ? err : (err?.message || err?.data || "");
-      if (typeof errorMsg === 'object') errorMsg = JSON.stringify(errorMsg);
-
-      // Comment lại đoạn tùy chỉnh thông báo lỗi theo yêu cầu của Nam
-      /* 
-       * GHI CHÚ HỆ THỐNG: Đã comment lại khối mapper thông báo lỗi đánh giá thủ công phía trên theo yêu cầu.
-       * Phản hồi lỗi trả về từ Backend (ReviewController.cs) được giữ nguyên bản gốc để người dùng nhận đúng 
-       * thông điệp chính xác từ CSDL (Ví dụ: thông báo chưa mua hàng / chưa nhận hàng hoặc đã đánh giá 1 lần).
-       */
-      /*
-      if (errorMsg.includes("chưa mua") || errorMsg.includes("chưa mua sản phẩm")) {
-        errorMsg = "Bạn chưa mua (hoặc chưa nhận thành công) sản phẩm này nên chưa thể gửi đánh giá.";
-      } else if (errorMsg.includes("đã đánh giá") || errorMsg.includes("đã gửi đánh giá")) {
-        errorMsg = "Bạn đã gửi đánh giá cho sản phẩm này rồi (mỗi sản phẩm chỉ được đánh giá 1 lần).";
-      } else if (!errorMsg || errorMsg === "[object Object]") {
-        errorMsg = "Có lỗi xảy ra khi gửi đánh giá. Vui lòng kiểm tra lại đơn hàng của bạn.";
+      // Trích xuất chính xác thông điệp phản hồi từ Backend C# (Ví dụ: Tài khoản chưa từng mua hàng)
+      let extractedMsg = '';
+      if (typeof err === 'string') {
+        extractedMsg = err;
+      } else if (err?.message && typeof err.message === 'string') {
+        extractedMsg = err.message;
+      } else if (err?.data && typeof err.data === 'string') {
+        extractedMsg = err.data;
+      } else if (err?.response?.data?.message) {
+        extractedMsg = err.response.data.message;
+      } else if (err?.response?.data && typeof err.response.data === 'string') {
+        extractedMsg = err.response.data;
       }
-      */
-      setReviewError(errorMsg || "Có lỗi xảy ra khi gửi đánh giá. Vui lòng kiểm tra lại đơn hàng của bạn.");
+
+      if (!extractedMsg || extractedMsg === '[object Object]') {
+        extractedMsg = " Tài khoản của bạn chưa từng mua (hoặc đơn hàng chưa giao thành công) sản phẩm này nên chưa thể gửi đánh giá.";
+      }
+
+      setReviewError(extractedMsg);
     } finally {
       setIsSubmittingReview(false);
     }
@@ -172,7 +179,7 @@ export default function ProductReviews({ productId, reviews, currentUser, stats,
         ) : (
           <form onSubmit={handleSubmitReview} className="w-full max-w-xl bg-gray-50 rounded-xl p-6 border border-gray-200/60 space-y-4 animate-in zoom-in-95 duration-200">
             <h4 className="font-black text-gray-800 text-sm">Đánh giá sản phẩm {productName}</h4>
-            
+
             {/* Chọn sao */}
             <div className="space-y-2">
               <div className="flex items-center justify-between">

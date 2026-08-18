@@ -200,7 +200,7 @@ export default function AdminBrands({ onRedirectToProducts, onRedirectToCreatePr
       setEditingBrand(brand);
       setFormData({
         name: fixVietnameseEncoding(brand.name || ''),
-        brandCode: brand.brandCode || '',
+        brandCode: brand.brandCode || brand.BrandCode || brand.code || brand.Code || generateBrandOrCategoryCode(brand.name || brand.Name || '', 10),
         slug: brand.slug || generateSlug(brand.name),
         description: fixVietnameseEncoding(brand.description || ''),
         imageUrl: brand.imageUrl || '',

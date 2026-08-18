@@ -157,7 +157,11 @@ export default function OrderDetailsModal({
                   <p className="text-admin-text-muted font-bold col-span-1 sm:col-span-2">
                     Theo dõi thời gian thực:
                     <a
-                      href={order.ahamoveSharedLink}
+                      href={
+                        order.ahamoveSharedLink.includes('mock-tracking-link') || order.ahamoveSharedLink.includes('mock')
+                          ? `/order-tracking?id=${order.id}`
+                          : order.ahamoveSharedLink
+                      }
                       target="_blank"
                       rel="noopener noreferrer"
                       className="text-primary font-extrabold ml-1 hover:underline inline-flex items-center gap-0.5"

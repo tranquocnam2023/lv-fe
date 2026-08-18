@@ -49,7 +49,7 @@ export default function AuthGuestForms({
         <Breadcrumb items={[{ label: 'Quên mật khẩu' }]} />
         <div className="flex justify-center items-start pt-6 w-full px-4">
           <div className="bg-white border border-gray-200 p-8 rounded-md w-full max-w-md space-y-4">
-            
+
             {/* Step Indicators */}
             <div className="flex items-center justify-between pb-2 border-b border-gray-100">
               <div className="flex flex-col items-center flex-1">
@@ -79,7 +79,7 @@ export default function AuthGuestForms({
               <form className="flex flex-col space-y-4" onSubmit={handleSendResetOtp}>
                 <h2 className="text-2xl font-bold text-primary mb-2 text-center">Yêu Cầu Đặt Lại Mật Khẩu</h2>
                 <p className="text-xs text-gray-500 text-center font-medium mb-4">Nhập tên tài khoản và email đã đăng ký để nhận mã xác thực OTP.</p>
-                
+
                 <div>
                   <label className="block text-sm font-medium mb-1">Tên đăng nhập *</label>
                   <input
@@ -141,7 +141,7 @@ export default function AuthGuestForms({
               <form className="flex flex-col space-y-4 animate-fade-in" onSubmit={handleForgotPasswordSubmit}>
                 <h2 className="text-2xl font-bold text-primary mb-2 text-center">Thiết Lập Mật Khẩu Mới</h2>
                 <p className="text-xs text-gray-500 text-center font-medium mb-4">Vui lòng nhập mật khẩu mới từ 6 ký tự để hoàn tất quy trình.</p>
-                
+
                 <div>
                   <label className="block text-sm font-medium mb-1">Mật khẩu mới *</label>
                   <input
@@ -187,8 +187,8 @@ export default function AuthGuestForms({
 
             {forgotPasswordStep !== 2 && (
               <div className="text-center pt-2">
-                <span 
-                  className="text-primary font-bold text-sm cursor-pointer hover:underline" 
+                <span
+                  className="text-primary font-bold text-sm cursor-pointer hover:underline"
                   onClick={() => { setIsForgotPassword(false); setForgotPasswordStep(1); setError(''); }}
                 >
                   Quay lại Đăng nhập
@@ -219,10 +219,10 @@ export default function AuthGuestForms({
           <form className="flex flex-col space-y-4" onSubmit={handleAuth}>
             {isLogin ? (
               <div>
-                <label className="block text-sm font-medium mb-1">Địa chỉ Email hoặc Tên đăng nhập</label>
+                <label className="block text-sm font-medium mb-1">Địa chỉ Email </label>
                 <input
                   type="text"
-                  placeholder="Nhập email hoặc tên đăng nhập"
+                  placeholder="Nhập email để đăng nhập"
                   className="w-full border border-gray-300 p-2.5 rounded focus:outline-none focus:border-primary text-gray-800 font-semibold text-sm"
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
@@ -261,7 +261,7 @@ export default function AuthGuestForms({
               <div className="flex justify-between items-center mb-1">
                 <label className="block text-sm font-medium">Mật khẩu</label>
                 {isLogin && (
-                  <span 
+                  <span
                     onClick={() => { setIsForgotPassword(true); setError(''); }}
                     className="text-xs text-primary font-bold cursor-pointer hover:underline"
                   >

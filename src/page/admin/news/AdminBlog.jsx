@@ -1,32 +1,29 @@
-//TIN TỨC VỀ CÁC THIẾT BỊ
+// TIN TỨC VỀ CÁC THIẾT BỊ - QUẢN LÝ BÀI VIẾT / BLOG ADMIN
 import React, { useState, useEffect } from 'react';
 import { Plus, Edit2, Trash2, PackagePlus, AlertCircle, RefreshCw, Search, Filter } from 'lucide-react';
 import api from '../../../services/api';
 import { blogService } from '../../../services/Blog';
 
 export default function AdminBlog({ onCreate, onEdit }) {
-  // State: blog - Quản lý trạng thái và dữ liệu của blog trong giao diện
+  // State: blog - Quản lý danh sách bài viết
   const [blog, setBlog] = useState([]);
-  // State: loading - Quản lý trạng thái và dữ liệu của loading trong giao diện
+  // State: loading - Trạng thái nạp dữ liệu
   const [loading, setLoading] = useState(true);
-  // State: actionLoading - Quản lý trạng thái và dữ liệu của actionLoading trong giao diện
+  // State: actionLoading - Trạng thái chờ khi xóa/đổi trạng thái
   const [actionLoading, setActionLoading] = useState(null);
   
   // Filters
   const [searchTerm, setSearchTerm] = useState('');
-  // State: statusFilter - Quản lý trạng thái và dữ liệu của statusFilter trong giao diện
   const [statusFilter, setStatusFilter] = useState('ALL');
-  // const [timeFilter, setTimeFilter] = useState('ALL');
+  // [CẬP NHẬT NGHIỆP VỤ ACCORDING TO USER REQUIREMENT]: Lọc bài viết theo Chuyên mục (Category)
+  const [categoryFilter, setCategoryFilter] = useState('ALL');
 
-  // Hàm xử lý logic/sự kiện: fetchData
+  // Hàm xử lý nạp danh sách bài viết từ Backend
   const fetchData = async () => {
     try {
       setLoading(true);
-      // Khai báo biến/hằng số: res - Dùng trong logic xử lý của component
       const res = await blogService.getBlogs();
-      // Cấu hình/Hằng số/Dịch vụ dữ liệu: data
       const data = res.data || res;
-      // Cấu hình/Hằng số/Dịch vụ dữ liệu: list
       const list = Array.isArray(data) ? data : (data.items || []);
       setBlog(list);
     } catch (err) {
@@ -35,11 +32,12 @@ export default function AdminBlog({ onCreate, onEdit }) {
       setLoading(false);
     }
   };
+
   useEffect(() => {
     fetchData();
   }, []);
 
-  // Hàm xử lý logic/sự kiện: handleDelete
+  // Xóa bài viết
   const handleDelete = async (id) => {
     if (!window.confirm("Bạn có chắc chắn muốn xóa bài đăng này không?")) return;
     try {
@@ -54,7 +52,7 @@ export default function AdminBlog({ onCreate, onEdit }) {
     }
   };
 
-  // Hàm xử lý logic/sự kiện: handleToggleStatus
+  // Đổi trạng thái Ẩn / Đã xuất bản
   const handleToggleStatus = async (item) => {
     try {
       setActionLoading(item.id + '_toggle');
@@ -68,30 +66,45 @@ export default function AdminBlog({ onCreate, onEdit }) {
     }
   };
 
-  // Hàm xử lý logic/sự kiện: getStatus
   const getStatus = (item) => {
-    // Khai báo biến/hằng số: isPub - Dùng trong logic xử lý của component
     const isPub = item.isPublished ?? item.isActive ?? true;
     return isPub ? 'ACTIVE' : 'PAUSED';
   };
 
-  // Hàm thực thi logic: filteredBlog
+  // Lấy danh sách Chuyên mục (Category) duy nhất từ dữ liệu bài viết
+  const categoriesList = React.useMemo(() => {
+    if (!Array.isArray(blog)) return [];
+    const set = new Set();
+    blog.forEach(b => {
+      const cat = b.categoryName || b.category || b.CategoryName || b.Category;
+      if (cat) set.add(cat);
+    });
+    // Đảm bảo có các chuyên mục phổ biến
+    ['Tin công nghệ', 'Mẹo hay & Thủ thuật', 'Tư vấn mua sắm', 'Đánh giá sản phẩm', 'Khác'].forEach(c => set.add(c));
+    return Array.from(set);
+  }, [blog]);
+
+  // Lọc dữ liệu bài viết theo Từ khóa, Trạng thái & Chuyên mục
   const filteredBlog = (Array.isArray(blog) ? blog : []).filter(item => {
-    // Khai báo biến/hằng số: matchText - Dùng trong logic xử lý của component
     const matchText = (item.title || item.name || '').toLowerCase().includes(searchTerm.toLowerCase()) || item.id?.toString() === searchTerm;
     if (!matchText) return false;
 
     if (statusFilter !== 'ALL') {
-      // Cấu hình/Hằng số/Dịch vụ dữ liệu: status
       const status = getStatus(item);
       if (status !== statusFilter) return false;
+    }
+
+    // [CẬP NHẬT NGHIỆP VỤ ACCORDING TO USER REQUIREMENT]: Lọc theo Chuyên mục
+    if (categoryFilter !== 'ALL') {
+      const itemCat = item.categoryName || item.category || item.CategoryName || item.Category || 'Khác';
+      if (itemCat !== categoryFilter) return false;
     }
 
     return true;
   });
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 font-sans">
       {/* Header */}
       <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 flex flex-col md:flex-row justify-between items-center gap-4">
         <div>
@@ -118,6 +131,7 @@ export default function AdminBlog({ onCreate, onEdit }) {
       <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4">
         <div className="flex flex-col lg:flex-row gap-4">
           
+          {/* Ô Tìm kiếm theo tiêu đề bài viết */}
           <div className="flex-1 relative">
             <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
               <Search size={18} className="text-gray-400" />
@@ -131,6 +145,26 @@ export default function AdminBlog({ onCreate, onEdit }) {
             />
           </div>
 
+          {/* [CẬP NHẬT NGHIỆP VỤ ACCORDING TO USER REQUIREMENT]: Dropdown Lọc Theo Chuyên Mục */}
+          <div className="lg:w-56 relative">
+            <select
+              value={categoryFilter}
+              onChange={(e) => setCategoryFilter(e.target.value)}
+              className="w-full pl-4 pr-10 py-3 bg-white border border-gray-200 hover:border-gray-300 rounded-xl text-sm font-bold text-gray-700 appearance-none outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all cursor-pointer"
+            >
+              <option value="ALL">Tất cả chuyên mục</option>
+              {categoriesList.map(cat => (
+                <option key={cat} value={cat}>
+                  {cat}
+                </option>
+              ))}
+            </select>
+            <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none text-gray-400 text-xs">
+              ▼
+            </div>
+          </div>
+
+          {/* Dropdown Lọc Trạng Thái */}
           <div className="lg:w-48 relative">
             <select
               value={statusFilter}
@@ -141,19 +175,20 @@ export default function AdminBlog({ onCreate, onEdit }) {
               <option value="ACTIVE">🟢 Đã xuất bản</option>             
               <option value="PAUSED">⚪ Ẩn bài viết</option>
             </select>
-            <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none text-gray-400">
+            <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none text-gray-400 text-xs">
               ▼
             </div>
           </div>
 
-          <button onClick={fetchData} className="px-4 py-3 text-gray-500 hover:text-blue-600 hover:bg-blue-50 bg-gray-50 rounded-xl font-bold transition-colors shrink-0 flex items-center justify-center border border-transparent hover:border-blue-100" title="Làm mới">
+          {/* Nút Làm mới */}
+          <button onClick={fetchData} className="px-4 py-3 text-gray-500 hover:text-blue-600 hover:bg-blue-50 bg-gray-50 rounded-xl font-bold transition-colors shrink-0 flex items-center justify-center border border-transparent hover:border-blue-100 cursor-pointer" title="Làm mới">
             <RefreshCw size={18} className={loading ? "animate-spin" : ""} />
           </button>
         </div>
       </div>
 
       {/* Bảng Dữ liệu */}
-      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-visible z-10">
+      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
         {loading ? (
           <div className="p-20 flex flex-col justify-center items-center text-blue-500">
             <RefreshCw className="animate-spin w-10 h-10 mb-4" />
@@ -168,8 +203,8 @@ export default function AdminBlog({ onCreate, onEdit }) {
             <p className="text-sm mt-1">Thử thay đổi bộ lọc hoặc từ khóa tìm kiếm</p>
           </div>
         ) : (
-          <div className="overflow-x-auto overflow-y-visible">
-            <table className="w-full text-left">
+          <div className="overflow-x-auto">
+            <table className="w-full text-left border-collapse">
               <thead className="bg-gray-50/80 text-gray-500 font-black text-[11px] uppercase tracking-widest border-b border-gray-100">
                 <tr>
                   <th className="px-6 py-4 rounded-tl-2xl">Bài viết</th>               
@@ -179,10 +214,10 @@ export default function AdminBlog({ onCreate, onEdit }) {
               </thead>
               <tbody className="divide-y divide-gray-100 text-gray-800 bg-white">
                 {filteredBlog.map(item => {
-                  // Cấu hình/Hằng số/Dịch vụ dữ liệu: status
                   const status = getStatus(item);
-                  // Khai báo biến/hằng số: isPub - Dùng trong logic xử lý của component
                   const isPub = status === 'ACTIVE';
+                  const categoryName = item.categoryName || item.category || item.CategoryName || item.Category || 'Khác';
+
                   return (
                     <tr key={item.id} className="hover:bg-gray-50/50 transition-colors group">
                       <td className="px-6 py-4">
@@ -200,9 +235,9 @@ export default function AdminBlog({ onCreate, onEdit }) {
                               {item.title || item.name || `Bài viết #${item.id}`}
                             </div>
                             <div className="flex items-center gap-3 text-xs text-gray-500">
-                              <span>Chuyên mục: <strong className="text-gray-700">{item.category || 'Tin tức'}</strong></span>
+                              <span>Chuyên mục: <strong className="text-blue-600 font-bold">{categoryName}</strong></span>
                               <span>•</span>
-                              <span>Tác giả: <strong className="text-gray-700">{item.authorName || item.author || 'Admin'}</strong></span>
+                              <span>Tác giả: <strong className="text-gray-700">{item.authorName || item.author || 'admin'}</strong></span>
                               {item.createdAt && (
                                 <>
                                   <span>•</span>
@@ -224,32 +259,28 @@ export default function AdminBlog({ onCreate, onEdit }) {
                            >
                              <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${isPub ? 'translate-x-6' : 'translate-x-1'}`} />
                            </button>
-                           
-                           {/* Text Status */}
-                           <span className={`text-[10px] font-black uppercase tracking-wider block text-center w-full whitespace-nowrap ${
-                             isPub ? 'text-green-600' : 'text-gray-400'
-                           }`}>
-                             {isPub ? 'ĐÃ XUẤT BẢN' : 'ẨN BÀI VIẾT'}
+                           <span className={`text-[10px] font-black uppercase tracking-wider ${isPub ? 'text-green-600' : 'text-gray-400'}`}>
+                             {isPub ? 'ĐÃ XUẤT BẢN' : 'ĐÃ ẨN BÀI'}
                            </span>
                         </div>
                       </td>
-                      
+
                       <td className="px-6 py-4 text-right">
                         <div className="flex items-center justify-end gap-2">
                           <button
-                            onClick={() => onEdit && onEdit(item.slug || item.id)}
-                            className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors border border-transparent hover:border-blue-100 cursor-pointer"
-                            title="Chỉnh sửa"
+                            onClick={() => onEdit(item.id || item.Id)}
+                            className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors cursor-pointer"
+                            title="Chỉnh sửa bài viết"
                           >
-                            <Edit2 size={16} strokeWidth={2.5} />
+                            <Edit2 size={16} />
                           </button>
                           <button
                             onClick={() => handleDelete(item.id)}
                             disabled={actionLoading === item.id}
-                            className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors border border-transparent hover:border-red-100 disabled:opacity-50"
-                            title="Xóa"
+                            className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors cursor-pointer"
+                            title="Xóa bài viết"
                           >
-                            {actionLoading === item.id ? <RefreshCw size={16} className="animate-spin" /> : <Trash2 size={16} strokeWidth={2.5} />}
+                            <Trash2 size={16} />
                           </button>
                         </div>
                       </td>
@@ -264,4 +295,3 @@ export default function AdminBlog({ onCreate, onEdit }) {
     </div>
   );
 }
-

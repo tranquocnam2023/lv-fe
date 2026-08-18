@@ -154,15 +154,21 @@ export default function AdminBlogForm({ blogId = null, onBack }) {
     const fetchBlogDetail = async () => {
       setFetchingData(true);
       try {
-        // =========================================================================
-        // 📖 [ĐỌC CHI TIẾT BÀI VIẾT]
-        // =========================================================================
-        // 👉 CÁCH 1: LẤY THEO SLUG (Đang dùng mặc định)
-        const res = await blogService.getBlogBySlug(blogId);
-
-        // 👉 CÁCH 2: NẾU MUỐN LẤY THEO ID (Mở comment dòng dưới và comment dòng CÁCH 1 ở trên)
-        // const res = await blogService.getBlog(blogId);
-        // =========================================================================
+        let res = null;
+        try {
+          if (!isNaN(blogId)) {
+            res = await blogService.getBlog(blogId);
+          } else {
+            res = await blogService.getBlogBySlug(blogId);
+          }
+        } catch (e) {
+          // Fallback phương thức tương ứng nếu thử nghiệm thất bại
+          if (!isNaN(blogId)) {
+            res = await blogService.getBlogBySlug(blogId);
+          } else {
+            res = await blogService.getBlog(blogId);
+          }
+        }
 
         // Cấu hình/Hằng số/Dịch vụ dữ liệu: data
         const data = res.data || res;
@@ -253,9 +259,11 @@ export default function AdminBlogForm({ blogId = null, onBack }) {
 
       if (isEdit) {
         // =========================================================================
-        // ✏️ [CẬP NHẬT BÀI VIẾT]
-        // =========================================================================
-        await blogService.updateBlogBySlug(blogId, payload);
+        if (!isNaN(blogId)) {
+          await blogService.updateBlog(blogId, payload);
+        } else {
+          await blogService.updateBlogBySlug(blogId, payload);
+        }
         alert(isPub ? 'Cập nhật và xuất bản bài viết thành công!' : 'Đã lưu bản nháp bài viết!');
       } else {
         // =========================================================================

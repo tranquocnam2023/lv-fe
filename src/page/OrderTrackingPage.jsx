@@ -155,23 +155,31 @@ export default function OrderTrackingPage() {
     return 1;
   };
 
-  // Lọc dữ liệu đơn hàng hiển thị ở bảng
+  // Lọc dữ liệu đơn hàng hiển thị ở bảng linh hoạt theo Mã đơn (nhận cả 20, #20, PS20, #PS20), SĐT hoặc Tên
   const filteredOrders = orders.filter(ord => {
-    // Khai báo biến/hằng số: ordId - Dùng trong logic xử lý của component
-    const ordId = String(ord.id || ord.Id || '');
+    // Khai báo biến/hằng số: rawId - Dùng trong logic xử lý của component
+    const rawId = String(ord.id ?? ord.Id ?? ord.orderId ?? ord.OrderId ?? '');
+    const rawCode = String(ord.code ?? ord.Code ?? ord.orderCode ?? ord.OrderCode ?? '');
+    const formattedId = `ps${rawId}`.toLowerCase();
+    const formattedHashId = `#ps${rawId}`.toLowerCase();
+
     // Khai báo biến/hằng số: phoneNum - Dùng trong logic xử lý của component
     const phoneNum = String(ord.receiverPhone || ord.ReceiverPhone || '');
     // Khai báo biến/hằng số: name - Dùng trong logic xử lý của component
     const name = String(ord.receiverName || ord.ReceiverName || '').toLowerCase();
 
-    // Khai báo biến/hằng số: cleanOrderId - Dùng trong logic xử lý của component
-    const cleanOrderId = searchOrderId.trim().replace('#', '').toLowerCase();
-    // Khai báo biến/hằng số: cleanPhone - Dùng trong logic xử lý của component
-    const cleanPhone = searchPhone.trim().toLowerCase();
+    // Làm sạch từ khóa tìm kiếm (Loại bỏ ký tự # hoặc tiền tố PS)
+    const rawQuery = searchOrderId.trim().toLowerCase();
+    const cleanQuery = rawQuery.replace('#', '').replace(/^ps/i, '');
 
-    // Khai báo biến/hằng số: matchesOrderId - Dùng trong logic xử lý của component
-    const matchesOrderId = !cleanOrderId || ordId.toLowerCase().includes(cleanOrderId);
-    // Khai báo biến/hằng số: matchesPhone - Dùng trong logic xử lý của component
+    // Kế thừa logic so khớp đa năng: Chấp nhận cả "20", "#20", "PS20", "#PS20"
+    const matchesOrderId = !rawQuery || 
+      rawId.toLowerCase().includes(cleanQuery) || 
+      rawCode.toLowerCase().includes(cleanQuery) ||
+      formattedId.includes(rawQuery) ||
+      formattedHashId.includes(rawQuery);
+
+    const cleanPhone = searchPhone.trim().toLowerCase();
     const matchesPhone = !cleanPhone || phoneNum.toLowerCase().includes(cleanPhone) || name.includes(cleanPhone);
 
     let matchesStatus = true;

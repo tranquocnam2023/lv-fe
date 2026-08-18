@@ -40,7 +40,7 @@ export default function ChatbotWidget() {
     }
   }, [messages, isOpen]);
 
-  // Cắt lấy tối đa 12 tin nhắn gần nhất để Tạo bộ nhớ ngữ cảnh trò chuyện (Context Window) gửi lên Backend
+  // Cắt lấy tối đa 12 tin nhắn gần nhất để tạo bộ nhớ ngữ cảnh (Context Window)
   const chatHistory = useMemo(
     () =>
       messages
@@ -227,4 +227,3 @@ export default function ChatbotWidget() {
     </div>
   );
 }
-
