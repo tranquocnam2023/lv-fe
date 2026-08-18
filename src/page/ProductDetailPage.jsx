@@ -851,16 +851,21 @@ export default function ProductDetailPage() {
       }
     }
     if (product) {
+      if (displayDetails.stock <= 0) {
+        alert(`Sản phẩm "${product.name}" hiện đã hết hàng trong kho!`);
+        return;
+      }
       // Thêm sản phẩm chính
       addToCart({
         ...product,
+        availableStock: displayDetails.stock,
+        stockQuantity: displayDetails.stock,
         price: displayDetails.price,
         selectedAttributes: { ...selectedAttributes },
         selectedColor: selectedAttributes["Màu sắc"] || Object.entries(selectedAttributes).find(([k]) => k.toLowerCase().includes('màu'))?.[1] || null,
         selectedStorage: selectedAttributes["Dung lượng RAM - ROM"] || selectedAttributes["Dung Lượng RAM - ROM"] || Object.entries(selectedAttributes).find(([k]) => k.toLowerCase().includes('dung lượng') || k.toLowerCase().includes('bộ nhớ') || k.toLowerCase().includes('ram') || k.toLowerCase().includes('rom'))?.[1] || null,
         selectedWarranty: selectedWarranty
       });
-      // Alert removed to rely on custom toast
     }
   };
 
@@ -873,8 +878,14 @@ export default function ProductDetailPage() {
       }
     }
     if (product) {
+      if (displayDetails.stock <= 0) {
+        alert(`Sản phẩm "${product.name}" hiện đã hết hàng trong kho!`);
+        return;
+      }
       addToCart({
         ...product,
+        availableStock: displayDetails.stock,
+        stockQuantity: displayDetails.stock,
         price: displayDetails.price,
         selectedAttributes: { ...selectedAttributes },
         selectedColor: selectedAttributes["Màu sắc"] || Object.entries(selectedAttributes).find(([k]) => k.toLowerCase().includes('màu'))?.[1] || null,
