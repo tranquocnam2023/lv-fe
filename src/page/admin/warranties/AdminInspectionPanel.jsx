@@ -183,7 +183,7 @@ export default function AdminInspectionPanel() {
       // Khai báo biến/hằng số: res - Dùng trong logic xử lý của component
       const res = await warrantyService.getAllPackages();
       const rawPackages = Array.isArray(res) ? res : (res?.data || []);
-      
+
       /* 
        * [GHI CHÚ HỆ THỐNG - ĐỒNG BỘ NỀN NẢNG BẢO HÀNH]:
        * Đọc bảng lưu trữ đệm 'WARRANTY_COMBO_ONLY_MAP' từ localStorage để khôi phục và giữ vững 

@@ -51,7 +51,7 @@ export default function AdminProducts({ onCreate, onEdit, defaultBrandFilter, cl
   const filteredProducts = products.filter(p => {
     let match = true;
     if (selectedBrand !== 'ALL' && String(p.brandId) !== String(selectedBrand)) match = false;
-    
+
     if (selectedCategory !== 'ALL') {
       // Khai báo biến/hằng số: allowedCatIds - Dùng trong logic xử lý của component
       const allowedCatIds = getAllCategoryIds(selectedCategory, dbCategories);
@@ -133,6 +133,35 @@ export default function AdminProducts({ onCreate, onEdit, defaultBrandFilter, cl
 
   useEffect(() => {
     fetchProducts();
+
+    // Tính toán số lượng sản phẩm đã bán trong tháng hiện tại từ CSDL đơn hàng thực tế
+    orderService.getAll()
+      .then(res => {
+        const orderList = Array.isArray(res) ? res : (res && Array.isArray(res.data) ? res.data : []);
+        const now = new Date();
+        const currentMonth = now.getMonth();
+        const currentYear = now.getFullYear();
+
+        const totalSold = orderList.reduce((sum, order) => {
+          // Bỏ qua các đơn hàng bị hủy
+          if (order.statusId === 5 || order.statusName === 'Đã hủy') return sum;
+
+          const orderDate = new Date(order.createdAt);
+          if (orderDate.getMonth() === currentMonth && orderDate.getFullYear() === currentYear) {
+            if (Array.isArray(order.items)) {
+              const qty = order.items.reduce((iSum, item) => iSum + (item.quantity || 0), 0);
+              return sum + qty;
+            }
+          }
+          return sum;
+        }, 0);
+
+        setMonthlySold(totalSold);
+      })
+      .catch(err => {
+        console.error("Lỗi lấy danh sách đơn hàng để tính số đã bán tháng này:", err);
+        setMonthlySold(0);
+      });
   }, []);
 
   // Khai báo biến/hằng số: stats - Dùng trong logic xử lý của component
@@ -140,7 +169,7 @@ export default function AdminProducts({ onCreate, onEdit, defaultBrandFilter, cl
     { label: 'Tổng sản phẩm', value: products.length, icon: 'Package', bgColor: '#FFFFFF', textColor: 'var(--color-admin-text-main)', iconColor: 'var(--color-primary)' },
     { label: 'Giá trị tồn kho', value: products.reduce((acc, p) => acc + ((p.basePrice || p.price || 0) * (p.totalStock ?? p.stock ?? p.stockQuantity ?? 0)), 0), icon: 'Layout', bgColor: '#FFFFFF', textColor: 'var(--color-admin-text-main)', isCurrency: true, iconColor: 'var(--color-success)' },
     { label: 'Sắp hết hàng', value: products.filter(p => (p.totalStock ?? p.stock ?? p.stockQuantity ?? 0) < 5).length, icon: 'Bell', bgColor: '#FFFFFF', textColor: 'var(--color-admin-text-main)', iconColor: 'var(--color-warning)' },
-    { label: 'Đã bán tháng này', value: 24, icon: 'ShoppingCart', bgColor: '#FFFFFF', textColor: 'var(--color-admin-text-main)', iconColor: 'var(--color-info)' },
+    { label: 'Đã bán tháng này', value: monthlySold, icon: 'ShoppingCart', bgColor: '#FFFFFF', textColor: 'var(--color-admin-text-main)', iconColor: 'var(--color-info)' },
   ];
 
 

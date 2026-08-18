@@ -2,7 +2,7 @@
  * Hook cung cấp các hàm định dạng dữ liệu dùng chung
  */
 export const useFormat = () => {
-  
+
   // Định dạng tiền tệ VNĐ: 1000000 -> 1.000.000₫
   const formatCurrency = (amount) => {
     if (amount === undefined || amount === null) return '0₫';

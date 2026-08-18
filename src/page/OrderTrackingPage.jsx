@@ -105,7 +105,7 @@ export default function OrderTrackingPage() {
   const getOrderStatusId = (ord) => {
     if (!ord) return 0;
     const ordId = String(ord.id || ord.Id || '');
-    
+
     // Đọc trạng thái đổi trả đã ghi nhận từ localStorage
     const savedRequests = JSON.parse(localStorage.getItem('PROJECT_RETURN_REQUESTS') || '{}');
     const existingReq = savedRequests[ordId];
@@ -127,28 +127,28 @@ export default function OrderTrackingPage() {
 
     // Phân tích chuỗi chữ ký tự tiếng Việt / tiếng Anh để ép kiểu về mã số chuẩn (Xắp xếp theo thứ tự 1-8)
     const st = String(ord.statusName || ord.StatusName || ord.status || '').toLowerCase();
-    
+
     // Mã 1: Chờ xác nhận (Pending)
     if (st.includes('pending') || st.includes('chờ xác nhận') || (st.includes('chờ') && !st.includes('duyệt'))) return 1;
-    
+
     // Mã 2: Đã xác nhận / Đang xử lý (Confirmed / Processing)
     if (st.includes('process') || st.includes('confirm') || st.includes('xử lý') || st.includes('chuẩn')) return 2;
-    
+
     // Mã 3: Đang giao hàng (Shipping)
     if ((st.includes('ship') || st.includes('giao')) && !st.includes('thất bại') && !st.includes('thành công')) return 3;
-    
+
     // Mã 4: Đã hoàn thành (Delivered)
     if (st.includes('complete') || st.includes('deliver') || st.includes('thành công') || st.includes('hoàn thành')) return 4;
-    
+
     // Mã 5: Đã hủy (Cancelled)
     if (st.includes('cancel') || st.includes('hủy')) return 5;
-    
+
     // Mã 6: Đang yêu cầu đổi trả (Pending Return Request)
     if (st.includes('yêu cầu đổi trả') || st.includes('chờ duyệt đổi trả') || st.includes('chờ xét duyệt') || st.includes('đang đổi trả')) return 6;
-    
+
     // Mã 7: Đã đổi trả & Hoàn tiền (Refunded)
     if (st.includes('refund') || st.includes('hoàn tiền') || st.includes('đã đổi trả')) return 7;
-    
+
     // Mã 8: Giao thất bại (Shipping Failed)
     if (st.includes('thất bại') || st.includes('failed')) return 8;
 
@@ -173,8 +173,8 @@ export default function OrderTrackingPage() {
     const cleanQuery = rawQuery.replace('#', '').replace(/^ps/i, '');
 
     // Kế thừa logic so khớp đa năng: Chấp nhận cả "20", "#20", "PS20", "#PS20"
-    const matchesOrderId = !rawQuery || 
-      rawId.toLowerCase().includes(cleanQuery) || 
+    const matchesOrderId = !rawQuery ||
+      rawId.toLowerCase().includes(cleanQuery) ||
       rawCode.toLowerCase().includes(cleanQuery) ||
       formattedId.includes(rawQuery) ||
       formattedHashId.includes(rawQuery);
@@ -428,8 +428,8 @@ export default function OrderTrackingPage() {
                       type="button"
                       onClick={() => goToPage(i + 1)}
                       className={`w-7 h-7 rounded-lg text-xs font-black transition cursor-pointer ${currentPage === i + 1
-                          ? 'bg-blue-600 text-white shadow-xs'
-                          : 'bg-white border border-gray-200 text-gray-700 hover:bg-gray-100'
+                        ? 'bg-blue-600 text-white shadow-xs'
+                        : 'bg-white border border-gray-200 text-gray-700 hover:bg-gray-100'
                         }`}
                     >
                       {i + 1}

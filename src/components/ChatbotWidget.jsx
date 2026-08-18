@@ -134,8 +134,8 @@ export default function ChatbotWidget() {
                 )}
                 <div
                   className={`max-w-[85%] rounded-2xl px-3.5 py-2.5 text-xs font-medium leading-relaxed shadow-sm break-words [word-break:break-word] overflow-hidden whitespace-pre-wrap ${item.role === 'user'
-                      ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-br-none'
-                      : 'border border-slate-200/80 bg-white text-slate-800 rounded-bl-none'
+                    ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-br-none'
+                    : 'border border-slate-200/80 bg-white text-slate-800 rounded-bl-none'
                     }`}
                 >
                   {item.content}

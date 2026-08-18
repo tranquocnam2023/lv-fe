@@ -37,7 +37,7 @@ export default function WarrantyPurchasePage() {
       .then(res => {
         // Cấu hình/Hằng số/Dịch vụ dữ liệu: rawData
         const rawData = Array.isArray(res) ? res : res?.data || [];
-        
+
         // [CẬP NHẬT NGHIỆP VỤ THEO YÊU CẦU ADMIM]:
         // Lọc bỏ các gói bảo hành có cấu hình isComboOnly === true (Chỉ bán kèm điện thoại),
         // Không cho phép hiển thị và mua lẻ trên trang /buy-warranty.

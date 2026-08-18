@@ -79,7 +79,7 @@ export default function AdminBrands({ onRedirectToProducts, onRedirectToCreatePr
       msg = typeof err.response.data === 'string' ? err.response.data : (err.response.data.message || JSON.stringify(err.response.data));
     }
     if (typeof err === 'object' && err.errors) msg = JSON.stringify(err.errors);
-    
+
     let parsed = {
       message: msg,
       details: []
@@ -233,11 +233,11 @@ export default function AdminBrands({ onRedirectToProducts, onRedirectToCreatePr
     if (!validExtensions.includes(file.type)) {
       return showToast('warning', 'Định dạng file không hợp lệ', 'Hệ thống chỉ hỗ trợ SVG, WebP, PNG, JPG/JPEG.');
     }
-    
+
     if (file.size > 2 * 1024 * 1024) {
       return showToast('warning', 'File quá lớn (>2MB)', 'Vui lòng chọn ảnh nhỏ hơn.');
     }
-    
+
     setUploading(true);
     try {
       // Khai báo biến/hằng số: res - Dùng trong logic xử lý của component
@@ -265,7 +265,7 @@ export default function AdminBrands({ onRedirectToProducts, onRedirectToCreatePr
   const handleSave = async (e) => {
     e.preventDefault();
     if (!formData.name.trim()) return showToast('warning', 'Thiếu dữ liệu', 'Vui lòng nhập tên thương hiệu.');
-    
+
     setFormError(null);
     setCatErrorMessage('');
     setSaving(true);
@@ -278,7 +278,7 @@ export default function AdminBrands({ onRedirectToProducts, onRedirectToCreatePr
       const generatedCode = formData.brandCode.trim() || generateBrandOrCategoryCode(formData.name.trim(), 10);
       // Khai báo biến/hằng số: generatedSlugStr - Dùng trong logic xử lý của component
       const generatedSlugStr = formData.slug.trim() || generateSlug(formData.name.trim());
-      
+
       // Khai báo biến/hằng số: payload - Dùng trong logic xử lý của component
       const payload = {
         name: formData.name.trim(),
@@ -318,7 +318,7 @@ export default function AdminBrands({ onRedirectToProducts, onRedirectToCreatePr
     const brandId = brand.id;
     // Khai báo biến/hằng số: isCurrentlyExpanded - Dùng trong logic xử lý của component
     const isCurrentlyExpanded = expandedBrands[brandId];
-    
+
     setExpandedBrands(prev => ({ ...prev, [brandId]: !isCurrentlyExpanded }));
 
     if (!isCurrentlyExpanded && !brandStats[brandId]) {
@@ -348,7 +348,7 @@ export default function AdminBrands({ onRedirectToProducts, onRedirectToCreatePr
         imageUrl: brand.imageUrl || '',
         isActive: !brand.isActive
       };
-      
+
       await brandService.update(brand.id, payload);
       showToast('success', `${!brand.isActive ? 'Bật' : 'Tắt'} thương hiệu thành công!`, `Các sản phẩm thuộc thương hiệu ${brand.name} sẽ được ${!brand.isActive ? 'hiển thị' : 'ẩn đi'} tương ứng.`);
       fetchBrands();
@@ -396,7 +396,7 @@ export default function AdminBrands({ onRedirectToProducts, onRedirectToCreatePr
     if (!validExtensions.includes(file.type)) {
       return showToast('warning', 'Định dạng file không hợp lệ', 'Hệ thống chỉ hỗ trợ SVG, WebP, PNG, JPG/JPEG.');
     }
-    
+
     if (file.size > 2 * 1024 * 1024) {
       return showToast('warning', 'File quá lớn (>2MB)', 'Vui lòng chọn ảnh nhỏ hơn.');
     }
@@ -414,7 +414,7 @@ export default function AdminBrands({ onRedirectToProducts, onRedirectToCreatePr
           const hostBase = apiBase.replace('/api', '');
           finalUrl = `${hostBase}${finalUrl}`;
         }
-        
+
         // Khai báo biến/hằng số: payload - Dùng trong logic xử lý của component
         const payload = {
           name: brand.name,

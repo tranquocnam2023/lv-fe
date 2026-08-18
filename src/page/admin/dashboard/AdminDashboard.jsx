@@ -24,7 +24,7 @@ export default function AdminDashboard({ onTabChange }) {
   // State: brandPerformance - Quản lý trạng thái và dữ liệu của brandPerformance trong giao diện
   const [brandPerformance, setBrandPerformance] = useState([]);
   // State: stats - Quản lý trạng thái và dữ liệu của stats trong giao diện
-  const [stats, setStats] = useState({ totalRevenue: 0, totalOrders: 0, totalProducts: 0, totalUsers: 0 });
+  const [stats, setStats] = useState({ totalRevenue: 0, totalCost: 0, totalProfit: 0, profitMargin: 0, totalCompletedOrders: 0, totalOrders: 0, totalProducts: 0, totalUsers: 0 });
   // State: weeklySales - Quản lý trạng thái và dữ liệu của weeklySales trong giao diện
   const [weeklySales, setWeeklySales] = useState(0);
   // State: usersList - Quản lý trạng thái và dữ liệu của usersList trong giao diện
@@ -184,6 +184,10 @@ export default function AdminDashboard({ onTabChange }) {
     ? `${stats.totalRevenue.toLocaleString('vi-VN')}đ`
     : '0đ';
 
+  // LỢI NHUẬN GỘP (Tiền bán - Tiền gốc nhập kho), chỉ tính trên các đơn hàng ĐÃ GIAO THÀNH CÔNG
+  const formattedTotalProfit = `${(stats.totalProfit || 0).toLocaleString('vi-VN')}đ`;
+  const formattedTotalCost = `${(stats.totalCost || 0).toLocaleString('vi-VN')}đ`;
+
   // Tạo dữ liệu giả lập cho biểu đồ mini của Total Orders
   const orderTrendData = [
     { name: 'W1', orders: 15 },
@@ -214,7 +218,32 @@ export default function AdminDashboard({ onTabChange }) {
     <div className="space-y-6 pb-10 font-sans text-textmain animate-in fade-in duration-300">
 
       {/* SECTION 1: TOP STATS CARDS */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
+
+        {/* Card 0: Lợi nhuận gộp thực tế (Tiền bán - Tiền gốc nhập kho, chỉ tính đơn giao thành công) */}
+        <div className="bg-bgcard p-5 rounded-lg border border-bordercustom shadow-sm flex flex-col justify-between h-[150px] relative overflow-hidden group hover:shadow-md transition-shadow">
+          <div>
+            <p className="text-[11px] font-bold text-textmuted uppercase tracking-wider flex items-center gap-1">
+              Lợi nhuận gộp
+              <span
+                className="text-[10px] text-gray-400 font-normal cursor-help"
+                title="Lợi nhuận = Tiền bán - Tiền gốc (giá nhập kho gần nhất). Chỉ tính các đơn hàng ĐÃ GIAO THÀNH CÔNG."
+              >
+                (đơn thành công)
+              </span>
+            </p>
+            <div className="flex items-baseline gap-2 mt-2">
+              <h3 className="text-2xl font-extrabold tracking-tight text-success">{formattedTotalProfit}</h3>
+              <span className="text-[11px] font-bold text-success bg-success/10 px-2 py-0.5 rounded-full">
+                {stats.profitMargin || 0}%
+              </span>
+            </div>
+          </div>
+          <div className="text-[11px] font-semibold text-textmuted space-y-0.5">
+            <p>Tiền gốc nhập hàng: <span className="font-bold text-admin-text-main">{formattedTotalCost}</span></p>
+            <p>{(stats.totalCompletedOrders || 0).toLocaleString('vi-VN')} đơn đã giao thành công</p>
+          </div>
+        </div>
 
         {/* Card 1: Weekly Sales */}
         <div className="bg-bgcard p-5 rounded-lg border border-bordercustom shadow-sm flex flex-col justify-between h-[150px] relative overflow-hidden group hover:shadow-md transition-shadow">
@@ -546,7 +575,7 @@ export default function AdminDashboard({ onTabChange }) {
               )}
             </div>
           </div>
-          <button 
+          <button
             onClick={() => onTabChange && onTabChange('customers')}
             className="w-full mt-6 py-2 bg-blue-500 hover:bg-blue-600 text-xs font-bold text-admin-text-muted rounded-md transition-colors border border-gray-100"
           >
@@ -565,7 +594,11 @@ export default function AdminDashboard({ onTabChange }) {
                 <span>📊</span> Báo Cáo Quản Trị: Ăn Chia Lợi Nhuận & Hệ Sinh Thái Theo Hãng
               </h3>
               <p className="text-xs text-slate-500 mt-1">
-                Phân tích đối sánh giữa Doanh thu và Lợi nhuận gộp thực tế (SellingPrice - CostPrice) giữa các thương hiệu.
+                Phân tích đối sánh giữa Doanh thu và Lợi nhuận gộp thực tế (Tiền bán - Tiền gốc nhập hàng) giữa các thương hiệu.
+                <span className="font-bold text-emerald-700"> Chỉ tính đơn hàng đã giao thành công</span>
+                {typeof brandProfitReport.totalCompletedOrders === 'number' && (
+                  <span className="text-slate-400"> ({brandProfitReport.totalCompletedOrders.toLocaleString('vi-VN')} đơn).</span>
+                )}
               </p>
             </div>
             <div className="flex items-center gap-3">
@@ -621,6 +654,7 @@ export default function AdminDashboard({ onTabChange }) {
                   <tr className="border-b border-slate-200 text-slate-500 font-bold uppercase tracking-wider bg-slate-50">
                     <th className="p-2.5 rounded-l-md">Thương hiệu</th>
                     <th className="p-2.5 text-right">Doanh thu</th>
+                    <th className="p-2.5 text-right">Tiền gốc (nhập hàng)</th>
                     <th className="p-2.5 text-right">Lợi nhuận gộp</th>
                     <th className="p-2.5 text-center">Biên Lợi Nhuận</th>
                     <th className="p-2.5 text-right rounded-r-md">Tỷ trọng LN</th>
@@ -635,6 +669,9 @@ export default function AdminDashboard({ onTabChange }) {
                       </td>
                       <td className="p-2.5 text-right font-semibold text-slate-600">
                         {b.revenue.toLocaleString('vi-VN')}₫ <span className="text-[10px] text-slate-400">({b.revenueShare}%)</span>
+                      </td>
+                      <td className="p-2.5 text-right font-semibold text-slate-500">
+                        {(b.costOfGoodsSold || 0).toLocaleString('vi-VN')}₫
                       </td>
                       <td className="p-2.5 text-right font-black text-emerald-600">
                         {b.grossProfit.toLocaleString('vi-VN')}₫
@@ -652,16 +689,25 @@ export default function AdminDashboard({ onTabChange }) {
                 </tbody>
               </table>
 
-              {/* Insight Cards */}
-              <div className="mt-4 p-3 bg-emerald-50/60 border border-emerald-200 rounded-lg text-emerald-900 text-xs font-semibold space-y-1">
-                <div className="font-extrabold flex items-center gap-1 text-emerald-800">
-                  <span>💡 Insight Kinh doanh Hệ sinh thái:</span>
+              {(brandProfitReport.brands || []).length === 0 && (
+                <div className="p-6 text-center text-xs font-semibold text-slate-500 bg-slate-50 border border-dashed border-slate-200 rounded-lg">
+                  Chưa có đơn hàng nào giao thành công trong kỳ nên chưa ghi nhận được lợi nhuận.
                 </div>
-                <p className="text-[11px] leading-relaxed text-emerald-800/90">
-                  - <strong>Apple</strong> kéo Traffic & Doanh thu cao nhưng biên lợi nhuận mỏng (chiết khấu thấp từ Hãng).<br />
-                  - <strong>OPPO / Phụ kiện Combo</strong> đóng góp tỷ trọng Lợi nhuận gộp bùng nổ nhờ chiến lược bán kèm trong giỏ hàng.
-                </p>
-              </div>
+              )}
+
+              {/* Insight Cards: sinh trực tiếp từ số liệu thật của từng thương hiệu */}
+              {(brandProfitReport.brands || []).length > 0 && (
+                <div className="mt-4 p-3 bg-emerald-50/60 border border-emerald-200 rounded-lg text-emerald-900 text-xs font-semibold space-y-1">
+                  <div className="font-extrabold flex items-center gap-1 text-emerald-800">
+                    <span>💡 Insight Kinh doanh Hệ sinh thái:</span>
+                  </div>
+                  <div className="text-[11px] leading-relaxed text-emerald-800/90 space-y-0.5">
+                    {(brandProfitReport.brands || []).slice(0, 3).map((b, idx) => (
+                      <p key={idx}>- <strong>{b.brandName}</strong>: {b.insightNote}</p>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </div>

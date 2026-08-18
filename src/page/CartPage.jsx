@@ -1089,7 +1089,10 @@ export default function CartPage() {
               quantity: item.quantity,
               appliedCampaignId: item.appliedCampaignId,
               isAddon: item.isAddon || false,
-              warrantyId: item.warrantyId || null
+              warrantyId: item.warrantyId || null,
+              // Truyền productId của SP chính giúp BE gắn ParentCartItemId chính xác,
+              // không cần dò lại theo rule campaign (giữ combo discount ổn định qua VNPay).
+              parentProductId: item.parentProductId || null
             });
           }
         } catch (err) {
@@ -1220,17 +1223,17 @@ export default function CartPage() {
             <div className="w-full lg:w-2/3 flex flex-col space-y-4">
 
               {/* Card 1: Selected Products */}
-            <CartItemsList
-              cartItems={cartItems}
-              updateQuantity={updateQuantity}
-              removeFromCart={removeFromCart}
-              cartTotal={cartTotal}
-            />
+              <CartItemsList
+                cartItems={cartItems}
+                updateQuantity={updateQuantity}
+                removeFromCart={removeFromCart}
+                cartTotal={cartTotal}
+              />
 
               {/* Co-Purchase Recommendation */}
               {cartItems.length > 0 && cartItems.some(i => !i.isAddon) && (
                 <div className="mt-2">
-                  <CoPurchaseRecommendation 
+                  <CoPurchaseRecommendation
                     isCartPage={true}
                     cartItems={cartItems}
                     onAddComboToCart={(comboData) => {
@@ -1253,47 +1256,47 @@ export default function CartPage() {
               )}
 
 
-            {/* Card 3: Delivery Options & Address Preview */}
-            <CartDeliveryForm
-              deliveryMethod={deliveryMethod}
-              setDeliveryMethod={setDeliveryMethod}
-              addressProvided={addressProvided}
-              formData={formData}
-              openAddressModal={openAddressModal}
-              isLoggedIn={isLoggedIn}
-              userAddresses={userAddresses}
-              onSelectSavedAddress={handleSelectSavedAddress}
-            />
+              {/* Card 3: Delivery Options & Address Preview */}
+              <CartDeliveryForm
+                deliveryMethod={deliveryMethod}
+                setDeliveryMethod={setDeliveryMethod}
+                addressProvided={addressProvided}
+                formData={formData}
+                openAddressModal={openAddressModal}
+                isLoggedIn={isLoggedIn}
+                userAddresses={userAddresses}
+                onSelectSavedAddress={handleSelectSavedAddress}
+              />
 
-            {/* Card 4: Support Request Checklist */}
-            <CartSpecialRequests
-              specialRequests={specialRequests}
-              setSpecialRequests={setSpecialRequests}
-              companyInvoiceDetails={companyInvoiceDetails}
-              setCompanyInvoiceDetails={setCompanyInvoiceDetails}
-              otherRequestText={otherRequestText}
-              setOtherRequestText={setOtherRequestText}
-            />
+              {/* Card 4: Support Request Checklist */}
+              <CartSpecialRequests
+                specialRequests={specialRequests}
+                setSpecialRequests={setSpecialRequests}
+                companyInvoiceDetails={companyInvoiceDetails}
+                setCompanyInvoiceDetails={setCompanyInvoiceDetails}
+                otherRequestText={otherRequestText}
+                setOtherRequestText={setOtherRequestText}
+              />
 
-            {/* Card 5: Payment Methods and Shipping Options */}
-            <CartPaymentMethods
-              isLoggedIn={isLoggedIn}
-              currentUser={currentUser}
-              setIsVerifyModalOpen={setIsVerifyModalOpen}
-              deliveryMethod={deliveryMethod}
-              shippingCarrier={shippingCarrier}
-              shippingOptions={shippingOptions}
-              onSelectShippingOption={(option) => {
-                setShippingFee(Number(option.fee || option.Fee || 0));
-                setShippingCarrier(option.carrier || option.Carrier || '');
-                setShippingEstimatedDays(option.estimatedDeliveryDays || option.EstimatedDeliveryDays || '');
-              }}
-              paymentMethod={paymentMethod}
-              setPaymentMethod={setPaymentMethod}
-              finalTotalPay={finalTotalPay}
-              installmentMonths={installmentMonths}
-              setInstallmentMonths={setInstallmentMonths}
-            />
+              {/* Card 5: Payment Methods and Shipping Options */}
+              <CartPaymentMethods
+                isLoggedIn={isLoggedIn}
+                currentUser={currentUser}
+                setIsVerifyModalOpen={setIsVerifyModalOpen}
+                deliveryMethod={deliveryMethod}
+                shippingCarrier={shippingCarrier}
+                shippingOptions={shippingOptions}
+                onSelectShippingOption={(option) => {
+                  setShippingFee(Number(option.fee || option.Fee || 0));
+                  setShippingCarrier(option.carrier || option.Carrier || '');
+                  setShippingEstimatedDays(option.estimatedDeliveryDays || option.EstimatedDeliveryDays || '');
+                }}
+                paymentMethod={paymentMethod}
+                setPaymentMethod={setPaymentMethod}
+                finalTotalPay={finalTotalPay}
+                installmentMonths={installmentMonths}
+                setInstallmentMonths={setInstallmentMonths}
+              />
 
             </div>
 

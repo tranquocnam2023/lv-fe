@@ -196,8 +196,8 @@ export default function BrandTable({
                                   <FolderOpen size={20} className="text-admin-text-muted opacity-50" />
                                   <span className="text-sm font-semibold">Chưa có sản phẩm nào thuộc thương hiệu này.</span>
                                 </div>
-                                <button 
-                                  type="button" 
+                                <button
+                                  type="button"
                                   className="flex items-center gap-1.5 px-4 py-2 bg-admin-bg text-primary hover:bg-primary/10 rounded-md text-xs font-bold transition-all active:scale-[0.98] cursor-pointer border-0"
                                   onClick={() => onRedirectToCreateProduct && onRedirectToCreateProduct(brand.id)}
                                 >

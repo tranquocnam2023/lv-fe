@@ -11,7 +11,7 @@ export default function AdminBlog({ onCreate, onEdit }) {
   const [loading, setLoading] = useState(true);
   // State: actionLoading - Trạng thái chờ khi xóa/đổi trạng thái
   const [actionLoading, setActionLoading] = useState(null);
-  
+
   // Filters
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('ALL');
@@ -130,7 +130,7 @@ export default function AdminBlog({ onCreate, onEdit }) {
       {/* Toolbar & Filters */}
       <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4">
         <div className="flex flex-col lg:flex-row gap-4">
-          
+
           {/* Ô Tìm kiếm theo tiêu đề bài viết */}
           <div className="flex-1 relative">
             <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
@@ -172,7 +172,7 @@ export default function AdminBlog({ onCreate, onEdit }) {
               className="w-full pl-4 pr-10 py-3 bg-white border border-gray-200 hover:border-gray-300 rounded-xl text-sm font-bold text-gray-700 appearance-none outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all cursor-pointer"
             >
               <option value="ALL">Tất cả trạng thái</option>
-              <option value="ACTIVE">🟢 Đã xuất bản</option>             
+              <option value="ACTIVE">🟢 Đã xuất bản</option>
               <option value="PAUSED">⚪ Ẩn bài viết</option>
             </select>
             <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none text-gray-400 text-xs">
@@ -197,7 +197,7 @@ export default function AdminBlog({ onCreate, onEdit }) {
         ) : filteredBlog.length === 0 ? (
           <div className="p-20 flex flex-col justify-center items-center text-gray-400">
             <div className="bg-gray-50 p-4 rounded-full mb-4">
-               <AlertCircle className="w-12 h-12" />
+              <AlertCircle className="w-12 h-12" />
             </div>
             <p className="font-bold text-lg text-gray-700">Không tìm thấy Bài viết nào</p>
             <p className="text-sm mt-1">Thử thay đổi bộ lọc hoặc từ khóa tìm kiếm</p>
@@ -207,7 +207,7 @@ export default function AdminBlog({ onCreate, onEdit }) {
             <table className="w-full text-left border-collapse">
               <thead className="bg-gray-50/80 text-gray-500 font-black text-[11px] uppercase tracking-widest border-b border-gray-100">
                 <tr>
-                  <th className="px-6 py-4 rounded-tl-2xl">Bài viết</th>               
+                  <th className="px-6 py-4 rounded-tl-2xl">Bài viết</th>
                   <th className="px-6 py-4 text-center">Trạng thái</th>
                   <th className="px-6 py-4 text-right rounded-tr-2xl">Thao tác</th>
                 </tr>
@@ -248,20 +248,20 @@ export default function AdminBlog({ onCreate, onEdit }) {
                           </div>
                         </div>
                       </td>
-                    
+
                       <td className="px-6 py-4 text-center">
                         <div className="flex flex-col items-center justify-center gap-1.5 w-[110px] mx-auto">
-                           {/* Toggle Switch */}
-                           <button 
-                             onClick={() => handleToggleStatus(item)}
-                             disabled={actionLoading === item.id + '_toggle'}
-                             className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none cursor-pointer ${isPub ? 'bg-green-500' : 'bg-gray-300'}`}
-                           >
-                             <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${isPub ? 'translate-x-6' : 'translate-x-1'}`} />
-                           </button>
-                           <span className={`text-[10px] font-black uppercase tracking-wider ${isPub ? 'text-green-600' : 'text-gray-400'}`}>
-                             {isPub ? 'ĐÃ XUẤT BẢN' : 'ĐÃ ẨN BÀI'}
-                           </span>
+                          {/* Toggle Switch */}
+                          <button
+                            onClick={() => handleToggleStatus(item)}
+                            disabled={actionLoading === item.id + '_toggle'}
+                            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none cursor-pointer ${isPub ? 'bg-green-500' : 'bg-gray-300'}`}
+                          >
+                            <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${isPub ? 'translate-x-6' : 'translate-x-1'}`} />
+                          </button>
+                          <span className={`text-[10px] font-black uppercase tracking-wider ${isPub ? 'text-green-600' : 'text-gray-400'}`}>
+                            {isPub ? 'ĐÃ XUẤT BẢN' : 'ĐÃ ẨN BÀI'}
+                          </span>
                         </div>
                       </td>
 
