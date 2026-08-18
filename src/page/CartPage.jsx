@@ -1119,6 +1119,9 @@ export default function CartPage() {
       // Khai báo biến/hằng số: newOrderId - Dùng trong logic xử lý của component
       const newOrderId = checkoutRes?.orderId || checkoutRes?.OrderId || `PS${Math.floor(100000 + Math.random() * 900000)}`;
       setOrderCode(newOrderId);
+
+      // Lưu bản sao giỏ hàng phục vụ khôi phục nếu hủy thanh toán online
+      localStorage.setItem('cart_backup', JSON.stringify(cartItems || []));
       clearCart();
 
       // Xử lý chuyển hướng cổng thanh toán online

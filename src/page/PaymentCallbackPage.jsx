@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import api from '../services/api';
+import { userService } from '../services/userService';
 import { CheckCircle2, XCircle, Loader2, ArrowRight, ShieldCheck, CreditCard, ShoppingBag } from 'lucide-react';
 import { useLoading } from '../context/LoadingContext';
 
@@ -26,6 +27,30 @@ export default function PaymentCallbackPage() {
   const provider = searchParams.get('provider') || 'stripe';
   // Khai báo biến/hằng số: isCancel - Dùng trong logic xử lý của component
   const isCancel = searchParams.get('cancel') === 'true';
+
+  // Khôi phục giỏ hàng và đồng bộ lại Profile người dùng khi bấm quay lại giỏ hàng
+  const handleReturnToCart = async () => {
+    try {
+      const backup = localStorage.getItem('cart_backup');
+      if (backup) {
+        localStorage.setItem('cart', backup);
+        localStorage.removeItem('cart_backup');
+      }
+
+      // Cập nhật lại profile user (điểm thưởng đã được hoàn lại từ CSDL)
+      const token = localStorage.getItem('token');
+      if (token) {
+        const profile = await userService.getProfile();
+        if (profile) {
+          localStorage.setItem('user', JSON.stringify(profile));
+        }
+      }
+    } catch (err) {
+      console.error("Lỗi khi khôi phục giỏ hàng:", err);
+    } finally {
+      window.location.href = '/cart';
+    }
+  };
 
   useEffect(() => {
     if (!loading) {
@@ -169,7 +194,7 @@ export default function PaymentCallbackPage() {
 
             <div className="border-t border-dashed border-gray-100 pt-6 space-y-3 w-full">
               <button
-                onClick={() => navigate('/cart')}
+                onClick={handleReturnToCart}
                 className="w-full py-3.5 bg-warning hover:bg-warning/90 text-white rounded-lg font-black transition active:scale-95 uppercase tracking-wider text-xs flex items-center justify-center gap-1.5 cursor-pointer"
               >
                 <span>Quay lại giỏ hàng thanh toán lại</span>
