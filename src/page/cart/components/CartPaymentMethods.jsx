@@ -2,7 +2,6 @@ import React from 'react';
 import { CreditCard, Truck, Info, ShieldCheck } from 'lucide-react';
 
 export default function CartPaymentMethods({
-  isLoggedIn,
   currentUser,
   setIsVerifyModalOpen,
   deliveryMethod,
