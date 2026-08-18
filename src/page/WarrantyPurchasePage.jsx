@@ -35,9 +35,18 @@ export default function WarrantyPurchasePage() {
     setLoading(true);
     warrantyService.getAllWarranties()
       .then(res => {
-        // Cấu hình/Hằng số/Dịch vụ dữ liệu: data
-        const data = Array.isArray(res) ? res : res?.data || [];
-        setWarranties(data);
+        // Cấu hình/Hằng số/Dịch vụ dữ liệu: rawData
+        const rawData = Array.isArray(res) ? res : res?.data || [];
+        
+        // [CẬP NHẬT NGHIỆP VỤ THEO YÊU CẦU ADMIM]:
+        // Lọc bỏ các gói bảo hành có cấu hình isComboOnly === true (Chỉ bán kèm điện thoại),
+        // Không cho phép hiển thị và mua lẻ trên trang /buy-warranty.
+        const retailAllowedData = rawData.filter(w => {
+          const isComboOnly = w.isComboOnly !== undefined ? w.isComboOnly : (w.IsComboOnly || false);
+          return !isComboOnly;
+        });
+
+        setWarranties(retailAllowedData);
       })
       .catch(err => {
         console.error("Lỗi lấy danh sách gói bảo hành:", err);

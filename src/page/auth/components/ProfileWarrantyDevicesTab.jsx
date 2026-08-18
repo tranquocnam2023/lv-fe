@@ -150,11 +150,16 @@ export default function ProfileWarrantyDevicesTab() {
             // Khai báo biến/hằng số: isEditing - Dùng trong logic xử lý của component
             const isEditing = activeInputId === item.orderItemId;
 
+            // [XỬ LÝ ĐỒNG BỘ MÃ TRẠNG THÁI THẨM ĐỊNH BẢO HÀNH GIỮA BACKEND & FRONTEND]
+            // - Backend trả về các mã chuẩn: PASSED, NOT_REQUIRED, FAILED, WAITING_CHECK.
+            // - Frontend so khớp thêm các chuỗi cũ (Approved, Approved_Passed, ĐÃ DUYỆT...) để đảm bảo tương thích ngược.
             const status = item.inspectionStatus;
-            const isApproved = status === 'Approved' || status === 'Approved_Passed' || status === 'ĐÃ DUYỆT';
-            const isRejected = status === 'Rejected' || status === 'Rejected_Failed' || status === 'TỪ CHỐI';
+            // isApproved: Đã được duyệt (PASSED / Approved / ĐÃ DUYỆT) hoặc Đơn mua máy mới không cần kiểm tra (NOT_REQUIRED)
+            const isApproved = status === 'Approved' || status === 'Approved_Passed' || status === 'ĐÃ DUYỆT' || status === 'PASSED' || status === 'NOT_REQUIRED';
+            // isRejected: Bị từ chối bảo hành (FAILED / Rejected / TỪ CHỐI)
+            const isRejected = status === 'Rejected' || status === 'Rejected_Failed' || status === 'TỪ CHỐI' || status === 'FAILED';
 
-            // Khách chỉ được phép nhập/sửa IMEI khi chưa được Admin duyệt (Chưa kích hoạt hoặc Đang chờ duyệt)
+            // Khách chỉ được phép nhập/sửa IMEI khi chưa được Admin duyệt (Chưa kích hoạt hoặc Đang chờ duyệt WAITING_CHECK)
             const canEditImei = !isApproved && !isRejected;
 
             return (

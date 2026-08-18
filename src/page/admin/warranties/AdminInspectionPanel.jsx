@@ -55,7 +55,7 @@ export default function AdminInspectionPanel() {
   const [selectedPackage, setSelectedPackage] = useState(null); // Gói đang chọn để sửa
   // State: isAddingNew - Quản lý trạng thái và dữ liệu của isAddingNew trong giao diện
   const [isAddingNew, setIsAddingNew] = useState(false); // Đang mở form thêm mới
-  // State: packageFormData - Quản lý trạng thái và dữ liệu của packageFormData trong giao diện
+  // State: packageFormData - Quản lý trạng thái và dữ liệu khởi tạo của packageFormData trong giao diện
   const [packageFormData, setPackageFormData] = useState({
     code: '',
     name: '',
@@ -65,6 +65,8 @@ export default function AdminInspectionPanel() {
     basePrice: 0,
     requiresInspection: false,
     isActive: true,
+    // [CẬP NHẬT NGHIỆP VỤ]: isComboOnly - Xác định gói chỉ cho bán kèm điện thoại (Không cho mua lẻ)
+    isComboOnly: false,
     rules: {
       brandId: '',
       categoryId: '',
@@ -368,6 +370,8 @@ export default function AdminInspectionPanel() {
       basePrice: 0,
       requiresInspection: false,
       isActive: true,
+      // [CẬP NHẬT NGHIỆP VỤ]: Mặc định gói mới cho phép cả mua lẻ và mua kèm
+      isComboOnly: false,
       rules: {
         brandId: '',
         categoryId: '',
@@ -395,6 +399,8 @@ export default function AdminInspectionPanel() {
       basePrice: pkg.basePrice || pkg.BasePrice,
       requiresInspection: pkg.requiresInspection !== undefined ? pkg.requiresInspection : pkg.RequiresInspection,
       isActive: pkg.isActive !== undefined ? pkg.isActive : pkg.IsActive,
+      // [CẬP NHẬT NGHIỆP VỤ]: Map trường isComboOnly từ CSDL/API
+      isComboOnly: pkg.isComboOnly !== undefined ? pkg.isComboOnly : (pkg.IsComboOnly !== undefined ? pkg.IsComboOnly : false),
       rules: {
         brandId: rulesObj.brandId || rulesObj.BrandId || '',
         categoryId: rulesObj.categoryId || rulesObj.CategoryId || '',
@@ -451,20 +457,36 @@ export default function AdminInspectionPanel() {
   const handleMoneyChange = (rawVal, fieldPath) => {
     // Khai báo biến/hằng số: stringWithoutDots - Dùng trong logic xử lý của component
     const stringWithoutDots = rawVal.replace(/\./g, '');
+
+    // Trường hợp 1: Nếu người dùng xóa trắng ô nhập
     if (stringWithoutDots === '') {
       if (fieldPath === 'basePrice') {
-        setPackageFormData(prev => ({ ...prev, basePrice: 0 }));
+        setPackageFormData(prev => ({ ...prev, basePrice: '' }));
       } else if (fieldPath === 'minPrice') {
-        setPackageFormData(prev => ({ ...prev, rules: { ...prev.rules, minPrice: 0 } }));
+        setPackageFormData(prev => ({ ...prev, rules: { ...prev.rules, minPrice: '' } }));
       } else if (fieldPath === 'maxPrice') {
         setPackageFormData(prev => ({ ...prev, rules: { ...prev.rules, maxPrice: '' } }));
       }
       return;
     }
 
+    // Trường hợp 2: Khi người dùng gõ chữ số
     if (/^\d+$/.test(stringWithoutDots)) {
-      // Khai báo biến/hằng số: parsed - Dùng trong logic xử lý của component
-      const parsed = parseInt(stringWithoutDots, 10);
+      let parsed = parseInt(stringWithoutDots, 10);
+
+      //   // Tự động khống chế trần tối đa maxPrice là 3.000.000 VNĐ
+      //   if (fieldPath === 'maxPrice' && parsed > 3000000) {
+      //     parsed = 3000000;
+      //   }
+      //   // Tự động khống chế trần tối thiểu minPrice là 100.000.000 VNĐ
+      //   if(fieldPath === 'minPrice' && parsed > 100000000) {
+      //     parsed = 100000000;
+      //   }
+      //   // tự động ràng buộc giá trị giá gói bảo hành
+      //   if(fieldPath === 'basePrice' && parsed >= 0) {
+      //     parsed = 0;
+      //   }
+
       if (fieldPath === 'basePrice') {
         setPackageFormData(prev => ({ ...prev, basePrice: parsed }));
       } else if (fieldPath === 'minPrice') {
@@ -521,6 +543,9 @@ export default function AdminInspectionPanel() {
       basePrice: packageFormData.basePrice,
       requiresInspection: packageFormData.requiresInspection,
       isActive: packageFormData.isActive,
+      // [CẬP NHẬT NGHIỆP VỤ]: Đóng gói payload isComboOnly để lưu vào CSDL
+      isComboOnly: packageFormData.isComboOnly,
+      IsComboOnly: packageFormData.isComboOnly,
       rules: rulesPayload,
       Rules: rulesPayload
     };
@@ -570,8 +595,8 @@ export default function AdminInspectionPanel() {
           <button
             onClick={() => setViewMode('inspection')}
             className={`px-4 py-2 rounded text-xs font-black uppercase tracking-wider transition-all cursor-pointer ${viewMode === 'inspection'
-                ? 'bg-white text-primary shadow-sm scale-[1.01]'
-                : 'text-gray-500 hover:text-gray-800'
+              ? 'bg-white text-primary shadow-sm scale-[1.01]'
+              : 'text-gray-500 hover:text-gray-800'
               }`}
           >
             Thẩm định thiết bị
@@ -579,19 +604,18 @@ export default function AdminInspectionPanel() {
           <button
             onClick={() => setViewMode('crud')}
             className={`px-4 py-2 rounded text-xs font-black uppercase tracking-wider transition-all cursor-pointer ${viewMode === 'crud'
-                ? 'bg-white text-primary shadow-sm scale-[1.01]'
-                : 'text-gray-500 hover:text-gray-800'
+              ? 'bg-white text-primary shadow-sm scale-[1.01]'
+              : 'text-gray-500 hover:text-gray-800'
               }`}
           >
             Quản lý gói bảo hành
           </button>
           <button
             onClick={() => setViewMode('customers')}
-            className={`px-4 py-2 rounded text-xs font-black uppercase tracking-wider transition-all cursor-pointer ${
-              viewMode === 'customers'
-                ? 'bg-white text-primary shadow-sm scale-[1.01]'
-                : 'text-gray-500 hover:text-gray-800'
-            }`}
+            className={`px-4 py-2 rounded text-xs font-black uppercase tracking-wider transition-all cursor-pointer ${viewMode === 'customers'
+              ? 'bg-white text-primary shadow-sm scale-[1.01]'
+              : 'text-gray-500 hover:text-gray-800'
+              }`}
           >
             Khách hàng &amp; IMEI Bảo hành
           </button>
@@ -639,8 +663,8 @@ export default function AdminInspectionPanel() {
                     setSelectedInspectionItem(null);
                   }}
                   className={`px-4 py-1.5 rounded text-[11px] font-black uppercase tracking-wider transition-all cursor-pointer ${orderStatusFilter === tab.key
-                      ? 'bg-white text-primary shadow-sm'
-                      : 'text-gray-500 hover:text-gray-700'
+                    ? 'bg-white text-primary shadow-sm'
+                    : 'text-gray-500 hover:text-gray-700'
                     }`}
                 >
                   {tab.label}
@@ -705,12 +729,12 @@ export default function AdminInspectionPanel() {
                             </td>
                             <td className="p-4">
                               <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider ${item.inspectionStatus === 'WAITING_CHECK'
-                                  ? 'bg-yellow-50 text-yellow-600'
-                                  : item.inspectionStatus === 'PASSED'
-                                    ? 'bg-green-50 text-green-600'
-                                    : item.inspectionStatus === 'NOT_REQUIRED'
-                                      ? 'bg-blue-50 text-blue-600'
-                                      : 'bg-red-50 text-red-600'
+                                ? 'bg-yellow-50 text-yellow-600'
+                                : item.inspectionStatus === 'PASSED'
+                                  ? 'bg-green-50 text-green-600'
+                                  : item.inspectionStatus === 'NOT_REQUIRED'
+                                    ? 'bg-blue-50 text-blue-600'
+                                    : 'bg-red-50 text-red-600'
                                 }`}>
                                 {item.inspectionStatus === 'WAITING_CHECK' && <Clock size={11} />}
                                 {item.inspectionStatus === 'PASSED' && <CheckCircle2 size={11} />}
@@ -932,10 +956,17 @@ export default function AdminInspectionPanel() {
                             </span>
                           </td>
                           <td className="p-4">
-                            <span className={`inline-flex items-center gap-0.5 px-2 py-0.5 rounded text-[10px] font-bold ${pkg.isActive ? 'bg-green-50 text-green-600' : 'bg-red-50 text-red-600'
-                              }`}>
-                              {pkg.isActive ? 'Hoạt động' : 'Tạm khóa'}
-                            </span>
+                            <div className="flex flex-col gap-1">
+                              <span className={`inline-flex items-center gap-0.5 px-2 py-0.5 rounded text-[10px] font-bold w-fit ${pkg.isActive ? 'bg-green-50 text-green-600' : 'bg-red-50 text-red-600'
+                                }`}>
+                                {pkg.isActive ? 'Hoạt động' : 'Tạm khóa'}
+                              </span>
+                              {/* [CẬP NHẬT NGHIỆP VỤ]: Badge phân loại Chỉ mua kèm vs Mua lẻ */}
+                              <span className={`inline-flex items-center gap-0.5 px-2 py-0.5 rounded text-[9px] font-bold w-fit ${(pkg.isComboOnly || pkg.IsComboOnly) ? 'bg-purple-50 text-purple-700 border border-purple-200' : 'bg-blue-50 text-blue-700'
+                                }`}>
+                                {(pkg.isComboOnly || pkg.IsComboOnly) ? '🔒 Chỉ mua kèm' : '🌐 Bán lẻ & Mua kèm'}
+                              </span>
+                            </div>
                           </td>
                           <td className="p-4 text-right space-x-2 whitespace-nowrap">
                             <button
@@ -1184,7 +1215,7 @@ export default function AdminInspectionPanel() {
                         <span className="text-[10px] text-gray-400 font-bold shrink-0">Đến:</span>
                         <input
                           type="text"
-                          placeholder="Không giới hạn"
+                          placeholder="không giới hạn"
                           value={formatMoneyInput(packageFormData.rules.maxPrice)}
                           onChange={(e) => handleMoneyChange(e.target.value, 'maxPrice')}
                           className="w-full p-2 bg-white border border-gray-250 rounded text-center focus:border-primary transition-all outline-none font-bold"
@@ -1194,33 +1225,83 @@ export default function AdminInspectionPanel() {
                   </div>
                 </div>
 
-                {/* Options toggle */}
-                <div className="flex flex-col gap-3 py-2 border-t border-b border-gray-100 bg-gray-50/50 p-3 rounded">
-                  {/* Requires Inspection */}
-                  <label className="flex items-center gap-2.5 cursor-pointer">
+                {/* Options toggle: Cấu hình thứ tự & Logic khóa tương tác qua lại (Mutual Exclusivity) */}
+                <div className="flex flex-col gap-3 py-3 border-t border-b border-gray-100 bg-gray-50/70 p-3.5 rounded-xl space-y-1">
+                  {/* 1. [CẬP NHẬT NGHIỆP VỤ]: Chỉ bán kèm điện thoại (Không cho mua lẻ) */}
+                  <label className={`flex items-start gap-2.5 p-2.5 rounded-xl border transition-all select-none ${packageFormData.requiresInspection
+                      ? 'opacity-50 cursor-not-allowed bg-gray-100 border-gray-200'
+                      : 'cursor-pointer bg-purple-50/50 border-purple-100 hover:bg-purple-50'
+                    }`}>
                     <input
                       type="checkbox"
-                      checked={packageFormData.requiresInspection}
-                      onChange={(e) => setPackageFormData(prev => ({ ...prev, requiresInspection: e.target.checked }))}
-                      className="w-4 h-4 text-primary border-gray-300 rounded focus:ring-primary/20 cursor-pointer"
+                      disabled={packageFormData.requiresInspection}
+                      checked={packageFormData.isComboOnly}
+                      onChange={(e) => {
+                        const checked = e.target.checked;
+                        setPackageFormData(prev => ({
+                          ...prev,
+                          isComboOnly: checked,
+                          // [LOGIC KHÓA]: Tích chọn Chỉ bán kèm -> Tự động bỏ tích Yêu cầu kiểm tra ngoại quan
+                          requiresInspection: checked ? false : prev.requiresInspection
+                        }));
+                      }}
+                      className="w-4 h-4 text-black border-gray-300 rounded focus:ring-black/20 cursor-pointer disabled:cursor-not-allowed mt-0.5"
                     />
                     <div>
-                      <span className="block text-xs font-bold text-gray-800">Yêu cầu kiểm tra ngoại quan máy</span>
-                      <span className="block text-[10px] text-gray-400 font-medium">Bắt buộc KTV cửa hàng duyệt đạt chuẩn ngoại quan rồi mới cho thanh toán.</span>
+                      <span className="block text-xs font-bold text-black">
+                        1. Chỉ bán kèm điện thoại (Không cho mua lẻ)
+                      </span>
+                      <span className="block text-[10px] text-gray-500 font-medium leading-relaxed">
+                        Tự động ẩn gói này khỏi trang Mua lẻ (/buy-warranty), chỉ xuất hiện khi mua kèm Điện thoại. (Không cần kiểm tra ngoại quan máy).
+                      </span>
                     </div>
                   </label>
 
-                  {/* Is Active */}
-                  <label className="flex items-center gap-2.5 cursor-pointer">
+                  {/* 2. [CẬP NHẬT NGHIỆP VỤ]: Yêu cầu kiểm tra ngoại quan máy */}
+                  <label className={`flex items-start gap-2.5 p-2.5 rounded-xl border transition-all select-none ${packageFormData.isComboOnly
+                      ? 'opacity-50 cursor-not-allowed bg-gray-100 border-gray-200'
+                      : 'cursor-pointer bg-orange-50/50 border-orange-100 hover:bg-orange-50'
+                    }`}>
+                    <input
+                      type="checkbox"
+                      disabled={packageFormData.isComboOnly}
+                      checked={packageFormData.requiresInspection}
+                      onChange={(e) => {
+                        const checked = e.target.checked;
+                        setPackageFormData(prev => ({
+                          ...prev,
+                          requiresInspection: checked,
+                          // [LOGIC KHÓA]: Tích chọn Yêu cầu kiểm tra ngoại quan -> Tự động bỏ tích Chỉ bán kèm
+                          isComboOnly: checked ? false : prev.isComboOnly
+                        }));
+                      }}
+                      className="w-4 h-4 text-orange-600 border-gray-300 rounded focus:ring-orange-500/20 cursor-pointer disabled:cursor-not-allowed mt-0.5"
+                    />
+                    <div>
+                      <span className="block text-xs font-bold text-gray-800">
+                        2. Yêu cầu kiểm tra ngoại quan máy
+                      </span>
+                      <span className="block text-[10px] text-gray-500 font-medium leading-relaxed">
+                        Bắt buộc KTV cửa hàng duyệt đạt chuẩn ngoại quan rồi mới cho thanh toán. (Dành cho mua lẻ máy cũ).
+                      </span>
+                    </div>
+                  </label>
+
+                  {/* 3. [CẬP NHẬT NGHIỆP VỤ]: Kích hoạt gói dịch vụ */}
+                  <label className="flex items-start gap-2.5 p-2.5 rounded-xl border border-blue-100 bg-blue-50/40 hover:bg-blue-50/70 transition-all cursor-pointer select-none">
                     <input
                       type="checkbox"
                       checked={packageFormData.isActive}
                       onChange={(e) => setPackageFormData(prev => ({ ...prev, isActive: e.target.checked }))}
-                      className="w-4 h-4 text-primary border-gray-300 rounded focus:ring-primary/20 cursor-pointer"
+                      className="w-4 h-4 text-primary border-gray-300 rounded focus:ring-primary/20 cursor-pointer mt-0.5"
                     />
                     <div>
-                      <span className="block text-xs font-bold text-gray-800">Kích hoạt gói dịch vụ</span>
-                      <span className="block text-[10px] text-gray-400 font-medium">Cho phép hiển thị và bán gói bảo hành này trên website.</span>
+                      <span className="block text-xs font-bold text-gray-800">
+                        3. Kích hoạt gói dịch vụ
+                      </span>
+                      <span className="block text-[10px] text-gray-500 font-medium leading-relaxed">
+                        Cho phép hiển thị và bán gói bảo hành này trên website.
+                      </span>
                     </div>
                   </label>
                 </div>
@@ -1357,11 +1438,10 @@ export default function AdminInspectionPanel() {
                 <button
                   key={tab.key}
                   onClick={() => setCustomerStatusFilter(tab.key)}
-                  className={`px-4 py-1.5 rounded text-[11px] font-black uppercase tracking-wider transition-all cursor-pointer border-0 ${
-                    customerStatusFilter === tab.key
-                      ? 'bg-white text-primary shadow-sm'
-                      : 'text-gray-500 hover:text-gray-700 bg-transparent'
-                  }`}
+                  className={`px-4 py-1.5 rounded text-[11px] font-black uppercase tracking-wider transition-all cursor-pointer border-0 ${customerStatusFilter === tab.key
+                    ? 'bg-white text-primary shadow-sm'
+                    : 'text-gray-500 hover:text-gray-700 bg-transparent'
+                    }`}
                 >
                   {tab.label}
                 </button>
@@ -1464,7 +1544,7 @@ export default function AdminInspectionPanel() {
             <h3 className="text-sm font-black text-gray-900 uppercase border-b border-gray-100 pb-2">
               Tiếp cận bảo hành #PS{editCustomerModal.item?.orderId}
             </h3>
-            
+
             <form onSubmit={handleUpdateCustomerImeiSubmit} className="space-y-4 text-xs font-semibold text-gray-700">
               <div className="p-3 bg-gray-50 rounded-lg space-y-1 text-[11px]">
                 <div className="flex justify-between">
@@ -1526,5 +1606,5 @@ export default function AdminInspectionPanel() {
       )}
     </div>
   );
-}
 
+}

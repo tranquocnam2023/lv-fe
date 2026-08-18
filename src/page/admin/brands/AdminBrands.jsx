@@ -10,6 +10,8 @@ import BrandTable from './components/BrandTable';
 import BrandModal from './components/BrandModal';
 import BrandToast from './components/BrandToast';
 
+import { fixVietnameseEncoding } from '../../../hooks/useFormat';
+
 export default function AdminBrands({ onRedirectToProducts, onRedirectToCreateProduct }) {
   // State: currentPage - Quản lý trạng thái và dữ liệu của currentPage trong giao diện
   const [currentPage, setCurrentPage] = useState(1);
@@ -197,10 +199,10 @@ export default function AdminBrands({ onRedirectToProducts, onRedirectToCreatePr
     if (brand) {
       setEditingBrand(brand);
       setFormData({
-        name: brand.name || '',
+        name: fixVietnameseEncoding(brand.name || ''),
         brandCode: brand.brandCode || '',
         slug: brand.slug || generateSlug(brand.name),
-        description: brand.description || '',
+        description: fixVietnameseEncoding(brand.description || ''),
         imageUrl: brand.imageUrl || '',
         isActive: brand.isActive !== false
       });

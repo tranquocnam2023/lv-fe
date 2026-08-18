@@ -155,11 +155,11 @@ export default function OrderDetailsModal({
                 )}
                 {order.ahamoveSharedLink && (
                   <p className="text-admin-text-muted font-bold col-span-1 sm:col-span-2">
-                    Theo dõi thời gian thực: 
-                    <a 
-                      href={order.ahamoveSharedLink} 
-                      target="_blank" 
-                      rel="noopener noreferrer" 
+                    Theo dõi thời gian thực:
+                    <a
+                      href={order.ahamoveSharedLink}
+                      target="_blank"
+                      rel="noopener noreferrer"
                       className="text-primary font-extrabold ml-1 hover:underline inline-flex items-center gap-0.5"
                     >
                       Bấm vào đây để theo dõi hành trình tài xế ↗
@@ -208,7 +208,7 @@ export default function OrderDetailsModal({
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-admin-border text-xs">
-                   {order.items?.map((item, index) => (
+                  {order.items?.map((item, index) => (
                     <tr key={index} className="hover:bg-admin-bg/30">
                       <td className="px-4 py-3">
                         <div className="flex flex-col">
@@ -218,12 +218,31 @@ export default function OrderDetailsModal({
                           )}
                           {item.warrantyId && (
                             <span className="text-[11px] text-blue-600 font-extrabold mt-1">
-                              🛡️ Bảo hành mở rộng: {item.warrantyName} (+{formatCurrency(item.warrantyPrice)})
+                              Bảo hành mở rộng: {item.warrantyName} (+{formatCurrency(item.warrantyPrice)})
                             </span>
                           )}
+                          {/* HIỂN THỊ IMEI & TRẠNG THÁI THẨM ĐỊNH MÁY TRONG MODAL BẢO HÀNH ADMIN */}
                           {item.imeiOrSerial && (
                             <span className="text-[10px] text-gray-500 font-bold mt-0.5">
-                              IMEI/Serial: {item.imeiOrSerial} ({item.inspectionStatus === 'WAITING_CHECK' ? 'Chờ kiểm tra' : item.inspectionStatus === 'PASSED' ? 'Đã duyệt' : 'Từ chối'})
+                              IMEI/Serial: {item.imeiOrSerial} (
+                              {/* 
+                                Logic so khớp nhãn trạng thái thẩm định:
+                                1. WAITING_CHECK -> 'Chờ kiểm tra'
+                                2. PASSED / Approved -> 'Đã duyệt'
+                                3. NOT_REQUIRED -> 'Máy mới (Không cần kiểm tra)' (Tránh bị nhảy nhầm vào nhánh Từ chối cũ)
+                                4. FAILED / Rejected -> 'Từ chối'
+                              */}
+                              {item.inspectionStatus === 'WAITING_CHECK'
+                                ? 'Chờ kiểm tra'
+                                : (item.inspectionStatus === 'PASSED' || item.inspectionStatus === 'Approved' || item.inspectionStatus === 'Approved_Passed' || item.inspectionStatus === 'ĐÃ DUYỆT')
+                                  ? 'Đã duyệt'
+                                  : (item.inspectionStatus === 'NOT_REQUIRED')
+                                    ? 'Máy mới (Không cần kiểm tra)'
+                                    : (item.inspectionStatus === 'FAILED' || item.inspectionStatus === 'Rejected' || item.inspectionStatus === 'Rejected_Failed' || item.inspectionStatus === 'TỪ CHỐI')
+                                      ? 'Từ chối'
+                                      : item.inspectionStatus || 'Đã duyệt'
+                              }
+                              )
                             </span>
                           )}
                         </div>
