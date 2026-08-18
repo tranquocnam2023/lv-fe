@@ -33,7 +33,7 @@ const POLICY_DATA = {
             {['OPPO', 'SAMSUNG', 'REALME', 'GIGABYTE', 'MICROLAB', 'CHUWI', 'LIFETRONS', 'ASIA MŨ BẢO HIỂM', 'VIVO', 'ARCA', 'FUROVER', '365 SELECTION'].map(brand => (
               <div key={brand} className="border border-gray-100 rounded-md p-4 flex flex-col items-center justify-center transition-shadow bg-white cursor-pointer group">
                 <div className="text-xs font-black text-gray-400 group-hover:text-blue-600 transition-colors">{brand}</div>
-                <div className="text-[10px] text-gray-400 mt-1 uppercase">{brand}</div>
+                {/* <div className="text-[10px] text-gray-400 mt-1 uppercase">{brand}</div> */}
               </div>
             ))}
           </div>

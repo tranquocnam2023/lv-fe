@@ -5,7 +5,6 @@ import { Package, Layout, Bell, ShoppingCart, Settings2, Plus, Edit, Trash2, X, 
 import { categoryService } from '../../../services/categoryService';
 import { brandService } from '../../../services/brandService';
 import { productService } from '../../../services/productService';
-import { orderService } from '../../../services/orderService';
 import { usePagination } from '../../../hooks/usePagination';
 import { useFormat } from '../../../hooks/useFormat';
 
@@ -17,8 +16,6 @@ export default function AdminProducts({ onCreate, onEdit, defaultBrandFilter, cl
   const [dbCategories, setDbCategories] = useState([]); // Database categories
   // State: products - Quản lý trạng thái và dữ liệu của products trong giao diện
   const [products, setProducts] = useState([]);
-  // State: monthlySold - Số sản phẩm đã bán thành công trong tháng hiện tại
-  const [monthlySold, setMonthlySold] = useState(0);
   // State: selectedBrand - Quản lý trạng thái và dữ liệu của selectedBrand trong giao diện
   const [selectedBrand, setSelectedBrand] = useState('ALL');
   // State: selectedCategory - Quản lý trạng thái và dữ liệu của selectedCategory trong giao diện
@@ -54,7 +51,7 @@ export default function AdminProducts({ onCreate, onEdit, defaultBrandFilter, cl
   const filteredProducts = products.filter(p => {
     let match = true;
     if (selectedBrand !== 'ALL' && String(p.brandId) !== String(selectedBrand)) match = false;
-    
+
     if (selectedCategory !== 'ALL') {
       // Khai báo biến/hằng số: allowedCatIds - Dùng trong logic xử lý của component
       const allowedCatIds = getAllCategoryIds(selectedCategory, dbCategories);

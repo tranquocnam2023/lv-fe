@@ -1,6 +1,7 @@
 import React from 'react';
 import { Loader2, Image as ImageIcon, X, Edit, Trash2, ChevronUp, ChevronDown, FolderOpen, Plus } from 'lucide-react';
 import { fixVietnameseEncoding } from '../../../../hooks/useFormat';
+import { generateBrandOrCategoryCode } from '../../../../utils/codeGenerator';
 
 export default function BrandTable({
   brands,
@@ -133,7 +134,7 @@ export default function BrandTable({
                       </td>
                       <td className="px-6 py-4 text-center">
                         <span className="text-sm font-semibold text-primary bg-admin-bg px-3 py-1 rounded-md">
-                          {brand.brandCode}
+                          {brand.brandCode || brand.BrandCode || brand.code || brand.Code || generateBrandOrCategoryCode(brand.name || brand.Name || 'BRAND', 10)}
                         </span>
                       </td>
                       <td className="px-6 py-4 text-center font-bold text-admin-text-main">
@@ -195,8 +196,8 @@ export default function BrandTable({
                                   <FolderOpen size={20} className="text-admin-text-muted opacity-50" />
                                   <span className="text-sm font-semibold">Chưa có sản phẩm nào thuộc thương hiệu này.</span>
                                 </div>
-                                <button 
-                                  type="button" 
+                                <button
+                                  type="button"
                                   className="flex items-center gap-1.5 px-4 py-2 bg-admin-bg text-primary hover:bg-primary/10 rounded-md text-xs font-bold transition-all active:scale-[0.98] cursor-pointer border-0"
                                   onClick={() => onRedirectToCreateProduct && onRedirectToCreateProduct(brand.id)}
                                 >

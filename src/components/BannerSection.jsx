@@ -222,7 +222,7 @@ const BannerSection = ({ showSideBanners = true, showTopBanner = true, showSlide
               <img
                 src={topBanner.imageUrl}
                 alt="Quảng cáo nổi bật"
-                fetchpriority="high"
+                fetchPriority="high"
                 decoding="async"
                 className="w-full h-full object-cover"
               />

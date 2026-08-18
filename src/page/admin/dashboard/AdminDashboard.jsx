@@ -35,10 +35,10 @@ export default function AdminDashboard({ onTabChange }) {
   const [brandProfitReport, setBrandProfitReport] = useState(null);
 
   useEffect(() => {
-    // Fetch Brand Profit Report
+    // Fetch Brand Profit Report (Xử lý mượt nếu Backend chưa định nghĩa endpoint này)
     api.get('/AdminDashboard/brand-profit-report')
       .then(res => setBrandProfitReport(res.data || res))
-      .catch(e => console.error("Lỗi tải báo cáo lợi nhuận:", e));
+      .catch(() => setBrandProfitReport(null));
     // 1. Fetch Revenue Data
     dashboardService.getRevenue()
       .then(data => { if (data && data.length > 0) setRevenueData(data); })
@@ -230,7 +230,7 @@ export default function AdminDashboard({ onTabChange }) {
             </div>
           </div>
           <div className="absolute right-2 bottom-2 w-[120px] h-[60px]">
-            <ResponsiveContainer width="100%" height="100%">
+            <ResponsiveContainer minWidth={0} minHeight={0} width="100%" height="100%">
               <BarChart data={revenueData.slice(-6)}>
                 <Bar dataKey="daily" fill="var(--color-primary)" opacity={0.8} radius={[2, 2, 0, 0]} />
               </BarChart>
@@ -252,7 +252,7 @@ export default function AdminDashboard({ onTabChange }) {
             </div>
           </div>
           <div className="absolute right-2 bottom-1 w-[120px] h-[60px]">
-            <ResponsiveContainer width="100%" height="100%">
+            <ResponsiveContainer minWidth={0} minHeight={0} width="100%" height="100%">
               <AreaChart data={orderTrendData}>
                 <defs>
                   <linearGradient id="orderGrad" x1="0" y1="0" x2="0" y2="1">
@@ -281,7 +281,7 @@ export default function AdminDashboard({ onTabChange }) {
             </div>
           </div>
           <div className="w-[100px] h-[100px] flex-shrink-0 relative">
-            <ResponsiveContainer width="100%" height="100%">
+            <ResponsiveContainer minWidth={0} minHeight={0} width="100%" height="100%">
               <PieChart>
                 <Pie
                   data={pieData}
@@ -339,7 +339,7 @@ export default function AdminDashboard({ onTabChange }) {
           </div>
 
           <div className="flex-1">
-            <ResponsiveContainer width="100%" height="100%">
+            <ResponsiveContainer minWidth={0} minHeight={0} width="100%" height="100%">
               <AreaChart data={formattedChartData}>
                 <defs>
                   <linearGradient id="colorSales" x1="0" y1="0" x2="0" y2="1">
@@ -546,7 +546,7 @@ export default function AdminDashboard({ onTabChange }) {
               )}
             </div>
           </div>
-          <button 
+          <button
             onClick={() => onTabChange && onTabChange('customers')}
             className="w-full mt-6 py-2 bg-blue-500 hover:bg-blue-600 text-xs font-bold text-admin-text-muted rounded-md transition-colors border border-gray-100"
           >
@@ -591,7 +591,7 @@ export default function AdminDashboard({ onTabChange }) {
                 So Sánh Tỷ Trọng Doanh Thu vs Lợi Nhuận Gộp (%)
               </h4>
               <div className="w-full h-[240px]">
-                <ResponsiveContainer width="100%" height="100%">
+                <ResponsiveContainer minWidth={0} minHeight={0} width="100%" height="100%">
                   <PieChart>
                     <Pie
                       data={brandProfitReport.brands || []}
@@ -681,7 +681,7 @@ export default function AdminDashboard({ onTabChange }) {
         </div>
 
         <div className="flex-1">
-          <ResponsiveContainer width="100%" height="100%">
+          <ResponsiveContainer minWidth={0} minHeight={0} width="100%" height="100%">
             <BarChart data={brandPerformance}>
               <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--color-bordercustom)" />
               <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: 'var(--color-textmuted)', fontSize: 11, fontWeight: 600 }} />

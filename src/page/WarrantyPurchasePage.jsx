@@ -37,12 +37,14 @@ export default function WarrantyPurchasePage() {
       .then(res => {
         // Cấu hình/Hằng số/Dịch vụ dữ liệu: rawData
         const rawData = Array.isArray(res) ? res : res?.data || [];
-        
+
         // [CẬP NHẬT NGHIỆP VỤ THEO YÊU CẦU ADMIM]:
         // Lọc bỏ các gói bảo hành có cấu hình isComboOnly === true (Chỉ bán kèm điện thoại),
         // Không cho phép hiển thị và mua lẻ trên trang /buy-warranty.
+        const savedComboMap = JSON.parse(localStorage.getItem('WARRANTY_COMBO_ONLY_MAP') || '{}');
         const retailAllowedData = rawData.filter(w => {
-          const isComboOnly = w.isComboOnly !== undefined ? w.isComboOnly : (w.IsComboOnly || false);
+          const savedVal = savedComboMap[w.id] ?? savedComboMap[w.code] ?? savedComboMap[w.Code];
+          const isComboOnly = savedVal !== undefined ? Boolean(savedVal) : (w.isComboOnly ?? w.IsComboOnly ?? w.rules?.isComboOnly ?? w.rules?.IsComboOnly ?? false);
           return !isComboOnly;
         });
 

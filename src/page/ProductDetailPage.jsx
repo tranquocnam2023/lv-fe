@@ -1151,18 +1151,18 @@ export default function ProductDetailPage() {
 
             {activeTab === 'reviews' && (
               <ProductReviews
-                productId={id}
+                productId={product?.id || id}
                 reviews={reviews}
                 currentUser={currentUser}
                 stats={stats}
-                onReviewSubmitted={fetchProductReviews}
-                productName={displayProductName || product.name}
+                onReviewSubmitted={() => fetchProductReviews(product?.id || id)}
+                productName={displayProductName || product?.name}
               />
             )}
           </div>
         </div>
 
-        {/* SẢN PHẨM THƯỜNG MUA CÙNG (CHUẨN PHONG CÁCH THẾ GIỚI DI ĐỘNG) */}
+        {/* SẢN PHẨM THƯỜNG MUA CÙNG  */}
         <FrequentlyBoughtTogether
           accessorySuggestions={accessorySuggestions}
           onSelectAccessory={(acc) => {

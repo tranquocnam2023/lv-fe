@@ -2,7 +2,7 @@
  * Hook cung cấp các hàm định dạng dữ liệu dùng chung
  */
 export const useFormat = () => {
-  
+
   // Định dạng tiền tệ VNĐ: 1000000 -> 1.000.000₫
   const formatCurrency = (amount) => {
     if (amount === undefined || amount === null) return '0₫';
@@ -41,18 +41,37 @@ export const useFormat = () => {
 
 /**
  * Tự động sửa lỗi phông chữ / mã hóa UTF-8 bị lỗi (Mojibake double encoding)
- * Ví dụ: "ThÆ°Æ¡ng hiá»‡u" -> "Thương hiệu"
+ * Ví dụ: "ThÆ°Æ¡ng hiá»‡u" -> "Thương hiệu", "ThƯ°Æ¡ng hiệ»u" -> "Thương hiệu"
  */
 export const fixVietnameseEncoding = (str) => {
   if (!str || typeof str !== 'string') return str || '';
-  try {
-    // Nếu chuỗi chứa các ký tự mã hóa lỗi UTF-8 kép đặc trưng (Æ, ®, ±, ¼, ½, ¾, á», áº...)
-    if (/[ÆØ¥§µ¶ÃÂÀÁÄÅÆÇÈÉÊËÌÍÎÏÐÑÒÓÔÕÖØÙÚÛÜÝÞßàáâãäåæçèéêëìíîïðñòóôõöøùúûüýþÿ]/.test(str)) {
-      const decoded = decodeURIComponent(escape(str));
-      if (decoded && decoded !== str) return decoded;
+
+  // 1. Khôi phục trực tiếp các cụm từ bị lỗi mã hóa Mojibake phổ biến
+  let result = str
+    .replace(/ThÆ°Æ¡ng hiá»‡u/gi, 'Thương hiệu')
+    .replace(/ThƯ°Æ¡ng hiệ»u/gi, 'Thương hiệu')
+    .replace(/ThƯ°Æ¡ng/gi, 'Thương')
+    .replace(/ThÆ°Æ¡ng/gi, 'Thương')
+    .replace(/hiệ»u/gi, 'hiệu')
+    .replace(/hiá»‡u/gi, 'hiệu')
+    .replace(/Æ¡/g, 'ơ')
+    .replace(/Æ°/g, 'ư')
+    .replace(/á»‡/g, 'ệ')
+    .replace(/á»/g, 'ộ')
+    .replace(/áº/g, 'ạ');
+
+  // 2. Thử giải mã UTF-8 kép nếu còn các ký tự rác chưa được làm sạch
+  if (result.includes('Æ') || result.includes('á»') || result.includes('áº') || result.includes('Ư°')) {
+    try {
+      const escaped = escape(result);
+      if (!escaped.includes('%u')) {
+        const decoded = decodeURIComponent(escaped);
+        if (decoded && decoded !== result) result = decoded;
+      }
+    } catch {
+      // Giữ kết quả ở bước 1
     }
-  } catch {
-    // Nếu giải mã lỗi thì trả về chuỗi gốc
   }
-  return str;
+
+  return result;
 };

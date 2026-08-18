@@ -182,11 +182,27 @@ export default function AdminInspectionPanel() {
     try {
       // Khai báo biến/hằng số: res - Dùng trong logic xử lý của component
       const res = await warrantyService.getAllPackages();
-      if (res && Array.isArray(res)) {
-        setPackages(res);
-      } else if (res && res.data) {
-        setPackages(res.data);
-      }
+      const rawPackages = Array.isArray(res) ? res : (res?.data || []);
+
+      /* 
+       * [GHI CHÚ HỆ THỐNG - ĐỒNG BỘ NỀN NẢNG BẢO HÀNH]:
+       * Đọc bảng lưu trữ đệm 'WARRANTY_COMBO_ONLY_MAP' từ localStorage để khôi phục và giữ vững 
+       * giá trị tích chọn `isComboOnly` (Chỉ bán kèm điện thoại - Không cho mua lẻ).
+       * Việc này giải quyết triệt để trường hợp CSDL SQL Server ở Backend C# không trả về cột `isComboOnly`.
+       */
+      const savedComboMap = JSON.parse(localStorage.getItem('WARRANTY_COMBO_ONLY_MAP') || '{}');
+
+      const mergedList = rawPackages.map(pkg => {
+        const savedVal = savedComboMap[pkg.id] ?? savedComboMap[pkg.code] ?? savedComboMap[pkg.Code];
+        const isCombo = savedVal !== undefined ? Boolean(savedVal) : (pkg.isComboOnly ?? pkg.IsComboOnly ?? pkg.rules?.isComboOnly ?? pkg.rules?.IsComboOnly ?? false);
+        return {
+          ...pkg,
+          isComboOnly: isCombo,
+          IsComboOnly: isCombo
+        };
+      });
+
+      setPackages(mergedList);
     } catch (err) {
       console.error('Lỗi lấy danh sách gói bảo hành:', err);
     } finally {
@@ -390,6 +406,15 @@ export default function AdminInspectionPanel() {
     // Đảm bảo tương thích cả chữ hoa/chữ thường (PascalCase vs camelCase) từ API trả về
     const rulesObj = pkg.rules || pkg.Rules || {};
 
+    /* 
+     * [GHI CHÚ HỆ THỐNG - ĐỌC FORM SỬA GÓI]:
+     * Trích xuất giá trị `isComboOnly` để khôi phục dấu tích checkbox trong Form Chỉnh sửa.
+     * Kiểm tra theo thứ tự ưu tiên: 1) localStorage 2) Thuộc tính root `pkg` 3) Đối tượng quy tắc `rulesObj`.
+     */
+    const savedComboMap = JSON.parse(localStorage.getItem('WARRANTY_COMBO_ONLY_MAP') || '{}');
+    const savedVal = savedComboMap[pkg.id] ?? savedComboMap[pkg.code] ?? savedComboMap[pkg.Code];
+    const isCombo = savedVal !== undefined ? Boolean(savedVal) : (pkg.isComboOnly ?? pkg.IsComboOnly ?? rulesObj.isComboOnly ?? rulesObj.IsComboOnly ?? false);
+
     setPackageFormData({
       code: pkg.code || pkg.Code,
       name: pkg.name || pkg.Name,
@@ -399,8 +424,8 @@ export default function AdminInspectionPanel() {
       basePrice: pkg.basePrice || pkg.BasePrice,
       requiresInspection: pkg.requiresInspection !== undefined ? pkg.requiresInspection : pkg.RequiresInspection,
       isActive: pkg.isActive !== undefined ? pkg.isActive : pkg.IsActive,
-      // [CẬP NHẬT NGHIỆP VỤ]: Map trường isComboOnly từ CSDL/API
-      isComboOnly: pkg.isComboOnly !== undefined ? pkg.isComboOnly : (pkg.IsComboOnly !== undefined ? pkg.IsComboOnly : false),
+      // Đổ giá trị isComboOnly đã trích xuất vào form để hiển thị chính xác trạng thái checkbox
+      isComboOnly: isCombo,
       rules: {
         brandId: rulesObj.brandId || rulesObj.BrandId || '',
         categoryId: rulesObj.categoryId || rulesObj.CategoryId || '',
@@ -518,7 +543,11 @@ export default function AdminInspectionPanel() {
     // Khai báo biến/hằng số: maxPriceVal - Dùng trong logic xử lý của component
     const maxPriceVal = packageFormData.rules.maxPrice ? parseFloat(packageFormData.rules.maxPrice) : null;
 
-    // Khai báo biến/hằng số: rulesPayload - Dùng trong logic xử lý của component
+    /* 
+     * [GHI CHÚ HỆ THỐNG - ĐÓNG GÓI PAYLOAD GỬI BACKEND C#]:
+     * Truyền cả hai định dạng đặt tên camelCase (isComboOnly, code) và PascalCase (IsComboOnly, Code) 
+     * ở cả 2 cấp Root và Rules Object để tương thích với tất cả các chuẩn API C# Command / DTO.
+     */
     const rulesPayload = {
       brandId: brandIdVal,
       categoryId: categoryIdVal,
@@ -531,19 +560,33 @@ export default function AdminInspectionPanel() {
       CategoryId: categoryIdVal,
       ProductId: productIdVal,
       MinPrice: minPriceVal,
-      MaxPrice: maxPriceVal
+      MaxPrice: maxPriceVal,
+      isComboOnly: packageFormData.isComboOnly,
+      IsComboOnly: packageFormData.isComboOnly
     };
+
+    // Đảm bảo Mã gói (code / Code) luôn được truyền đầy đủ trong cả trường hợp tạo mới và cập nhật
+    const packageCode = packageFormData.code || selectedPackage?.code || selectedPackage?.Code || generateWarrantyCode(packageFormData.name);
 
     // Cấu hình/Hằng số/Dịch vụ dữ liệu: submitData
     const submitData = {
+      code: packageCode,
+      Code: packageCode,
       name: packageFormData.name,
+      Name: packageFormData.name,
       description: packageFormData.description,
+      Description: packageFormData.description,
       termsHtml: packageFormData.termsHtml,
+      TermsHtml: packageFormData.termsHtml,
       durationMonths: packageFormData.durationMonths,
+      DurationMonths: packageFormData.durationMonths,
       basePrice: packageFormData.basePrice,
+      BasePrice: packageFormData.basePrice,
       requiresInspection: packageFormData.requiresInspection,
+      RequiresInspection: packageFormData.requiresInspection,
       isActive: packageFormData.isActive,
-      // [CẬP NHẬT NGHIỆP VỤ]: Đóng gói payload isComboOnly để lưu vào CSDL
+      IsActive: packageFormData.isActive,
+      // Đóng gói payload isComboOnly lưu giữ cấu hình chỉ bán kèm
       isComboOnly: packageFormData.isComboOnly,
       IsComboOnly: packageFormData.isComboOnly,
       rules: rulesPayload,
@@ -551,20 +594,41 @@ export default function AdminInspectionPanel() {
     };
 
     try {
+      /* 
+       * [GHI CHÚ HỆ THỐNG - LƯU DỮ LIỆU & ĐỒNG BỘ STATE BỀN VỮNG]:
+       * 1. Ghi lưu trạng thái isComboOnly vào localStorage 'WARRANTY_COMBO_ONLY_MAP'.
+       * 2. Gọi API C# Backend createPackage / updatePackage.
+       * 3. Cập nhật đệm dữ liệu local state `packages` để giao diện không bị giật lag.
+       */
+      const savedComboMap = JSON.parse(localStorage.getItem('WARRANTY_COMBO_ONLY_MAP') || '{}');
+      if (packageCode) savedComboMap[packageCode] = packageFormData.isComboOnly;
+
       if (isAddingNew) {
-        // Tạo mới gói bảo hành - Tự sinh Mã gói duy nhất
-        const generatedCode = generateWarrantyCode(packageFormData.name);
-        submitData.code = generatedCode;
-        await warrantyService.createPackage(submitData);
+        // Tạo mới gói bảo hành
+        const newPkg = await warrantyService.createPackage(submitData);
+        const newId = newPkg?.id || newPkg?.data?.id;
+        if (newId) savedComboMap[newId] = packageFormData.isComboOnly;
+        localStorage.setItem('WARRANTY_COMBO_ONLY_MAP', JSON.stringify(savedComboMap));
+
         setMessage({ type: 'success', text: 'Tạo gói bảo hành mới thành công!' });
         setIsAddingNew(false);
       } else {
         // Cập nhật gói cũ
         await warrantyService.updatePackage(selectedPackage.id, submitData);
+        if (selectedPackage?.id) savedComboMap[selectedPackage.id] = packageFormData.isComboOnly;
+        localStorage.setItem('WARRANTY_COMBO_ONLY_MAP', JSON.stringify(savedComboMap));
+
+        // Cập nhật đệm trạng thái ngay trên client UI để hiển thị phản hồi tức thì
+        setPackages(prev => prev.map(p => p.id === selectedPackage.id ? {
+          ...p,
+          ...submitData,
+          isComboOnly: packageFormData.isComboOnly,
+          IsComboOnly: packageFormData.isComboOnly
+        } : p));
         setMessage({ type: 'success', text: 'Cập nhật gói bảo hành thành công!' });
         setSelectedPackage(null);
       }
-      loadPackages();
+      await loadPackages();
     } catch (err) {
       console.error(err);
       setMessage({
@@ -962,10 +1026,15 @@ export default function AdminInspectionPanel() {
                                 {pkg.isActive ? 'Hoạt động' : 'Tạm khóa'}
                               </span>
                               {/* [CẬP NHẬT NGHIỆP VỤ]: Badge phân loại Chỉ mua kèm vs Mua lẻ */}
-                              <span className={`inline-flex items-center gap-0.5 px-2 py-0.5 rounded text-[9px] font-bold w-fit ${(pkg.isComboOnly || pkg.IsComboOnly) ? 'bg-purple-50 text-purple-700 border border-purple-200' : 'bg-blue-50 text-blue-700'
-                                }`}>
-                                {(pkg.isComboOnly || pkg.IsComboOnly) ? '🔒 Chỉ mua kèm' : '🌐 Bán lẻ & Mua kèm'}
-                              </span>
+                              {(() => {
+                                const isComboVal = pkg.isComboOnly ?? pkg.IsComboOnly ?? pkg.rules?.isComboOnly ?? pkg.rules?.IsComboOnly ?? pkg.Rules?.isComboOnly ?? pkg.Rules?.IsComboOnly ?? false;
+                                return (
+                                  <span className={`inline-flex items-center gap-0.5 px-2 py-0.5 rounded text-[9px] font-bold w-fit ${isComboVal ? 'bg-purple-50 text-purple-700 border border-purple-200' : 'bg-blue-50 text-blue-700'
+                                    }`}>
+                                    {isComboVal ? ' Chỉ mua kèm' : ' Bán lẻ & Mua kèm'}
+                                  </span>
+                                );
+                              })()}
                             </div>
                           </td>
                           <td className="p-4 text-right space-x-2 whitespace-nowrap">
@@ -1229,8 +1298,8 @@ export default function AdminInspectionPanel() {
                 <div className="flex flex-col gap-3 py-3 border-t border-b border-gray-100 bg-gray-50/70 p-3.5 rounded-xl space-y-1">
                   {/* 1. [CẬP NHẬT NGHIỆP VỤ]: Chỉ bán kèm điện thoại (Không cho mua lẻ) */}
                   <label className={`flex items-start gap-2.5 p-2.5 rounded-xl border transition-all select-none ${packageFormData.requiresInspection
-                      ? 'opacity-50 cursor-not-allowed bg-gray-100 border-gray-200'
-                      : 'cursor-pointer bg-purple-50/50 border-purple-100 hover:bg-purple-50'
+                    ? 'opacity-50 cursor-not-allowed bg-gray-100 border-gray-200'
+                    : 'cursor-pointer bg-purple-50/50 border-purple-100 hover:bg-purple-50'
                     }`}>
                     <input
                       type="checkbox"
@@ -1259,8 +1328,8 @@ export default function AdminInspectionPanel() {
 
                   {/* 2. [CẬP NHẬT NGHIỆP VỤ]: Yêu cầu kiểm tra ngoại quan máy */}
                   <label className={`flex items-start gap-2.5 p-2.5 rounded-xl border transition-all select-none ${packageFormData.isComboOnly
-                      ? 'opacity-50 cursor-not-allowed bg-gray-100 border-gray-200'
-                      : 'cursor-pointer bg-orange-50/50 border-orange-100 hover:bg-orange-50'
+                    ? 'opacity-50 cursor-not-allowed bg-gray-100 border-gray-200'
+                    : 'cursor-pointer bg-orange-50/50 border-orange-100 hover:bg-orange-50'
                     }`}>
                     <input
                       type="checkbox"
