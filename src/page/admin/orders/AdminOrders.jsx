@@ -225,8 +225,10 @@ export default function AdminOrders() {
   const filteredOrders = orders.filter(order => {
     const ordId = String(order.id);
     const returnReq = savedReturnRequests[ordId];
-    const isReturnRequested = order.status === 'return_requested' || order.statusId === 6 || (returnReq && returnReq.status === 'Pending');
-    const isRefunded = order.status === 'refunded' || order.statusId === 7 || (returnReq && returnReq.status === 'Approved');
+    // Trạng thái đổi trả CHỈ đọc từ bảng ReturnRequests. statusId 6 là "Giao hàng thất bại"
+    // nên không được dùng để nhận diện đơn đang yêu cầu đổi trả.
+    const isReturnRequested = returnReq?.status === 'Pending';
+    const isRefunded = order.statusId === 7 || order.status === 'refunded' || returnReq?.status === 'Approved';
 
     const matchesTab = activeTab === 'all' ||
       (activeTab === 'shipping' && (order.status === 'shipping' || order.status === 'shipping_failed')) ||
@@ -494,7 +496,7 @@ export default function AdminOrders() {
     confirmed: orders.filter(o => o.status === 'confirmed' || o.status === 'preparing' || o.statusId === 2).length,
     shipping: orders.filter(o => o.status === 'shipping' || o.status === 'shipping_failed' || o.statusId === 3).length,
     delivered: orders.filter(o => o.status === 'delivered' || o.statusId === 4).length,
-    return_requested: orders.filter(o => o.status === 'return_requested' || o.statusId === 6 || (savedReturnRequests[String(o.id)] && savedReturnRequests[String(o.id)].status === 'Pending')).length,
+    return_requested: orders.filter(o => savedReturnRequests[String(o.id)]?.status === 'Pending').length,
     refunded: orders.filter(o => o.status === 'refunded' || o.statusId === 7 || (savedReturnRequests[String(o.id)] && savedReturnRequests[String(o.id)].status === 'Approved')).length,
     cancelled: orders.filter(o => o.status === 'cancelled' || o.statusId === 5).length,
   };
