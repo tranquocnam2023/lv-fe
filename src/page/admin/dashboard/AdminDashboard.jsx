@@ -716,6 +716,19 @@ có
                 </tbody>
               </table>
 
+              {/*
+                Sau khi bỏ việc tự sinh giá vốn = 85% giá bán, những sản phẩm chưa khai giá nhập
+                sẽ KHÔNG được tính vào báo cáo lợi nhuận (thay vì hiện lợi nhuận 0đ như số liệu
+                thật). Nói rõ ra để admin biết báo cáo đang thiếu bao nhiêu, và đi khai giá nhập.
+              */}
+              {(brandProfitReport.unknownCostUnits || 0) > 0 && (
+                <div className="mt-3 p-3 bg-amber-50 border border-amber-200 rounded-lg text-amber-900 text-[11px] font-semibold">
+                  Có <span className="font-black">{brandProfitReport.unknownCostUnits.toLocaleString('vi-VN')}</span> sản phẩm đã bán
+                  (doanh thu <span className="font-black">{(brandProfitReport.unknownCostRevenue || 0).toLocaleString('vi-VN')}₫</span>)
+                  chưa khai giá nhập nên không được tính vào báo cáo lợi nhuận. Khai giá nhập ở màn Kho để số liệu đầy đủ.
+                </div>
+              )}
+
               {(brandProfitReport.brands || []).length === 0 && (
                 <div className="p-6 text-center text-xs font-semibold text-slate-500 bg-slate-50 border border-dashed border-slate-200 rounded-lg">
                   Chưa có đơn hàng nào giao thành công trong kỳ nên chưa ghi nhận được lợi nhuận.
